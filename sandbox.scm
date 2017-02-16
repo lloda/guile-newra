@@ -1,9 +1,35 @@
 
-(import (rnrs io ports) (srfi srfi-1) (srfi srfi-4 gnu)
+; Replacement for Guile C-based arrays - WIP
+; (c) Daniel Llorens - 2016-2017
+
+(import (rnrs io ports) (srfi srfi-1) (srfi srfi-4 gnu) (rnrs base)
         (newra newra) (newra print))
 
 ; this is a direct translation of scm_i_print_array_dimension() in arrays.c.
 (define (array-print a port)
+  (define lo caar)
+  (define hi cadar)
+  (array-print-prefix a port)
+  (let ((s (array-shape a))
+        (i (shared-array-increments a))
+        (r (shared-array-root a))
+        (b (shared-array-offset a)))
+    (let loop ((ss s) (ii i) (b b))
+      (if (null? ss)
+        (display (ref r b) port)
+        (let ((lo (lo ss))
+              (hi (hi ss))
+              (i (car ii)))
+          (put-char port #\()
+          (do ((j lo (+ 1 j))
+               (b b (+ b i)))
+              ((> j hi))
+            (loop (cdr ss) (cdr ii) b)
+            (when (< j hi)
+              (put-char port #\space)))
+          (put-char port #\)))))))
+
+(define (ra-print a port)
   (define lo caar)
   (define hi cadar)
   (array-print-prefix a port)
