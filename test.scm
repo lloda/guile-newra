@@ -73,6 +73,12 @@
 (test-equal (call-with-output-string (cut display (ra-cell ra8 2) <>)) "%1d@1:3(4 5 6)")
 (test-equal 5 (ra-cell ra8 2 2))
 
+; applicable!
+(test-equal (call-with-output-string (cut display (ra8) <>)) "%2d@1:2@1:3((1 2 3) (4 5 6))")
+(test-equal (call-with-output-string (cut display (ra8 1) <>)) "%1d@1:3(1 2 3)")
+(test-equal (call-with-output-string (cut display (ra8 2) <>)) "%1d@1:3(4 5 6)")
+(test-equal 5 (ra8 2 2))
+
 (test-equal (call-with-output-string (cut display (ra-slice ra8) <>)) "%2d@1:2@1:3((1 2 3) (4 5 6))")
 (test-equal (call-with-output-string (cut display (ra-slice ra8 1) <>)) "%1d@1:3(1 2 3)")
 (test-equal (call-with-output-string (cut display (ra-slice ra8 2) <>)) "%1d@1:3(4 5 6)")
