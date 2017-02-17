@@ -54,8 +54,8 @@
 
 (define <ra-vtable>
   (let ((v (make-struct/no-tail
-            <applicable-struct-vtable>
-            (make-struct-layout (string-append "pw" "pwpwpwpwpwpw")))))
+            <applicable-struct-with-setter-vtable>
+            (make-struct-layout (string-append "pwpw" "pwpwpwpwpwpw")))))
     v))
 
 (define (ra? o)
@@ -66,10 +66,11 @@
             (make-struct/no-tail
              <ra-vtable>
              (lambda i (format (current-error-port) "you've called REF ra (~a) with args: ~a\n" ra i))
+             (lambda i (format (current-error-port) "you've called SET! ra (~a) with args: ~a\n" ra i))
              data zero dims type vlen vref vset!)))
     ra))
 
-(define field0 1)
+(define field0 2)
 (define (ra-data a)  (unless (ra? a) (throw 'bad-ra a)) (struct-ref a (+ field0 0)))
 (define (ra-zero a)  (unless (ra? a) (throw 'bad-ra a)) (struct-ref a (+ field0 1)))
 (define (ra-dims a)  (unless (ra? a) (throw 'bad-ra a)) (struct-ref a (+ field0 2)))
