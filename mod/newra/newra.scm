@@ -11,7 +11,8 @@
   #:export (make-ra ra? ra-data ra-zero ra-dims ra-vlen ra-vref ra-vset!
             make-dim dim? dim-len dim-lo dim-step dim-ref
             ra-rank ra-type
-            make-ra-new make-ra-data array->ra
+            make-ra-new make-ra-data
+            array->ra ra->array
             ra-pos ra-pos-first ra-pos-lo ra-pos-hi
             ra-slice ra-ref ra-cell))
 
@@ -81,13 +82,16 @@
 (define (dim-end dim)
   (+ (dim-lo dim) (dim-len dim)))
 
+(define (dim-hi dim)
+  (+ (dim-lo dim) (dim-len dim) -1))
+
 (define (dim-ref dim i)
   (unless (and (<= 0 i) (< i (dim-len dim)))
     (throw 'dim-ref-out-of-range dim i))
   (+ (dim-lo dim) (* (dim-step dim) i)))
 
 (define (dim-check dim i)
-  (unless (and (<= (dim-lo dim) i) (< i (+ (dim-lo dim) (dim-len dim))))
+  (unless (and (<= (dim-lo dim) i) (< i (dim-end dim)))
     (throw 'dim-check-out-of-range dim i))
   i)
 
@@ -139,7 +143,7 @@
         ((string? v)    (values  'a    string-length     string-ref     string-set!   ))
         ((bitvector? v) (values  'b    bitvector-length  bitvector-ref  bitvector-set!))
 ; @TODO extend this idea to 'non-strict arrays' (cf Racket), to a method for drag-along
-        ((dim? v)       (values 'd   dim-len          dim-ref       (cut throw 'no-dim-set! <...>)))
+        ((dim? v)       (values  'd    dim-len           dim-ref        (cut throw 'no-dim-set! <...>)))
         (else (throw 'bad-ra-data-type v))))
 
 ; low level, for conversions
@@ -168,7 +172,7 @@
         pos
         (let* ((dim (vector-ref dims j))
                (step (dim-step dim)))
-          (loop (- j 1) (+ pos (* step (+ (dim-lo dim) (if (positive? step) 0 (- (dim-len dim) 1)))))))))))
+          (loop (- j 1) (+ pos (* step (if (positive? step) (dim-lo dim) (dim-hi dim))))))))))
 
 ; highest position on data.
 (define (ra-pos-hi ra)
@@ -178,7 +182,7 @@
         pos
         (let* ((dim (vector-ref dims j))
                (step (dim-step dim)))
-          (loop (- j 1) (+ pos (* step (+ (dim-lo dim) (if (positive? step) (- (dim-len dim) 1) 0))))))))))
+          (loop (- j 1) (+ pos (* step (if (positive? step) (dim-hi dim) (dim-lo dim))))))))))
 
 ; first position of the array (when all indices = dim-lo)
 ; useful for some types of loops, or to transition from Guile C arrays.
@@ -257,5 +261,11 @@
              (- (shared-array-offset a) (ra-pos-first 0 dims))
              dims)))
 
-(define (ra->array a)
-  'FIXME)
+(define (ra->array ra)
+  (when (eq? 'd (ra-type ra))
+    (throw 'nonconvertible-type (ra-type ra)))
+  (apply make-shared-array (ra-data ra)
+         (lambda i (list (apply ra-pos (ra-zero ra) (ra-dims ra) i)))
+         (vector->list
+          (vector-map (lambda (dim) (list (dim-lo dim) (dim-hi dim)))
+                      (ra-dims ra)))))

@@ -29,7 +29,7 @@
  #(2 3) ((@@ (newra newra) vector-clip) #(1 2 3 4) 1 3))
 
 ; -----------------------
-; array->ra & printers
+; array->ra, ra->array, printers
 ; -----------------------
 
 (define ra0 (array->ra #(1 2 3)))
@@ -43,6 +43,12 @@
 (test-equal (call-with-output-string (cut display ra2 <>)) "%2:2:2((1 2) (3 4))")
 (test-equal (call-with-output-string (cut display ra3 <>)) "%2@1:2@1:2((1 2) (3 4))")
 (test-equal (call-with-output-string (cut display ra4 <>)) "%0(99)")
+
+(test-equal  #(1 2 3)            (ra->array ra0))
+(test-equal  #@1(1 2 3)          (ra->array ra1))
+(test-equal  #2((1 2) (3 4))     (ra->array ra2))
+(test-equal  #2@1@1((1 2) (3 4)) (ra->array ra3))
+(test-equal  #0(99)              (ra->array ra4))
 
 ; -----------------------
 ; make-ra-new
@@ -101,7 +107,6 @@
 
 ;; (ra-print-prefix ra0 (current-output-port))
 ;; (ra-print ra1 (current-output-port))
-
 
 ;; ;; ; ways to go
 ;; ;; (define array0 (make-typed-array 'f64 9 10 10 10 10 10 2))
