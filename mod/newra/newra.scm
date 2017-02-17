@@ -14,11 +14,16 @@
             make-ra-new make-ra-data
             array->ra ra->array
             ra-pos ra-pos-first ra-pos-lo ra-pos-hi
-            ra-slice ra-ref ra-cell))
+            ra-slice ra-cell ra-ref ra-set!
+            ra-for-each-slice))
 
-(import (srfi srfi-9) (srfi srfi-9 gnu) (only (srfi srfi-1) fold) (srfi srfi-8)
+(import (srfi srfi-9) (srfi srfi-9 gnu) (only (srfi srfi-1) fold every) (srfi srfi-8)
         (srfi srfi-4 gnu) (srfi srfi-26) (ice-9 match)
         (only (rnrs base) vector-map vector-for-each))
+
+; ----------------
+; misc
+; ----------------
 
 (define (struct-length s)
   (* 1/2 (string-length (symbol->string (struct-layout s)))))
@@ -64,7 +69,7 @@
   (vector-clip v 0 n))
 
 ; ----------------
-; dimension record
+; dimension record, used both as that, and as delayed iota.
 ; ----------------
 
 (define-immutable-record-type <dim>
@@ -102,7 +107,7 @@
 (define <ra-vtable>
   (let ((v (make-struct/no-tail
             <applicable-struct-with-setter-vtable>
-            (make-struct-layout (string-append "pwpw" "pwpwpwpwpwpw")))))
+            (make-struct-layout (string-append "pwpw" "pwpwpwpwpwpwpw")))))
     v))
 
 (define (ra? o)
@@ -113,7 +118,7 @@
             (make-struct/no-tail
              <ra-vtable>
              (lambda i (apply ra-cell ra i))
-             (lambda i (format (current-error-port) "you've called SET! ra (~a) with args: ~a\n" ra i))
+             (match-lambda* ((i ... o) (apply ra-set! ra o i))) ; it should be easier :-/
              data zero dims type vlen vref vset!)))
     ra))
 
@@ -198,6 +203,11 @@
     (throw 'bad-number-of-indices (ra-rank ra) (length i)))
   ((ra-vref ra) (ra-data ra) (apply ra-pos (ra-zero ra) (ra-dims ra) i)))
 
+(define (ra-set! ra o . i)
+  (unless (= (ra-rank ra) (length i))
+    (throw 'bad-number-of-indices (ra-rank ra) (length i)))
+  ((ra-vset! ra) (ra-data ra) (apply ra-pos (ra-zero ra) (ra-dims ra) i) o))
+
 (define (ra-slice ra . i)
   (make-ra (ra-data ra)
            (apply ra-pos (ra-zero ra) (ra-dims ra) i)
@@ -269,3 +279,39 @@
          (vector->list
           (vector-map (lambda (dim) (list (dim-lo dim) (dim-hi dim)))
                       (ra-dims ra)))))
+
+; ----------------
+; ra-map!, ra-copy!, etc.
+; ----------------
+
+; Unlike Guile's array-for-each, etc. this one is strict —every dimension must match.
+(define (ra-for-each-slice-check k . ra)
+  (unless (pair? ra)
+    (throw 'missing-arguments))
+  (unless (<= k (ra-rank (car ra)))
+    (throw 'bad-frame-rank k (ra-rank (car ra))))
+  (unless (every (lambda (rai) (= (ra-rank (car ra)) (ra-rank rai))) (cdr ra))
+    (throw 'bad-ranks k (map ra-rank ra)))
+  (let* ((dims (map (compose (cut vector-take <> k) ra-dims) ra))
+         (lo (vector-map dim-lo (car dims)))
+         (end (vector-map dim-end (car dims))))
+    (unless (every (lambda (rb) (equal? lo (vector-map dim-lo rb))) (cdr dims))
+      (throw 'mismatched-lo lo))
+    (unless (every (lambda (rb) (equal? end (vector-map dim-end rb))) (cdr dims))
+      (throw 'mismatched-end end))
+    (values lo end)))
+
+; FIXME Unravel, moving slice, etc.
+(define (ra-for-each-slice kk op . ra)
+  (receive (los ends) (apply ra-for-each-slice-check kk ra)
+; we pick a (-k)-slice for each ra and then just move along.
+    (let loop-rank ((k 0) (ra ra))
+      (if (= k kk)
+        (apply op ra)
+        (let  ((lo (vector-ref los k))
+               (end (vector-ref ends k)))
+          (let loop-dim ((i lo))
+            (unless (= i end)
+              (let ((rai (map (cut ra-slice <> i) ra)))
+                (loop-rank (+ k 1) rai)
+                (loop-dim (+ i 1))))))))))

@@ -3,10 +3,11 @@
 ; (c) Daniel Llorens - 2016-2017
 ; Run with $GUILE -L mod -s test.scm
 
-(import (newra newra) (newra print) (newra tools)
-        (only (rnrs base) vector-map) (only (srfi srfi-1) fold)
-        (srfi srfi-26) (ice-9 match)
-        (srfi srfi-64))
+(import (srfi srfi-64)
+        (newra newra) (newra print) (newra tools)
+        (only (rnrs base) vector-map)
+        (srfi srfi-26) (srfi srfi-8) (only (srfi srfi-1) fold)
+        (ice-9 match))
 
 (define (throws-exception? k thunk)
   (catch #t (lambda () (thunk) #f)
@@ -102,22 +103,100 @@
 (test-equal 5 (ra-ref ra8 2 2))
 (test-equal 6 (ra-ref ra8 2 3))
 
-;; (define ra0 (make-ra (make-vector 10 3) 0 (vector (make-dim 3))))
-;; (define ra1 (make-ra (make-vector 10 3) 0 (vector (make-dim 3) (make-dim 3))))
+; -----------------------
+; ra-slice, ra-ref, ra-cell
+; -----------------------
 
-;; (ra-print-prefix ra0 (current-output-port))
-;; (ra-print ra1 (current-output-port))
+(test-equal "%2@1:2@1:3((1 2 3) (4 5 6))\n"
+            (call-with-output-string
+             (lambda (s) (ra-for-each-slice 0 (lambda (o) (format s"~a\n" o)) ra6))))
+(test-equal "%1@1:3(1 2 3)\n%1@1:3(4 5 6)\n"
+            (call-with-output-string
+             (lambda (s) (ra-for-each-slice 1 (lambda (o) (format s "~a\n" o)) ra6))))
+(test-equal "1\n2\n3\n4\n5\n6\n"
+            (call-with-output-string
+             (lambda (s) (ra-for-each-slice 2 (lambda (o) (format s "~a\n" (ra-ref o))) ra6))))
+(test-equal "2\n4\n6\n8\n10\n12\n"
+            (call-with-output-string
+             (lambda (s) (ra-for-each-slice 2 (lambda (a b) (format s "~a\n" (+ (ra-ref a) (ra-ref b)))) ra6 ra7))))
 
-;; ;; ; ways to go
-;; ;; (define array0 (make-typed-array 'f64 9 10 10 10 10 10 2))
-;; ;; (define t0 (time (call-with-output-file "/dev/null" (cut display array0 <>))))
-;; ;; (define t1 (time (call-with-output-file "/dev/null" (cut ra-print (array->ra array0) <>))))
-;; ;; (define t2 (time (call-with-output-file "/dev/null" (cut (@@ (ice-9 arrays) array-print) array0 <>))))
+; -----------------------
+; setter
+; -----------------------
 
-;; ; now array-cell, etc.
+(define ra9 (make-ra-data (make-vector 6) '(-1 0) '(1 3)))
+(set! (ra9 -1 1) 99)
+(set! (ra9 -1 2) 77)
+(set! (ra9 -1 3) 88)
+(set! (ra9 0 1) 33)
+(set! (ra9 0 2) 11)
+(set! (ra9 0 3) 22)
+(test-equal (call-with-output-string (cut display ra9 <>)) "%2@-1:2@1:3((99 77 88) (33 11 22))")
 
-;; (define ra0 (make-ra-c (make-dim 10) 10))
-;; (define ra2 (make-ra (make-dim 10) 0 (vector (make-dim 10))))
+; -----------------------
+; we have enough for ra-map!
+; -----------------------
+
+(define ra10 (make-ra-new #t 0 '(0 10)))
+
+(define (ra-map! o f . args)
+  (apply ra-for-each-slice (ra-rank o)
+         (lambda (o . args) (ra-type o)
+                 (ra-set! o (apply f (map ra-ref args))))
+         o args)
+  o)
+
+(define ra11 (make-ra-new #t 0 10))
+(define ra12 (make-ra-data (make-dim 10) 10))
+(define ra13 (make-ra-data (make-dim 10 10 -1) 10))
+(test-equal "%1:10(-10 -8 -6 -4 -2 0 2 4 6 8)" (call-with-output-string (cute display (ra-map! ra11 - ra12 ra13) <>)))
+
+; -----------------------
+; benchmark rank 1 (haha...)
+; -----------------------
+
+(define type #t)
+
+(define n 50000)
+(define ra20 (make-ra-new type *unspecified* n))
+(define ra21 (ra-map! (make-ra-new type 0 n) identity (make-ra-data (make-dim n) n)))
+(define ra22 (ra-map! (make-ra-new type 0 n) identity (make-ra-data (make-dim n n -1) n)))
+(define a20 (ra->array ra20))
+(define a21 (ra->array ra21))
+(define a22 (ra->array ra22))
+
+(format #t "~8,6f\n" (time (ra-map! ra20 - ra21 ra22)))
+(format #t "~8,6f\n" (time (array-map! a20 - a21 a22)))
+
+; -----------------------
+; benchmark rank 2 (haha...)
+; -----------------------
+
+(define n 200)
+(define ra20 (make-ra-new type *unspecified* n n))
+(define ra21 (ra-map! (make-ra-new type 0 n n) (lambda () (random n))))
+(define ra22 (ra-map! (make-ra-new type 0 n n) (lambda () (random n))))
+(define a20 (ra->array ra20))
+(define a21 (ra->array ra21))
+(define a22 (ra->array ra22))
+
+(format #t "~8,6f\n" (time (ra-map! ra20 - ra21 ra22)))
+(format #t "~8,6f\n" (time (array-map! a20 - a21 a22)))
+
+; -----------------------
+; benchmark rank 3 (haha...)
+; -----------------------
+
+(define n 37)
+(define ra20 (make-ra-new type *unspecified* n n n))
+(define ra21 (ra-map! (make-ra-new type 0 n n n) (lambda () (random n))))
+(define ra22 (ra-map! (make-ra-new type 0 n n n) (lambda () (random n))))
+(define a20 (ra->array ra20))
+(define a21 (ra->array ra21))
+(define a22 (ra->array ra22))
+
+(format #t "~8,6f\n" (time (ra-map! ra20 - ra21 ra22)))
+(format #t "~8,6f\n" (time (array-map! a20 - a21 a22)))
 
 (test-end "newra")
 (unless (zero? (test-runner-fail-count (test-runner-current)))
