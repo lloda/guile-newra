@@ -38,7 +38,7 @@
                    (data (ra-data a)))
                (lambda (i) (vref data i)))))
 ; special case
-    (if (= (ra-rank a) 0)
+    (if (zero? (ra-rank a))
       (begin
         (display #\( port)
         (display (ref b) port)
