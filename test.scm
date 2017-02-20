@@ -130,7 +130,7 @@
                  (lambda (s) (ra-slice-for-each 2 (lambda (a b) (format s "~a\n" (+ (ra-ref a) (ra-ref b)))) ra6 ra7))))
 
     (test-end (procedure-name ra-slice-for-each)))
-  (list ra-slice-for-each-1 ra-slice-for-each-2))
+  (list ra-slice-for-each-1 ra-slice-for-each-2 ra-slice-for-each-3))
 
 ; -----------------------
 ; setter
@@ -149,8 +149,6 @@
 ; we have enough for ra-map!
 ; -----------------------
 
-(define ra10 (make-ra-new #t 0 '(0 10)))
-
 (define (ra-map! ra-slice-for-each o f . args)
   (apply ra-slice-for-each (ra-rank o)
          (lambda (o . args) (ra-type o)
@@ -168,8 +166,14 @@
 (define ra11 (make-ra-new #t 0 10))
 (define ra12 (make-ra-data (make-dim 10) 10))
 (define ra13 (make-ra-data (make-dim 10 10 -1) 10))
-(test-equal "%1:10(-10 -8 -6 -4 -2 0 2 4 6 8)"
-            (call-with-output-string (cute display (ra-map! ra-slice-for-each ra11 - ra12 ra13) <>)))
+
+(for-each
+    (lambda (ra-slice-for-each)
+      (test-begin (procedure-name ra-slice-for-each))
+      (test-equal "%1:10(-10 -8 -6 -4 -2 0 2 4 6 8)"
+                  (call-with-output-string (cute display (ra-map! ra-slice-for-each ra11 - ra12 ra13) <>)))
+      (test-end (procedure-name ra-slice-for-each)))
+  (list ra-slice-for-each-1 ra-slice-for-each-2 ra-slice-for-each-3))
 
 (test-end "newra")
 (unless (zero? (test-runner-fail-count (test-runner-current)))
@@ -180,8 +184,9 @@
 ; -----------------------
 
 (define type #t)
+(define m 500000)
 
-(define n 50000)
+(define n (inexact->exact (ceiling (expt m (/ 1)))))
 (define ra20 (make-ra-new type *unspecified* n))
 (define ra21 (ra-map! ra-slice-for-each (make-ra-new type 0 n) identity (make-ra-data (make-dim n) n)))
 (define ra22 (ra-map! ra-slice-for-each (make-ra-new type 0 n) identity (make-ra-data (make-dim n n -1) n)))
@@ -189,16 +194,17 @@
 (define a21 (ra->array ra21))
 (define a22 (ra->array ra22))
 
-(format #t "\n~8,6f\n" (time (ra-map! ra-slice-for-each-1 ra20 - ra21 ra22)))
-(format #t "~8,6f\n" (time (ra-map! ra-slice-for-each-2 ra20 - ra21 ra22)))
-(format #t "~8,6f\n" (time (array-map*! a20 - a21 a22)))
-(format #t "~8,6f\n" (time (array-map! a20 - a21 a22)))
+(format #t "\n1\t~8,6f\n" (time (ra-map! ra-slice-for-each-1 ra20 - ra21 ra22)))
+(format #t "2\t~8,6f\n" (time (ra-map! ra-slice-for-each-2 ra20 - ra21 ra22)))
+(format #t "3\t~8,6f\n" (time (ra-map! ra-slice-for-each-3 ra20 - ra21 ra22)))
+(format #t "4\t~8,6f\n" (time (array-map*! a20 - a21 a22)))
+(format #t "5\t~8,6f\n" (time (array-map! a20 - a21 a22)))
 
 ; -----------------------
 ; benchmark rank 2
 ; -----------------------
 
-(define n 200)
+(define n (inexact->exact (ceiling (expt m (/ 2)))))
 (define ra20 (make-ra-new type *unspecified* n n))
 (define ra21 (ra-map! ra-slice-for-each (make-ra-new type 0 n n) (lambda () (random n))))
 (define ra22 (ra-map! ra-slice-for-each (make-ra-new type 0 n n) (lambda () (random n))))
@@ -206,16 +212,17 @@
 (define a21 (ra->array ra21))
 (define a22 (ra->array ra22))
 
-(format #t "\n~8,6f\n" (time (ra-map! ra-slice-for-each-1 ra20 - ra21 ra22)))
-(format #t "~8,6f\n" (time (ra-map! ra-slice-for-each-2 ra20 - ra21 ra22)))
-(format #t "~8,6f\n" (time (array-map*! a20 - a21 a22)))
-(format #t "~8,6f\n" (time (array-map! a20 - a21 a22)))
+(format #t "\n1\t~8,6f\n" (time (ra-map! ra-slice-for-each-1 ra20 - ra21 ra22)))
+(format #t "2\t~8,6f\n" (time (ra-map! ra-slice-for-each-2 ra20 - ra21 ra22)))
+(format #t "3\t~8,6f\n" (time (ra-map! ra-slice-for-each-3 ra20 - ra21 ra22)))
+(format #t "4\t~8,6f\n" (time (array-map*! a20 - a21 a22)))
+(format #t "5\t~8,6f\n" (time (array-map! a20 - a21 a22)))
 
 ; -----------------------
 ; benchmark rank 3
 ; -----------------------
 
-(define n 37)
+(define n (inexact->exact (ceiling (expt m (/ 3)))))
 (define ra20 (make-ra-new type *unspecified* n n n))
 (define ra21 (ra-map! ra-slice-for-each (make-ra-new type 0 n n n) (lambda () (random n))))
 (define ra22 (ra-map! ra-slice-for-each (make-ra-new type 0 n n n) (lambda () (random n))))
@@ -223,15 +230,16 @@
 (define a21 (ra->array ra21))
 (define a22 (ra->array ra22))
 
-(format #t "\n~8,6f\n" (time (ra-map! ra-slice-for-each-1 ra20 - ra21 ra22)))
-(format #t "~8,6f\n" (time (ra-map! ra-slice-for-each-2 ra20 - ra21 ra22)))
-(format #t "~8,6f\n" (time (array-map*! a20 - a21 a22)))
-(format #t "~8,6f\n" (time (array-map! a20 - a21 a22)))
+(format #t "\n1\t~8,6f\n" (time (ra-map! ra-slice-for-each-1 ra20 - ra21 ra22)))
+(format #t "2\t~8,6f\n" (time (ra-map! ra-slice-for-each-2 ra20 - ra21 ra22)))
+(format #t "3\t~8,6f\n" (time (ra-map! ra-slice-for-each-3 ra20 - ra21 ra22)))
+(format #t "4\t~8,6f\n" (time (array-map*! a20 - a21 a22)))
+(format #t "5\t~8,6f\n" (time (array-map! a20 - a21 a22)))
 
 ; -----------------------
 ; some profiling...
 ; -----------------------
 
 (import (statprof))
-(define prof (lambda () (ra-map! ra-slice-for-each-2 ra20 * ra21 ra22)))
+(define prof (lambda () (ra-map! ra-slice-for-each-3 ra20 * ra21 ra22)))
 (statprof prof #:count-calls? #t #:display-style 'tree)

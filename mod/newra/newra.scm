@@ -412,9 +412,64 @@
                   ra frame)
                 (loop-dim (+ i 1)))))))))))
 
-; FIXME moving slice, unrolling
-(define (ra-slice-for-each-3 kk op . ra)
-  (throw 'FIXME))
+; moving slice, row-major unrolling.
+(define (ra-slice-for-each-3 u op . ra)
+  (for-each check-ra ra)
+  (receive (los ends) (apply ra-slice-for-each-check u ra)
+; create (rank(ra) - k) slices that we'll use to iterate by bumping their zeros.
+    (let* ((lens (vector-map - ends los))
+           (frame ra)
+           (ra (map (lambda (ra)
+                      (make-ra (%ra-data ra)
+                               (ra-pos-first (%ra-zero ra) (vector-take (%ra-dims ra) u))
+                               (vector-drop (%ra-dims ra) u)))
+                    ra)))
+; since we'll unroll, special case for rank 0
+      (if (zero? u)
+        (apply op ra)
+; we'll do a normal rank-loop in [0..u) and unroll dimensions [u..k); u must be found.
+; the last axis of the frame can always be unrolled, so we start checking from the one before.
+        (let* ((u (- u 1))
+               (s0 (map (lambda (frame) (dim-step (vector-ref (%ra-dims frame) u))) frame)))
+          (receive (u len)
+              (let loop ((u u) (s s0) (len 1))
+                (let ((lenu (vector-ref lens u)))
+                  (if (zero? u)
+                    (values u (* len lenu))
+                    (let* ((ss (map (cut * lenu <>) s))
+                           (sm (map (lambda (frame) (dim-step (vector-ref (%ra-dims frame) (- u 1)))) frame)))
+                      (if (equal? ss sm)
+                        (loop (- u 1) ss (* len lenu))
+                        (values u (* len lenu)))))))
+            (let loop-rank ((k 0))
+              (if (= k u)
+; unrolled dimensions.
+                (let loop ((i 0))
+                  (cond ((= i len)
+                         (for-each (lambda (ra step) (%ra-zero-set! ra (- (%ra-zero ra) (* step len)))) ra s0))
+                        (else
+; BUG doesn't pass fresh slice descriptor like array-slice-for-each does.
+                         (apply op ra)
+                         (for-each (lambda (ra step) (%ra-zero-set! ra (+ (%ra-zero ra) step))) ra s0)
+                         (loop (+ i 1)))))
+                (let  ((lo (vector-ref los k))
+                       (end (vector-ref ends k)))
+                  (let loop-dim ((i lo))
+                    (cond
+                     ((= i end)
+                      (for-each
+                          (lambda (ra frame)
+                            (let ((step (dim-step (vector-ref (%ra-dims frame) k))))
+                              (%ra-zero-set! ra (- (%ra-zero ra) (* step (- end lo))))))
+                        ra frame))
+                     (else
+                      (loop-rank (+ k 1))
+                      (for-each
+                          (lambda (ra frame)
+                            (let ((step (dim-step (vector-ref (%ra-dims frame) k))))
+                              (%ra-zero-set! ra (+ (%ra-zero ra) step))))
+                        ra frame)
+                      (loop-dim (+ i 1))))))))))))))
 
 ; default
 (define ra-slice-for-each ra-slice-for-each-1)
