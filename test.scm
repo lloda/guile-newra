@@ -167,6 +167,10 @@
 (test-equal "%1:10(-10 -8 -6 -4 -2 0 2 4 6 8)"
             (call-with-output-string (cute display (ra-map! ra-slice-for-each ra11 - ra12 ra13) <>)))
 
+(test-end "newra")
+(unless (zero? (test-runner-fail-count (test-runner-current)))
+  (error "FAILED test.scm"))
+
 ; -----------------------
 ; benchmark rank 1
 ; -----------------------
@@ -220,6 +224,10 @@
 (format #t "~8,6f\n" (time (array-map*! a20 - a21 a22)))
 (format #t "~8,6f\n" (time (array-map! a20 - a21 a22)))
 
-(test-end "newra")
-(unless (zero? (test-runner-fail-count (test-runner-current)))
-  (error "FAILED test.scm"))
+; -----------------------
+; some profiling...
+; -----------------------
+
+(import (statprof))
+(define prof (lambda () (ra-map! ra-slice-for-each-2 ra20 * ra21 ra22)))
+(statprof prof #:count-calls? #t #:display-style 'tree)

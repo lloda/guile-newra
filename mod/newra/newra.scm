@@ -16,7 +16,7 @@
             ra-pos ra-pos-first ra-pos-lo ra-pos-hi
             ra-slice ra-cell ra-ref ra-set!
             ra-slice-for-each
-            ra-slice-for-each-1 ra-slice-for-each-2))
+            ra-slice-for-each-1 ra-slice-for-each-2 ra-slice-for-each-3))
 
 (import (srfi srfi-9) (srfi srfi-9 gnu) (only (srfi srfi-1) fold every) (srfi srfi-8)
         (srfi srfi-4 gnu) (srfi srfi-26) (ice-9 match)
@@ -132,6 +132,9 @@
 (define (ra? o)
   (and (struct? o) (eq? <ra-vtable> (struct-vtable o))))
 
+(define (check-ra o)
+  (unless (ra? o) (throw 'bad-ra o)))
+
 (define (make-ra* data zero dims type vlen vref vset!)
   (letrec ((ra
             (make-struct/no-tail
@@ -147,17 +150,17 @@
 ;; zero:    address that corresponds to all the ra indices = 0.
 
 (define field0 2)
-(define (ra-data a)  (unless (ra? a) (throw 'bad-ra a)) (struct-ref a (+ field0 0)))
-(define (ra-zero a)  (unless (ra? a) (throw 'bad-ra a)) (struct-ref a (+ field0 1)))
-(define (ra-dims a)  (unless (ra? a) (throw 'bad-ra a)) (struct-ref a (+ field0 2)))
-(define (ra-type a)  (unless (ra? a) (throw 'bad-ra a)) (struct-ref a (+ field0 3)))
-(define (ra-vlen a)  (unless (ra? a) (throw 'bad-ra a)) (struct-ref a (+ field0 4)))
-(define (ra-vref a)  (unless (ra? a) (throw 'bad-ra a)) (struct-ref a (+ field0 5)))
-(define (ra-vset! a) (unless (ra? a) (throw 'bad-ra a)) (struct-ref a (+ field0 6)))
+(define (ra-data a)  (check-ra a) (struct-ref a (+ field0 0)))
+(define (ra-zero a)  (check-ra a) (struct-ref a (+ field0 1)))
+(define (ra-dims a)  (check-ra a) (struct-ref a (+ field0 2)))
+(define (ra-type a)  (check-ra a) (struct-ref a (+ field0 3)))
+(define (ra-vlen a)  (check-ra a) (struct-ref a (+ field0 4)))
+(define (ra-vref a)  (check-ra a) (struct-ref a (+ field0 5)))
+(define (ra-vset! a) (check-ra a) (struct-ref a (+ field0 6)))
 
 ; set on iteration. FIXME immutable record?
 
-(define (ra-zero-set! a z)  (unless (ra? a) (throw 'bad-ra a)) (struct-set! a (+ field0 1) z))
+(define (ra-zero-set! a z)  (check-ra a) (struct-set! a (+ field0 1) z))
 
 (define (pick-typed-vector-functions v)
   (cond ((vector? v)    (values  #t    vector-length     vector-ref     vector-set!   ))
@@ -346,6 +349,7 @@
 
 ; moving slice
 (define (ra-slice-for-each-2 kk op . ra)
+  (for-each check-ra ra)
   (receive (los ends) (apply ra-slice-for-each-check kk ra)
 ; create (rank(ra) - k) slices that we'll use to iterate by bumping their zeros.
     (let ((frame ra)
@@ -379,7 +383,7 @@
 
 ; FIXME moving slice, unrolling
 (define (ra-slice-for-each-3 kk op . ra)
-  #f)
+  (throw 'FIXME))
 
 ; default
 (define ra-slice-for-each ra-slice-for-each-1)
