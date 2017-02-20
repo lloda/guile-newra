@@ -165,7 +165,6 @@
          o args)
   o)
 
-
 (define ra11 (make-ra-new #t 0 10))
 (define ra12 (make-ra-data (make-dim 10) 10))
 (define ra13 (make-ra-data (make-dim 10 10 -1) 10))

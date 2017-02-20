@@ -247,15 +247,30 @@
 ; ref, set!, prefix slices
 ; ----------------
 
-(define (ra-ref ra . i)
-  (unless (= (ra-rank ra) (length i))
-    (throw 'bad-number-of-indices (ra-rank ra) (length i)))
-  ((%ra-vref ra) (%ra-data ra) (apply ra-pos (%ra-zero ra) (%ra-dims ra) i)))
+(define (ra-rank a)
+  (vector-length (%ra-dims a)))
 
-(define (ra-set! ra o . i)
-  (unless (= (ra-rank ra) (length i))
-    (throw 'bad-number-of-indices (ra-rank ra) (length i)))
-  ((%ra-vset! ra) (%ra-data ra) (apply ra-pos (%ra-zero ra) (%ra-dims ra) i) o))
+(define ra-ref
+  (case-lambda
+   ((ra)
+    (unless (zero? (ra-rank ra))
+      (throw 'bad-number-of-indices (ra-rank ra) 0))
+    ((%ra-vref ra) (%ra-data ra) (%ra-zero ra)))
+   ((ra . i)
+    (unless (= (ra-rank ra) (length i))
+      (throw 'bad-number-of-indices (ra-rank ra) (length i)))
+    ((%ra-vref ra) (%ra-data ra) (apply ra-pos (%ra-zero ra) (%ra-dims ra) i)))))
+
+(define ra-set!
+  (case-lambda
+   ((ra o)
+    (unless (zero? (ra-rank ra))
+      (throw 'bad-number-of-indices (ra-rank ra) 0))
+    ((%ra-vset! ra) (%ra-data ra) (%ra-zero ra) o))
+   ((ra o . i)
+    (unless (= (ra-rank ra) (length i))
+      (throw 'bad-number-of-indices (ra-rank ra) (length i)))
+    ((%ra-vset! ra) (%ra-data ra) (apply ra-pos (%ra-zero ra) (%ra-dims ra) i) o))))
 
 (define (ra-slice ra . i)
   (make-ra (%ra-data ra)
@@ -271,9 +286,6 @@
 ; ----------------
 ; derived functions
 ; ----------------
-
-(define (ra-rank a)
-  (vector-length (%ra-dims a)))
 
 (define (c-dims-size d)
   (let* ((dims (let loop ((d d))
