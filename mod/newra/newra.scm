@@ -15,11 +15,30 @@
             array->ra ra->array
             ra-pos ra-pos-first ra-pos-lo ra-pos-hi
             ra-slice ra-cell ra-ref ra-set!
-            ra-for-each-slice))
+            ra-slice-for-each
+            ra-slice-for-each-1 ra-slice-for-each-2))
 
 (import (srfi srfi-9) (srfi srfi-9 gnu) (only (srfi srfi-1) fold every) (srfi srfi-8)
         (srfi srfi-4 gnu) (srfi srfi-26) (ice-9 match)
         (only (rnrs base) vector-map vector-for-each))
+
+; ----------------
+;; Glossary
+; ----------------
+
+;; dim:         each axis of an ra, or its bounds, as many as the rank.
+;; index:       into an axis.
+;; lo:          lowest index in a dim
+;; hi:          highest index in a dim
+;; end:         one past the highest index
+;; len:         length of a dim = end-lo
+;; v:           a vector
+;; l:           a list
+;; i, j:        indices in a dim, from hi to lo
+;; k:           an index in a dim vector, from 0 to rank-1
+;; slice:       an ra, as a piece of another ra
+;; cell:        (also prefix-cell) slice obtained by fixing the first k indices into an ra.
+;; item:        slice obtained by fixing the first index into an ra; a (rank - 1)-cell.
 
 ; ----------------
 ; misc
@@ -122,6 +141,11 @@
              data zero dims type vlen vref vset!)))
     ra))
 
+
+;; data:    a container (function) addressable by a single integer
+;; address: into data.
+;; zero:    address that corresponds to all the ra indices = 0.
+
 (define field0 2)
 (define (ra-data a)  (unless (ra? a) (throw 'bad-ra a)) (struct-ref a (+ field0 0)))
 (define (ra-zero a)  (unless (ra? a) (throw 'bad-ra a)) (struct-ref a (+ field0 1)))
@@ -130,6 +154,10 @@
 (define (ra-vlen a)  (unless (ra? a) (throw 'bad-ra a)) (struct-ref a (+ field0 4)))
 (define (ra-vref a)  (unless (ra? a) (throw 'bad-ra a)) (struct-ref a (+ field0 5)))
 (define (ra-vset! a) (unless (ra? a) (throw 'bad-ra a)) (struct-ref a (+ field0 6)))
+
+; set on iteration. FIXME immutable record?
+
+(define (ra-zero-set! a z)  (unless (ra? a) (throw 'bad-ra a)) (struct-set! a (+ field0 1) z))
 
 (define (pick-typed-vector-functions v)
   (cond ((vector? v)    (values  #t    vector-length     vector-ref     vector-set!   ))
@@ -285,7 +313,7 @@
 ; ----------------
 
 ; Unlike Guile's array-for-each, etc. this one is strict —every dimension must match.
-(define (ra-for-each-slice-check k . ra)
+(define (ra-slice-for-each-check k . ra)
   (unless (pair? ra)
     (throw 'missing-arguments))
   (unless (<= k (ra-rank (car ra)))
@@ -301,9 +329,9 @@
       (throw 'mismatched-end end))
     (values lo end)))
 
-; FIXME Unravel, moving slice, etc.
-(define (ra-for-each-slice kk op . ra)
-  (receive (los ends) (apply ra-for-each-slice-check kk ra)
+; naive
+(define (ra-slice-for-each-1 kk op . ra)
+  (receive (los ends) (apply ra-slice-for-each-check kk ra)
 ; we pick a (-k)-slice for each ra and then just move along.
     (let loop-rank ((k 0) (ra ra))
       (if (= k kk)
@@ -315,3 +343,43 @@
               (let ((rai (map (cut ra-slice <> i) ra)))
                 (loop-rank (+ k 1) rai)
                 (loop-dim (+ i 1))))))))))
+
+; moving slice
+(define (ra-slice-for-each-2 kk op . ra)
+  (receive (los ends) (apply ra-slice-for-each-check kk ra)
+; create (rank(ra) - k) slices that we'll use to iterate by bumping their zeros.
+    (let ((frame ra)
+          (ra (map (lambda (ra)
+                     (make-ra (ra-data ra)
+                              (ra-pos-first (ra-zero ra) (vector-take (ra-dims ra) kk))
+                              (vector-drop (ra-dims ra) kk)))
+                   ra)))
+      (let loop-rank ((k 0))
+        (if (= k kk)
+; BUG doesn't pass fresh slice descriptor like array-slice-for-each does.
+          (apply op ra)
+          (let  ((lo (vector-ref los k))
+                 (end (vector-ref ends k)))
+            (let loop-dim ((i lo))
+              (cond
+               ((= i end)
+                (for-each
+                    (lambda (ra frame)
+                      (let ((step (dim-step (vector-ref (ra-dims frame) k))))
+                        (ra-zero-set! ra (+ (ra-zero ra) (* step (- lo end))))))
+                  ra frame))
+               (else
+                (loop-rank (+ k 1))
+                (for-each
+                    (lambda (ra frame)
+                      (let ((step (dim-step (vector-ref (ra-dims frame) k))))
+                        (ra-zero-set! ra (+ (ra-zero ra) step))))
+                  ra frame)
+                (loop-dim (+ i 1)))))))))))
+
+; FIXME moving slice, unrolling
+(define (ra-slice-for-each-3 kk op . ra)
+  #f)
+
+; default
+(define ra-slice-for-each ra-slice-for-each-1)
