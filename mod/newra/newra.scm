@@ -149,28 +149,28 @@
 ;; address: into data.
 ;; zero:    address that corresponds to all the ra indices = 0.
 
-(define-syntax rastruct-ref (syntax-rules () ((_ a n) (begin (check-ra a) (struct-ref a (+ 2 n))))))
-(define-syntax rastruct-set! (syntax-rules () ((_ a n o) (begin (check-ra a) (struct-set! a (+ 2 n) o)))))
+(define-syntax rastruct-ref (syntax-rules () ((_ a n) (begin (check-ra a) (struct-ref a n)))))
+(define-syntax rastruct-set! (syntax-rules () ((_ a n o) (begin (check-ra a) (struct-set! a n o)))))
 
-(define-inlinable (%ra-data a) (rastruct-ref a 0))
-(define-inlinable (%ra-zero a) (rastruct-ref a 1))
-(define-inlinable (%ra-dims a) (rastruct-ref a 2))
-(define-inlinable (%ra-type a) (rastruct-ref a 3))
-(define-inlinable (%ra-vlen a) (rastruct-ref a 4))
-(define-inlinable (%ra-vref a) (rastruct-ref a 5))
-(define-inlinable (%ra-vset! a) (rastruct-ref a 6))
+(define-inlinable (%ra-data a) (rastruct-ref a 2))
+(define-inlinable (%ra-zero a) (rastruct-ref a 3))
+(define-inlinable (%ra-dims a) (rastruct-ref a 4))
+(define-inlinable (%ra-type a) (rastruct-ref a 5))
+(define-inlinable (%ra-vlen a) (rastruct-ref a 6))
+(define-inlinable (%ra-vref a) (rastruct-ref a 7))
+(define-inlinable (%ra-vset! a) (rastruct-ref a 8))
 ; set on iteration. FIXME immutable record?
-(define (%ra-zero-set! a z) (rastruct-set! a 1 z))
+(define-inlinable (%ra-zero-set! a z) (rastruct-set! a 3 z))
 
-(define (ra-data a) (rastruct-ref a 0))
-(define (ra-zero a) (rastruct-ref a 1))
-(define (ra-dims a) (rastruct-ref a 2))
-(define (ra-type a) (rastruct-ref a 3))
-(define (ra-vlen a) (rastruct-ref a 4))
-(define (ra-vref a) (rastruct-ref a 5))
-(define (ra-vset! a) (rastruct-ref a 6))
+(define (ra-data a) (%ra-data a))
+(define (ra-zero a) (%ra-zero a))
+(define (ra-dims a) (%ra-dims a))
+(define (ra-type a) (%ra-type a))
+(define (ra-vlen a) (%ra-vlen a))
+(define (ra-vref a) (%ra-vref a))
+(define (ra-vset! a) (%ra-vset! a))
 ; set on iteration. FIXME immutable record?
-(define (ra-zero-set! a z) (rastruct-set! a 1 z))
+(define (ra-zero-set! a z) (%ra-zero-set! a z))
 
 (define (pick-typed-vector-functions v)
   (cond ((vector? v)    (values  #t    vector-length     vector-ref     vector-set!   ))
