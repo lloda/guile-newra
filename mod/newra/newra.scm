@@ -129,10 +129,10 @@
             (make-struct-layout (string-append "pwpw" "pwpwpwpwpwpwpw")))))
     v))
 
-(define (ra? o)
+(define-inlinable (ra? o)
   (and (struct? o) (eq? <ra-vtable> (struct-vtable o))))
 
-(define (check-ra o)
+(define-inlinable (check-ra o)
   (unless (ra? o) (throw 'bad-ra o)))
 
 (define (make-ra* data zero dims type vlen vref vset!)
@@ -149,18 +149,28 @@
 ;; address: into data.
 ;; zero:    address that corresponds to all the ra indices = 0.
 
-(define field0 2)
-(define (ra-data a)  (check-ra a) (struct-ref a (+ field0 0)))
-(define (ra-zero a)  (check-ra a) (struct-ref a (+ field0 1)))
-(define (ra-dims a)  (check-ra a) (struct-ref a (+ field0 2)))
-(define (ra-type a)  (check-ra a) (struct-ref a (+ field0 3)))
-(define (ra-vlen a)  (check-ra a) (struct-ref a (+ field0 4)))
-(define (ra-vref a)  (check-ra a) (struct-ref a (+ field0 5)))
-(define (ra-vset! a) (check-ra a) (struct-ref a (+ field0 6)))
+(define-syntax rastruct-ref (syntax-rules () ((_ a n) (begin (check-ra a) (struct-ref a (+ 2 n))))))
+(define-syntax rastruct-set! (syntax-rules () ((_ a n o) (begin (check-ra a) (struct-set! a (+ 2 n) o)))))
 
+(define-inlinable (%ra-data a) (rastruct-ref a 0))
+(define-inlinable (%ra-zero a) (rastruct-ref a 1))
+(define-inlinable (%ra-dims a) (rastruct-ref a 2))
+(define-inlinable (%ra-type a) (rastruct-ref a 3))
+(define-inlinable (%ra-vlen a) (rastruct-ref a 4))
+(define-inlinable (%ra-vref a) (rastruct-ref a 5))
+(define-inlinable (%ra-vset! a) (rastruct-ref a 6))
 ; set on iteration. FIXME immutable record?
+(define (%ra-zero-set! a z) (rastruct-set! a 1 z))
 
-(define (ra-zero-set! a z)  (check-ra a) (struct-set! a (+ field0 1) z))
+(define (ra-data a) (rastruct-ref a 0))
+(define (ra-zero a) (rastruct-ref a 1))
+(define (ra-dims a) (rastruct-ref a 2))
+(define (ra-type a) (rastruct-ref a 3))
+(define (ra-vlen a) (rastruct-ref a 4))
+(define (ra-vref a) (rastruct-ref a 5))
+(define (ra-vset! a) (rastruct-ref a 6))
+; set on iteration. FIXME immutable record?
+(define (ra-zero-set! a z) (rastruct-set! a 1 z))
 
 (define (pick-typed-vector-functions v)
   (cond ((vector? v)    (values  #t    vector-length     vector-ref     vector-set!   ))
@@ -190,6 +200,10 @@
   (receive (type vlen vref vset!) (pick-typed-vector-functions data)
     (make-ra* data zero dims type vlen vref vset!)))
 
+; ----------------
+; compute addresses
+; ----------------
+
 ; FIXME we'll optimize these I think
 (define (ra-pos zero dims . i_)
   (let loop ((i i_) (j 0) (pos zero))
@@ -202,8 +216,8 @@
 
 ; lowest position on data.
 (define (ra-pos-lo ra)
-  (let ((dims (ra-dims ra)))
-    (let loop ((j (- (vector-length dims) 1)) (pos (ra-zero ra)))
+  (let ((dims (%ra-dims ra)))
+    (let loop ((j (- (vector-length dims) 1)) (pos (%ra-zero ra)))
       (if (< j 0)
         pos
         (let* ((dim (vector-ref dims j))
@@ -212,8 +226,8 @@
 
 ; highest position on data.
 (define (ra-pos-hi ra)
-  (let ((dims (ra-dims ra)))
-    (let loop ((j (- (vector-length dims) 1)) (pos (ra-zero ra)))
+  (let ((dims (%ra-dims ra)))
+    (let loop ((j (- (vector-length dims) 1)) (pos (%ra-zero ra)))
       (if (< j 0)
         pos
         (let* ((dim (vector-ref dims j))
@@ -229,33 +243,37 @@
       (let ((dim (vector-ref dims j)))
         (loop (- j 1) (+ pos (* (dim-lo dim) (dim-step dim))))))))
 
+; ----------------
+; ref, set!, prefix slices
+; ----------------
+
 (define (ra-ref ra . i)
   (unless (= (ra-rank ra) (length i))
     (throw 'bad-number-of-indices (ra-rank ra) (length i)))
-  ((ra-vref ra) (ra-data ra) (apply ra-pos (ra-zero ra) (ra-dims ra) i)))
+  ((%ra-vref ra) (%ra-data ra) (apply ra-pos (%ra-zero ra) (%ra-dims ra) i)))
 
 (define (ra-set! ra o . i)
   (unless (= (ra-rank ra) (length i))
     (throw 'bad-number-of-indices (ra-rank ra) (length i)))
-  ((ra-vset! ra) (ra-data ra) (apply ra-pos (ra-zero ra) (ra-dims ra) i) o))
+  ((%ra-vset! ra) (%ra-data ra) (apply ra-pos (%ra-zero ra) (%ra-dims ra) i) o))
 
 (define (ra-slice ra . i)
-  (make-ra (ra-data ra)
-           (apply ra-pos (ra-zero ra) (ra-dims ra) i)
-           (vector-drop (ra-dims ra) (length i))))
+  (make-ra (%ra-data ra)
+           (apply ra-pos (%ra-zero ra) (%ra-dims ra) i)
+           (vector-drop (%ra-dims ra) (length i))))
 
 (define (ra-cell ra . i)
-  (let ((pos (apply ra-pos (ra-zero ra) (ra-dims ra) i)))
+  (let ((pos (apply ra-pos (%ra-zero ra) (%ra-dims ra) i)))
     (if (= (ra-rank ra) (length i))
-      ((ra-vref ra) (ra-data ra) pos)
-      (make-ra (ra-data ra) pos (vector-drop (ra-dims ra) (length i))))))
+      ((%ra-vref ra) (%ra-data ra) pos)
+      (make-ra (%ra-data ra) pos (vector-drop (%ra-dims ra) (length i))))))
 
 ; ----------------
 ; derived functions
 ; ----------------
 
 (define (ra-rank a)
-  (vector-length (ra-dims a)))
+  (vector-length (%ra-dims a)))
 
 (define (c-dims-size d)
   (let* ((dims (let loop ((d d))
@@ -303,13 +321,13 @@
              dims)))
 
 (define (ra->array ra)
-  (when (eq? 'd (ra-type ra))
-    (throw 'nonconvertible-type (ra-type ra)))
-  (apply make-shared-array (ra-data ra)
-         (lambda i (list (apply ra-pos (ra-zero ra) (ra-dims ra) i)))
+  (when (eq? 'd (%ra-type ra))
+    (throw 'nonconvertible-type (%ra-type ra)))
+  (apply make-shared-array (%ra-data ra)
+         (lambda i (list (apply ra-pos (%ra-zero ra) (%ra-dims ra) i)))
          (vector->list
           (vector-map (lambda (dim) (list (dim-lo dim) (dim-hi dim)))
-                      (ra-dims ra)))))
+                      (%ra-dims ra)))))
 
 ; ----------------
 ; ra-map!, ra-copy!, etc.
@@ -323,7 +341,7 @@
     (throw 'bad-frame-rank k (ra-rank (car ra))))
   (unless (every (lambda (rai) (= (ra-rank (car ra)) (ra-rank rai))) (cdr ra))
     (throw 'bad-ranks k (map ra-rank ra)))
-  (let* ((dims (map (compose (cut vector-take <> k) ra-dims) ra))
+  (let* ((dims (map (compose (cut vector-take <> k) %ra-dims) ra))
          (lo (vector-map dim-lo (car dims)))
          (end (vector-map dim-end (car dims))))
     (unless (every (lambda (rb) (equal? lo (vector-map dim-lo rb))) (cdr dims))
@@ -334,6 +352,7 @@
 
 ; naive
 (define (ra-slice-for-each-1 kk op . ra)
+  (for-each check-ra ra)
   (receive (los ends) (apply ra-slice-for-each-check kk ra)
 ; we pick a (-k)-slice for each ra and then just move along.
     (let loop-rank ((k 0) (ra ra))
@@ -354,9 +373,9 @@
 ; create (rank(ra) - k) slices that we'll use to iterate by bumping their zeros.
     (let ((frame ra)
           (ra (map (lambda (ra)
-                     (make-ra (ra-data ra)
-                              (ra-pos-first (ra-zero ra) (vector-take (ra-dims ra) kk))
-                              (vector-drop (ra-dims ra) kk)))
+                     (make-ra (%ra-data ra)
+                              (ra-pos-first (%ra-zero ra) (vector-take (%ra-dims ra) kk))
+                              (vector-drop (%ra-dims ra) kk)))
                    ra)))
       (let loop-rank ((k 0))
         (if (= k kk)
@@ -369,15 +388,15 @@
                ((= i end)
                 (for-each
                     (lambda (ra frame)
-                      (let ((step (dim-step (vector-ref (ra-dims frame) k))))
-                        (ra-zero-set! ra (+ (ra-zero ra) (* step (- lo end))))))
+                      (let ((step (dim-step (vector-ref (%ra-dims frame) k))))
+                        (%ra-zero-set! ra (+ (%ra-zero ra) (* step (- lo end))))))
                   ra frame))
                (else
                 (loop-rank (+ k 1))
                 (for-each
                     (lambda (ra frame)
-                      (let ((step (dim-step (vector-ref (ra-dims frame) k))))
-                        (ra-zero-set! ra (+ (ra-zero ra) step))))
+                      (let ((step (dim-step (vector-ref (%ra-dims frame) k))))
+                        (%ra-zero-set! ra (+ (%ra-zero ra) step))))
                   ra frame)
                 (loop-dim (+ i 1)))))))))))
 
