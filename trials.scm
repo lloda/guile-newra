@@ -2,6 +2,11 @@
 ; Replacement for Guile C-based arrays - WIP
 ; (c) Daniel Llorens - 2016-2017
 
+; This library is free software; you can redistribute it and/or modify it under
+; the terms of the GNU General Public License as published by the Free
+; Software Foundation; either version 3 of the License, or (at your option) any
+; later version.
+
 (import (rnrs io ports) (srfi srfi-1) (srfi srfi-4 gnu) (rnrs base) (srfi srfi-26)
         (newra newra) (newra print))
 

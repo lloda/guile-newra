@@ -3,6 +3,11 @@
 ; (c) Daniel Llorens - 2016-2017
 ; Run with $GUILE -L mod -s test.scm
 
+; This library is free software; you can redistribute it and/or modify it under
+; the terms of the GNU General Public License as published by the Free
+; Software Foundation; either version 3 of the License, or (at your option) any
+; later version.
+
 (import (srfi srfi-64)
         (newra newra) (newra print) (newra tools)
         (only (rnrs base) vector-map)
