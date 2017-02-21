@@ -70,9 +70,10 @@
 
 (define ra6 (make-ra-data #(1 2 3 4 5 6) '(1 2) '(1 3)))
 (test-equal (call-with-output-string (cut display ra6 <>)) "%2@1:2@1:3((1 2 3) (4 5 6))")
-
-(define ra7 (make-ra-data (make-dim 6 1) '(1 2) '(1 3)))
-(test-equal (call-with-output-string (cut display ra7 <>)) "%2d@1:2@1:3((1 2 3) (4 5 6))")
+(define ra7a (make-ra-data (make-dim 6 1) '(1 2) '(1 3)))
+(test-equal (call-with-output-string (cut display ra7a <>)) "%2d@1:2@1:3((1 2 3) (4 5 6))")
+(define ra7b (make-ra #(1 4 2 5 3 6) -3 `#(,(make-dim 2 1 1) ,(make-dim 3 1 2))))
+(test-equal (call-with-output-string (cut display ra7b <>)) "%2@1:2@1:3((1 2 3) (4 5 6))")
 
 ; -----------------------
 ; ra-slice, ra-ref, ra-cell
@@ -127,7 +128,10 @@
                  (lambda (s) (ra-slice-for-each 2 (lambda (o) (format s "~a\n" (ra-ref o))) ra6))))
     (test-equal "2\n4\n6\n8\n10\n12\n"
                 (call-with-output-string
-                 (lambda (s) (ra-slice-for-each 2 (lambda (a b) (format s "~a\n" (+ (ra-ref a) (ra-ref b)))) ra6 ra7))))
+                 (lambda (s) (ra-slice-for-each 2 (lambda (a b) (format s "~a\n" (+ (ra-ref a) (ra-ref b)))) ra6 ra7a))))
+    (test-equal "2\n4\n6\n8\n10\n12\n"
+                (call-with-output-string
+                 (lambda (s) (ra-slice-for-each 2 (lambda (a b) (format s "~a\n" (+ (ra-ref a) (ra-ref b)))) ra6 ra7b))))
 
     (test-end (procedure-name ra-slice-for-each)))
   (list ra-slice-for-each-1 ra-slice-for-each-2 ra-slice-for-each-3))

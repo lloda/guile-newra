@@ -431,9 +431,9 @@
 ; we'll do a normal rank-loop in [0..u) and unroll dimensions [u..k); u must be found.
 ; the last axis of the frame can always be unrolled, so we start checking from the one before.
         (let* ((u (- u 1))
-               (s0 (map (lambda (frame) (%ra-step frame u)) frame)))
+               (step (map (lambda (frame) (%ra-step frame u)) frame)))
           (receive (u len)
-              (let loop ((u u) (s s0) (len 1))
+              (let loop ((u u) (s step) (len 1))
                 (let ((lenu (vector-ref lens u)))
                   (if (zero? u)
                     (values u (* len lenu))
@@ -450,12 +450,13 @@
                    ((= i len)
                     (for-each (lambda (ra step)
                                 (%ra-zero-set! ra (- (%ra-zero ra) (* step len))))
-                              ra s0))
+                              ra step))
                    (else
 ; BUG no fresh slice descriptor like in array-slice-for-each.
                     (apply op ra)
-                    (for-each (lambda (ra step) (%ra-zero-set! ra (+ (%ra-zero ra) step)))
-                              ra s0)
+                    (for-each (lambda (ra step)
+                                (%ra-zero-set! ra (+ (%ra-zero ra) step)))
+                              ra step)
                     (loop (+ i 1)))))
                 (let  ((lo (vector-ref los k))
                        (end (vector-ref ends k)))
@@ -473,4 +474,4 @@
                       (loop-dim (+ i 1))))))))))))))
 
 ; default
-(define ra-slice-for-each ra-slice-for-each-1)
+(define ra-slice-for-each ra-slice-for-each-3)
