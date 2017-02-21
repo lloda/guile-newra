@@ -328,11 +328,11 @@
         dims exch
         (let ((ndim (vector-ref dims exch)))
           (if ndim
-            (begin
-              (unless (= (dim-lo odim) (dim-lo ndim)) (throw 'bad-lo))
+            (if (= (dim-lo odim) (dim-lo ndim))
               (make-dim (min (dim-len odim) (dim-len ndim))
                         (dim-lo ndim)
-                        (+ (dim-step odim) (dim-step ndim))))
+                        (+ (dim-step odim) (dim-step ndim)))
+               (throw 'bad-lo))
             odim))))
      (%ra-dims ra) exch)
     (make-ra (%ra-data ra) (%ra-zero ra) dims)))

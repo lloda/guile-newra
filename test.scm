@@ -11,7 +11,7 @@
 (import (srfi srfi-64)
         (newra newra) (newra print) (newra tools)
         (only (rnrs base) vector-map)
-        (srfi srfi-26) (srfi srfi-8) (only (srfi srfi-1) fold)
+        (srfi srfi-26) (srfi srfi-8) (only (srfi srfi-1) fold iota)
         (ice-9 match))
 
 (define (throws-exception? k thunk)
@@ -113,18 +113,12 @@
 ; ra-transpose
 ; -----------------------
 
-(test-equal "%2d@1:3@1:2((1 4) (2 5) (3 6))"
-            (call-with-output-string (cut display (ra-transpose ra7a #(1 0)) <>)))
-(test-equal "%2@1:3@1:2((1 4) (2 5) (3 6))"
-            (call-with-output-string (cut display (ra-transpose ra7b #(1 0)) <>)))
-(test-equal "%2d@1:2@1:3((1 2 3) (4 5 6))"
-            (call-with-output-string (cut display (ra-transpose ra7a #(0 1)) <>)))
-(test-equal "%2@1:2@1:3((1 2 3) (4 5 6))"
-            (call-with-output-string (cut display (ra-transpose ra7b #(0 1)) <>)))
-(test-equal "%1d@1:2(1 5)"
-            (call-with-output-string (cut display (ra-transpose ra7a #(0 0)) <>)))
-(test-equal "%1@1:2(1 5)"
-            (call-with-output-string (cut display (ra-transpose ra7b #(0 0)) <>)))
+(test-equal (call-with-output-string (cut display (ra-transpose ra7a #(1 0)) <>)) "%2d@1:3@1:2((1 4) (2 5) (3 6))")
+(test-equal (call-with-output-string (cut display (ra-transpose ra7b #(1 0)) <>)) "%2@1:3@1:2((1 4) (2 5) (3 6))")
+(test-equal (call-with-output-string (cut display (ra-transpose ra7a #(0 1)) <>)) "%2d@1:2@1:3((1 2 3) (4 5 6))")
+(test-equal (call-with-output-string (cut display (ra-transpose ra7b #(0 1)) <>)) "%2@1:2@1:3((1 2 3) (4 5 6))")
+(test-equal (call-with-output-string (cut display (ra-transpose ra7a #(0 0)) <>)) "%1d@1:2(1 5)")
+(test-equal (call-with-output-string (cut display (ra-transpose ra7b #(0 0)) <>)) "%1@1:2(1 5)")
 
 ; -----------------------
 ; ra-slice-for-each
@@ -211,19 +205,20 @@
   (lambda (rank)
     (let* ((n (inexact->exact (ceiling (expt m (/ rank)))))
            (nn (make-list rank n))
+           (len (fold * 1 nn))
            (ra20 (apply make-ra-new type *unspecified* nn))
            (ra21 (ra-map! ra-slice-for-each (apply make-ra-new type 0 nn) (lambda () (random n))))
            (ra22 (ra-map! ra-slice-for-each (apply make-ra-new type 0 nn) (lambda () (random n))))
            (a20 (ra->array ra20))
            (a21 (ra->array ra21))
            (a22 (ra->array ra22)))
-      (format #t "\nrank ~a\n" rank)
-      (format #t "1\t~8,6f\n" (time (ra-map! ra-slice-for-each-1 ra20 - ra21 ra22)))
-      (format #t "2\t~8,6f\n" (time (ra-map! ra-slice-for-each-2 ra20 - ra21 ra22)))
-      (format #t "3\t~8,6f\n" (time (ra-map! ra-slice-for-each-3 ra20 - ra21 ra22)))
-      (format #t "4\t~8,6f\n" (time (array-map*! a20 - a21 a22)))
-      (format #t "5\t~8,6f\n" (time (array-map! a20 - a21 a22)))))
-  (list 1 2 3))
+      (format #t "\nrank ~a (nn ~a)\n" rank nn)
+      (format #t "1\t~8,6f\n" (* (/ m len) (time (ra-map! ra-slice-for-each-1 ra20 - ra21 ra22))))
+      (format #t "2\t~8,6f\n" (* (/ m len) (time (ra-map! ra-slice-for-each-2 ra20 - ra21 ra22))))
+      (format #t "3\t~8,6f\n" (* (/ m len) (time (ra-map! ra-slice-for-each-3 ra20 - ra21 ra22))))
+      (format #t "4\t~8,6f\n" (* (/ m len) (time (array-map*! a20 - a21 a22))))
+      (format #t "5\t~8,6f\n" (* (/ m len) (time (array-map! a20 - a21 a22))))))
+  (iota 6 1))
 
 ; -----------------------
 ; some profiling...
