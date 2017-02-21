@@ -180,66 +180,44 @@
   (error "FAILED test.scm"))
 
 ; -----------------------
-; benchmark rank 1
+; benchmarks
 ; -----------------------
 
 (define type #t)
-(define m 500000)
+(define m 50000)
 
-(define n (inexact->exact (ceiling (expt m (/ 1)))))
-(define ra20 (make-ra-new type *unspecified* n))
-(define ra21 (ra-map! ra-slice-for-each (make-ra-new type 0 n) identity (make-ra-data (make-dim n) n)))
-(define ra22 (ra-map! ra-slice-for-each (make-ra-new type 0 n) identity (make-ra-data (make-dim n n -1) n)))
-(define a20 (ra->array ra20))
-(define a21 (ra->array ra21))
-(define a22 (ra->array ra22))
-
-(format #t "\n1\t~8,6f\n" (time (ra-map! ra-slice-for-each-1 ra20 - ra21 ra22)))
-(format #t "2\t~8,6f\n" (time (ra-map! ra-slice-for-each-2 ra20 - ra21 ra22)))
-(format #t "3\t~8,6f\n" (time (ra-map! ra-slice-for-each-3 ra20 - ra21 ra22)))
-(format #t "4\t~8,6f\n" (time (array-map*! a20 - a21 a22)))
-(format #t "5\t~8,6f\n" (time (array-map! a20 - a21 a22)))
-
-; -----------------------
-; benchmark rank 2
-; -----------------------
-
-(define n (inexact->exact (ceiling (expt m (/ 2)))))
-(define ra20 (make-ra-new type *unspecified* n n))
-(define ra21 (ra-map! ra-slice-for-each (make-ra-new type 0 n n) (lambda () (random n))))
-(define ra22 (ra-map! ra-slice-for-each (make-ra-new type 0 n n) (lambda () (random n))))
-(define a20 (ra->array ra20))
-(define a21 (ra->array ra21))
-(define a22 (ra->array ra22))
-
-(format #t "\n1\t~8,6f\n" (time (ra-map! ra-slice-for-each-1 ra20 - ra21 ra22)))
-(format #t "2\t~8,6f\n" (time (ra-map! ra-slice-for-each-2 ra20 - ra21 ra22)))
-(format #t "3\t~8,6f\n" (time (ra-map! ra-slice-for-each-3 ra20 - ra21 ra22)))
-(format #t "4\t~8,6f\n" (time (array-map*! a20 - a21 a22)))
-(format #t "5\t~8,6f\n" (time (array-map! a20 - a21 a22)))
-
-; -----------------------
-; benchmark rank 3
-; -----------------------
-
-(define n (inexact->exact (ceiling (expt m (/ 3)))))
-(define ra20 (make-ra-new type *unspecified* n n n))
-(define ra21 (ra-map! ra-slice-for-each (make-ra-new type 0 n n n) (lambda () (random n))))
-(define ra22 (ra-map! ra-slice-for-each (make-ra-new type 0 n n n) (lambda () (random n))))
-(define a20 (ra->array ra20))
-(define a21 (ra->array ra21))
-(define a22 (ra->array ra22))
-
-(format #t "\n1\t~8,6f\n" (time (ra-map! ra-slice-for-each-1 ra20 - ra21 ra22)))
-(format #t "2\t~8,6f\n" (time (ra-map! ra-slice-for-each-2 ra20 - ra21 ra22)))
-(format #t "3\t~8,6f\n" (time (ra-map! ra-slice-for-each-3 ra20 - ra21 ra22)))
-(format #t "4\t~8,6f\n" (time (array-map*! a20 - a21 a22)))
-(format #t "5\t~8,6f\n" (time (array-map! a20 - a21 a22)))
+(for-each
+  (lambda (rank)
+    (let* ((n (inexact->exact (ceiling (expt m (/ rank)))))
+           (nn (make-list rank n))
+           (ra20 (apply make-ra-new type *unspecified* nn))
+           (ra21 (ra-map! ra-slice-for-each (apply make-ra-new type 0 nn) (lambda () (random n))))
+           (ra22 (ra-map! ra-slice-for-each (apply make-ra-new type 0 nn) (lambda () (random n))))
+           (a20 (ra->array ra20))
+           (a21 (ra->array ra21))
+           (a22 (ra->array ra22)))
+      (format #t "\nrank ~a\n" rank)
+      (format #t "1\t~8,6f\n" (time (ra-map! ra-slice-for-each-1 ra20 - ra21 ra22)))
+      (format #t "2\t~8,6f\n" (time (ra-map! ra-slice-for-each-2 ra20 - ra21 ra22)))
+      (format #t "3\t~8,6f\n" (time (ra-map! ra-slice-for-each-3 ra20 - ra21 ra22)))
+      (format #t "4\t~8,6f\n" (time (array-map*! a20 - a21 a22)))
+      (format #t "5\t~8,6f\n" (time (array-map! a20 - a21 a22)))))
+  (list 1 2 3))
 
 ; -----------------------
 ; some profiling...
 ; -----------------------
 
 (import (statprof))
-(define prof (lambda () (ra-map! ra-slice-for-each-3 ra20 * ra21 ra22)))
-(statprof prof #:count-calls? #t #:display-style 'tree)
+
+(let* ((rank 3)
+       (n (inexact->exact (ceiling (expt m (/ rank)))))
+       (nn (make-list rank n))
+       (ra20 (apply make-ra-new type *unspecified* nn))
+       (ra21 (ra-map! ra-slice-for-each (apply make-ra-new type 0 nn) (lambda () (random n))))
+       (ra22 (ra-map! ra-slice-for-each (apply make-ra-new type 0 nn) (lambda () (random n))))
+       (a20 (ra->array ra20))
+       (a21 (ra->array ra21))
+       (a22 (ra->array ra22))
+       (prof (lambda () (ra-map! ra-slice-for-each-3 ra20 * ra21 ra22))))
+  (statprof prof #:count-calls? #t #:display-style 'tree))
