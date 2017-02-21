@@ -110,6 +110,23 @@
 (test-equal 6 (ra-ref ra8 2 3))
 
 ; -----------------------
+; ra-transpose
+; -----------------------
+
+(test-equal "%2d@1:3@1:2((1 4) (2 5) (3 6))"
+            (call-with-output-string (cut display (ra-transpose ra7a #(1 0)) <>)))
+(test-equal "%2@1:3@1:2((1 4) (2 5) (3 6))"
+            (call-with-output-string (cut display (ra-transpose ra7b #(1 0)) <>)))
+(test-equal "%2d@1:2@1:3((1 2 3) (4 5 6))"
+            (call-with-output-string (cut display (ra-transpose ra7a #(0 1)) <>)))
+(test-equal "%2@1:2@1:3((1 2 3) (4 5 6))"
+            (call-with-output-string (cut display (ra-transpose ra7b #(0 1)) <>)))
+(test-equal "%1d@1:2(1 5)"
+            (call-with-output-string (cut display (ra-transpose ra7a #(0 0)) <>)))
+(test-equal "%1@1:2(1 5)"
+            (call-with-output-string (cut display (ra-transpose ra7b #(0 0)) <>)))
+
+; -----------------------
 ; ra-slice-for-each
 ; -----------------------
 

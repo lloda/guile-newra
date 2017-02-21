@@ -15,6 +15,7 @@
             array->ra ra->array
             ra-pos ra-pos-first ra-pos-lo ra-pos-hi
             ra-slice ra-cell ra-ref ra-set!
+            ra-transpose
             ra-slice-for-each
             ra-slice-for-each-1 ra-slice-for-each-2 ra-slice-for-each-3))
 
@@ -318,6 +319,23 @@
       (make-ra (make-typed-array type value size)
                (- (ra-pos-first 0 dims))
                dims)))
+
+(define (ra-transpose ra exch)
+  (let ((dims (make-vector (+ 1 (vector-fold max 0 exch)) #f)))
+    (vector-for-each
+     (lambda (odim exch)
+       (vector-set!
+        dims exch
+        (let ((ndim (vector-ref dims exch)))
+          (if ndim
+            (begin
+              (unless (= (dim-lo odim) (dim-lo ndim)) (throw 'bad-lo))
+              (make-dim (min (dim-len odim) (dim-len ndim))
+                        (dim-lo ndim)
+                        (+ (dim-step odim) (dim-step ndim))))
+            odim))))
+     (%ra-dims ra) exch)
+    (make-ra (%ra-data ra) (%ra-zero ra) dims)))
 
 ; ----------------
 ; transition help
