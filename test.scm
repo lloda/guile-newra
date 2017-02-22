@@ -241,7 +241,7 @@
 (import (statprof))
 
 (let* ((rank 3)
-       (n (inexact->exact (ceiling (expt m (/ rank)))))
+       (n (inexact->exact (ceiling (expt (* 10 m) (/ rank)))))
        (nn (make-list rank n))
        (ra20 (apply make-ra-new type *unspecified* nn))
        (ra21 (ra-map! ra-slice-for-each (apply make-ra-new type 0 nn) (lambda () (random n))))

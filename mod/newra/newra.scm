@@ -23,7 +23,7 @@
             ra-slice-for-each-1 ra-slice-for-each-2 ra-slice-for-each-3))
 
 (import (srfi srfi-9) (srfi srfi-9 gnu) (only (srfi srfi-1) fold every) (srfi srfi-8)
-        (srfi srfi-4 gnu) (srfi srfi-26) (ice-9 match)
+        (srfi srfi-4 gnu) (srfi srfi-26) (ice-9 match) (ice-9 control)
         (only (rnrs base) vector-map vector-for-each))
 
 
@@ -37,6 +37,7 @@
 ;; hi:          highest index in a dim
 ;; end:         one past the highest index
 ;; len:         length of a dim = end-lo
+;; lenm:        len - 1.
 ;; v:           a vector
 ;; l:           a list
 ;; i, j:        indices in a dim, from hi to lo
@@ -375,7 +376,7 @@
 
 
 ; ----------------
-; ra-map!, ra-copy!, etc.
+; ra-slice-for-each, several versions
 ; ----------------
 
 ; Unlike Guile's array-for-each, etc. this one is strict —every dimension must match.
@@ -446,59 +447,63 @@
 ; moving slice, row-major unrolling.
 (define (ra-slice-for-each-3 u op . ra)
   (receive (los lens) (apply ra-slice-for-each-check u ra)
+    (let/ec exit
+; check early so we can save a step in the loop later.
+      (vector-for-each (lambda (len) (when (zero? len) (exit))) lens)
 ; create (rank(ra) - k) slices that we'll use to iterate by bumping their zeros.
-    (let* ((frame ra)
-           (ra (map (lambda (ra)
-                      (make-ra (%ra-data ra)
-                               (ra-pos-first (%ra-zero ra) (vector-take (%ra-dims ra) u))
-                               (vector-drop (%ra-dims ra) u)))
-                    ra)))
+      (let* ((frame ra)
+             (ra (map (lambda (ra)
+                        (make-ra (%ra-data ra)
+                                 (ra-pos-first (%ra-zero ra) (vector-take (%ra-dims ra) u))
+                                 (vector-drop (%ra-dims ra) u)))
+                      ra)))
 ; since we'll unroll, special case for rank 0
-      (if (zero? u)
-        (apply op ra)
+        (if (zero? u)
+          (apply op ra)
 ; we'll do a normal rank-loop in [0..u) and unroll dimensions [u..k); u must be found.
 ; the last axis of the frame can always be unrolled, so we start checking from the one before.
-        (let* ((u (- u 1))
-               (step (map (lambda (frame) (%ra-step frame u)) frame)))
-          (receive (u len)
-              (let loop ((u u) (s step) (len 1))
-                (let ((lenu (vector-ref lens u)))
-                  (if (zero? u)
-                    (values u (* len lenu))
-                    (let ((ss (map (cut * lenu <>) s))
-                          (sm (map (lambda (frame) (%ra-step frame (- u 1))) frame)))
-                      (if (equal? ss sm)
-                        (loop (- u 1) ss (* len lenu))
-                        (values u (* len lenu)))))))
-            (let loop-rank ((k 0))
-              (if (= k u)
+          (let* ((u (- u 1))
+                 (step (map (lambda (frame) (%ra-step frame u)) frame)))
+            (receive (u len)
+                (let loop ((u u) (s step) (len 1))
+                  (let ((lenu (vector-ref lens u)))
+                    (if (zero? u)
+                      (values u (* len lenu))
+                      (let ((ss (map (cut * lenu <>) s))
+                            (sm (map (lambda (frame) (%ra-step frame (- u 1))) frame)))
+                        (if (equal? ss sm)
+                          (loop (- u 1) ss (* len lenu))
+                          (values u (* len lenu)))))))
+              (let ((lenm (- len 1)))
+                (let loop-rank ((k 0))
+                  (if (= k u)
 ; unrolled dimensions.
-                (let loop ((i 0))
-                  (cond
-                   ((= i len)
-                    (for-each (lambda (ra step)
-                                (%ra-zero-set! ra (- (%ra-zero ra) (* step len))))
-                              ra step))
-                   (else
+                    (let loop ((i lenm))
 ; BUG no fresh slice descriptor like in array-slice-for-each.
-                    (apply op ra)
-                    (for-each (lambda (ra step)
-                                (%ra-zero-set! ra (+ (%ra-zero ra) step)))
-                              ra step)
-                    (loop (+ i 1)))))
-                (let ((lenk (vector-ref lens k)))
-                  (let loop-dim ((i 0))
-                    (cond
-                     ((= i lenk)
-                      (for-each (lambda (ra frame)
-                                  (%ra-zero-set! ra (- (%ra-zero ra) (* (%ra-step frame k) lenk))))
-                                ra frame))
-                     (else
-                      (loop-rank (+ k 1))
-                      (for-each (lambda (ra frame)
-                                  (%ra-zero-set! ra (+ (%ra-zero ra) (%ra-step frame k))))
-                                ra frame)
-                      (loop-dim (+ i 1))))))))))))))
+                      (apply op ra)
+                      (cond
+                       ((zero? i)
+                        (for-each (lambda (ra step)
+                                    (%ra-zero-set! ra (- (%ra-zero ra) (* step lenm))))
+                                  ra step))
+                       (else
+                        (for-each (lambda (ra step)
+                                    (%ra-zero-set! ra (+ (%ra-zero ra) step)))
+                                  ra step)
+                        (loop (- i 1)))))
+                    (let ((lenmk (- (vector-ref lens k) 1)))
+                      (let loop-dim ((i lenmk))
+                        (loop-rank (+ k 1))
+                        (cond
+                         ((zero? i)
+                          (for-each (lambda (ra frame)
+                                      (%ra-zero-set! ra (- (%ra-zero ra) (* (%ra-step frame k) lenmk))))
+                                    ra frame))
+                         (else
+                          (for-each (lambda (ra frame)
+                                      (%ra-zero-set! ra (+ (%ra-zero ra) (%ra-step frame k))))
+                                    ra frame)
+                          (loop-dim (- i 1))))))))))))))))
 
 ; default
 (define ra-slice-for-each ra-slice-for-each-3)
