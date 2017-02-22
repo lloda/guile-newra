@@ -124,13 +124,27 @@
 ; ra-slice-for-each
 ; -----------------------
 
+(define ra-empty0 (make-ra-data (make-dim 6 1) '(1 0) '(2 1)))
+(define ra-empty1 (make-ra-data (make-dim 6 1) '(1 1) '(2 1)))
+(define ra-empty2 (make-ra-data (make-dim 6 1) '(1 0) '(2 2)))
+
 (for-each
   (lambda (ra-slice-for-each)
     (test-begin (procedure-name ra-slice-for-each))
 
+    (test-equal "%2d@1:0@2:0()\n"
+                (call-with-output-string
+                 (lambda (s) (ra-slice-for-each 0 (lambda (o) (format s "~a\n" o)) ra-empty0))))
+    (test-equal "%2d@1:1@2:0(())\n"
+                (call-with-output-string
+                 (lambda (s) (ra-slice-for-each 0 (lambda (o) (format s "~a\n" o)) ra-empty1))))
+    (test-equal "%2d@1:0@2:1()\n"
+                (call-with-output-string
+                 (lambda (s) (ra-slice-for-each 0 (lambda (o) (format s "~a\n" o)) ra-empty2))))
+
     (test-equal "%2@1:2@1:3((1 2 3) (4 5 6))\n"
                 (call-with-output-string
-                 (lambda (s) (ra-slice-for-each 0 (lambda (o) (format s"~a\n" o)) ra6))))
+                 (lambda (s) (ra-slice-for-each 0 (lambda (o) (format s "~a\n" o)) ra6))))
     (test-equal "%1@1:3(1 2 3)\n%1@1:3(4 5 6)\n"
                 (call-with-output-string
                  (lambda (s) (ra-slice-for-each 1 (lambda (o) (format s "~a\n" o)) ra6))))
@@ -166,15 +180,15 @@
 
 (define (ra-map! ra-slice-for-each o f . args)
   (apply ra-slice-for-each (ra-rank o)
-         (lambda (o . args) (ra-type o)
-                 (ra-set! o (apply f (map ra-ref args))))
+         (lambda (o . args)
+           (ra-set! o (apply f (map ra-ref args))))
          o args)
   o)
 
 (define (array-map*! o f . args)
   (apply array-slice-for-each (array-rank o)
-         (lambda (o . args) (array-type o)
-                 (array-set! o (apply f (map array-ref args))))
+         (lambda (o . args)
+           (array-set! o (apply f (map array-ref args))))
          o args)
   o)
 

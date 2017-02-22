@@ -1,11 +1,14 @@
 
-; Replacement for Guile C-based array system - Main types
 ; (c) Daniel Llorens - 2016-2017
 
 ; This library is free software; you can redistribute it and/or modify it under
 ; the terms of the GNU General Public License as published by the Free
 ; Software Foundation; either version 3 of the License, or (at your option) any
 ; later version.
+
+;;; Commentary:
+;; Newra is a (WIP) replacement for Guile C-based array system.
+;;; Code:
 
 (define-module (newra newra)
   #:export (make-ra ra? ra-data ra-zero ra-dims ra-vlen ra-vref ra-vset!
@@ -23,6 +26,7 @@
         (srfi srfi-4 gnu) (srfi srfi-26) (ice-9 match)
         (only (rnrs base) vector-map vector-for-each))
 
+
 ; ----------------
 ;; Glossary
 ; ----------------
@@ -41,6 +45,7 @@
 ;; cell:        (also prefix-cell) slice obtained by fixing the first k indices into an ra.
 ;; item:        slice obtained by fixing the first index into an ra; a (rank - 1)-cell.
 
+
 ; ----------------
 ; misc
 ; ----------------
@@ -88,6 +93,7 @@
 (define (vector-take v n)
   (vector-clip v 0 n))
 
+
 ; ----------------
 ; dimension record, used both as that, and as delayed iota.
 ; ----------------
@@ -102,7 +108,9 @@
   (case-lambda
    ((len) (make-dim* len 0 1))
    ((len lo) (make-dim* len lo 1))
-   ((len lo step) (make-dim* len lo step))))
+   ((len lo step)
+    (when (< len 0) (throw 'bad-dim-len len))
+    (make-dim* len lo step))))
 
 (define (dim-end dim)
   (+ (dim-lo dim) (dim-len dim)))
@@ -120,6 +128,7 @@
     (throw 'dim-check-out-of-range dim i))
   i)
 
+
 ; ----------------
 ; array type
 ; ----------------
@@ -201,6 +210,7 @@
   (receive (type vlen vref vset!) (pick-typed-vector-functions data)
     (make-ra* data zero dims type vlen vref vset!)))
 
+
 ; ----------------
 ; compute addresses
 ; ----------------
@@ -244,6 +254,7 @@
       (let ((dim (vector-ref dims j)))
         (loop (- j 1) (+ pos (* (dim-lo dim) (dim-step dim))))))))
 
+
 ; ----------------
 ; ref, set!, prefix slices
 ; ----------------
@@ -285,6 +296,7 @@
       ((%ra-vref ra) (%ra-data ra) pos)
       (make-ra (%ra-data ra) pos (vector-drop (%ra-dims ra) leni)))))
 
+
 ; ----------------
 ; derived functions
 ; ----------------
@@ -337,6 +349,7 @@
      (%ra-dims ra) exch)
     (make-ra (%ra-data ra) (%ra-zero ra) dims)))
 
+
 ; ----------------
 ; transition help
 ; ----------------
@@ -360,6 +373,7 @@
           (vector-map (lambda (dim) (list (dim-lo dim) (dim-hi dim)))
                       (%ra-dims ra)))))
 
+
 ; ----------------
 ; ra-map!, ra-copy!, etc.
 ; ----------------
@@ -368,29 +382,29 @@
 (define (ra-slice-for-each-check k . ra)
   (unless (pair? ra)
     (throw 'missing-arguments))
+  (for-each check-ra ra)
   (unless (<= k (%ra-rank (car ra)))
     (throw 'bad-frame-rank k (%ra-rank (car ra))))
   (unless (every (lambda (rai) (= (%ra-rank (car ra)) (%ra-rank rai))) (cdr ra))
     (throw 'bad-ranks k (map ra-rank ra)))
   (let* ((dims (map (compose (cut vector-take <> k) %ra-dims) ra))
          (lo (vector-map dim-lo (car dims)))
-         (end (vector-map dim-end (car dims))))
+         (len (vector-map dim-len (car dims))))
     (unless (every (lambda (rb) (equal? lo (vector-map dim-lo rb))) (cdr dims))
       (throw 'mismatched-lo lo))
-    (unless (every (lambda (rb) (equal? end (vector-map dim-end rb))) (cdr dims))
-      (throw 'mismatched-end end))
-    (values lo end)))
+    (unless (every (lambda (rb) (equal? len (vector-map dim-len rb))) (cdr dims))
+      (throw 'mismatched-len len))
+    (values lo len)))
 
 ; naive
 (define (ra-slice-for-each-1 kk op . ra)
-  (for-each check-ra ra)
-  (receive (los ends) (apply ra-slice-for-each-check kk ra)
+  (receive (los lens) (apply ra-slice-for-each-check kk ra)
 ; we pick a (-k)-slice for each ra and then just move along.
     (let loop-rank ((k 0) (ra ra))
       (if (= k kk)
         (apply op ra)
-        (let  ((lo (vector-ref los k))
-               (end (vector-ref ends k)))
+        (let* ((lo (vector-ref los k))
+               (end (+ lo (vector-ref lens k))))
           (let loop-dim ((i lo))
             (unless (= i end)
               (let ((rai (map (cut ra-slice <> i) ra)))
@@ -399,8 +413,7 @@
 
 ; moving slice
 (define (ra-slice-for-each-2 kk op . ra)
-  (for-each check-ra ra)
-  (receive (los ends) (apply ra-slice-for-each-check kk ra)
+  (receive (los lens) (apply ra-slice-for-each-check kk ra)
 ; create (rank(ra) - k) slices that we'll use to iterate by bumping their zeros.
     (let ((frame ra)
           (ra (map (lambda (ra)
@@ -412,15 +425,14 @@
         (if (= k kk)
 ; BUG no fresh slice descriptor like in array-slice-for-each.
           (apply op ra)
-          (let  ((lo (vector-ref los k))
-                 (end (vector-ref ends k)))
-            (let loop-dim ((i lo))
+          (let  ((lenk (vector-ref lens k)))
+            (let loop-dim ((i 0))
               (cond
-               ((= i end)
+               ((= i lenk)
                 (for-each
                     (lambda (ra frame)
                       (let ((step (dim-step (vector-ref (%ra-dims frame) k))))
-                        (%ra-zero-set! ra (+ (%ra-zero ra) (* step (- lo end))))))
+                        (%ra-zero-set! ra (- (%ra-zero ra) (* step lenk)))))
                   ra frame))
                (else
                 (loop-rank (+ k 1))
@@ -433,11 +445,9 @@
 
 ; moving slice, row-major unrolling.
 (define (ra-slice-for-each-3 u op . ra)
-  (for-each check-ra ra)
-  (receive (los ends) (apply ra-slice-for-each-check u ra)
+  (receive (los lens) (apply ra-slice-for-each-check u ra)
 ; create (rank(ra) - k) slices that we'll use to iterate by bumping their zeros.
-    (let* ((lens (vector-map - ends los))
-           (frame ra)
+    (let* ((frame ra)
            (ra (map (lambda (ra)
                       (make-ra (%ra-data ra)
                                (ra-pos-first (%ra-zero ra) (vector-take (%ra-dims ra) u))
@@ -476,13 +486,12 @@
                                 (%ra-zero-set! ra (+ (%ra-zero ra) step)))
                               ra step)
                     (loop (+ i 1)))))
-                (let  ((lo (vector-ref los k))
-                       (end (vector-ref ends k)))
-                  (let loop-dim ((i lo))
+                (let ((lenk (vector-ref lens k)))
+                  (let loop-dim ((i 0))
                     (cond
-                     ((= i end)
+                     ((= i lenk)
                       (for-each (lambda (ra frame)
-                                  (%ra-zero-set! ra (- (%ra-zero ra) (* (%ra-step frame k) (- end lo)))))
+                                  (%ra-zero-set! ra (- (%ra-zero ra) (* (%ra-step frame k) lenk))))
                                 ra frame))
                      (else
                       (loop-rank (+ k 1))
