@@ -538,15 +538,6 @@
     ((_ op a)
      (apply op a))))
 
-(define-syntax %loop
-  (syntax-rules ()
-    ((_ loop (x ...) body ...)
-     (let loop (x ...) body ...))))
-(define-syntax %apply-loop
-  (syntax-rules ()
-    ((_ loop (x ...) body ...)
-     (let loop (x ...) body ...))))
-
 (define-syntax %equal?
   (syntax-rules ()
     ((_ (x ...) (y ...))
@@ -595,8 +586,7 @@
 (define-syntax %ra-slice-for-each-macro
   (lambda (stx)
     (syntax-case stx ()
-      ((_ %list %op %let %equal? %loop
-          %stepu %stepu-back %stepk %stepk-back
+      ((_ %list %op %let %equal? %stepu %stepu-back %stepk %stepk-back
           u op (ra ...) (frame ...) (step ...) (s ...) (ss ...) (sm ...))
        #'(receive (los lens) (apply ra-slice-for-each-check u (%list ra ...))
            (let/ec exit
@@ -618,15 +608,15 @@
                    (let ((u (- u 1)))
                      (%let ((step ...) (frame ...) (lambda (frome) (%ra-step frome u)))
                        (receive (u len)
-                           (%loop loop ((u u) (len 1) (s step) ...)
-                                  (let ((lenu (vector-ref lens u)))
-                                    (if (zero? u)
-                                      (values u (* len lenu))
-                                      (%let ((ss ...) (s ...) (cut * lenu <>))
-                                        (%let ((sm ...) (frame ...) (lambda (frome) (%ra-step frome (- u 1))))
-                                          (if (%equal? (ss ...) (sm ...))
-                                            (loop (- u 1) (* len lenu) ss ...)
-                                            (values u (* len lenu))))))))
+                           (let loop ((u u) (len 1) (s step) ...)
+                             (let ((lenu (vector-ref lens u)))
+                               (if (zero? u)
+                                 (values u (* len lenu))
+                                 (%let ((ss ...) (s ...) (cut * lenu <>))
+                                   (%let ((sm ...) (frame ...) (lambda (frome) (%ra-step frome (- u 1))))
+                                     (if (%equal? (ss ...) (sm ...))
+                                       (loop (- u 1) (* len lenu) ss ...)
+                                       (values u (* len lenu))))))))
                          (let ((lenm (- len 1)))
                            (let loop-rank ((k 0))
                              (if (= k u)
@@ -652,25 +642,25 @@
   (case-lambda
    ((u op ra0)
     (%ra-slice-for-each-macro
-     %list %op %let %equal? %loop
+     %list %op %let %equal?
      %stepu %stepu-back %stepk %stepk-back
      u op
      (ra0) (frame0) (step0) (s0) (ss) (sm)))
    ((u op ra0 ra1)
     (%ra-slice-for-each-macro
-     %list %op %let %equal? %loop
+     %list %op %let %equal?
      %stepu %stepu-back %stepk %stepk-back
      u op
      (ra0 ra1) (frame0 frame1) (step0 step1) (s0 s1) (ss0 ss1) (sm0 sm1)))
    ((u op ra0 ra1 ra2)
     (%ra-slice-for-each-macro
-     %list %op %let %equal? %loop
+     %list %op %let %equal?
      %stepu %stepu-back %stepk %stepk-back
      u op
      (ra0 ra1 ra2) (frame0 frame1 frame2) (step0 step1 step2) (s0 s1 s2) (ss0 ss1 ss2) (sm0 sm1 sm2)))
    ((u op . ra)
     (%ra-slice-for-each-macro
-     %apply-list %apply-op %apply-let %apply-equal? %loop
+     %apply-list %apply-op %apply-let %apply-equal?
      %apply-stepu %apply-stepu-back %apply-stepk %apply-stepk-back
      u op
      (ra) (frame) (step) (s) (ss) (sm)))))
