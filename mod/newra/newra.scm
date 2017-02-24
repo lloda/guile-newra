@@ -587,60 +587,59 @@
      (for-each (lambda (ra frame) (%stepk-back k lenmk (ra frame))) ra frame))))
 
 (define-syntax %slice-loop
-  (lambda (stx)
-    (syntax-case stx ()
-      ((_ u_ op (ra ...) (frame ...) (step ...) (s ...) (ss ...) (sm ...)
-          %opper %op %list %let %equal? %stepu %stepu-back %stepk %stepk-back)
-       #'(let ((u u_))
-           (receive (los lens) (apply ra-slice-for-each-check u (%list ra ...))
-             (let/ec exit
+  (syntax-rules ()
+    ((_ u_ op (ra ...) (frame ...) (step ...) (s ...) (ss ...) (sm ...)
+        %opper %op %list %let %equal? %stepu %stepu-back %stepk %stepk-back)
+     (let ((u u_))
+       (receive (los lens) (apply ra-slice-for-each-check u (%list ra ...))
+         (let/ec exit
 ; check early so we can save a step in the loop later.
-               (vector-for-each (lambda (len) (when (zero? len) (exit))) lens)
+           (vector-for-each (lambda (len) (when (zero? len) (exit))) lens)
 ; create (rank(ra) - k) slices that we'll use to iterate by bumping their zeros.
-               (%let ((frame ...) (ra ...) identity)
-                 (%let ((ra ...) (ra ...)
-                        (lambda (ro)
-                          (make-ra (%ra-data ro)
-                                   (ra-pos-first (%ra-zero ro) (vector-take (%ra-dims ro) u))
-                                   (vector-drop (%ra-dims ro) u))))
+           (%let ((frame ...) (ra ...) identity)
+             (%let ((ra ...) (ra ...)
+                    (lambda (ro)
+                      (make-ra (%ra-data ro)
+                               (ra-pos-first (%ra-zero ro) (vector-take (%ra-dims ro) u))
+                               (vector-drop (%ra-dims ro) u))))
 ; since we'll unroll, special case for rank 0
-                   (if (zero? u)
+               (if (zero? u)
 ; BUG no fresh slice descriptor like in array-slice-for-each. See also below.
-                     (%opper %op op ra ...)
+                 (%opper %op op ra ...)
 ; we'll do a normal rank-loop in [0..u) and unroll dimensions [u..k); u must be found.
 ; the last axis of the frame can always be unrolled, so we start checking from the one before.
-                     (let ((u (- u 1)))
-                       (%let ((step ...) (frame ...) (lambda (frome) (%ra-step frome u)))
-                         (receive (u len)
-                             (let loop ((u u) (len 1) (s step) ...)
-                               (let ((lenu (vector-ref lens u)))
-                                 (if (zero? u)
-                                   (values u (* len lenu))
-                                   (%let ((ss ...) (s ...) (cut * lenu <>))
-                                     (%let ((sm ...) (frame ...) (lambda (frome) (%ra-step frome (- u 1))))
-                                       (if (%equal? (ss ...) (sm ...))
-                                         (loop (- u 1) (* len lenu) ss ...)
-                                         (values u (* len lenu))))))))
-                           (let ((lenm (- len 1)))
-                             (let loop-rank ((k 0))
-                               (if (= k u)
-                                 (let loop-unrolled ((i lenm))
-                                   (%opper %op op ra ...)
-                                   (cond
-                                    ((zero? i)
-                                     (%stepu-back lenm (ra step) ...))
-                                    (else
-                                     (%stepu (ra step) ...)
-                                     (loop-unrolled (- i 1)))))
-                                 (let ((lenmk (- (vector-ref lens k) 1)))
-                                   (let loop-dim ((i lenmk))
-                                     (loop-rank (+ k 1))
-                                     (cond
-                                      ((zero? i)
-                                       (%stepk-back k lenmk (ra frame) ...))
-                                      (else
-                                       (%stepk k (ra frame) ...)
-                                       (loop-dim (- i 1))))))))))))))))))))))
+                 (let ((u (- u 1)))
+                   (%let ((step ...) (frame ...) (lambda (frome) (%ra-step frome u)))
+                     (receive (u len)
+                         (let loop ((u u) (len 1) (s step) ...)
+                           (let ((lenu (vector-ref lens u)))
+                             (if (zero? u)
+                               (values u (* len lenu))
+                               (%let ((ss ...) (s ...) (cut * lenu <>))
+                                 (%let ((sm ...) (frame ...) (lambda (frome) (%ra-step frome (- u 1))))
+                                   (if (%equal? (ss ...) (sm ...))
+                                     (loop (- u 1) (* len lenu) ss ...)
+                                     (values u (* len lenu))))))))
+                       (let ((lenm (- len 1)))
+                         (let loop-rank ((k 0))
+                           (if (= k u)
+                             (let loop-unrolled ((i lenm))
+                               (%opper %op op ra ...)
+                               (cond
+                                ((zero? i)
+                                 (%stepu-back lenm (ra step) ...))
+                                (else
+                                 (%stepu (ra step) ...)
+                                 (loop-unrolled (- i 1)))))
+                             (let ((lenmk (- (vector-ref lens k) 1)))
+                               (let loop-dim ((i lenmk))
+                                 (loop-rank (+ k 1))
+                                 (cond
+                                  ((zero? i)
+                                   (%stepk-back k lenmk (ra frame) ...))
+                                  (else
+                                   (%stepk k (ra frame) ...)
+                                   (loop-dim (- i 1)))))))))))))))))))))
 
 (define-syntax %opper-slice-for-each
   (syntax-rules ()
