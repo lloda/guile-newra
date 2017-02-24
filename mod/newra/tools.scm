@@ -8,7 +8,7 @@
 ; later version.
 
 (define-module (newra tools)
-  #:export (time walltime define-constant))
+  #:export (time walltime define-constant syntax->list))
 
 (define-syntax time
   (syntax-rules ()
@@ -32,3 +32,10 @@
      (begin
        (define t e)
        (define-syntax x (identifier-syntax t))))))
+
+; from Chez syntax.stex
+(define syntax->list
+  (lambda (ls)
+    (syntax-case ls ()
+      [() '()]
+      [(x . r) (cons #'x (syntax->list #'r))])))
