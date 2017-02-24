@@ -24,6 +24,7 @@
 (set! test-log-to-file #f)
 (test-begin "newra")
 
+
 ; -----------------------
 ; auxiliary functions
 ; -----------------------
@@ -34,6 +35,7 @@
 (test-equal
  #(2 3) ((@@ (newra newra) vector-clip) #(1 2 3 4) 1 3))
 
+
 ; -----------------------
 ; array->ra, ra->array, printers
 ; -----------------------
@@ -56,6 +58,7 @@
 (test-equal  #2@1@1((1 2) (3 4)) (ra->array ra3))
 (test-equal  #0(99)              (ra->array ra4))
 
+
 ; -----------------------
 ; make-ra-new
 ; -----------------------
@@ -64,6 +67,7 @@
 (array-index-map! (ra-data ra5) (lambda i i))
 (test-equal (call-with-output-string (cut display ra5 <>)) "%2@1:3@1:2(((0) (1)) ((2) (3)) ((4) (5)))")
 
+
 ; -----------------------
 ; make-ra-data
 ; -----------------------
@@ -75,6 +79,7 @@
 (define ra7b (make-ra #(1 4 2 5 3 6) -3 `#(,(make-dim 2 1 1) ,(make-dim 3 1 2))))
 (test-equal (call-with-output-string (cut display ra7b <>)) "%2@1:2@1:3((1 2 3) (4 5 6))")
 
+
 ; -----------------------
 ; ra-slice, ra-ref, ra-cell
 ; -----------------------
@@ -109,6 +114,7 @@
 (test-equal 5 (ra-ref ra8 2 2))
 (test-equal 6 (ra-ref ra8 2 3))
 
+
 ; -----------------------
 ; ra-transpose
 ; -----------------------
@@ -120,6 +126,7 @@
 (test-equal (call-with-output-string (cut display (ra-transpose ra7a #(0 0)) <>)) "%1d@1:2(1 5)")
 (test-equal (call-with-output-string (cut display (ra-transpose ra7b #(0 0)) <>)) "%1@1:2(1 5)")
 
+
 ; -----------------------
 ; ra-slice-for-each
 ; -----------------------
@@ -173,9 +180,7 @@
   (list ra-slice-for-each-1 ra-slice-for-each-2
         ra-slice-for-each-3 ra-slice-for-each-4))
 
-; (ra-slice-for-each-4 2 (lambda (a b) (format #t "~a\n" (+ (ra-ref a) (ra-ref b)))) ra6 ra7a)
-; (ra-slice-for-each-4 2 (lambda x (format #t "x ~a\n" x)) ra6 ra7a)
-
+
 ; -----------------------
 ; setter
 ; -----------------------
@@ -189,6 +194,7 @@
 (set! (ra9 0 3) 22)
 (test-equal (call-with-output-string (cut display ra9 <>)) "%2@-1:2@1:3((99 77 88) (33 11 22))")
 
+
 ; -----------------------
 ; test through the ra-map! interface
 ; -----------------------
@@ -230,15 +236,34 @@
 (define ra12 (make-ra-data (make-dim 10) 10))
 (define ra13 (make-ra-data (make-dim 10 10 -1) 10))
 
+(test-begin "ra-for-each")
+(test-equal "(10 0 10)(9 1 9)(8 2 8)(7 3 7)(6 4 6)(5 5 5)(4 6 4)(3 7 3)(2 8 2)(1 9 1)"
+            (call-with-output-string (lambda (s) (ra-for-each (lambda x (display x s)) ra13 ra12 ra13))))
+(test-end "ra-for-each")
+
 (ra-map! ra11 (lambda () (random 1000)))
 
 (for-each
   (match-lambda
     ((ra-map! name)
-      (test-begin name)
+      (test-begin (string-append "3 args - " name))
       (test-equal "%1:10(-10 -8 -6 -4 -2 0 2 4 6 8)"
                   (call-with-output-string (cute display (ra-map! ra11 - ra12 ra13) <>)))
-      (test-end name)))
+      (test-end (string-append "3 args - " name))))
+  `((,(cut ra-map*! ra-slice-for-each-1  <...>) "fe1")
+    (,(cut ra-map*! ra-slice-for-each-2  <...>) "fe2")
+    (,(cut ra-map*! ra-slice-for-each-3  <...>) "fe3")
+    (,(cut ra-map*! ra-slice-for-each-4  <...>) "fe4")
+    (,ra-map! "ra-map!")))
+
+; test with enough args to hit the arglist version.
+(for-each
+  (match-lambda
+    ((ra-map! name)
+      (test-begin (string-append "4 args - " name))
+      (test-equal "%1:10(-10 -9 -8 -7 -6 -5 -4 -3 -2 -1)"
+                  (call-with-output-string (cute display (ra-map! ra11 - ra12 ra13 ra12) <>)))
+      (test-end (string-append "4 args - " name))))
   `((,(cut ra-map*! ra-slice-for-each-1  <...>) "fe1")
     (,(cut ra-map*! ra-slice-for-each-2  <...>) "fe2")
     (,(cut ra-map*! ra-slice-for-each-3  <...>) "fe3")
@@ -254,6 +279,7 @@
 (unless (zero? (test-runner-fail-count (test-runner-current)))
   (error "FAILED test.scm"))
 
+
 ; -----------------------
 ; benchmarks
 ; -----------------------
@@ -305,6 +331,7 @@
       (iota 6 1)))
   (iota 3 1))
 
+
 ; -----------------------
 ; some profiling...
 ; -----------------------

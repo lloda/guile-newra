@@ -14,3 +14,4 @@
 - make-shared-ra
 - compatibility with root vectors
 - as-ra
+- hooks into C / replace array-*.
