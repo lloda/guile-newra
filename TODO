@@ -1,0 +1,16 @@
+
++ done
+* WIP
+- todo
+
++ make-ra-new, make-ra-data
++ ra-slice-for-each, ra-map!, ra-for-each, ra-transpose, ra-cell, ra-ref, ra-set!
+
+* refactor macros
+* speed
+
+- drag-along facility / delayed ops
+- high level slicing
+- make-shared-ra
+- compatibility with root vectors
+- as-ra
