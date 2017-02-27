@@ -9,7 +9,7 @@
 ; later version.
 
 (import (srfi srfi-64)
-        (newra newra) (newra print) (newra tools)
+        (newra newra) (newra test) (newra print) (newra tools)
         (only (rnrs base) vector-map)
         (srfi srfi-26) (srfi srfi-8) (only (srfi srfi-1) fold iota)
         (ice-9 match))
@@ -199,39 +199,6 @@
 ; test through the ra-map! interface
 ; -----------------------
 
-(define ra-map*!
-  (case-lambda
-   ((ra-slice-for-each o f)
-    (ra-slice-for-each
-     (ra-rank o)
-     (lambda (o) (ra-set! o (f)))
-     o)
-    o)
-   ((ra-slice-for-each o f a0)
-    (ra-slice-for-each
-     (ra-rank o)
-     (lambda (o a0) (ra-set! o (f (ra-ref a0))))
-     o a0)
-    o)
-   ((ra-slice-for-each o f a0 a1)
-    (ra-slice-for-each
-     (ra-rank o)
-     (lambda (o a0 a1) (ra-set! o (f (ra-ref a0) (ra-ref a1))))
-     o a0 a1)
-    o)
-   ((ra-slice-for-each o f . args)
-    (apply ra-slice-for-each (ra-rank o)
-           (lambda (o . args) (ra-set! o (apply f (map ra-ref args))))
-           o args)
-    o)))
-
-(define (array-map*! o f . args)
-  (apply array-slice-for-each (array-rank o)
-         (lambda (o . args)
-           (array-set! o (apply f (map array-ref args))))
-         o args)
-  o)
-
 (define ra11 (make-ra-new #t 0 10))
 (define ra12 (make-ra-data (make-dim 10) 10))
 (define ra13 (make-ra-data (make-dim 10 10 -1) 10))
@@ -278,74 +245,3 @@
 (test-end "newra")
 (unless (zero? (test-runner-fail-count (test-runner-current)))
   (error "FAILED test.scm"))
-
-
-; -----------------------
-; benchmarks
-; -----------------------
-
-(define type #t)
-(define m 100000)
-
-(for-each
-  (lambda (nargs)
-    (format #t "\n~a args\n---------\n" nargs)
-    (for-each
-      (lambda (rank)
-        (let* ((n (inexact->exact (ceiling (expt m (/ rank)))))
-               (nn (make-list rank n))
-               (len (fold * 1 nn))
-               (scale (* 1e3 (/ m len)))
-               (ra20 (apply make-ra-new type *unspecified* nn))
-               (ra21 (ra-map*! ra-slice-for-each (apply make-ra-new type 0 nn) (lambda () (random n))))
-               (ra22 (ra-map*! ra-slice-for-each (apply make-ra-new type 0 nn) (lambda () (random n))))
-               (a20 (ra->array ra20))
-               (a21 (ra->array ra21))
-               (a22 (ra->array ra22)))
-          (format #t "rank ~a (nn ~a)\n" rank nn)
-          (case nargs
-            ((3)
-             (format #t "1\t~9,4f\n" (* scale (time (ra-map*! ra-slice-for-each-1 ra20 - ra21 ra22))))
-             (format #t "2\t~9,4f\n" (* scale (time (ra-map*! ra-slice-for-each-2 ra20 - ra21 ra22))))
-             (format #t "3\t~9,4f\n" (* scale (time (ra-map*! ra-slice-for-each-3 ra20 - ra21 ra22))))
-             (format #t "4\t~9,4f\n" (* scale (time (ra-map*! ra-slice-for-each-4 ra20 - ra21 ra22))))
-             (format #t "5\t~9,4f\n" (* scale (time (array-map*! a20 - a21 a22))))
-             (format #t "6\t~9,4f\n" (* scale (time (ra-map! ra20 - ra21 ra22))))
-             (format #t "7\t~9,4f\n" (* scale (time (array-map! a20 - a21 a22)))))
-            ((2)
-             (format #t "1\t~9,4f\n" (* scale (time (ra-map*! ra-slice-for-each-1 ra20 - ra21))))
-             (format #t "2\t~9,4f\n" (* scale (time (ra-map*! ra-slice-for-each-2 ra20 - ra21))))
-             (format #t "3\t~9,4f\n" (* scale (time (ra-map*! ra-slice-for-each-3 ra20 - ra21))))
-             (format #t "4\t~9,4f\n" (* scale (time (ra-map*! ra-slice-for-each-4 ra20 - ra21))))
-             (format #t "5\t~9,4f\n" (* scale (time (array-map*! a20 - a21))))
-             (format #t "6\t~9,4f\n" (* scale (time (ra-map! ra20 - ra21))))
-             (format #t "7\t~9,4f\n" (* scale (time (array-map! a20 - a21)))))
-            ((1)
-             (format #t "1\t~9,4f\n" (* scale (time (ra-map*! ra-slice-for-each-1 ra20 (lambda () (random n))))))
-             (format #t "2\t~9,4f\n" (* scale (time (ra-map*! ra-slice-for-each-2 ra20 (lambda () (random n))))))
-             (format #t "3\t~9,4f\n" (* scale (time (ra-map*! ra-slice-for-each-3 ra20 (lambda () (random n))))))
-             (format #t "4\t~9,4f\n" (* scale (time (ra-map*! ra-slice-for-each-4 ra20 (lambda () (random n))))))
-             (format #t "5\t~9,4f\n" (* scale (time (array-map*! a20 (lambda () (random n))))))
-             (format #t "6\t~9,4f\n" (* scale (time (ra-map! ra20 (lambda () (random n))))))
-             (format #t "7\t~9,4f\n" (* scale (time (array-map! a20 (lambda () (random n))))))))))
-      (iota 6 1)))
-  (iota 3 1))
-
-
-; -----------------------
-; some profiling...
-; -----------------------
-
-(import (statprof))
-
-(let* ((rank 3)
-       (n (inexact->exact (ceiling (expt (* 10 m) (/ rank)))))
-       (nn (make-list rank n))
-       (ra20 (apply make-ra-new type *unspecified* nn))
-       (ra21 (ra-map! (apply make-ra-new type 0 nn) (lambda () (random n))))
-       (ra22 (ra-map! (apply make-ra-new type 0 nn) (lambda () (random n))))
-       (a20 (ra->array ra20))
-       (a21 (ra->array ra21))
-       (a22 (ra->array ra22))
-       (prof (lambda () (ra-map*! ra-slice-for-each-4 ra20 * ra21 ra22))))
-  (statprof prof #:count-calls? #t #:display-style 'tree))
