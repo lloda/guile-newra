@@ -22,7 +22,7 @@
             ra-slice-for-each
             ra-slice-for-each-1 ra-slice-for-each-2
             ra-slice-for-each-3 ra-slice-for-each-4
-            ra-map! ra-for-each))
+            ra-map! ra-for-each ra-copy! ra-fill! ra-equal?))
 
 (import (srfi srfi-9) (srfi srfi-9 gnu) (only (srfi srfi-1) fold every) (srfi srfi-8)
         (srfi srfi-4 gnu) (srfi srfi-26) (ice-9 match) (ice-9 control)
@@ -674,7 +674,7 @@
 
 
 ; ----------------
-; special rank-0 versions, ra-for-each and ra-map!
+; special rank-0 versions, ra-for-each, ra-map!, ra-copy!
 ; ----------------
 
 (define-syntax %opper-for-each
@@ -740,10 +740,58 @@
                      %apply-stepu %apply-stepu-back %apply-stepk %apply-stepk-back ra)
         ra0)))))
 
+(define-syntax %opper-copy!
+  (syntax-rules ()
+    ((_ %op op src dst)
+     ((%ra-vset! dst) (%ra-data dst) (%ra-zero dst)
+      ((%ra-vref src) (%ra-data src) (%ra-zero src))))))
+
+(define (ra-copy! src dst)
+  (%slice-loop (ra-rank dst) (const #f)
+               %opper-copy! %op
+               %list %let %equal?
+               %stepu %stepu-back %stepk %stepk-back src dst)
+  dst)
+
+(define-syntax %opper-fill!
+  (syntax-rules ()
+    ((_ %op fill ra)
+     ((%ra-vset! ra) (%ra-data ra) (%ra-zero ra) fill))))
+
+(define (ra-fill! ra fill)
+  (%slice-loop (ra-rank ra) fill
+               %opper-fill! %op
+               %list %let %equal?
+               %stepu %stepu-back %stepk %stepk-back ra)
+  ra)
+
+(define-syntax %opper-equal?
+  (syntax-rules ()
+    ((_ %op exit ra rb)
+     (unless (equal? ((%ra-vref ra) (%ra-data ra) (%ra-zero ra))
+                     ((%ra-vref rb) (%ra-data rb) (%ra-zero rb)))
+       (exit #f)))))
+
+(define (ra-equal? ra rb)
+  (and (eq? (%ra-type ra) (%ra-type rb))
+       (let/ec exit
+         (vector-for-each
+          (lambda (a b)
+            (unless (and (= (dim-lo a) (dim-lo b))
+                         (= (dim-len a) (dim-len b)))
+              (exit #f)))
+          (%ra-dims ra) (%ra-dims rb))
+         #t)
+       (let/ec exit
+         (%slice-loop (ra-rank ra) exit
+                      %opper-equal? %op
+                      %list %let %equal?
+                      %stepu %stepu-back %stepk %stepk-back ra rb)
+         #t)))
+
 
 ; ----------------
 ; epilogue
 ; ----------------
 
-; default
 (define ra-slice-for-each ra-slice-for-each-4)

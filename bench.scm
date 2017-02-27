@@ -19,8 +19,8 @@
 ; -----------------------
 
 (define type #t)
-(define m 100000)
-
+(define m #e1e5)
+(format #t "\nra-slice-for-each array-slice-for-each ra-map! array-map!\n==========\n")
 (for-each
   (lambda (nargs)
     (format #t "\n~a args\n---------\n" nargs)
@@ -64,6 +64,68 @@
              (format #t "7\t~9,4f\n" (* scale (time (array-map! a20 (lambda () (random n))))))))))
       (iota 6 1)))
   (iota 3 1))
+
+(define m #e5e5)
+(format #t "\nra-copy! array-copy!\n==========\n")
+(for-each
+  (lambda (typesrc typedst)
+    (format #t "\ntype src ~a -> type dst ~a\n---------\n" typesrc typedst)
+    (for-each
+      (lambda (rank)
+        (let* ((n (inexact->exact (ceiling (expt m (/ rank)))))
+               (nn (make-list rank n))
+               (len (fold * 1 nn))
+               (scale (* 1e3 (/ m len)))
+               (ra20 (apply make-ra-new typesrc *unspecified* nn))
+               (ra21 (ra-map! (apply make-ra-new typedst 0 nn) (lambda () (random n))))
+               (a20 (ra->array ra20))
+               (a21 (ra->array ra21)))
+          (format #t "rank ~a (nn ~a)\n" rank nn)
+          (format #t "1\t~9,4f\n" (* scale (time (ra-copy! ra21 ra20))))
+          (format #t "2\t~9,4f\n" (* scale (time (array-copy! a21 a20))))))
+      (iota 6 1)))
+  (list #t 'f64 #t)
+  (list #t 'f64 'f64))
+
+(define m #e5e5)
+(format #t "\nra-fill! array-fill!\n==========\n")
+(for-each
+  (lambda (type)
+    (format #t "\ntype dst ~a\n----------\n" type)
+    (for-each
+      (lambda (rank)
+        (let* ((n (inexact->exact (ceiling (expt m (/ rank)))))
+               (nn (make-list rank n))
+               (len (fold * 1 nn))
+               (scale (* 1e3 (/ m len)))
+               (ra20 (apply make-ra-new type *unspecified* nn))
+               (a20 (ra->array ra20)))
+          (format #t "rank ~a (nn ~a)\n" rank nn)
+          (format #t "1\t~9,4f\n" (* scale (time (ra-fill! ra20 77.))))
+          (format #t "2\t~9,4f\n" (* scale (time (array-fill! a20 77.))))))
+      (iota 6 1)))
+  (list #t 'f64))
+
+(define m #e5e5)
+(format #t "\nra-equal? array-equal?\n==========\n")
+(for-each
+  (lambda (type)
+    (format #t "\ntype dst ~a\n----------\n" type)
+    (for-each
+      (lambda (rank)
+        (let* ((n (inexact->exact (ceiling (expt m (/ rank)))))
+               (nn (make-list rank n))
+               (len (fold * 1 nn))
+               (scale (* 1e3 (/ m len)))
+               (ra20 (ra-map! (apply make-ra-new type 0 nn) (lambda () (random n))))
+               (ra21 (ra-copy! ra20 (apply make-ra-new type 0 nn)))
+               (a20 (ra->array ra20))
+               (a21 (ra->array ra21)))
+          (format #t "rank ~a (nn ~a)\n" rank nn)
+          (format #t "1\t~9,4f\n" (* scale (time (ra-equal? ra20 ra21))))
+          (format #t "2\t~9,4f\n" (* scale (time (array-equal? a20 a21))))))
+      (iota 6 1)))
+  (list #t 'f64))
 
 
 ; -----------------------
