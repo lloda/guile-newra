@@ -139,7 +139,7 @@
 (define <ra-vtable>
   (let ((v (make-struct/no-tail
             <applicable-struct-with-setter-vtable>
-            (make-struct-layout (string-append "pwpw" "pwpwpwpwpwpwpw")))))
+            (make-struct-layout (string-append "pwpw" "prpwprprprprpr")))))
     v))
 
 (define-inlinable (ra? o)
@@ -161,18 +161,31 @@
 ;; data:    a container (function) addressable by a single integer
 ;; address: into data.
 ;; zero:    address that corresponds to all the ra indices = 0.
+;; %%:      skip check for ra?, when it's already done.
 
-(define-syntax rastruct-ref (syntax-rules () ((_ a n) (begin (check-ra a) (struct-ref a n)))))
-(define-syntax rastruct-set! (syntax-rules () ((_ a n o) (begin (check-ra a) (struct-set! a n o)))))
+(define-syntax %%rastruct-ref (syntax-rules () ((_ a n) (struct-ref a n))))
+(define-syntax %%rastruct-set! (syntax-rules () ((_ a n o) (struct-set! a n o))))
 
-(define-inlinable (%ra-data a) (rastruct-ref a 2))
-(define-inlinable (%ra-zero a) (rastruct-ref a 3))
-(define-inlinable (%ra-zero-set! a z) (rastruct-set! a 3 z)) ; set on iteration. FIXME immutable record?
-(define-inlinable (%ra-dims a) (rastruct-ref a 4))
-(define-inlinable (%ra-type a) (rastruct-ref a 5))
-(define-inlinable (%ra-vlen a) (rastruct-ref a 6))
-(define-inlinable (%ra-vref a) (rastruct-ref a 7))
-(define-inlinable (%ra-vset! a) (rastruct-ref a 8))
+(define-inlinable (%%ra-data a) (%%rastruct-ref a 2))
+(define-inlinable (%%ra-zero a) (%%rastruct-ref a 3))
+(define-inlinable (%%ra-zero-set! a z) (%%rastruct-set! a 3 z)) ; set on iteration. FIXME immutable record?
+(define-inlinable (%%ra-dims a) (%%rastruct-ref a 4))
+(define-inlinable (%%ra-type a) (%%rastruct-ref a 5))
+(define-inlinable (%%ra-vlen a) (%%rastruct-ref a 6))
+(define-inlinable (%%ra-vref a) (%%rastruct-ref a 7))
+(define-inlinable (%%ra-vset! a) (%%rastruct-ref a 8))
+
+(define-syntax %rastruct-ref (syntax-rules () ((_ a n) (begin (check-ra a) (struct-ref a n)))))
+(define-syntax %rastruct-set! (syntax-rules () ((_ a n o) (begin (check-ra a) (struct-set! a n o)))))
+
+(define-inlinable (%ra-data a) (%rastruct-ref a 2))
+(define-inlinable (%ra-zero a) (%rastruct-ref a 3))
+(define-inlinable (%ra-zero-set! a z) (%rastruct-set! a 3 z))
+(define-inlinable (%ra-dims a) (%rastruct-ref a 4))
+(define-inlinable (%ra-type a) (%rastruct-ref a 5))
+(define-inlinable (%ra-vlen a) (%rastruct-ref a 6))
+(define-inlinable (%ra-vref a) (%rastruct-ref a 7))
+(define-inlinable (%ra-vset! a) (%rastruct-ref a 8))
 
 (define (ra-data a) (%ra-data a))
 (define (ra-zero a) (%ra-zero a))
@@ -183,7 +196,7 @@
 (define (ra-vref a) (%ra-vref a))
 (define (ra-vset! a) (%ra-vset! a))
 
-(define-inlinable (%ra-step a k) (dim-step (vector-ref (%ra-dims a) k)))
+(define-inlinable (%%ra-step a k) (dim-step (vector-ref (%%ra-dims a) k)))
 
 (define (pick-typed-vector-functions v)
   (cond ((vector? v)    (values  #t    vector-length     vector-ref     vector-set!   ))
@@ -262,42 +275,49 @@
 ; ref, set!, prefix slices
 ; ----------------
 
+(define-inlinable (%%ra-rank a) (vector-length (%%ra-dims a)))
 (define-inlinable (%ra-rank a) (vector-length (%ra-dims a)))
 (define (ra-rank a) (%ra-rank a))
 
 (define ra-ref
   (case-lambda
    ((ra)
-    (unless (zero? (%ra-rank ra))
-      (throw 'bad-number-of-indices (%ra-rank ra) 0))
-    ((%ra-vref ra) (%ra-data ra) (%ra-zero ra)))
+    (check-ra ra)
+    (unless (zero? (%%ra-rank ra))
+      (throw 'bad-number-of-indices (%%ra-rank ra) 0))
+    ((%%ra-vref ra) (%%ra-data ra) (%%ra-zero ra)))
    ((ra . i)
+    (check-ra ra)
     (unless (= (%ra-rank ra) (length i))
       (throw 'bad-number-of-indices (%ra-rank ra) (length i)))
-    ((%ra-vref ra) (%ra-data ra) (apply ra-pos (%ra-zero ra) (%ra-dims ra) i)))))
+    ((%%ra-vref ra) (%%ra-data ra) (apply ra-pos (%%ra-zero ra) (%%ra-dims ra) i)))))
 
 (define ra-set!
   (case-lambda
    ((ra o)
-    (unless (zero? (%ra-rank ra))
-      (throw 'bad-number-of-indices (%ra-rank ra) 0))
-    ((%ra-vset! ra) (%ra-data ra) (%ra-zero ra) o))
+    (check-ra ra)
+    (unless (zero? (%%ra-rank ra))
+      (throw 'bad-number-of-indices (%%ra-rank ra) 0))
+    ((%%ra-vset! ra) (%%ra-data ra) (%%ra-zero ra) o))
    ((ra o . i)
+    (check-ra ra)
     (unless (= (%ra-rank ra) (length i))
       (throw 'bad-number-of-indices (%ra-rank ra) (length i)))
-    ((%ra-vset! ra) (%ra-data ra) (apply ra-pos (%ra-zero ra) (%ra-dims ra) i) o))))
+    ((%%ra-vset! ra) (%%ra-data ra) (apply ra-pos (%%ra-zero ra) (%%ra-dims ra) i) o))))
 
 (define (ra-slice ra . i)
-  (make-ra (%ra-data ra)
-           (apply ra-pos (%ra-zero ra) (%ra-dims ra) i)
-           (vector-drop (%ra-dims ra) (length i))))
+  (check-ra ra)
+  (make-ra (%%ra-data ra)
+           (apply ra-pos (%%ra-zero ra) (%%ra-dims ra) i)
+           (vector-drop (%%ra-dims ra) (length i))))
 
 (define (ra-cell ra . i)
-  (let ((pos (apply ra-pos (%ra-zero ra) (%ra-dims ra) i))
+  (check-ra ra)
+  (let ((pos (apply ra-pos (%%ra-zero ra) (%%ra-dims ra) i))
         (leni (length i)))
-    (if (= (%ra-rank ra) leni)
-      ((%ra-vref ra) (%ra-data ra) pos)
-      (make-ra (%ra-data ra) pos (vector-drop (%ra-dims ra) leni)))))
+    (if (= (%%ra-rank ra) leni)
+      ((%%ra-vref ra) (%%ra-data ra) pos)
+      (make-ra (%%ra-data ra) pos (vector-drop (%%ra-dims ra) leni)))))
 
 
 ; ----------------
@@ -386,11 +406,11 @@
   (unless (pair? ra)
     (throw 'missing-arguments))
   (for-each check-ra ra)
-  (unless (<= k (%ra-rank (car ra)))
-    (throw 'bad-frame-rank k (%ra-rank (car ra))))
-  (unless (every (lambda (rai) (= (%ra-rank (car ra)) (%ra-rank rai))) (cdr ra))
+  (unless (<= k (%%ra-rank (car ra)))
+    (throw 'bad-frame-rank k (%%ra-rank (car ra))))
+  (unless (every (lambda (rai) (= (%%ra-rank (car ra)) (%%ra-rank rai))) (cdr ra))
     (throw 'bad-ranks k (map ra-rank ra)))
-  (let* ((dims (map (compose (cut vector-take <> k) %ra-dims) ra))
+  (let* ((dims (map (compose (cut vector-take <> k) %%ra-dims) ra))
          (lo (vector-map dim-lo (car dims)))
          (len (vector-map dim-len (car dims))))
     (unless (every (lambda (rb) (equal? lo (vector-map dim-lo rb))) (cdr dims))
@@ -420,9 +440,9 @@
 ; create (rank(ra) - k) slices that we'll use to iterate by bumping their zeros.
     (let ((frame ra)
           (ra (map (lambda (ra)
-                     (make-ra (%ra-data ra)
-                              (ra-pos-first (%ra-zero ra) (vector-take (%ra-dims ra) kk))
-                              (vector-drop (%ra-dims ra) kk)))
+                     (make-ra (%%ra-data ra)
+                              (ra-pos-first (%%ra-zero ra) (vector-take (%%ra-dims ra) kk))
+                              (vector-drop (%%ra-dims ra) kk)))
                    ra)))
       (let loop-rank ((k 0))
         (if (= k kk)
@@ -434,15 +454,15 @@
                ((= i lenk)
                 (for-each
                     (lambda (ra frame)
-                      (let ((step (dim-step (vector-ref (%ra-dims frame) k))))
-                        (%ra-zero-set! ra (- (%ra-zero ra) (* step lenk)))))
+                      (let ((step (dim-step (vector-ref (%%ra-dims frame) k))))
+                        (%%ra-zero-set! ra (- (%%ra-zero ra) (* step lenk)))))
                   ra frame))
                (else
                 (loop-rank (+ k 1))
                 (for-each
                     (lambda (ra frame)
-                      (let ((step (dim-step (vector-ref (%ra-dims frame) k))))
-                        (%ra-zero-set! ra (+ (%ra-zero ra) step))))
+                      (let ((step (dim-step (vector-ref (%%ra-dims frame) k))))
+                        (%%ra-zero-set! ra (+ (%%ra-zero ra) step))))
                   ra frame)
                 (loop-dim (+ i 1)))))))))))
 
@@ -455,9 +475,9 @@
 ; create (rank(ra) - k) slices that we'll use to iterate by bumping their zeros.
       (let* ((frame ra)
              (ra (map (lambda (ra)
-                        (make-ra (%ra-data ra)
-                                 (ra-pos-first (%ra-zero ra) (vector-take (%ra-dims ra) u))
-                                 (vector-drop (%ra-dims ra) u)))
+                        (make-ra (%%ra-data ra)
+                                 (ra-pos-first (%%ra-zero ra) (vector-take (%%ra-dims ra) u))
+                                 (vector-drop (%%ra-dims ra) u)))
                       ra)))
 ; since we'll unroll, special case for rank 0
         (if (zero? u)
@@ -465,14 +485,14 @@
 ; we'll do a normal rank-loop in [0..u) and unroll dimensions [u..k); u must be found.
 ; the last axis of the frame can always be unrolled, so we start checking from the one before.
           (let* ((u (- u 1))
-                 (step (map (lambda (frame) (%ra-step frame u)) frame)))
+                 (step (map (lambda (frame) (%%ra-step frame u)) frame)))
             (receive (u len)
                 (let loop ((u u) (s step) (len 1))
                   (let ((lenu (vector-ref lens u)))
                     (if (zero? u)
                       (values u (* len lenu))
                       (let ((ss (map (cut * lenu <>) s))
-                            (sm (map (lambda (frame) (%ra-step frame (- u 1))) frame)))
+                            (sm (map (lambda (frame) (%%ra-step frame (- u 1))) frame)))
                         (if (equal? ss sm)
                           (loop (- u 1) ss (* len lenu))
                           (values u (* len lenu)))))))
@@ -486,11 +506,11 @@
                       (cond
                        ((zero? i)
                         (for-each (lambda (ra step)
-                                    (%ra-zero-set! ra (- (%ra-zero ra) (* step lenm))))
+                                    (%%ra-zero-set! ra (- (%%ra-zero ra) (* step lenm))))
                                   ra step))
                        (else
                         (for-each (lambda (ra step)
-                                    (%ra-zero-set! ra (+ (%ra-zero ra) step)))
+                                    (%%ra-zero-set! ra (+ (%%ra-zero ra) step)))
                                   ra step)
                         (loop (- i 1)))))
                     (let ((lenmk (- (vector-ref lens k) 1)))
@@ -499,11 +519,11 @@
                         (cond
                          ((zero? i)
                           (for-each (lambda (ra frame)
-                                      (%ra-zero-set! ra (- (%ra-zero ra) (* (%ra-step frame k) lenmk))))
+                                      (%%ra-zero-set! ra (- (%%ra-zero ra) (* (%%ra-step frame k) lenmk))))
                                     ra frame))
                          (else
                           (for-each (lambda (ra frame)
-                                      (%ra-zero-set! ra (+ (%ra-zero ra) (%ra-step frame k))))
+                                      (%%ra-zero-set! ra (+ (%%ra-zero ra) (%%ra-step frame k))))
                                     ra frame)
                           (loop-dim (- i 1))))))))))))))))
 
@@ -553,7 +573,7 @@
 (define-syntax %stepu
   (syntax-rules ()
     ((_ (ra step) ...)
-     (begin (%ra-zero-set! ra (+ (%ra-zero ra) step)) ...))))
+     (begin (%%ra-zero-set! ra (+ (%%ra-zero ra) step)) ...))))
 (define-syntax %apply-stepu
   (syntax-rules ()
     ((_ (ra step))
@@ -562,7 +582,7 @@
 (define-syntax %stepu-back
   (syntax-rules ()
     ((_ lenm (ra step) ...)
-     (begin (%ra-zero-set! ra (- (%ra-zero ra) (* step lenm))) ...))))
+     (begin (%%ra-zero-set! ra (- (%%ra-zero ra) (* step lenm))) ...))))
 (define-syntax %apply-stepu-back
   (syntax-rules ()
     ((_ lenm (ra step))
@@ -571,7 +591,7 @@
 (define-syntax %stepk
   (syntax-rules ()
     ((_ k (ra frame) ...)
-     (begin (%ra-zero-set! ra (+ (%ra-zero ra) (%ra-step frame k))) ...))))
+     (begin (%%ra-zero-set! ra (+ (%%ra-zero ra) (%%ra-step frame k))) ...))))
 (define-syntax %apply-stepk
   (syntax-rules ()
     ((_ k (ra frame))
@@ -580,7 +600,7 @@
 (define-syntax %stepk-back
   (syntax-rules ()
     ((_ k lenmk (ra frame) ...)
-     (begin (%ra-zero-set! ra (- (%ra-zero ra) (* (%ra-step frame k) lenmk))) ...))))
+     (begin (%%ra-zero-set! ra (- (%%ra-zero ra) (* (%%ra-step frame k) lenmk))) ...))))
 (define-syntax %apply-stepk-back
   (syntax-rules ()
     ((_ k lenmk (ra frame))
@@ -606,9 +626,9 @@
                  (%let ((frame ...) (ra ...) identity)
                    (%let ((ra ...) (ra ...)
                           (lambda (ro)
-                            (make-ra (%ra-data ro)
-                                     (ra-pos-first (%ra-zero ro) (vector-take (%ra-dims ro) u))
-                                     (vector-drop (%ra-dims ro) u))))
+                            (make-ra (%%ra-data ro)
+                                     (ra-pos-first (%%ra-zero ro) (vector-take (%%ra-dims ro) u))
+                                     (vector-drop (%%ra-dims ro) u))))
 ; since we'll unroll, special case for rank 0
                      (if (zero? u)
 ; BUG no fresh slice descriptor like in array-slice-for-each. See also below.
@@ -616,14 +636,14 @@
 ; we'll do a normal rank-loop in [0..u) and unroll dimensions [u..k); u must be found.
 ; the last axis of the frame can always be unrolled, so we start checking from the one before.
                        (let ((u (- u 1)))
-                         (%let ((step ...) (frame ...) (lambda (frome) (%ra-step frome u)))
+                         (%let ((step ...) (frame ...) (lambda (frome) (%%ra-step frome u)))
                            (receive (u len)
                                (let loop ((u u) (len 1) (s step) ...)
                                  (let ((lenu (vector-ref lens u)))
                                    (if (zero? u)
                                      (values u (* len lenu))
                                      (%let ((ss ...) (s ...) (cut * lenu <>))
-                                       (%let ((sm ...) (frame ...) (lambda (frome) (%ra-step frome (- u 1))))
+                                       (%let ((sm ...) (frame ...) (lambda (frome) (%%ra-step frome (- u 1))))
                                          (if (%equal? (ss ...) (sm ...))
                                            (loop (- u 1) (* len lenu) ss ...)
                                            (values u (* len lenu))))))))
@@ -674,13 +694,13 @@
 
 
 ; ----------------
-; special rank-0 versions, ra-for-each, ra-map!, ra-copy!
+; special rank-0 versions, ra-for-each, ra-map!, ra-copy!, ra-equal?
 ; ----------------
 
 (define-syntax %opper-for-each
   (syntax-rules ()
     ((_ %op op ra ...)
-     (%op op ((%ra-vref ra) (%ra-data ra) (%ra-zero ra)) ...))))
+     (%op op ((%%ra-vref ra) (%%ra-data ra) (%%ra-zero ra)) ...))))
 
 (define ra-for-each
   (let-syntax
@@ -694,7 +714,7 @@
        (%apply-opper-for-each
         (syntax-rules ()
           ((_ %op op ra)
-           (%op op (map (lambda (a) ((%ra-vref a) (%ra-data a) (%ra-zero a))) ra))))))
+           (%op op (map (lambda (a) ((%%ra-vref a) (%%ra-data a) (%%ra-zero a))) ra))))))
     (case-lambda
      ((op ra0) (%args op ra0))
      ((op ra0 ra1) (%args op ra0 ra1))
@@ -709,8 +729,8 @@
 (define-syntax %opper-map!
   (syntax-rules ()
     ((_ %op op ra0 ra ...)
-     ((%ra-vset! ra0) (%ra-data ra0) (%ra-zero ra0)
-      (%op op ((%ra-vref ra) (%ra-data ra) (%ra-zero ra)) ...)))))
+     ((%%ra-vset! ra0) (%%ra-data ra0) (%%ra-zero ra0)
+      (%op op ((%%ra-vref ra) (%%ra-data ra) (%%ra-zero ra)) ...)))))
 
 (define ra-map!
   (let-syntax
@@ -726,8 +746,8 @@
        (%apply-opper-map!
         (syntax-rules ()
           ((_ %op op ra)
-           ((%ra-vset! (car ra)) (%ra-data (car ra)) (%ra-zero (car ra))
-            (%op op (map (lambda (a) ((%ra-vref a) (%ra-data a) (%ra-zero a))) (cdr ra))))))))
+           ((%%ra-vset! (car ra)) (%%ra-data (car ra)) (%%ra-zero (car ra))
+            (%op op (map (lambda (a) ((%%ra-vref a) (%%ra-data a) (%%ra-zero a))) (cdr ra))))))))
     (case-lambda
      ((ra0 op) (%args op ra0))
      ((ra0 op ra1) (%args op ra0 ra1))
@@ -743,8 +763,8 @@
 (define-syntax %opper-copy!
   (syntax-rules ()
     ((_ %op op src dst)
-     ((%ra-vset! dst) (%ra-data dst) (%ra-zero dst)
-      ((%ra-vref src) (%ra-data src) (%ra-zero src))))))
+     ((%%ra-vset! dst) (%%ra-data dst) (%%ra-zero dst)
+      ((%%ra-vref src) (%%ra-data src) (%%ra-zero src))))))
 
 (define (ra-copy! src dst)
   (%slice-loop (ra-rank dst) (const #f)
@@ -756,7 +776,7 @@
 (define-syntax %opper-fill!
   (syntax-rules ()
     ((_ %op fill ra)
-     ((%ra-vset! ra) (%ra-data ra) (%ra-zero ra) fill))))
+     ((%%ra-vset! ra) (%%ra-data ra) (%%ra-zero ra) fill))))
 
 (define (ra-fill! ra fill)
   (%slice-loop (ra-rank ra) fill
@@ -768,19 +788,19 @@
 (define-syntax %opper-equal?
   (syntax-rules ()
     ((_ %op exit ra rb)
-     (unless (equal? ((%ra-vref ra) (%ra-data ra) (%ra-zero ra))
-                     ((%ra-vref rb) (%ra-data rb) (%ra-zero rb)))
+     (unless (equal? ((%%ra-vref ra) (%%ra-data ra) (%%ra-zero ra))
+                     ((%%ra-vref rb) (%%ra-data rb) (%%ra-zero rb)))
        (exit #f)))))
 
 (define (ra-equal? ra rb)
-  (and (eq? (%ra-type ra) (%ra-type rb))
+  (and (eq? (%%ra-type ra) (%%ra-type rb))
        (let/ec exit
          (vector-for-each
           (lambda (a b)
             (unless (and (= (dim-lo a) (dim-lo b))
                          (= (dim-len a) (dim-len b)))
               (exit #f)))
-          (%ra-dims ra) (%ra-dims rb))
+          (%%ra-dims ra) (%%ra-dims rb))
          #t)
        (let/ec exit
          (%slice-loop (ra-rank ra) exit
