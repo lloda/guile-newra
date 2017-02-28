@@ -62,6 +62,25 @@
 
 
 ; -----------------------
+; make-ra-shared
+; -----------------------
+
+(test-equal "%0(99)" (ra->string (make-shared-ra ra4 (lambda () '()))))
+
+(test-equal "%1:2(1 4)" (ra->string (make-shared-ra ra2 (lambda (i) (list i i)) 2)))
+(test-equal "%1:2(1 3)" (ra->string (make-shared-ra ra2 (lambda (i) (list i 0)) 2)))
+(test-equal "%1:2(2 4)" (ra->string (make-shared-ra ra2 (lambda (i) (list i 1)) 2)))
+(test-equal "%1:2(1 2)" (ra->string (make-shared-ra ra2 (lambda (j) (list 0 j)) 2)))
+(test-equal "%1:2(3 4)" (ra->string (make-shared-ra ra2 (lambda (j) (list 1 j)) 2)))
+
+(test-equal "%1@1:2(1 4)" (ra->string (make-shared-ra ra3 (lambda (i) (list i i)) '(1 2))))
+(test-equal "%1@1:2(1 3)" (ra->string (make-shared-ra ra3 (lambda (i) (list i 1)) '(1 2))))
+(test-equal "%1@1:2(2 4)" (ra->string (make-shared-ra ra3 (lambda (i) (list i 2)) '(1 2))))
+(test-equal "%1@1:2(1 2)" (ra->string (make-shared-ra ra3 (lambda (j) (list 1 j)) '(1 2))))
+(test-equal "%1@1:2(3 4)" (ra->string (make-shared-ra ra3 (lambda (j) (list 2 j)) '(1 2))))
+
+
+; -----------------------
 ; make-ra-new
 ; -----------------------
 

@@ -5,13 +5,14 @@
 
 + make-ra-new, make-ra-data
 + ra-slice-for-each, ra-map!, ra-for-each, ra-transpose, ra-cell, ra-ref, ra-set!
++ make-shared-ra
 
 * refactor macros
 * speed
 
 - drag-along facility / delayed ops
 - high level slicing
-- make-shared-ra
 - compatibility with root vectors
 - as-ra
+- ra-index-map!
 - hooks into C / replace array-*.

@@ -23,7 +23,7 @@
             ra-slice-for-each-1 ra-slice-for-each-2
             ra-slice-for-each-3 ra-slice-for-each-4
             ra-map! ra-for-each ra-copy! ra-fill! ra-equal?
-            ra-length))
+            ra-length make-shared-ra))
 
 (import (srfi srfi-9) (srfi srfi-9 gnu) (only (srfi srfi-1) fold every) (srfi srfi-8)
         (srfi srfi-4 gnu) (srfi srfi-26) (ice-9 match) (ice-9 control)
@@ -803,7 +803,7 @@
 
 
 ; ----------------
-; Guile compatibility
+; misc functions for Guile compatibility
 ; ----------------
 
 (define-inlinable (ra-length ra)
@@ -811,7 +811,30 @@
     (throw 'zero-rank-ra-has-no-length ra))
   (dim-len (vector-ref (%ra-dims ra) 0)))
 
-; make-shared-ra
+(define (make-shared-ra oldra mapfunc . d)
+  (check-ra oldra)
+  (receive (dims size) (c-dims-size d) ; only lo len, won't use step
+    (let* ((newrank (vector-length dims))
+           (los (vector->list (vector-map dim-lo dims)))
+           (ref (apply ra-pos (%%ra-zero oldra) (%%ra-dims oldra) (apply mapfunc los)))
+           (dims (vector-map
+                  (lambda (dim step) (make-dim (dim-len dim) (dim-lo dim) step))
+                  dims
+                  (let ((steps (make-vector newrank 0)))
+                    (let loop ((k 0))
+                      (cond
+                       ((= k newrank) steps)
+                       (else
+                        (vector-set!
+                         steps k
+                         (if (positive? (dim-len (vector-ref dims k)))
+                           (let ((ii (list-copy los)))
+                             (list-set! ii k (+ 1 (list-ref los k)))
+                             (- (apply ra-pos (%%ra-zero oldra) (%%ra-dims oldra) (apply mapfunc ii)) ref))
+                           0))
+                        (loop (+ k 1)))))))))
+      (make-ra (%%ra-data oldra) (- ref (ra-pos-first 0 dims)) dims))))
+
 ; ra-index-map!
 ; list->ra, list->typed-ra
 ; ra->list
