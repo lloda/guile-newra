@@ -68,6 +68,7 @@
 (define ra5 (make-ra-new #t 0 '(1 3) '(1 2)))
 (array-index-map! (ra-data ra5) (lambda i i))
 (test-equal (ra->string ra5) "%2@1:3@1:2(((0) (1)) ((2) (3)) ((4) (5)))")
+(test-equal 3 (ra-length ra5))
 
 
 ; -----------------------
@@ -81,12 +82,17 @@
 (define ra7b (make-ra #(1 4 2 5 3 6) -3 `#(,(make-dim 2 1 1) ,(make-dim 3 1 2))))
 (test-equal (ra->string ra7b) "%2@1:2@1:3((1 2 3) (4 5 6))")
 
+(test-equal 2 (ra-length ra6))
+(test-equal 2 (ra-length ra7a))
+(test-equal 2 (ra-length ra7b))
+
 
 ; -----------------------
 ; ra-slice, ra-ref, ra-cell
 ; -----------------------
 
 (define ra8 (make-ra-data (make-dim 6 1) '(1 2) '(1 3)))
+(test-equal 2 (ra-length ra8))
 
 (test-equal (ra->string (ra-cell ra8)) "%2d@1:2@1:3((1 2 3) (4 5 6))")
 (test-equal (ra->string (ra-cell ra8 1)) "%1d@1:3(1 2 3)")
@@ -136,6 +142,9 @@
 (define ra-empty0 (make-ra-data (make-dim 6 1) '(1 0) '(2 1)))
 (define ra-empty1 (make-ra-data (make-dim 6 1) '(1 1) '(2 1)))
 (define ra-empty2 (make-ra-data (make-dim 6 1) '(1 0) '(2 2)))
+(test-equal 0 (ra-length ra-empty0))
+(test-equal 1 (ra-length ra-empty1))
+(test-equal 0 (ra-length ra-empty2))
 
 (for-each
   (lambda (ra-slice-for-each)
@@ -195,6 +204,7 @@
 (set! (ra9 0 2) 11)
 (set! (ra9 0 3) 22)
 (test-equal (ra->string ra9) "%2@-1:2@1:3((99 77 88) (33 11 22))")
+(test-equal 2 (ra-length ra9))
 
 
 ; -----------------------
@@ -204,6 +214,10 @@
 (define ra11 (make-ra-new #t 0 10))
 (define ra12 (make-ra-data (make-dim 10) 10))
 (define ra13 (make-ra-data (make-dim 10 10 -1) 10))
+
+(test-equal 10 (ra-length ra11))
+(test-equal 10 (ra-length ra12))
+(test-equal 10 (ra-length ra13))
 
 (test-equal "%1:10(0 1 2 3 4 5 6 7 8 9)" (ra->string (ra-copy! ra12 ra11)))
 (let ((ra5a (make-ra-new #t 0 '(1 2) '(1 3)))

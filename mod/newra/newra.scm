@@ -22,7 +22,8 @@
             ra-slice-for-each
             ra-slice-for-each-1 ra-slice-for-each-2
             ra-slice-for-each-3 ra-slice-for-each-4
-            ra-map! ra-for-each ra-copy! ra-fill! ra-equal?))
+            ra-map! ra-for-each ra-copy! ra-fill! ra-equal?
+            ra-length))
 
 (import (srfi srfi-9) (srfi srfi-9 gnu) (only (srfi srfi-1) fold every) (srfi srfi-8)
         (srfi srfi-4 gnu) (srfi srfi-26) (ice-9 match) (ice-9 control)
@@ -804,6 +805,11 @@
 ; ----------------
 ; Guile compatibility
 ; ----------------
+
+(define-inlinable (ra-length ra)
+  (unless (positive? (%ra-rank ra))
+    (throw 'zero-rank-ra-has-no-length ra))
+  (dim-len (vector-ref (%ra-dims ra) 0)))
 
 ; make-shared-ra
 ; ra-index-map!
