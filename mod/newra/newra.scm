@@ -543,12 +543,12 @@
 
 (define-syntax %let
   (syntax-rules ()
-    ((_ ((a ...) (b ...) f) body ...)
-     (let ((a (f b)) ...) body ...))))
+    ((_ ((a ...) (b ...) f) e ...)
+     (let ((a (f b)) ...) e ...))))
 (define-syntax %apply-let
   (syntax-rules ()
-    ((_ ((a) (b) f) body ...)
-     (let ((a (map f b))) body ...))))
+    ((_ ((a) (b) f) e ...)
+     (let ((a (map f b))) e ...))))
 
 (define-syntax %op
   (syntax-rules ()
@@ -560,15 +560,6 @@
      (throw 'bad-number-of-arguments))
     ((_ op a)
      (apply op a))))
-
-(define-syntax %equal?
-  (syntax-rules ()
-    ((_ (x ...) (y ...))
-     (and (equal? x y) ...))))
-(define-syntax %apply-equal?
-  (syntax-rules ()
-    ((_ (x) (y))
-     (equal? x y))))
 
 (define-syntax %stepu
   (syntax-rules ()
@@ -610,7 +601,7 @@
   (lambda (stx)
     (syntax-case stx ()
       ((_ u_ op
-          %opper %op %list %let %equal? %stepu %stepu-back %stepk %stepk-back
+          %opper %op %list %let %stepu %stepu-back %stepk %stepk-back
           ra ...)
        (with-syntax ([(frame ...) (generate-temporaries #'(ra ...))]
                      [(step ...) (generate-temporaries #'(ra ...))]
@@ -644,7 +635,7 @@
                                      (values u (* len lenu))
                                      (%let ((ss ...) (s ...) (cut * lenu <>))
                                        (%let ((sm ...) (frame ...) (lambda (frome) (%%ra-step frome (- u 1))))
-                                         (if (%equal? (ss ...) (sm ...))
+                                         (if (and (equal? ss sm) ...)
                                            (loop (- u 1) (* len lenu) ss ...)
                                            (values u (* len lenu))))))))
                              (let ((lenm (- len 1)))
@@ -680,7 +671,7 @@
           ((_ u op ra ...)
            (%slice-loop u op
                         %opper-slice-for-each %op
-                        %list %let %equal?
+                        %list %let
                         %stepu %stepu-back %stepk %stepk-back ra ...)))))
     (case-lambda
      ((u op ra0) (%args u op ra0))
@@ -689,7 +680,7 @@
      ((u op . ra)
       (%slice-loop u op
                    %opper-slice-for-each %apply-op
-                   %apply-list %apply-let %apply-equal?
+                   %apply-list %apply-let
                    %apply-stepu %apply-stepu-back %apply-stepk %apply-stepk-back ra)))))
 
 
@@ -709,7 +700,7 @@
           ((_ op ra0 ra ...)
            (%slice-loop (ra-rank ra0) op
                         %opper-for-each %op
-                        %list %let %equal?
+                        %list %let
                         %stepu %stepu-back %stepk %stepk-back ra0 ra ...))))
        (%apply-opper-for-each
         (syntax-rules ()
@@ -723,7 +714,7 @@
       (let ((ra (cons ra0 rax)))
         (%slice-loop (ra-rank ra0) op
                      %apply-opper-for-each %apply-op
-                     %apply-list %apply-let %apply-equal?
+                     %apply-list %apply-let
                      %apply-stepu %apply-stepu-back %apply-stepk %apply-stepk-back ra))))))
 
 (define-syntax %opper-map!
@@ -740,7 +731,7 @@
            (begin
              (%slice-loop (ra-rank ra0) op
                           %opper-map! %op
-                          %list %let %equal?
+                          %list %let
                           %stepu %stepu-back %stepk %stepk-back ra0 ra ...)
              ra0))))
        (%apply-opper-map!
@@ -756,7 +747,7 @@
       (let ((ra (cons ra0 rax)))
         (%slice-loop (ra-rank ra0) op
                      %apply-opper-map! %apply-op
-                     %apply-list %apply-let %apply-equal?
+                     %apply-list %apply-let
                      %apply-stepu %apply-stepu-back %apply-stepk %apply-stepk-back ra)
         ra0)))))
 
@@ -769,7 +760,7 @@
 (define (ra-copy! src dst)
   (%slice-loop (ra-rank dst) (const #f)
                %opper-copy! %op
-               %list %let %equal?
+               %list %let
                %stepu %stepu-back %stepk %stepk-back src dst)
   dst)
 
@@ -781,7 +772,7 @@
 (define (ra-fill! ra fill)
   (%slice-loop (ra-rank ra) fill
                %opper-fill! %op
-               %list %let %equal?
+               %list %let
                %stepu %stepu-back %stepk %stepk-back ra)
   ra)
 
@@ -805,9 +796,19 @@
        (let/ec exit
          (%slice-loop (ra-rank ra) exit
                       %opper-equal? %op
-                      %list %let %equal?
+                      %list %let
                       %stepu %stepu-back %stepk %stepk-back ra rb)
          #t)))
+
+
+; ----------------
+; Guile compatibility
+; ----------------
+
+; make-shared-ra
+; ra-index-map!
+; list->ra, list->typed-ra
+; ra->list
 
 
 ; ----------------
