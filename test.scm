@@ -62,7 +62,7 @@
 
 
 ; -----------------------
-; make-ra-shared
+; make-shared-ra
 ; -----------------------
 
 (test-equal "%0(99)" (ra->string (make-shared-ra ra4 (lambda () '()))))

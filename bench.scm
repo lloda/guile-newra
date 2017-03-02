@@ -161,5 +161,5 @@
        (ra21 (ra-map! (apply make-ra-new type 0 nn) (lambda () (random n))))
        (ra22 (ra-map! (apply make-ra-new type 0 nn) (lambda () (random n))))
        (prof (lambda () (ra-map! ra20 * ra21 ra22))))
-  (statprof prof #:count-calls? #t #:display-style 'tree)
+  (statprof prof #:count-calls? #t)
   prof)

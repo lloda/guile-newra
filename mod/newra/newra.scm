@@ -16,7 +16,7 @@
             ra-rank ra-type
             make-ra-new make-ra-data
             array->ra ra->array
-            ra-pos ra-pos-first ra-pos-lo ra-pos-hi
+            ra-pos ra-pos-first ra-pos-hi ra-pos-lo
             ra-slice ra-cell ra-ref ra-set!
             ra-transpose
             ra-slice-for-each
@@ -138,10 +138,9 @@
 ; ----------------
 
 (define <ra-vtable>
-  (let ((v (make-struct/no-tail
+  (make-struct/no-tail
             <applicable-struct-with-setter-vtable>
-            (make-struct-layout (string-append "pwpw" "prpwprprprprpr")))))
-    v))
+            (make-struct-layout (string-append "pwpw" "prpwprprprprpr"))))
 
 (define-inlinable (ra? o)
   (and (struct? o) (eq? <ra-vtable> (struct-vtable o))))
@@ -157,7 +156,6 @@
              (match-lambda* ((i ... o) (apply ra-set! ra o i))) ; it should be easier :-/
              data zero dims type vlen vref vset!)))
     ra))
-
 
 ;; data:    a container (function) addressable by a single integer
 ;; address: into data.
@@ -244,8 +242,9 @@
 
 ; lowest position on data.
 (define (ra-pos-lo ra)
-  (let ((dims (%ra-dims ra)))
-    (let loop ((j (- (vector-length dims) 1)) (pos (%ra-zero ra)))
+  (check-ra ra)
+  (let ((dims (%%ra-dims ra)))
+    (let loop ((j (- (vector-length dims) 1)) (pos (%%ra-zero ra)))
       (if (< j 0)
         pos
         (let* ((dim (vector-ref dims j))
@@ -254,8 +253,9 @@
 
 ; highest position on data.
 (define (ra-pos-hi ra)
-  (let ((dims (%ra-dims ra)))
-    (let loop ((j (- (vector-length dims) 1)) (pos (%ra-zero ra)))
+  (check-ra ra)
+  (let ((dims (%%ra-dims ra)))
+    (let loop ((j (- (vector-length dims) 1)) (pos (%%ra-zero ra)))
       (if (< j 0)
         pos
         (let* ((dim (vector-ref dims j))
@@ -809,7 +809,7 @@
 (define-inlinable (ra-length ra)
   (unless (positive? (%ra-rank ra))
     (throw 'zero-rank-ra-has-no-length ra))
-  (dim-len (vector-ref (%ra-dims ra) 0)))
+  (dim-len (vector-ref (%%ra-dims ra) 0)))
 
 (define (make-shared-ra oldra mapfunc . d)
   (check-ra oldra)
