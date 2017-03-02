@@ -9,7 +9,7 @@
 ; later version.
 
 (import (srfi srfi-64)
-        (newra newra) (newra test) (newra print) (newra tools)
+        (newra newra) (newra test) (newra print) (newra tools) (newra read)
         (only (rnrs base) vector-map)
         (srfi srfi-26) (srfi srfi-8) (only (srfi srfi-1) fold iota)
         (ice-9 match))
@@ -289,6 +289,33 @@
 (test-equal "(10 0 10)(9 1 9)(8 2 8)(7 3 7)(6 4 6)(5 5 5)(4 6 4)(3 7 3)(2 8 2)(1 9 1)"
             (call-with-output-string (lambda (s) (ra-for-each (lambda x (display x s)) ra13 ra12 ra13))))
 (test-end "ra-for-each")
+
+
+; -----------------------
+; reader
+; -----------------------
+
+(test-equal "%3:2:2:2(((1 2) (3 4)) ((5 6) (7 8)))"
+            (ra->string (call-with-input-string "#%3(((1 2) (3 4)) ((5 6) (7 8)))" read)))
+(test-equal "%2:2:2((1 2) (3 4))"
+            (ra->string (call-with-input-string "#%2((1 2) (3 4))" read)))
+(test-equal "%1:4(1 2 3 4)"
+            (ra->string (call-with-input-string "#%1(1 2 3 4)" read)))
+(test-equal "%1:12(1 2 3 4 5 6 7 8 9 10 11 12)"
+            (ra->string (call-with-input-string "#%1(1 2 3 4 5 6 7 8 9 10 11 12)" read)))
+(test-equal "%2@1:2@1:2((1 2) (3 4))"
+            (ra->string (call-with-input-string "#%2@1@1((1 2) (3 4))" read)))
+(test-equal "%2@1:2@1:2((1 2) (3 4))"
+            (ra->string (call-with-input-string "#%2@1@1:2((1 2) (3 4))" read)))
+(test-equal "%2@-1:2@1:2((1 2) (3 4))"
+            (ra->string (call-with-input-string "#%2@-1@1((1 2) (3 4))" read)))
+(test-equal "%0(#(1 2 3))"
+            (ra->string (call-with-input-string "#%0(#(1 2 3))" read)))
+
+
+; -----------------------
+; the end.
+; -----------------------
 
 (test-end "newra")
 (unless (zero? (test-runner-fail-count (test-runner-current)))
