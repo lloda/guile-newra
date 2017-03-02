@@ -603,7 +603,7 @@
     (syntax-case stx ()
       ((_ u_ op
           %opper %op %list %let %stepu %stepu-back %stepk %stepk-back
-          ra ...)
+          (ra ...))
        (with-syntax ([(frame ...) (generate-temporaries #'(ra ...))]
                      [(step ...) (generate-temporaries #'(ra ...))]
                      [(s ...) (generate-temporaries #'(ra ...))]
@@ -673,7 +673,7 @@
            (%slice-loop u op
                         %opper-slice-for-each %op
                         %list %let
-                        %stepu %stepu-back %stepk %stepk-back ra ...)))))
+                        %stepu %stepu-back %stepk %stepk-back (ra ...))))))
     (case-lambda
      ((u op ra0) (%args u op ra0))
      ((u op ra0 ra1) (%args u op ra0 ra1))
@@ -682,7 +682,7 @@
       (%slice-loop u op
                    %opper-slice-for-each %apply-op
                    %apply-list %apply-let
-                   %apply-stepu %apply-stepu-back %apply-stepk %apply-stepk-back ra)))))
+                   %apply-stepu %apply-stepu-back %apply-stepk %apply-stepk-back (ra))))))
 
 
 ; ----------------
@@ -702,7 +702,7 @@
            (%slice-loop (ra-rank ra0) op
                         %opper-for-each %op
                         %list %let
-                        %stepu %stepu-back %stepk %stepk-back ra0 ra ...))))
+                        %stepu %stepu-back %stepk %stepk-back (ra0 ra ...)))))
        (%apply-opper-for-each
         (syntax-rules ()
           ((_ %op op ra)
@@ -716,7 +716,7 @@
         (%slice-loop (ra-rank ra0) op
                      %apply-opper-for-each %apply-op
                      %apply-list %apply-let
-                     %apply-stepu %apply-stepu-back %apply-stepk %apply-stepk-back ra))))))
+                     %apply-stepu %apply-stepu-back %apply-stepk %apply-stepk-back (ra)))))))
 
 (define-syntax %opper-map!
   (syntax-rules ()
@@ -733,7 +733,7 @@
              (%slice-loop (ra-rank ra0) op
                           %opper-map! %op
                           %list %let
-                          %stepu %stepu-back %stepk %stepk-back ra0 ra ...)
+                          %stepu %stepu-back %stepk %stepk-back (ra0 ra ...))
              ra0))))
        (%apply-opper-map!
         (syntax-rules ()
@@ -749,7 +749,7 @@
         (%slice-loop (ra-rank ra0) op
                      %apply-opper-map! %apply-op
                      %apply-list %apply-let
-                     %apply-stepu %apply-stepu-back %apply-stepk %apply-stepk-back ra)
+                     %apply-stepu %apply-stepu-back %apply-stepk %apply-stepk-back (ra))
         ra0)))))
 
 (define-syntax %opper-copy!
@@ -762,7 +762,7 @@
   (%slice-loop (ra-rank dst) (const #f)
                %opper-copy! %op
                %list %let
-               %stepu %stepu-back %stepk %stepk-back src dst)
+               %stepu %stepu-back %stepk %stepk-back (src dst))
   dst)
 
 (define-syntax %opper-fill!
@@ -774,7 +774,7 @@
   (%slice-loop (ra-rank ra) fill
                %opper-fill! %op
                %list %let
-               %stepu %stepu-back %stepk %stepk-back ra)
+               %stepu %stepu-back %stepk %stepk-back (ra))
   ra)
 
 (define-syntax %opper-equal?
@@ -798,7 +798,7 @@
          (%slice-loop (ra-rank ra) exit
                       %opper-equal? %op
                       %list %let
-                      %stepu %stepu-back %stepk %stepk-back ra rb)
+                      %stepu %stepu-back %stepk %stepk-back (ra rb))
          #t)))
 
 
