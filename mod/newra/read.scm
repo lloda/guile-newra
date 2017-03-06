@@ -17,9 +17,7 @@
 (import (newra newra) (newra tools)
         (only (rnrs base) vector-map) (only (srfi srfi-1) fold every)
         (rnrs io ports) (srfi srfi-8)
-        (srfi srfi-26) (ice-9 match))
-
-(define ra0 (array->ra #(1 2 3)))
+        (srfi srfi-26) (ice-9 match) (ice-9 rdelim))
 
 ; take a looked ahead 'c'. FIXME shouldn't look ahead the last one and then again in the caller.
 (define (read-number port)
@@ -40,21 +38,28 @@
     (cond ((char-whitespace? c) (get-char port) (loop (lookahead-char port)))
           (else c))))
 
-(define (vector-resize old newsize)
-  (let ((oldsize (vector-length old)))
+; FIXME eventually replace.
+
+(define (make-root type size) (make-typed-array type *unspecified* size))
+(define (root-type root) (array-type root))
+(define (root-length root) (array-length root))
+(define (root-ref root i) (array-ref root i))
+(define (root-set! root i o) (array-set! root o i))
+(define (root-resize old newsize)
+  (let ((oldsize (root-length old)))
     (if (= newsize oldsize)
       old
-      (let ((new (make-vector newsize))
+      (let ((new (make-root (root-type old) newsize))
             (size (min oldsize newsize)))
         (let loop ((j 0))
           (cond ((= j size) new)
-                (else (vector-set! new j (vector-ref old j))
+                (else (root-set! new j (root-ref old j))
                       (loop (+ j 1)))))))))
 
 (read-hash-extend
  #\%
  (lambda (chr port)
-   (let loop ((lo '()) (len '()) (rank #f) (i 0))
+   (let loop ((lo '()) (len '()) (rank #f) (i 0) (type #f))
      (let ((c (lookahead-char port)))
        (if (eof-object? c)
          (throw 'unexpected-end-of-input)
@@ -68,9 +73,9 @@
                (throw 'bad-length leni))
              (let ((len (append len (list leni))))
                (cond ((= (length len) (+ 1 (length lo)))
-                      (loop (append lo (list 0)) len rank (+ i 1)))
+                      (loop (append lo (list 0)) len rank (+ i 1) type))
                      ((= (length len) (length lo))
-                      (loop lo len rank (+ i 1)))
+                      (loop lo len rank (+ i 1) type))
                      (else
                       (throw 'mismatched-len-lo))))))
           ((eqv? c #\@)
@@ -79,17 +84,13 @@
              (throw 'too-many-dimensions-for-rank rank))
            (let ((lo (append lo (list (read-number port)))))
              (if (= (+ 1 (length len)) (length lo))
-               (loop lo len rank i)
-               (loop lo (if (= (length len) (length lo)) len (append len (list #f))) rank (+ i 1)))))
-          ((char-numeric? c)
-           (when (or rank (positive? i))
-             (throw 'unexpected-rank rank))
-           (let ((rank (read-number port)))
-             (loop lo len rank i)))
+               (loop lo len rank i type)
+               (loop lo (if (= (length len) (length lo)) len (append len (list #f))) rank (+ i 1) type))))
           ((eqv? c #\()
            (receive (i len)
                (if (= (length len) (length lo)) (values i len) (values (+ i 1) (append len (list #f))))
-             (let ((rank (or rank 1)))
+             (let ((rank (or rank 1))
+                   (type (or type #t)))
                (when (and (pair? len) rank (not (= i rank)))
                  (throw 'too-few-dimensions-for-rank i rank))
 ; read content here
@@ -102,16 +103,16 @@
                 (else
                  (let* ((lo (if (null? lo) (make-list rank 0) lo))
                         (len (if (null? len) (make-list rank #f) len))
-                        (temp (make-vector (if (every identity len) (fold * 1 len) 8)))
+                        (temp (make-root type (if (every identity len) (fold * 1 len) 8)))
                         (j 0))
                    (let loop-rank ((k rank))
                      (cond
 ; read element
                       ((zero? k)
-                       (let ((n (vector-length temp)))
+                       (let ((n (root-length temp)))
                          (when (>= j n)
-                           (set! temp (vector-resize temp (ceiling (* n 3/2))))))
-                       (vector-set! temp j (read port))
+                           (set! temp (root-resize temp (ceiling (* n 3/2))))))
+                       (root-set! temp j (read port))
                        (set! j (+ j 1)))
 ; read slice
                       (else
@@ -125,20 +126,30 @@
                            (cond
                             ((eqv? #\) c)
                              (get-char port)
-; dimension which may be too short
+; dimension may be too short
                              (cond
                               ((not dimk)
                                (list-set! len (- rank k) i))
                               ((< i dimk)
                                (throw 'too-few-elements-in-dimension (- rank k) i dimk))))
-; dimension which may be too long
+; dimension may be too long
                             ((or (not dimk) (< i dimk))
                              (loop-rank (- k 1))
                              (loop-dim (+ i 1)))
                             (else
                              (throw 'too-many-elements-on-dim (- rank k)))))))))
-                   (apply make-ra-data (vector-resize temp (fold * 1 len))
+                   (apply make-ra-data (root-resize temp (fold * 1 len))
                           (map (lambda (lo len) (list lo (+ lo len -1))) lo len))))))))
-          (else
+; try to read rank if we don't have one already
+          ((char-numeric? c)
+           (when (or rank (positive? i))
+             (throw 'unexpected-rank rank))
+           (let ((rank (read-number port)))
+             (loop lo len rank i type)))
+; try to read type if we don't have one already
+          (type
            (get-char port)
-           (throw 'bad-character c))))))))
+           (throw 'bad-character c type))
+          (else
+           (let ((type (string->symbol (read-delimited ":@(" port 'peek))))
+             (loop lo len rank i type)))))))))

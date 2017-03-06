@@ -22,6 +22,7 @@
              #f))))
 
 (define (ra->string ra) (call-with-output-string (cut display ra <>)))
+(define (string->ra s) (call-with-input-string s read))
 
 (set! test-log-to-file #f)
 (test-begin "newra")
@@ -295,22 +296,26 @@
 ; reader
 ; -----------------------
 
-(test-equal "%3:2:2:2(((1 2) (3 4)) ((5 6) (7 8)))"
-            (ra->string (call-with-input-string "#%3(((1 2) (3 4)) ((5 6) (7 8)))" read)))
-(test-equal "%2:2:2((1 2) (3 4))"
-            (ra->string (call-with-input-string "#%2((1 2) (3 4))" read)))
-(test-equal "%1:4(1 2 3 4)"
-            (ra->string (call-with-input-string "#%1(1 2 3 4)" read)))
-(test-equal "%1:12(1 2 3 4 5 6 7 8 9 10 11 12)"
-            (ra->string (call-with-input-string "#%1(1 2 3 4 5 6 7 8 9 10 11 12)" read)))
-(test-equal "%2@1:2@1:2((1 2) (3 4))"
-            (ra->string (call-with-input-string "#%2@1@1((1 2) (3 4))" read)))
-(test-equal "%2@1:2@1:2((1 2) (3 4))"
-            (ra->string (call-with-input-string "#%2@1@1:2((1 2) (3 4))" read)))
-(test-equal "%2@-1:2@1:2((1 2) (3 4))"
-            (ra->string (call-with-input-string "#%2@-1@1((1 2) (3 4))" read)))
-(test-equal "%0(#(1 2 3))"
-            (ra->string (call-with-input-string "#%0(#(1 2 3))" read)))
+(for-each
+ (lambda (str)
+   (test-equal (format #f "%3~a:2:2:2(((1 2) (3 4)) ((5 6) (7 8)))" str)
+               (ra->string (string->ra (format #f "#%3~a(((1 2) (3 4)) ((5 6) (7 8)))" str))))
+   (test-equal (format #f "%2~a:2:2((1 2) (3 4))" str)
+               (ra->string (string->ra (format #f "#%2~a((1 2) (3 4))" str))))
+   (test-equal (format #f "%1~a:4(1 2 3 4)" str)
+               (ra->string (string->ra (format #f "#%1~a(1 2 3 4)" str))))
+   (test-equal (format #f "%1~a:12(1 2 3 4 5 6 7 8 9 10 11 12)" str)
+               (ra->string (string->ra (format #f "#%1~a(1 2 3 4 5 6 7 8 9 10 11 12)" str))))
+   (test-equal (format #f "%2~a@1:2@1:2((1 2) (3 4))" str)
+               (ra->string (string->ra (format #f "#%2~a@1@1((1 2) (3 4))" str))))
+   (test-equal (format #f "%2~a@1:2@1:2((1 2) (3 4))" str)
+               (ra->string (string->ra (format #f "#%2~a@1@1:2((1 2) (3 4))" str))))
+   (test-equal (format #f "%2~a@-1:2@1:2((1 2) (3 4))" str)
+               (ra->string (string->ra (format #f "#%2~a@-1@1((1 2) (3 4))" str)))))
+ '("s32" ""))
+
+(test-equal "%0(#(1 2 3))" (ra->string (string->ra "#%0(#(1 2 3))")))
+(test-equal "%1f64:3(1.0 2.0 3.0)" (ra->string (string->ra "#%1f64(1 2 3)")))
 
 
 ; -----------------------
