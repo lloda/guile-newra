@@ -138,14 +138,38 @@
                (nn (make-list rank n))
                (len (fold * 1 nn))
                (scale (* 1e3 (/ m len)))
-               (ra20 (ra-map! (apply make-ra-new type 0 nn) (lambda () (random n))))
-               (a20 (ra->array ra20)))
+               (ra (ra-map! (apply make-ra-new type 0 nn) (lambda () (random n))))
+               (a (ra->array ra)))
           (format #t "rank ~a (nn ~a)\n" rank nn)
-          (format #t "1\t~9,4f\n" (* scale (time (call-with-output-file "/dev/null" (cut display ra20 <>)))))
-          (format #t "2\t~9,4f\n" (* scale (time (call-with-output-file "/dev/null" (cut array-print* a20 <>)))))
-          (format #t "3\t~9,4f\n" (* scale (time (call-with-output-file "/dev/null" (cut display a20 <>)))))))
+          (format #t "1\t~9,4f\n" (* scale (time (call-with-output-file "/dev/null" (cut display ra <>)))))
+          (format #t "2\t~9,4f\n" (* scale (time (call-with-output-file "/dev/null" (cut array-print* a <>)))))
+          (format #t "3\t~9,4f\n" (* scale (time (call-with-output-file "/dev/null" (cut display a <>)))))))
       (iota 6 1)))
   (list #t 'f64))
+
+(define m #e1e5)
+(format #t "\nreading\n==========\n")
+(for-each
+  (lambda (type)
+    (format #t "\ntype dst ~a\n----------\n" type)
+    (for-each
+      (lambda (rank)
+        (let* ((n (inexact->exact (ceiling (expt m (/ rank)))))
+               (nn (make-list rank n))
+               (len (fold * 1 nn))
+               (scale (* 1e3 (/ m len)))
+               (ra (ra-map! (apply make-ra-new type 0 nn) (lambda () (random n))))
+               (sra (call-with-output-string (cut display ra <>)))
+               (a (ra->array ra))
+               (sa (call-with-output-string (cut display a <>))))
+          (format #t "rank ~a (nn ~a)\n" rank nn)
+          (let ((rb #f) (b #f))
+            (format #t "1\t~9,4f\n" (* scale (time (set! rb (call-with-input-string sra read)))))
+            (format #t "2\t~9,4f\n" (* scale (time (set! b (call-with-input-string sa read)))))
+            (unless (array-equal? (ra->array rb) b) (throw 'bad-reading-benchmark)))))
+      (iota 6 1)))
+  (list #t 'f64))
+
 
 
 ; -----------------------

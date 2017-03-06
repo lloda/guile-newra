@@ -15,7 +15,7 @@
 ; FIXME still need to extend (truncated-print).
 
 (define* (ra-print-prefix a port #:key dims?)
-  (display #\% port)
+  (display "#%" port)
   (display (ra-rank a) port)
   (let ((type (ra-type a)))
     (unless (eq? #t type)
