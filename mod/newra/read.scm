@@ -9,7 +9,6 @@
 ;;; Commentary:
 ;; Reader for ra objects. They start with #% instead of #, otherwise the syntax
 ;; is the same as for regular Guile arrays.
-;; FIXME: doesn't read the type.
 ;;; Code:
 
 (define-module (newra read))
@@ -40,7 +39,7 @@
     (cond ((char-whitespace? c) (get-char port) (loop (lookahead-char port)))
           (else c))))
 
-; FIXME eventually replace.
+; FIXME eventually replace these.
 
 (define (make-root type size) (make-typed-array type *unspecified* size))
 (define (root-type root) (array-type root))
@@ -70,92 +69,94 @@
                   1))
           (type (read-delimited ":@(" port 'peek))
           (type (if (zero? (string-length type)) #t (string->symbol type)))
-          (lo (make-vector rank 0)) (len (make-vector rank #f)))
-     (let loop ((i 0))
+          (lo (make-vector rank 0))
+          (len (make-vector rank #f)))
+     (let loop ((k 0))
        (let ((c (lookahead-char port)))
-         (cond ((eqv? c #\@)
-                (unless (< i rank) (throw 'too-many-dimensions-for-rank i rank))
-                (get-char port)
-                (vector-set! lo i (read-number port))
-                (let ((c (lookahead-char port)))
-                  (cond ((eqv? c #\:)
-                         (unless (< i rank) (throw 'too-many-dimensions-for-rank i rank))
-                         (get-char port)
-                         (vector-set! len i (read-number port)))
-                        (else
-                         (vector-set! len i #f)))
-                  (loop (+ i 1))))
-               ((eqv? c #\:)
-                (unless (< i rank) (throw 'too-many-dimensions-for-rank i rank))
-                (get-char port)
-                (vector-set! len i (read-number port))
-                (vector-set! lo i 0)
-                (loop (+ i 1)))
-               ((eqv? c #\()
-                (unless (or (zero? i) (= i rank)) (throw 'too-few-dimensions-for-rank i rank))
-; read content here
-                (cond
-                 ((zero? rank)
-                  (get-char port)
-                  (let ((item (read port)))
+         (cond
+          ((eqv? c #\@)
+           (unless (< k rank) (throw 'too-many-dimensions-for-rank k rank))
+           (get-char port)
+           (vector-set! lo k (read-number port))
+           (let ((c (lookahead-char port)))
+             (cond ((eqv? c #\:)
+                    (unless (< k rank) (throw 'too-many-dimensions-for-rank k rank))
                     (get-char port)
-                    (make-ra-new #t item)))
-                 (else
-                  (let* ((j 0)
-                         (temp (make-root type (let loop ((size 1) (k 0))
-                                                (if (= k rank)
-                                                  size
-                                                  (let ((l (vector-ref len k)))
-                                                    (if l (loop (* size l) (+ 1 k))
-                                                        8))))))
-                         (resize-temp! (lambda (j)
-                                         (let ((n (root-length temp)))
-                                           (when (> j n)
-                                             (set! temp (root-resize temp (ceiling (* (+ n j) 3/2)))))))))
-                    (let loop-rank ((k rank))
-                      (cond
+                    (vector-set! len k (read-number port)))
+                   (else
+                    (vector-set! len k #f)))
+             (loop (+ k 1))))
+          ((eqv? c #\:)
+           (unless (< k rank) (throw 'too-many-dimensions-for-rank k rank))
+           (get-char port)
+           (vector-set! len k (read-number port))
+           (vector-set! lo k 0)
+           (loop (+ k 1)))
+          (else
+           (unless (eqv? c #\() (throw 'expected-open-paren c))
+           (unless (or (zero? k) (= k rank)) (throw 'too-few-dimensions-for-rank k rank))))))
+; read content here
+     (cond
+      ((zero? rank)
+       (get-char port)
+       (let ((item (read port)))
+         (get-char port)
+         (make-ra-new #t item)))
+      (else
+       (receive (temp final-size?)
+           (let loop ((size 1) (k 0))
+             (if (= k rank)
+               (values (make-root type size) #t)
+               (let ((l (vector-ref len k)))
+                 (if l (loop (* size l) (+ 1 k))
+                     (values (make-root type 8) #f)))))
+         (let ((j 0)
+               (resize-temp!
+                (if final-size?
+                  (lambda (j) (when #f #f))
+                  (lambda (j)
+                    (let ((n (root-length temp)))
+                      (when (> j n)
+                        (set! temp (root-resize temp (ceiling (* (+ n j) 3/2))))))))))
+           (let loop-rank ((k rank))
+             (cond
 ; read element
-                       ((zero? k)
-                        (resize-temp! (+ j 1))
-                        (root-set! temp j (read port))
-                        (set! j (+ j 1)))
+              ((zero? k)
+               (resize-temp! (+ j 1))
+               (root-set! temp j (read port))
+               (set! j (+ j 1)))
 ; read slice
-                       (else
-                        (let ((c (skip-whitespace port)))
-                          (unless (eqv? #\( c)
-                            (throw 'expected-open-paren c i j k))
-                          (get-char port))
+              (else
+               (let ((c (skip-whitespace port)))
+                 (unless (eqv? #\( c) (throw 'expected-open-paren-at-dim (- rank k) c))
+                 (get-char port))
+               (let ((lenk (vector-ref len (- rank k))))
+                 (cond
 ; read a whole slice when the dimension is known
-                        (let ((lenk (vector-ref len (- rank k))))
-                          (cond
-                           ((and (= k 1) lenk)
-                            (resize-temp! (+ j lenk))
-                            (do ((i 0 (+ i 1))) ((= i lenk))
-                              (root-set! temp (+ j i) (read port)))
-                            (set! j (+ j lenk))
-                            (let ((c (skip-whitespace port)))
-                              (cond
-                               ((eqv? #\) c)
-                                (get-char port))
-                               (else
-                                (throw 'too-few-elements-in-dimension (- rank k) i lenk)))))
-                           (else
-                            (let loop-dim ((i 0))
-                              (let ((c (skip-whitespace port)))
-                                (cond
-                                 ((eqv? #\) c)
-                                  (get-char port)
-; dimension may be too short
-                                  (cond
-                                   ((not lenk)
-                                    (vector-set! len (- rank k) i))
-                                   ((< i lenk)
-                                    (throw 'too-few-elements-in-dimension (- rank k) i lenk))))
-; dimension may be too long
-                                 ((or (not lenk) (< i lenk))
-                                  (loop-rank (- k 1))
-                                  (loop-dim (+ i 1)))
-                                 (else
-                                  (throw 'too-many-elements-on-dim (- rank k))))))))))))
-                    (apply make-ra-data (root-resize temp (vector-fold * 1 len))
-                           (vector->list (vector-map (lambda (lo len) (list lo (+ lo len -1))) lo len)))))))))))))
+                  ((and (= k 1) lenk)
+                   (resize-temp! (+ j lenk))
+                   (do ((i 0 (+ i 1))) ((= i lenk))
+                     (root-set! temp (+ j i) (read port)))
+                   (set! j (+ j lenk))
+                   (let ((c (skip-whitespace port)))
+                     (unless (eqv? #\) c) (throw 'too-many-elements-in-dim (- rank k) c lenk))
+                     (get-char port)))
+; general case, feeling for the end
+                  (else
+                   (let loop-dim ((i 0))
+                     (let ((c (skip-whitespace port)))
+                       (cond
+                        ((eqv? #\) c)
+                         (get-char port)
+                         (cond
+                          ((not lenk)
+                           (vector-set! len (- rank k) i))
+                          ((< i lenk)
+                           (throw 'too-few-elements-in-dim (- rank k) i lenk))))
+                        ((or (not lenk) (< i lenk))
+                         (loop-rank (- k 1))
+                         (loop-dim (+ i 1)))
+                        (else
+                         (throw 'too-many-elements-on-dim (- rank k))))))))))))
+           (apply make-ra-data (root-resize temp (vector-fold * 1 len))
+                  (vector->list (vector-map (lambda (lo len) (list lo (+ lo len -1))) lo len))))))))))

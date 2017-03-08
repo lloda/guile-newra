@@ -7,17 +7,24 @@
 ; Software Foundation; either version 3 of the License, or (at your option) any
 ; later version.
 
+;;; Commentary:
+;; Printer for ra objects. They start with #% instead of #, otherwise the syntax
+;; is the same as for regular Guile arrays.
+;;; Code:
+
 (define-module (newra print)
   #:export (ra-print-prefix ra-print))
+
 (import (rnrs io ports) (rnrs base) (srfi srfi-1) (srfi srfi-4 gnu)
-        (newra newra))
+        (newra newra) (srfi srfi-26))
 
 ; FIXME still need to extend (truncated-print).
 
-(define* (ra-print-prefix a port #:key dims?)
-  (display "#%" port)
-  (display (ra-rank a) port)
-  (let ((type (ra-type a)))
+(define* (ra-print-prefix ra port #:key (dims? #t))
+  (display #\# port)
+  (display #\% port)
+  (display (ra-rank ra) port)
+  (let ((type (ra-type ra)))
     (unless (eq? #t type)
       (display type port)))
   (vector-for-each
@@ -26,37 +33,41 @@
        (unless (zero? lo)
          (display #\@ port)
          (display (dim-lo dim) port)))
-     (display #\: port)
-     (display (dim-len dim) port))
-   (ra-dims a)))
+     (when dims?
+       (display #\: port)
+       (display (dim-len dim) port)))
+   (ra-dims ra)))
 
-(define* (ra-print a port #:key dims?)
-  (ra-print-prefix a port #:dims? dims?)
-; first position on the ra.
-  (let ((b (ra-pos-first (ra-zero a) (ra-dims a)))
-        (ref (let ((vref (ra-vref a))
-                   (data (ra-data a)))
-               (lambda (i) (vref data i)))))
+(define* (ra-print ra port #:key (dims? #t))
+  (ra-print-prefix ra port #:dims? dims?)
+  (let ((base (ra-pos-first (ra-zero ra) (ra-dims ra)))
+        (ref (cute (ra-vref ra) (ra-data ra) <>))
+        (rank (ra-rank ra)))
 ; special case
-    (if (zero? (ra-rank a))
+    (if (zero? rank)
       (begin
         (display #\( port)
-        (display (ref b) port)
+        (display (ref base) port)
         (display #\) port))
-      (let loop ((p 0) (b b))
-        (if (= (ra-rank a) p)
-          (display (ref b) port)
-          (let* ((dim (vector-ref (ra-dims a) p))
-                 (lo (dim-lo dim))
-                 (hi (+ lo (dim-len dim) -1))
-                 (i (dim-step dim)))
-            (display #\( port)
-            (do ((j lo (+ 1 j))
-                 (b b (+ b i)))
+      (let loop ((k 0) (b base))
+        (let* ((dim (vector-ref (ra-dims ra) k))
+               (lo (dim-lo dim))
+               (hi (+ lo (dim-len dim) -1))
+               (i (dim-step dim)))
+          (display #\( port)
+          (cond
+           ((= (- rank 1) k)
+            (do ((j lo (+ 1 j)) (b b (+ b i)))
                 ((> j hi))
-              (loop (+ p 1) b)
+              (display (ref b) port)
               (when (< j hi)
-                (display #\space port)))
-            (display #\) port)))))))
+                (display #\space port))))
+           (else
+            (do ((j lo (+ 1 j)) (b b (+ b i)))
+                ((> j hi))
+              (loop (+ k 1) b)
+              (when (< j hi)
+                (display #\space port)))))
+          (display #\) port))))))
 
 (struct-set! (@@ (newra newra) <ra-vtable>) vtable-index-printer ra-print)
