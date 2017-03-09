@@ -12,7 +12,7 @@
 
 (define-module (newra newra)
   #:export (make-ra ra? ra-data ra-zero ra-dims ra-vlen ra-vref ra-vset!
-            make-dim dim? dim-len dim-lo dim-step dim-ref
+            make-dim dim? dim-len dim-lo dim-hi dim-step dim-ref
             ra-rank ra-type
             make-ra-new make-ra-data
             array->ra ra->array
@@ -23,7 +23,7 @@
             ra-slice-for-each-1 ra-slice-for-each-2
             ra-slice-for-each-3 ra-slice-for-each-4
             ra-map! ra-for-each ra-copy! ra-fill! ra-equal?
-            ra-length make-shared-ra))
+            ra-length make-shared-ra ra->list))
 
 (import (srfi srfi-9) (srfi srfi-9 gnu) (only (srfi srfi-1) fold every) (srfi srfi-8)
         (srfi srfi-4 gnu) (srfi srfi-26) (ice-9 match) (ice-9 control)
@@ -835,9 +835,26 @@
                         (loop (+ k 1)))))))))
       (make-ra (%%ra-data oldra) (- ref (ra-pos-first 0 dims)) dims))))
 
-; ra-index-map!
-; list->ra, list->typed-ra
-; ra->list
+; FIXME use ra-reverse and maybe ra-slice-for-each
+(define (ra->list ra)
+  (let ((rank (ra-rank ra))
+        (dims (ra-dims ra)))
+    (cond
+     ((zero? rank) (ra-ref ra))
+     (else
+      (let loop-rank ((k rank) (ra ra))
+        (let ((dimk (vector-ref dims (- rank k))))
+          (cond
+           ((= 1 k)
+            (let loop-dim ((l '()) (i (dim-hi dimk)))
+              (if (< i (dim-lo dimk))
+                l
+                (loop-dim (cons (ra-ref ra i) l) (- i 1)))))
+           (else
+            (let loop-dim ((l '()) (i (dim-hi dimk)))
+              (if (< i (dim-lo dimk))
+                l
+                (loop-dim (cons (loop-rank (- k 1) (ra-cell ra i)) l) (- i 1))))))))))))
 
 
 ; ----------------

@@ -16,3 +16,20 @@
 (define ra1 (array->ra #@1(1 2 3)))
 (define ra2 (array->ra #2((1 2) (3 4))))
 (define ra3 (array->ra #2@1@1((1 2) (3 4))))
+(define ra4 (array->ra #3@1@1@-1(((1 2 3) (3 4 5)) ((4 5 6) (6 7 8)))))
+(define ra5 (array->ra #0(99)))
+
+(define v #(1 2 3 4))
+
+(define (vector->list-forward v)
+  (case (vector-length v)
+    ((0) '())
+    ((1) (list (vector-ref v 0)))
+    (else
+     (let ((first (list (vector-ref v 0))))
+       (let loop ((last first)  (i 1))
+         (if (= i (vector-length v))
+           first
+           (let ((next (list (vector-ref v i))))
+             (set-cdr! last next)
+             (loop next (+ i 1)))))))))

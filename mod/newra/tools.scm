@@ -8,7 +8,7 @@
 ; later version.
 
 (define-module (newra tools)
-  #:export (time walltime define-constant syntax->list))
+  #:export (time walltime repeat define-constant syntax->list))
 
 (define-syntax time
   (syntax-rules ()
@@ -25,6 +25,10 @@
         e0 ...
         (exact->inexact (/ (- (get-internal-real-time) start)
                            internal-time-units-per-second))))))
+
+(define-syntax repeat
+  (syntax-rules ()
+    ((_ n e0 ...) (do ((i 0 (+ i 1))) ((= i n)) e0 ...))))
 
 (define-syntax define-constant
   (syntax-rules ()
