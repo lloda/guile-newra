@@ -170,62 +170,51 @@
 (define (list->ra rank l)
   (list->typed-ra #t rank l))
 
+; FIXME looks up all lengths even when
 (define (list->typed-ra type shape l)
+  (define (list-len l rank)
+    (reverse!
+     (let loop ((k rank) (l l))
+       (if (zero? k) '() (cons (length l) (loop (- k 1) (car l)))))))
   (receive (rank lo len)
       (cond
        ((number? shape)
-        (values shape (make-vector shape 0) (make-vector shape #f)))
-       ((list? shape)
-        (let loop ((s shape) (v '()))
-          (if (null? s)
-            (receive (lo len) (unzip2 (reverse! v))
-              (values (length lo) (list->vector lo) (list->vector len)))
-            (receive (vi rest) (car+cdr s)
-              (cond ((number? vi)
-                     (loop rest (cons (list vi #f) v)))
-                    ((list? vi)
-                     (unless (and (list? (cdr vi)) (null? (cddr vi))) (throw 'bad-dim-spec shape))
-; FIXME list->typed-array spec lo | (lo hi). But print prefix is @lo | @lo:len | :len so I'd prefer len.
-                     (let ((len (- (cadr vi) (car vi) -1)))
-                       (when (negative? len) (throw 'negative-dim-in-shape-spec shape))
-                       (loop rest (cons (list (car vi) len) v))))
-                    (else (throw 'bad-shape-spec shape))))))))
-    (receive (temp resize-temp) (make-temp-root len type)
-      (let ((j 0))
-        (let loop-rank ((k rank) (l l))
-          (cond
+        (values shape (make-list shape 0) (list-len l shape)))
+       ((list shape)
+        (let* ((rank (length shape))
+               (len (list-len l rank))
+               (lo (map (lambda (x) (if (number? x) x (car x))) shape)))
+          (for-each
+           (lambda (s lo len)
+             (unless (number? s)
+               (unless (= len (- (cadr s) lo -1)) (throw 'mismatched-shape shape))))
+           shape lo len)
+          (values rank lo len)))
+       (else (throw 'bad-shape-spec shape)))
+    (let ((temp (make-root type (fold * 1 len)))
+          (j 0))
+      (let loop-rank ((len len) (l l))
+        (cond
 ; read element
-           ((zero? k)
-            (set! temp (resize-temp temp (+ j 1)))
-            (root-set! temp j l)
-            (set! j (+ j 1)))
-; read slice
-           (else
-            (let ((lenk (vector-ref len (- rank k))))
-              (cond
-; read a whole slice when the dimension is known
-               ((and (= k 1) lenk)
-                (set! temp (resize-temp temp (+ j lenk)))
-                (do ((i 0 (+ i 1)) (l l (cdr l)))
-                    ((= i lenk)
-                     (unless (null? l) (throw 'mismatched-list-length-dim (- rank 1))))
-                  (root-set! temp (+ j i) (car l)))
-                (set! j (+ j lenk)))
-; general case, feeling for the end
-               (else
-                (let loop-dim ((i 0) (l l))
-                  (cond
-                   ((null? l)
-                    (cond
-                     ((not lenk)
-                      (vector-set! len (- rank k) i))
-                     ((< i lenk)
-                      (throw 'too-few-elements-in-dim (- rank k) i lenk))))
-                   ((or (not lenk) (< i lenk))
-                    (loop-rank (- k 1) (car l))
-                    (loop-dim (+ i 1) (cdr l)))
-                   (else
-                    (throw 'too-many-elements-on-dim (- rank k))))))))))))
+         ((null? len)
+          (root-set! temp j l)
+          (set! j (+ j 1)))
+         (else
+          (receive (lenk len) (car+cdr len)
+            (cond
+; read 1-slice
+             ((null? len)
+              (do ((i 0 (+ i 1)) (l l (cdr l)))
+                  ((= i lenk)
+                   (unless (null? l) (throw 'mismatched-list-length-dim (- rank 1))))
+                (root-set! temp (+ j i) (car l)))
+              (set! j (+ j lenk)))
+; general case
+             (else
+              (do ((i 0 (+ i 1)) (l l (cdr l)))
+                  ((= i lenk)
+                   (unless (null? l) (throw 'mismatched-list-length-dim (- rank 1 (length len)))))
+                (loop-rank len (car l)))))))))
 ; FIXME make-ra-data takes len | (lo hi) as in Guile, but I'd prefer len | (lo len)
-      (apply make-ra-data (root-resize temp (vector-fold * 1 len))
-             (vector->list (vector-map (lambda (lo len) (list lo (+ lo len -1))) lo len))))))
+      (apply make-ra-data
+        temp (map (lambda (lo len) (list lo (+ lo len -1))) lo len)))))
