@@ -601,7 +601,7 @@
 (define-syntax %slice-loop
   (lambda (stx)
     (syntax-case stx ()
-      ((_ u_ op
+      ((_ k_ op
           %opper %op %list %let %stepu %stepu-back %stepk %stepk-back
           (ra ...))
        (with-syntax ([(frame ...) (generate-temporaries #'(ra ...))]
@@ -609,8 +609,8 @@
                      [(s ...) (generate-temporaries #'(ra ...))]
                      [(ss ...) (generate-temporaries #'(ra ...))]
                      [(sm ...) (generate-temporaries #'(ra ...))])
-         #'(let ((u u_))
-             (receive (los lens) (apply ra-slice-for-each-check u (%list ra ...))
+         #'(let ((k k_))
+             (receive (los lens) (apply ra-slice-for-each-check k (%list ra ...))
                (let/ec exit
 ; check early so we can save a step in the loop later.
                  (vector-for-each (lambda (len) (when (zero? len) (exit))) lens)
@@ -619,15 +619,15 @@
                    (%let ((ra ...) (ra ...)
                           (lambda (ro)
                             (make-ra (%%ra-data ro)
-                                     (ra-pos-first (%%ra-zero ro) (vector-take (%%ra-dims ro) u))
-                                     (vector-drop (%%ra-dims ro) u))))
+                                     (ra-pos-first (%%ra-zero ro) (vector-take (%%ra-dims ro) k))
+                                     (vector-drop (%%ra-dims ro) k))))
 ; since we'll unroll, special case for rank 0
-                     (if (zero? u)
+                     (if (zero? k)
 ; BUG no fresh slice descriptor like in array-slice-for-each. See also below.
                        (%opper %op op ra ...)
 ; we'll do a normal rank-loop in [0..u) and unroll dimensions [u..k); u must be found.
 ; the last axis of the frame can always be unrolled, so we start checking from the one before.
-                       (let ((u (- u 1)))
+                       (let ((u (- k 1)))
                          (%let ((step ...) (frame ...) (lambda (frome) (%%ra-step frome u)))
                            (receive (u len)
                                (let loop ((u u) (len 1) (s step) ...)
@@ -671,8 +671,7 @@
         (syntax-rules ()
           ((_ u op ra ...)
            (%slice-loop u op
-                        %opper-slice-for-each %op
-                        %list %let
+                        %opper-slice-for-each %op %list %let
                         %stepu %stepu-back %stepk %stepk-back (ra ...))))))
     (case-lambda
      ((u op ra0) (%args u op ra0))
@@ -680,8 +679,7 @@
      ((u op ra0 ra1 ra2) (%args u op ra0 ra1 ra2))
      ((u op . ra)
       (%slice-loop u op
-                   %opper-slice-for-each %apply-op
-                   %apply-list %apply-let
+                   %opper-slice-for-each %apply-op %apply-list %apply-let
                    %apply-stepu %apply-stepu-back %apply-stepk %apply-stepk-back (ra))))))
 
 
@@ -689,50 +687,46 @@
 ; special rank-0 versions, ra-for-each, ra-map!, ra-copy!, ra-equal?
 ; ----------------
 
-(define-syntax %opper-for-each
-  (syntax-rules ()
-    ((_ %op op ra ...)
-     (%op op ((%%ra-vref ra) (%%ra-data ra) (%%ra-zero ra)) ...))))
 
 (define ra-for-each
-  (let-syntax
-      ((%args
+  (letrec-syntax
+      ((%opper-for-each
+        (syntax-rules ()
+          ((_ %op op ra ...)
+           (%op op ((%%ra-vref ra) (%%ra-data ra) (%%ra-zero ra)) ...))))
+       (%args
         (syntax-rules ()
           ((_ op ra0 ra ...)
            (%slice-loop (ra-rank ra0) op
-                        %opper-for-each %op
-                        %list %let
+                        %opper-for-each %op %list %let
                         %stepu %stepu-back %stepk %stepk-back (ra0 ra ...)))))
        (%apply-opper-for-each
         (syntax-rules ()
           ((_ %op op ra)
            (%op op (map (lambda (a) ((%%ra-vref a) (%%ra-data a) (%%ra-zero a))) ra))))))
-    (case-lambda
-     ((op ra0) (%args op ra0))
-     ((op ra0 ra1) (%args op ra0 ra1))
-     ((op ra0 ra1 ra2) (%args op ra0 ra1 ra2))
-     ((op ra0 . rax)
-      (let ((ra (cons ra0 rax)))
-        (%slice-loop (ra-rank ra0) op
-                     %apply-opper-for-each %apply-op
-                     %apply-list %apply-let
-                     %apply-stepu %apply-stepu-back %apply-stepk %apply-stepk-back (ra)))))))
-
-(define-syntax %opper-map!
-  (syntax-rules ()
-    ((_ %op op ra0 ra ...)
-     ((%%ra-vset! ra0) (%%ra-data ra0) (%%ra-zero ra0)
-      (%op op ((%%ra-vref ra) (%%ra-data ra) (%%ra-zero ra)) ...)))))
+      (case-lambda
+       ((op ra0) (%args op ra0))
+       ((op ra0 ra1) (%args op ra0 ra1))
+       ((op ra0 ra1 ra2) (%args op ra0 ra1 ra2))
+       ((op ra0 . rax)
+        (let ((ra (cons ra0 rax)))
+          (%slice-loop (ra-rank ra0) op
+                       %apply-opper-for-each %apply-op %apply-list %apply-let
+                       %apply-stepu %apply-stepu-back %apply-stepk %apply-stepk-back (ra)))))))
 
 (define ra-map!
-  (let-syntax
-      ((%args
+  (letrec-syntax
+      ((%opper-map!
+        (syntax-rules ()
+          ((_ %op op ra0 ra ...)
+           ((%%ra-vset! ra0) (%%ra-data ra0) (%%ra-zero ra0)
+            (%op op ((%%ra-vref ra) (%%ra-data ra) (%%ra-zero ra)) ...)))))
+       (%args
         (syntax-rules ()
           ((_ op ra0 ra ...)
            (begin
              (%slice-loop (ra-rank ra0) op
-                          %opper-map! %op
-                          %list %let
+                          %opper-map! %op %list %let
                           %stepu %stepu-back %stepk %stepk-back (ra0 ra ...))
              ra0))))
        (%apply-opper-map!
@@ -747,59 +741,55 @@
      ((ra0 op . rax)
       (let ((ra (cons ra0 rax)))
         (%slice-loop (ra-rank ra0) op
-                     %apply-opper-map! %apply-op
-                     %apply-list %apply-let
+                     %apply-opper-map! %apply-op %apply-list %apply-let
                      %apply-stepu %apply-stepu-back %apply-stepk %apply-stepk-back (ra))
         ra0)))))
 
-(define-syntax %opper-copy!
-  (syntax-rules ()
-    ((_ %op op src dst)
-     ((%%ra-vset! dst) (%%ra-data dst) (%%ra-zero dst)
-      ((%%ra-vref src) (%%ra-data src) (%%ra-zero src))))))
-
 (define (ra-copy! src dst)
-  (%slice-loop (ra-rank dst) (const #f)
-               %opper-copy! %op
-               %list %let
-               %stepu %stepu-back %stepk %stepk-back (src dst))
-  dst)
-
-(define-syntax %opper-fill!
-  (syntax-rules ()
-    ((_ %op fill ra)
-     ((%%ra-vset! ra) (%%ra-data ra) (%%ra-zero ra) fill))))
+  (let-syntax
+      ((%opper-copy!
+        (syntax-rules ()
+          ((_ %op op src dst)
+           ((%%ra-vset! dst) (%%ra-data dst) (%%ra-zero dst)
+            ((%%ra-vref src) (%%ra-data src) (%%ra-zero src)))))))
+    (%slice-loop (ra-rank dst) (const #f)
+                 %opper-copy! %op %list %let
+                 %stepu %stepu-back %stepk %stepk-back (src dst))
+    dst))
 
 (define (ra-fill! ra fill)
-  (%slice-loop (ra-rank ra) fill
-               %opper-fill! %op
-               %list %let
-               %stepu %stepu-back %stepk %stepk-back (ra))
-  ra)
-
-(define-syntax %opper-equal?
-  (syntax-rules ()
-    ((_ %op exit ra rb)
-     (unless (equal? ((%%ra-vref ra) (%%ra-data ra) (%%ra-zero ra))
-                     ((%%ra-vref rb) (%%ra-data rb) (%%ra-zero rb)))
-       (exit #f)))))
+  (let-syntax
+      ((%opper-fill!
+        (syntax-rules ()
+          ((_ %op fill ra)
+           ((%%ra-vset! ra) (%%ra-data ra) (%%ra-zero ra) fill)))))
+    (%slice-loop (ra-rank ra) fill
+                 %opper-fill! %op %list %let
+                 %stepu %stepu-back %stepk %stepk-back (ra))
+    ra))
 
 (define (ra-equal? ra rb)
-  (and (eq? (%%ra-type ra) (%%ra-type rb))
-       (let/ec exit
-         (vector-for-each
-          (lambda (a b)
-            (unless (and (= (dim-lo a) (dim-lo b))
-                         (= (dim-len a) (dim-len b)))
-              (exit #f)))
-          (%%ra-dims ra) (%%ra-dims rb))
-         #t)
-       (let/ec exit
-         (%slice-loop (ra-rank ra) exit
-                      %opper-equal? %op
-                      %list %let
-                      %stepu %stepu-back %stepk %stepk-back (ra rb))
-         #t)))
+  (let-syntax
+      ((%opper-equal?
+        (syntax-rules ()
+          ((_ %op exit ra rb)
+           (unless (equal? ((%%ra-vref ra) (%%ra-data ra) (%%ra-zero ra))
+                           ((%%ra-vref rb) (%%ra-data rb) (%%ra-zero rb)))
+             (exit #f))))))
+    (and (eq? (%%ra-type ra) (%%ra-type rb))
+         (let/ec exit
+           (vector-for-each
+            (lambda (a b)
+              (unless (and (= (dim-lo a) (dim-lo b))
+                           (= (dim-len a) (dim-len b)))
+                (exit #f)))
+            (%%ra-dims ra) (%%ra-dims rb))
+           #t)
+         (let/ec exit
+           (%slice-loop (ra-rank ra) exit
+                        %opper-equal? %op %list %let
+                        %stepu %stepu-back %stepk %stepk-back (ra rb))
+           #t))))
 
 
 ; ----------------

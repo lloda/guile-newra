@@ -33,3 +33,41 @@
            (let ((next (list (vector-ref v i))))
              (set-cdr! last next)
              (loop next (+ i 1)))))))))
+
+
+(define-syntax %%rastruct-ref (syntax-rules () ((_ a n) (struct-ref a n))))
+
+; call macro with PARAM according to values OPT of TAG
+(define-syntax %tag-dispatch
+  (syntax-rules ()
+    ((_ tag macro (opt ...) (param ...) args ...)
+     (case tag ((opt) (macro param args ...)) ... (else (throw 'bad-tag tag))))))
+
+(%tag-dispatch 'TWO display (ONE TWO) ('one 'two))
+
+(define (ra-foll! ra fill)
+  (letrec-syntax
+      ((%opper-fill!
+        (syntax-rules ()
+          ((_ %op fill ra vset)
+           (vset (%%ra-data ra) (%%ra-zero ra) fill))))
+       (%slice-loop-type
+        (syntax-rules ()
+          ((_ (ra-rank ra) fill
+              %opper-fill! %op %list %let
+              %stepu %stepu-back %stepk %stepk-back (ra) (vset))
+           (%slice-loop ))))
+    (%tag-dispatch tag
+                   (%slice-loop-type
+    ra)))))
+
+(define (ra-fill! ra fill)
+  (let-syntax
+      ((%opper-fill!
+        (syntax-rules ()
+          ((_ %op fill ra)
+           ((%%ra-vset! ra) (%%ra-data ra) (%%ra-zero ra) fill)))))
+    (%slice-loop (ra-rank ra) fill
+                 %opper-fill! %op %list %let
+                 %stepu %stepu-back %stepk %stepk-back (ra))
+    ra))
