@@ -331,6 +331,25 @@
 
 
 ; -----------------------
+; list->ra, list->typed-ra
+; -----------------------
+
+(test-equal "#%0(99)" (ra->string (list->ra 0 99)))
+(test-equal "#%1:3(1 2 3)" (ra->string (list->ra 1 '(1 2 3))))
+(test-equal "#%0((1 2 3))" (ra->string (list->ra 0 '(1 2 3))))
+(test-equal "#%2:2:2((1 2) (3 4))" (ra->string (list->ra 2 '((1 2) (3 4)))))
+(test-equal "#%1:2((1 2) (3 4))" (ra->string (list->ra 1 '((1 2) (3 4)))))
+(test-equal "#%0(((1 2) (3 4)))" (ra->string (list->ra 0 '((1 2) (3 4)))))
+
+(test-equal "#%0f64(99.0)" (ra->string (list->typed-ra 'f64 0 99)))
+(test-equal "#%1f64:3(1.0 2.0 3.0)" (ra->string (list->typed-ra 'f64 1 '(1 2 3))))
+(test-equal "#%2f64:2:2((1.0 2.0) (3.0 4.0))" (ra->string (list->typed-ra 'f64 2 '((1 2) (3 4)))))
+
+(test-equal "#%1f64@1:3(1.0 2.0 3.0)" (ra->string (list->typed-ra 'f64 '(1) '(1 2 3))))
+(test-equal "#%1f64@1:3(1.0 2.0 3.0)" (ra->string (list->typed-ra 'f64 '((1 3)) '(1 2 3))))
+
+
+; -----------------------
 ; the end.
 ; -----------------------
 
