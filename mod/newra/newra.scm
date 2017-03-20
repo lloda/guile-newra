@@ -22,7 +22,8 @@
             ra-slice-for-each
             ra-slice-for-each-1 ra-slice-for-each-2
             ra-slice-for-each-3 ra-slice-for-each-4
-            ra-map! ra-for-each ra-copy! ra-fill! ra-equal?
+            ra-fill! ra-fill-1! ra-fill-2!
+            ra-map! ra-for-each ra-copy! ra-equal?
             ra-length make-shared-ra ra->list))
 
 (import (srfi srfi-9) (srfi srfi-9 gnu) (only (srfi srfi-1) fold every) (srfi srfi-8)
@@ -207,10 +208,10 @@
         ((s32vector? v) (values  's32  s32vector-length  s32vector-ref  s32vector-set!))
         ((s16vector? v) (values  's16  s16vector-length  s16vector-ref  s16vector-set!))
         ((s8vector? v)  (values  's8   s8vector-length   s8vector-ref   s8vector-set! ))
-        ((u64vector? v) (values  'u64  s64vector-length  s64vector-ref  s64vector-set!))
-        ((u32vector? v) (values  'u32  s32vector-length  s32vector-ref  s32vector-set!))
-        ((u16vector? v) (values  'u16  s16vector-length  s16vector-ref  s16vector-set!))
-        ((u8vector? v)  (values  'u8   s8vector-length   s8vector-ref   s8vector-set! ))
+        ((u64vector? v) (values  'u64  u64vector-length  u64vector-ref  u64vector-set!))
+        ((u32vector? v) (values  'u32  u32vector-length  u32vector-ref  u32vector-set!))
+        ((u16vector? v) (values  'u16  u16vector-length  u16vector-ref  u16vector-set!))
+        ((u8vector? v)  (values  'u8   u8vector-length   u8vector-ref   u8vector-set! ))
         ((string? v)    (values  'a    string-length     string-ref     string-set!   ))
         ((bitvector? v) (values  'b    bitvector-length  bitvector-ref  bitvector-set!))
 ; @TODO extend this idea to 'non-strict arrays' (cf Racket), to a method for drag-along
@@ -758,7 +759,7 @@
                  %stepu %stepu-back %stepk %stepk-back (src dst))
     dst))
 
-(define (ra-fill! ra fill)
+(define (ra-fill-1! ra fill)
   (let-syntax
       ((%opper-fill!
         (syntax-rules ()
@@ -768,6 +769,51 @@
                  %opper-fill! %op %list %let
                  %stepu %stepu-back %stepk %stepk-back (ra))
     ra))
+
+(eval-when (expand load eval)
+  (define syntax-accessors
+    (list (list #'#t  #'vector-ref     #'vector-set!                   )
+          (list #'c64 #'c64vector-ref  #'c64vector-set!                )
+          (list #'c32 #'c32vector-ref  #'c32vector-set!                )
+          (list #'f64 #'f64vector-ref  #'f64vector-set!                )
+          (list #'f32 #'f32vector-ref  #'f32vector-set!                )
+          (list #'s64 #'s64vector-ref  #'s64vector-set!                )
+          (list #'s32 #'s32vector-ref  #'s32vector-set!                )
+          (list #'s16 #'s16vector-ref  #'s16vector-set!                )
+          (list #'s8  #'s8vector-ref   #'s8vector-set!                 )
+          (list #'u64 #'u64vector-ref  #'u64vector-set!                )
+          (list #'u32 #'u32vector-ref  #'u32vector-set!                )
+          (list #'u16 #'u16vector-ref  #'u16vector-set!                )
+          (list #'u8  #'u8vector-ref   #'u8vector-set!                 )
+          (list #'a   #'string-ref     #'string-set!                   )
+          (list #'b   #'bitvector-ref  #'bitvector-set!                )
+          (list #'d   #'dim-ref        #'(cut throw 'no-dim-set! <...>)))))
+
+(define (ra-fill-2! ra fill)
+  (let-syntax
+      ((%%do
+        (lambda (stx)
+          (syntax-case stx ()
+            ((_ ra fill)
+             #`(let ((type (ra-type ra)))
+                 (case type
+                   #,@(map (match-lambda
+                             ((tag vref vset!)
+                              #`((#,tag)
+                                 (let-syntax
+                                     ((%opper-fill!
+                                       (syntax-rules ()
+                                         ((_ %op fill ra)
+                                          (#,vset! (%%ra-data ra) (%%ra-zero ra) fill)))))
+                                   (%slice-loop (ra-rank ra) fill
+                                                %opper-fill! %op %list %let
+                                                %stepu %stepu-back %stepk %stepk-back (ra))))))
+                        syntax-accessors)
+                   (else (throw 'unknown-or-unsettable-ra-type type)))
+                 ra))))))
+    (%%do ra fill)))
+
+(define ra-fill! ra-fill-2!)
 
 (define (ra-equal? ra rb)
   (let-syntax
