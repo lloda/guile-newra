@@ -250,7 +250,9 @@
   (test-assert (ra-equal? ra5a ra6a))
   (test-equal "#%2@1:2@1:3((x x x) (x x x))" (ra->string (ra-fill! ra5a 'x)))
   (test-equal "#%2@1:2@1:3((x x x) (x x x))" (ra->string ra5a))
-  (test-assert (not (ra-equal? ra6a ra5a))))
+  (test-assert (not (ra-equal? ra6a ra5a)))
+  (test-assert (ra-equal? (make-ra-data #(99 99 99 99) '(1 2) '(1 2))
+                          (ra-fill! (make-ra-data (vector 1 2 3 4) '(1 2) '(1 2)) 99))))
 
 (test-begin "ra-for-each")
 (test-equal "(10 0 10)(9 1 9)(8 2 8)(7 3 7)(6 4 6)(5 5 5)(4 6 4)(3 7 3)(2 8 2)(1 9 1)"

@@ -603,24 +603,25 @@
     (syntax-case stx ()
       ((_ k_ op
           %opper %op %list %let %stepu %stepu-back %stepk %stepk-back
-          (ra ...))
-       (with-syntax ([(frame ...) (generate-temporaries #'(ra ...))]
-                     [(step ...) (generate-temporaries #'(ra ...))]
-                     [(s ...) (generate-temporaries #'(ra ...))]
-                     [(ss ...) (generate-temporaries #'(ra ...))]
-                     [(sm ...) (generate-temporaries #'(ra ...))])
+          (ra_ ...))
+       (with-syntax ([(ra ...) (generate-temporaries #'(ra_ ...))]
+                     [(frame ...) (generate-temporaries #'(ra_ ...))]
+                     [(step ...) (generate-temporaries #'(ra_ ...))]
+                     [(s ...) (generate-temporaries #'(ra_ ...))]
+                     [(ss ...) (generate-temporaries #'(ra_ ...))]
+                     [(sm ...) (generate-temporaries #'(ra_ ...))])
          #'(let ((k k_))
-             (receive (los lens) (apply ra-slice-for-each-check k (%list ra ...))
-               (let/ec exit
-; check early so we can save a step in the loop later.
-                 (vector-for-each (lambda (len) (when (zero? len) (exit))) lens)
 ; create (rank(ra) - k) slices that we'll use to iterate by bumping their zeros.
-                 (%let ((frame ...) (ra ...) identity)
-                   (%let ((ra ...) (ra ...)
-                          (lambda (ro)
-                            (make-ra (%%ra-data ro)
-                                     (ra-pos-first (%%ra-zero ro) (vector-take (%%ra-dims ro) k))
-                                     (vector-drop (%%ra-dims ro) k))))
+             (%let ((frame ...) (ra_ ...) identity)
+               (%let ((ra ...) (frame ...)
+                      (lambda (ro)
+                        (make-ra (%%ra-data ro)
+                                 (ra-pos-first (%%ra-zero ro) (vector-take (%%ra-dims ro) k))
+                                 (vector-drop (%%ra-dims ro) k))))
+                 (receive (los lens) (apply ra-slice-for-each-check k (%list frame ...))
+                   (let/ec exit
+; check early so we can save a step in the loop later.
+                     (vector-for-each (lambda (len) (when (zero? len) (exit))) lens)
 ; since we'll unroll, special case for rank 0
                      (if (zero? k)
 ; BUG no fresh slice descriptor like in array-slice-for-each. See also below.
