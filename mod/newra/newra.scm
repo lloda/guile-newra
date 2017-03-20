@@ -19,11 +19,10 @@
             ra-pos ra-pos-first ra-pos-hi ra-pos-lo
             ra-slice ra-cell ra-ref ra-set!
             ra-transpose
-            ra-slice-for-each
-            ra-slice-for-each-1 ra-slice-for-each-2
-            ra-slice-for-each-3 ra-slice-for-each-4
+            ra-slice-for-each ra-slice-for-each-1 ra-slice-for-each-2 ra-slice-for-each-3 ra-slice-for-each-4
             ra-fill! ra-fill-1! ra-fill-2!
-            ra-map! ra-for-each ra-copy! ra-equal?
+            ra-copy! ra-copy-1! ra-copy-2!
+            ra-map! ra-for-each ra-equal?
             ra-length make-shared-ra ra->list))
 
 (import (srfi srfi-9) (srfi srfi-9 gnu) (only (srfi srfi-1) fold every) (srfi srfi-8)
@@ -217,6 +216,25 @@
 ; @TODO extend this idea to 'non-strict arrays' (cf Racket), to a method for drag-along
         ((dim? v)       (values  'd    dim-len           dim-ref        (cut throw 'no-dim-set! <...>)))
         (else (throw 'bad-ra-data-type v))))
+
+(eval-when (expand load eval)
+  (define syntax-accessors
+    (list (list #'#t  #'vector-ref     #'vector-set!                   )
+          (list #'c64 #'c64vector-ref  #'c64vector-set!                )
+          (list #'c32 #'c32vector-ref  #'c32vector-set!                )
+          (list #'f64 #'f64vector-ref  #'f64vector-set!                )
+          (list #'f32 #'f32vector-ref  #'f32vector-set!                )
+          (list #'s64 #'s64vector-ref  #'s64vector-set!                )
+          (list #'s32 #'s32vector-ref  #'s32vector-set!                )
+          (list #'s16 #'s16vector-ref  #'s16vector-set!                )
+          (list #'s8  #'s8vector-ref   #'s8vector-set!                 )
+          (list #'u64 #'u64vector-ref  #'u64vector-set!                )
+          (list #'u32 #'u32vector-ref  #'u32vector-set!                )
+          (list #'u16 #'u16vector-ref  #'u16vector-set!                )
+          (list #'u8  #'u8vector-ref   #'u8vector-set!                 )
+          (list #'a   #'string-ref     #'string-set!                   )
+          (list #'b   #'bitvector-ref  #'bitvector-set!                )
+          (list #'d   #'dim-ref        #'(cut throw 'no-dim-set! <...>)))))
 
 ; low level, for conversions
 (define (make-ra data zero dims)
@@ -662,14 +680,13 @@
                                          (%stepk k (ra frame) ...)
                                          (loop-dim (- i 1)))))))))))))))))))))))
 
-(define-syntax %opper-slice-for-each
-  (syntax-rules ()
-    ((_ %op op ra ...)
-     (%op op ra ...))))
-
 (define ra-slice-for-each-4
-  (let-syntax
-      ((%args
+  (letrec-syntax
+      ((%opper-slice-for-each
+        (syntax-rules ()
+          ((_ %op op ra ...)
+           (%op op ra ...))))
+       (%args
         (syntax-rules ()
           ((_ u op ra ...)
            (%slice-loop u op
@@ -688,7 +705,6 @@
 ; ----------------
 ; special rank-0 versions, ra-for-each, ra-map!, ra-copy!, ra-equal?
 ; ----------------
-
 
 (define ra-for-each
   (letrec-syntax
@@ -747,7 +763,7 @@
                      %apply-stepu %apply-stepu-back %apply-stepk %apply-stepk-back (ra))
         ra0)))))
 
-(define (ra-copy! src dst)
+(define (ra-copy-1! src dst)
   (let-syntax
       ((%opper-copy!
         (syntax-rules ()
@@ -759,6 +775,40 @@
                  %stepu %stepu-back %stepk %stepk-back (src dst))
     dst))
 
+(define (ra-copy-2! src dst)
+  (let-syntax
+      ((%%do
+        (lambda (stx)
+          (syntax-case stx ()
+            ((_ src dst)
+             #`(let ((type-src (ra-type src))
+                     (type-dst (ra-type dst)))
+                 (case type-src
+                   #,@(map (match-lambda
+                             ((tag-src vref-src vset!-src)
+                              #`((#,tag-src)
+                                 (case type-dst
+                                   #,@(map (match-lambda
+                                             ((tag-dst vref-dst vset!-dst)
+                                              #`((#,tag-dst)
+                                                 (let-syntax
+                                                     ((%opper-copy!
+                                                       (syntax-rules ()
+                                                         ((_ %op op src dst)
+                                                          (#,vset!-dst (%%ra-data dst) (%%ra-zero dst)
+                                                                       (#,vref-src (%%ra-data src) (%%ra-zero src)))))))
+                                                   (%slice-loop (%%ra-rank dst) (const #f)
+                                                                %opper-copy! %op %list %let
+                                                                %stepu %stepu-back %stepk %stepk-back (src dst))))))
+                                        syntax-accessors)
+                                   (else (throw 'unknown-ra-type type-dst)))
+                                 dst)))
+                        syntax-accessors)
+                   (else (throw 'unknown-ra-type type-src)))))))))
+    (%%do src dst)))
+
+(define ra-copy! ra-copy-2!)
+
 (define (ra-fill-1! ra fill)
   (let-syntax
       ((%opper-fill!
@@ -769,25 +819,6 @@
                  %opper-fill! %op %list %let
                  %stepu %stepu-back %stepk %stepk-back (ra))
     ra))
-
-(eval-when (expand load eval)
-  (define syntax-accessors
-    (list (list #'#t  #'vector-ref     #'vector-set!                   )
-          (list #'c64 #'c64vector-ref  #'c64vector-set!                )
-          (list #'c32 #'c32vector-ref  #'c32vector-set!                )
-          (list #'f64 #'f64vector-ref  #'f64vector-set!                )
-          (list #'f32 #'f32vector-ref  #'f32vector-set!                )
-          (list #'s64 #'s64vector-ref  #'s64vector-set!                )
-          (list #'s32 #'s32vector-ref  #'s32vector-set!                )
-          (list #'s16 #'s16vector-ref  #'s16vector-set!                )
-          (list #'s8  #'s8vector-ref   #'s8vector-set!                 )
-          (list #'u64 #'u64vector-ref  #'u64vector-set!                )
-          (list #'u32 #'u32vector-ref  #'u32vector-set!                )
-          (list #'u16 #'u16vector-ref  #'u16vector-set!                )
-          (list #'u8  #'u8vector-ref   #'u8vector-set!                 )
-          (list #'a   #'string-ref     #'string-set!                   )
-          (list #'b   #'bitvector-ref  #'bitvector-set!                )
-          (list #'d   #'dim-ref        #'(cut throw 'no-dim-set! <...>)))))
 
 (define (ra-fill-2! ra fill)
   (let-syntax
@@ -805,7 +836,7 @@
                                        (syntax-rules ()
                                          ((_ %op fill ra)
                                           (#,vset! (%%ra-data ra) (%%ra-zero ra) fill)))))
-                                   (%slice-loop (ra-rank ra) fill
+                                   (%slice-loop (%%ra-rank ra) fill
                                                 %opper-fill! %op %list %let
                                                 %stepu %stepu-back %stepk %stepk-back (ra))))))
                         syntax-accessors)
