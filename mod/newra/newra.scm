@@ -20,9 +20,7 @@
             ra-slice ra-cell ra-ref ra-set!
             ra-transpose
             ra-slice-for-each ra-slice-for-each-1 ra-slice-for-each-2 ra-slice-for-each-3 ra-slice-for-each-4
-            ra-fill! ra-fill-1! ra-fill-2!
-            ra-copy! ra-copy-1! ra-copy-2!
-            ra-map! ra-for-each ra-equal?
+            ra-fill! ra-copy! ra-equal? ra-map! ra-for-each
             ra-length make-shared-ra ra->list))
 
 (import (srfi srfi-9) (srfi srfi-9 gnu) (only (srfi srfi-1) fold every) (srfi srfi-8)
@@ -832,47 +830,35 @@
       rx)
     ra))
 
-(define (ra-fill-1! ra fill)
+(define (ra-fill! ra fill)
   (let-syntax
-      ((%fill!
+      ((%typed-fill
+        (syntax-rules ()
+          ((_ (vref-ra vset!-ra ra))
+           (vset!-ra (%%ra-data ra) (%%ra-zero ra) fill))))
+       (%fill!
         (syntax-rules ()
           ((_ ra)
            ((%%ra-vset! ra) (%%ra-data ra) (%%ra-zero ra) fill)))))
-    (%%default %fill! ra)
+    ;; (%%default %fill! ra)
+    (%%dispatch %typed-fill ra)
     ra))
 
-(define (ra-fill-2! ra fill)
+(define (ra-copy! ra rb)
   (let-syntax
-      ((%fill
+      ((%typed-copy
         (syntax-rules ()
-          ((_ (vref-ra vset!-ra ra))
-           (vset!-ra (%%ra-data ra) (%%ra-zero ra) fill)))))
-    (%%dispatch %fill ra)
-    ra))
-
-(define ra-fill! ra-fill-2!)
-
-(define (ra-copy-1! ra rb)
-  (let-syntax
-      ((%copy!
+          ((_ (vref-ra vset!-ra ra) (vref-rb vset!-rb rb))
+           (vset!-rb (%%ra-data rb) (%%ra-zero rb)
+                     (vref-ra (%%ra-data ra) (%%ra-zero ra))))))
+       (%copy!
         (syntax-rules ()
           ((_ ra rb)
            ((%%ra-vset! rb) (%%ra-data rb) (%%ra-zero rb)
             ((%%ra-vref ra) (%%ra-data ra) (%%ra-zero ra)))))))
-    (%%default %copy! ra rb)
+    ;; (%%default %copy! ra rb)
+    (%%dispatch %typed-copy ra rb)
     rb))
-
-(define (ra-copy-2! ra rb)
-  (let-syntax
-      ((%copy
-        (syntax-rules ()
-          ((_ (vref-ra vset!-ra ra) (vref-rb vset!-rb rb))
-           (vset!-rb (%%ra-data rb) (%%ra-zero rb)
-                     (vref-ra (%%ra-data ra) (%%ra-zero ra)))))))
-    (%%dispatch %copy ra rb)
-    rb))
-
-(define ra-copy! ra-copy-2!)
 
 (define (ra-equal? ra rb)
   (let/ec exit
@@ -948,8 +934,3 @@
               (if (< i (dim-lo dimk))
                 l
                 (loop-dim (cons (loop-rank (- k 1) (ra-cell ra i)) l) (- i 1))))))))))))
-
-
-; ----------------
-; epilogue
-; ----------------
