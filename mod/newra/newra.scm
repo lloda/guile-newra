@@ -936,3 +936,8 @@
               (if (< i (dim-lo dimk))
                 l
                 (loop-dim (cons (loop-rank (- k 1) (ra-cell ra i)) l) (- i 1))))))))))))
+
+
+; ----------------
+; necessary conveniences
+; ----------------
