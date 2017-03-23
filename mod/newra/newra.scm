@@ -224,15 +224,16 @@
           (list #'f32 #'f32vector-ref  #'f32vector-set!                )
           (list #'s64 #'s64vector-ref  #'s64vector-set!                )
           (list #'s32 #'s32vector-ref  #'s32vector-set!                )
-          (list #'s16 #'s16vector-ref  #'s16vector-set!                )
-          (list #'s8  #'s8vector-ref   #'s8vector-set!                 )
-          (list #'u64 #'u64vector-ref  #'u64vector-set!                )
-          (list #'u32 #'u32vector-ref  #'u32vector-set!                )
-          (list #'u16 #'u16vector-ref  #'u16vector-set!                )
-          (list #'u8  #'u8vector-ref   #'u8vector-set!                 )
-          (list #'a   #'string-ref     #'string-set!                   )
-          (list #'b   #'bitvector-ref  #'bitvector-set!                )
-          (list #'d   #'dim-ref        #'(cut throw 'no-dim-set! <...>)))))
+          ;; (list #'s16 #'s16vector-ref  #'s16vector-set!                )
+          ;; (list #'s8  #'s8vector-ref   #'s8vector-set!                 )
+          ;; (list #'u64 #'u64vector-ref  #'u64vector-set!                )
+          ;; (list #'u32 #'u32vector-ref  #'u32vector-set!                )
+          ;; (list #'u16 #'u16vector-ref  #'u16vector-set!                )
+          ;; (list #'u8  #'u8vector-ref   #'u8vector-set!                 )
+          ;; (list #'a   #'string-ref     #'string-set!                   )
+          ;; (list #'b   #'bitvector-ref  #'bitvector-set!                )
+          ;; (list #'d   #'dim-ref        #'(cut throw 'no-dim-set! <...>))
+          )))
 
 ; low level, for conversions
 (define (make-ra data zero dims)
@@ -719,24 +720,31 @@
        (%op-loop %apply-op %apply-stepu %apply-stepk ra)
        ra))))
 
-; FIXME Refactor, support missing syntax-accessor (e.g. choose between %op and %typed-op).
+(define-syntax %%subop
+  (syntax-rules ()
+    ((_ %op (vref-ra vset!-ra ra) ...)
+     (let-syntax
+         ((%op-op
+           (syntax-rules ()
+             ((_ ra ...)
+              (%op (vref-ra vset!-ra ra) ...)))))
+       (%%default %op-op ra ...)))))
+
+; FIXME Refactor
+; FIXME Maybe partial dispatch? i.e. the first type is supported but not the others.
+; FIXME Compile cases on demand.
 (define-syntax %%dispatch
   (lambda (stx)
     (syntax-case stx ()
-      ((_ %op ra)
+      ((_ %typed-op %op ra)
        #`(case (ra-type ra)
            #,@(map (match-lambda
-                     ((tag vref-ra vset!-ra)
-                      #`((#,tag)
-                         (let-syntax
-                             ((%op-op
-                               (syntax-rules ()
-                                 ((_ ra)
-                                  (%op (#,vref-ra #,vset!-ra ra))))))
-                           (%%default %op-op ra)))))
+                     ((tag-ra vref-ra vset!-ra)
+                      #`((#,tag-ra)
+                         (%%subop %typed-op (#,vref-ra #,vset!-ra ra)))))
                 syntax-accessors)
-           (else (throw 'bad-ra-type (ra-type ra)))))
-      ((_ %op ra rb)
+           (else (%%default %op ra))))
+      ((_ %typed-op %op ra rb)
        #`(case (ra-type ra)
            #,@(map (match-lambda
                      ((tag-ra vref-ra vset!-ra)
@@ -745,18 +753,13 @@
                            #,@(map (match-lambda
                                      ((tag-rb vref-rb vset!-rb)
                                       #`((#,tag-rb)
-                                         (let-syntax
-                                             ((%op-op
-                                               (syntax-rules ()
-                                                 ((_ ra rb)
-                                                  (%op (#,vref-ra #,vset!-ra ra) (#,vref-rb #,vset!-rb rb))))))
-                                           (%%default %op-op ra rb)))))
+                                         (%%subop %typed-op (#,vref-ra #,vset!-ra ra) (#,vref-rb #,vset!-rb rb)))))
                                 syntax-accessors)
-                           (else (throw 'bad-ra-type (ra-type rb))))
+                           (else (%%default %op ra rb)))
                          rb)))
                 syntax-accessors)
-           (else (throw 'bad-ra-type (ra-type ra)))))
-      ((_ %op ra rb rc)
+           (else (%%default %op ra rb))))
+      ((_ %typed-op %op ra rb rc)
        #`(case (ra-type ra)
            #,@(map (match-lambda
                      ((tag-ra vref-ra vset!-ra)
@@ -769,19 +772,14 @@
                                            #,@(map (match-lambda
                                                      ((tag-rc vref-rc vset!-rc)
                                                       #`((#,tag-rc)
-                                                         (let-syntax
-                                                             ((%op-op
-                                                               (syntax-rules ()
-                                                                 ((_ ra rb rc)
-                                                                  (%op (#,vref-ra #,vset!-ra ra) (#,vref-rb #,vset!-rb rb) (#,vref-rc #,vset!-rc rc))))))
-                                                           (%%default %op-op ra rb rc)))))
+                                                         (%%subop %typed-op (#,vref-ra #,vset!-ra ra) (#,vref-rb #,vset!-rb rb) (#,vref-rc #,vset!-rc rc)))))
                                                 syntax-accessors)
-                                           (else (throw 'bad-ra-type (ra-type rc)))))))
+                                           (else (%%default %op ra rb rc))))))
                                 syntax-accessors)
-                           (else (throw 'bad-ra-type (ra-type rb))))
+                           (else (%%default %op ra rb rc)))
                          rb)))
                 syntax-accessors)
-           (else (throw 'bad-ra-type (ra-type ra))))))))
+           (else (%%default %op ra rb rc)))))))
 
 (define (ra-for-each op ra . rx)
   (let-syntax
@@ -798,8 +796,8 @@
           ((_ ra)
            (apply op (map (lambda (a) ((%%ra-vref a) (%%ra-data a) (%%ra-zero a))) ra))))))
     (apply (case-lambda
-            (() (%%dispatch %typed-fe ra))
-            ((rb) (%%dispatch %typed-fe ra rb))
+            (() (%%dispatch %typed-fe %fe ra))
+            ((rb) (%%dispatch %typed-fe %fe ra rb))
             ((rb rc) (%%default %fe ra rb rc))
             (rx (%%apply-default %apply-fe (cons ra rx))))
       rx)
@@ -823,8 +821,8 @@
            ((%%ra-vset! (car ra)) (%%ra-data (car ra)) (%%ra-zero (car ra))
             (apply op (map (lambda (a) ((%%ra-vref a) (%%ra-data a) (%%ra-zero a))) (cdr ra))))))))
     (apply (case-lambda
-            (() (%%dispatch %typed-map! ra))
-            ((rb) (%%dispatch %typed-map! ra rb))
+            (() (%%dispatch %typed-map! %map! ra))
+            ((rb) (%%dispatch %typed-map! %map! ra rb))
             ((rb rc) (%%default %map! ra rb rc))
             (rx (%%apply-default %apply-map! (cons ra rx))))
       rx)
@@ -832,7 +830,7 @@
 
 (define (ra-fill! ra fill)
   (let-syntax
-      ((%typed-fill
+      ((%typed-fill!
         (syntax-rules ()
           ((_ (vref-ra vset!-ra ra))
            (vset!-ra (%%ra-data ra) (%%ra-zero ra) fill))))
@@ -840,13 +838,12 @@
         (syntax-rules ()
           ((_ ra)
            ((%%ra-vset! ra) (%%ra-data ra) (%%ra-zero ra) fill)))))
-    ;; (%%default %fill! ra)
-    (%%dispatch %typed-fill ra)
+    (%%dispatch %typed-fill! %fill! ra)
     ra))
 
 (define (ra-copy! ra rb)
   (let-syntax
-      ((%typed-copy
+      ((%typed-copy!
         (syntax-rules ()
           ((_ (vref-ra vset!-ra ra) (vref-rb vset!-rb rb))
            (vset!-rb (%%ra-data rb) (%%ra-zero rb)
@@ -856,18 +853,23 @@
           ((_ ra rb)
            ((%%ra-vset! rb) (%%ra-data rb) (%%ra-zero rb)
             ((%%ra-vref ra) (%%ra-data ra) (%%ra-zero ra)))))))
-    ;; (%%default %copy! ra rb)
-    (%%dispatch %typed-copy ra rb)
+    (%%dispatch %typed-copy! %copy! ra rb)
     rb))
 
 (define (ra-equal? ra rb)
   (let/ec exit
     (let-syntax
-        ((%equal?
+        ((%typed-equal?
           (syntax-rules ()
             ((_ (vref-ra vset!-ra ra) (vref-rb vset!-rb rb))
              (unless (equal? (vref-ra (%%ra-data ra) (%%ra-zero ra))
                              (vref-rb (%%ra-data rb) (%%ra-zero rb)))
+               (exit #f)))))
+         (%equal?
+          (syntax-rules ()
+            ((_ ra rb)
+             (unless (equal? ((%%ra-vref ra) (%%ra-data ra) (%%ra-zero ra))
+                             ((%%ra-vref rb) (%%ra-data rb) (%%ra-zero rb)))
                (exit #f))))))
       (and (eq? (%%ra-type ra) (%%ra-type rb))
            (begin
@@ -877,7 +879,7 @@
                              (= (dim-len a) (dim-len b)))
                   (exit #f)))
               (%%ra-dims ra) (%%ra-dims rb))
-             (%%dispatch %equal? ra rb)
+             (%%dispatch %typed-equal? %equal? ra rb)
              #t)))))
 
 
