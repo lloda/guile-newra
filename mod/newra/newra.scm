@@ -612,6 +612,30 @@
                        (%stepk k 1 (ra frame) ...)
                        (loop-dim (- i 1))))))))))))))
 
+; this variant of %op-loop avoids updating/rolling back %%ra-zero and instead
+; keeps indices on the stack. The improvement from this is somewhat
+; unreasonable...
+; FIXME (maybe?) unusable for list ra (since %%ra-zero/%%ra-step are used directly).
+(define-syntax %op-loop-z
+  (lambda (stx)
+    (syntax-case stx ()
+      ((_ %op ra_ ...)
+       (with-syntax ([(ra ...) (generate-temporaries #'(ra_ ...))]
+                     [(frame ...) (generate-temporaries #'(ra_ ...))]
+                     [(step ...) (generate-temporaries #'(ra_ ...))]
+                     [(z ...) (generate-temporaries #'(ra_ ...))])
+         #'(lambda (lens lenm u ra ... frame ... step ...)
+             (let loop-rank ((k 0) (z (%%ra-zero ra)) ...)
+               (if (= k u)
+                 (let loop-unrolled ((i lenm) (z z) ...)
+                   (%op (ra z) ...)
+                   (unless (zero? i)
+                     (loop-unrolled (- i 1) (+ z step) ...)))
+                 (let loop-dim ((i (- (vector-ref lens k) 1)) (z z) ...)
+                   (loop-rank (+ k 1) z ...)
+                   (unless (zero? i)
+                     (loop-dim (- i 1) (+ z (%%ra-step frame k)) ...)))))))))))
+
 (define-syntax %op-once
   (lambda (stx)
     (syntax-case stx ()
@@ -619,6 +643,14 @@
        (with-syntax ([(ra ...) (generate-temporaries #'(ra_ ...))])
          #'(lambda (ra ...)
              (%op ra ...)))))))
+
+(define-syntax %op-once-z
+  (lambda (stx)
+    (syntax-case stx ()
+      ((_ %op ra_ ...)
+       (with-syntax ([(ra ...) (generate-temporaries #'(ra_ ...))])
+         #'(lambda (ra ...)
+             (%op (ra (%%ra-zero ra)) ...)))))))
 
 (define-syntax %slice-loop
   (lambda (stx)
@@ -708,8 +740,8 @@
 (define-syntax %%default
   (syntax-rules ()
     ((_ %op ra ...)
-     (slice-loop-fun (%op-once %op ra ...)
-                     (%op-loop %op %stepu %stepk ra ...)
+     (slice-loop-fun (%op-once-z %op ra ...)
+                     (%op-loop-z %op ra ...)
                      ra ...))))
 
 (define-syntax %%apply-default
@@ -721,14 +753,16 @@
        ra))))
 
 (define-syntax %%subop
-  (syntax-rules ()
-    ((_ %op (vref-ra vset!-ra ra) ...)
-     (let-syntax
-         ((%op-op
-           (syntax-rules ()
-             ((_ ra ...)
-              (%op (vref-ra vset!-ra ra) ...)))))
-       (%%default %op-op ra ...)))))
+  (lambda (stx)
+    (syntax-case stx ()
+      ((_ %op (vref-ra vset!-ra ra) ...)
+       (with-syntax ([(z ...) (generate-temporaries #'(ra ...))])
+         #'(let-syntax
+               ((%op-op
+                 (syntax-rules ()
+                   ((_ (ra z) ...)
+                    (%op (vref-ra vset!-ra ra z) ...)))))
+             (%%default %op-op ra ...)))))))
 
 ; FIXME Refactor
 ; FIXME Maybe partial dispatch? i.e. the first type is supported but not the others.
@@ -785,12 +819,12 @@
   (let-syntax
       ((%typed-fe
         (syntax-rules ()
-          ((_ (vref-rx vset!-rx rx) ...)
-           (op (vref-rx (%%ra-data rx) (%%ra-zero rx)) ...))))
+          ((_ (vref-rx vset!-rx rx z) ...)
+           (op (vref-rx (%%ra-data rx) z) ...))))
        (%fe
         (syntax-rules ()
-          ((_ rx ...)
-           (op ((%%ra-vref rx) (%%ra-data rx) (%%ra-zero rx)) ...))))
+          ((_ (rx zx) ...)
+           (op ((%%ra-vref rx) (%%ra-data rx) zx) ...))))
        (%apply-fe
         (syntax-rules ()
           ((_ ra)
@@ -807,14 +841,14 @@
   (let-syntax
       ((%typed-map!
         (syntax-rules ()
-          ((_ (vref-ra vset!-ra ra) (vref-rx vset!-rx rx) ...)
-           (vset!-ra (%%ra-data ra) (%%ra-zero ra)
-                     (op (vref-rx (%%ra-data rx) (%%ra-zero rx)) ...)))))
+          ((_ (vref-ra vset!-ra ra za) (vref-rx vset!-rx rx zx) ...)
+           (vset!-ra (%%ra-data ra) za
+                     (op (vref-rx (%%ra-data rx) zx) ...)))))
        (%map!
         (syntax-rules ()
-          ((_ ra rx ...)
-           ((%%ra-vset! ra) (%%ra-data ra) (%%ra-zero ra)
-            (op ((%%ra-vref rx) (%%ra-data rx) (%%ra-zero rx)) ...)))))
+          ((_ (ra za) (rx zx) ...)
+           ((%%ra-vset! ra) (%%ra-data ra) za
+            (op ((%%ra-vref rx) (%%ra-data rx) zx) ...)))))
        (%apply-map!
         (syntax-rules ()
           ((_ ra)
@@ -832,12 +866,12 @@
   (let-syntax
       ((%typed-fill!
         (syntax-rules ()
-          ((_ (vref-ra vset!-ra ra))
-           (vset!-ra (%%ra-data ra) (%%ra-zero ra) fill))))
+          ((_ (vref-ra vset!-ra ra za))
+           (vset!-ra (%%ra-data ra) za fill))))
        (%fill!
         (syntax-rules ()
-          ((_ ra)
-           ((%%ra-vset! ra) (%%ra-data ra) (%%ra-zero ra) fill)))))
+          ((_ (ra za))
+           ((%%ra-vset! ra) (%%ra-data ra) za fill)))))
     (%%dispatch %typed-fill! %fill! ra)
     ra))
 
@@ -845,14 +879,14 @@
   (let-syntax
       ((%typed-copy!
         (syntax-rules ()
-          ((_ (vref-ra vset!-ra ra) (vref-rb vset!-rb rb))
-           (vset!-rb (%%ra-data rb) (%%ra-zero rb)
-                     (vref-ra (%%ra-data ra) (%%ra-zero ra))))))
+          ((_ (vref-ra vset!-ra ra za) (vref-rb vset!-rb rb zb))
+           (vset!-rb (%%ra-data rb) zb
+                     (vref-ra (%%ra-data ra) za)))))
        (%copy!
         (syntax-rules ()
-          ((_ ra rb)
-           ((%%ra-vset! rb) (%%ra-data rb) (%%ra-zero rb)
-            ((%%ra-vref ra) (%%ra-data ra) (%%ra-zero ra)))))))
+          ((_ (ra za) (rb zb))
+           ((%%ra-vset! rb) (%%ra-data rb) zb
+            ((%%ra-vref ra) (%%ra-data ra) za))))))
     (%%dispatch %typed-copy! %copy! ra rb)
     rb))
 
@@ -861,15 +895,15 @@
     (let-syntax
         ((%typed-equal?
           (syntax-rules ()
-            ((_ (vref-ra vset!-ra ra) (vref-rb vset!-rb rb))
-             (unless (equal? (vref-ra (%%ra-data ra) (%%ra-zero ra))
-                             (vref-rb (%%ra-data rb) (%%ra-zero rb)))
+            ((_ (vref-ra vset!-ra ra za) (vref-rb vset!-rb rb zb))
+             (unless (equal? (vref-ra (%%ra-data ra) za)
+                             (vref-rb (%%ra-data rb) zb))
                (exit #f)))))
          (%equal?
           (syntax-rules ()
-            ((_ ra rb)
-             (unless (equal? ((%%ra-vref ra) (%%ra-data ra) (%%ra-zero ra))
-                             ((%%ra-vref rb) (%%ra-data rb) (%%ra-zero rb)))
+            ((_ (ra za) (rb zb))
+             (unless (equal? ((%%ra-vref ra) (%%ra-data ra) za)
+                             ((%%ra-vref rb) (%%ra-data rb) zb))
                (exit #f))))))
       (and (eq? (%%ra-type ra) (%%ra-type rb))
            (begin
