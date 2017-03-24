@@ -120,7 +120,7 @@
        (get-char port)
        (let ((item (read port)))
          (get-char port)
-         (make-ra-new #t item)))
+         (make-ra-new #t item #())))
       (else
        (receive (temp resize-temp) (make-temp-root len type)
          (let ((j 0))
@@ -164,8 +164,9 @@
                          (loop-dim (+ i 1)))
                         (else
                          (throw 'too-many-elements-on-dim (- rank k))))))))))))
-           (apply make-ra-data (root-resize temp (vector-fold * 1 len))
-                  (vector->list (vector-map (lambda (lo len) (list lo (+ lo len -1))) lo len))))))))))
+           (make-ra-data (root-resize temp (vector-fold * 1 len))
+                         (apply c-dims
+                           (vector->list (vector-map (lambda (lo len) (list lo (+ lo len -1))) lo len))))))))))) ; FIXME
 
 (define (list->ra rank l)
   (list->typed-ra #t rank l))
@@ -215,6 +216,6 @@
                   ((= i lenk)
                    (unless (null? l) (throw 'mismatched-list-length-dim (- rank 1 (length len)))))
                 (loop-rank len (car l)))))))))
-; FIXME make-ra-data takes len | (lo hi) as in Guile, but I'd prefer len | (lo len)
-      (apply make-ra-data
-        temp (map (lambda (lo len) (list lo (+ lo len -1))) lo len)))))
+; FIXME c-dims takes len | (lo hi) as in Guile, but I'd prefer len | (lo len)
+      (make-ra-data
+       temp (apply c-dims (map (lambda (lo len) (list lo (+ lo len -1))) lo len)))))) ; FIXME

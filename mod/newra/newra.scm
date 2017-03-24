@@ -11,17 +11,16 @@
 ;;; Code:
 
 (define-module (newra newra)
-  #:export (make-ra ra? ra-data ra-zero ra-dims ra-vlen ra-vref ra-vset!
-            make-dim dim? dim-len dim-lo dim-hi dim-step dim-ref
-            ra-rank ra-type
-            make-ra-new make-ra-data
+  #:export (make-ra-raw ra? ra-data ra-zero ra-dims ra-vlen ra-vref ra-vset!
+            ra-rank ra-type make-ra-new make-ra-data
+            make-dim dim? dim-len dim-lo dim-hi dim-step dim-ref c-dims
             array->ra ra->array
             ra-pos ra-pos-first ra-pos-hi ra-pos-lo
             ra-slice ra-cell ra-ref ra-set!
             ra-transpose
             ra-slice-for-each ra-slice-for-each-1 ra-slice-for-each-2 ra-slice-for-each-3 ra-slice-for-each-4
             ra-fill! ra-copy! ra-equal? ra-map! ra-for-each
-            ra-length make-shared-ra ra->list))
+            ra-length make-ra make-typed-ra make-shared-ra ra->list))
 
 (import (srfi srfi-9) (srfi srfi-9 gnu) (only (srfi srfi-1) fold every) (srfi srfi-8)
         (srfi srfi-4 gnu) (srfi srfi-26) (ice-9 match) (ice-9 control)
@@ -236,7 +235,7 @@
           )))
 
 ; low level, for conversions
-(define (make-ra data zero dims)
+(define (make-ra-raw data zero dims)
   (unless (vector? dims) (throw 'bad-dims dims))
   (vector-for-each (lambda (dim) (unless (dim? dim) (throw 'bad-dim dim))) dims)
 ; after check
@@ -326,9 +325,9 @@
 
 (define (ra-slice ra . i)
   (check-ra ra)
-  (make-ra (%%ra-data ra)
-           (apply ra-pos (%%ra-zero ra) (%%ra-dims ra) i)
-           (vector-drop (%%ra-dims ra) (length i))))
+  (make-ra-raw (%%ra-data ra)
+               (apply ra-pos (%%ra-zero ra) (%%ra-dims ra) i)
+               (vector-drop (%%ra-dims ra) (length i))))
 
 (define (ra-cell ra . i)
   (check-ra ra)
@@ -336,43 +335,44 @@
         (leni (length i)))
     (if (= (%%ra-rank ra) leni)
       ((%%ra-vref ra) (%%ra-data ra) pos)
-      (make-ra (%%ra-data ra) pos (vector-drop (%%ra-dims ra) leni)))))
+      (make-ra-raw (%%ra-data ra)
+                   pos
+                   (vector-drop (%%ra-dims ra) leni)))))
 
 
 ; ----------------
 ; derived functions
 ; ----------------
 
-(define (c-dims-size d)
-  (let* ((dims (let loop ((d d))
-                 (match d
-                   (()
-                    '())
-                   (((lo hi))
-                    (list (make-dim (- hi lo -1) lo 1)))
-                   ((len)
-                    (list (make-dim len 0 1)))
-                   (((lo hi) . rest)
-                    (let ((next (loop rest))
-                          (len (- hi lo -1)))
-                      (cons (make-dim len lo (* (dim-len (car next)) (dim-step (car next)))) next)))
-                   ((len . rest)
-                    (let ((next (loop rest)))
-                      (cons (make-dim len 0 (* (dim-len (car next)) (dim-step (car next)))) next)))))))
-    (values (list->vector dims)
-            (fold (lambda (a c) (* c (dim-len a))) 1 dims))))
+(define (c-dims . d)
+  (list->vector
+   (let loop ((d d))
+     (match d
+       (()
+        '())
+       (((lo hi))
+        (list (make-dim (- hi lo -1) lo 1)))
+       ((len)
+        (list (make-dim len 0 1)))
+       (((lo hi) . rest)
+        (let ((next (loop rest))
+              (len (- hi lo -1)))
+          (cons (make-dim len lo (* (dim-len (car next)) (dim-step (car next)))) next)))
+       ((len . rest)
+        (let ((next (loop rest)))
+          (cons (make-dim len 0 (* (dim-len (car next)) (dim-step (car next)))) next)))))))
 
-(define (make-ra-data data . d)
-  (receive (dims size) (c-dims-size d)
-    (make-ra data
-             (- (ra-pos-first 0 dims))
-             dims)))
+(define (make-ra-data data dims)
+  (let ((size (vector-fold (lambda (a c) (* c (dim-len a))) 1 dims)))
+    (make-ra-raw data
+                 (- (ra-pos-first 0 dims))
+                 dims)))
 
-(define (make-ra-new type value . d)
-  (receive (dims size) (c-dims-size d)
-    (make-ra (make-typed-array type value size)
-             (- (ra-pos-first 0 dims))
-             dims)))
+(define (make-ra-new type value dims)
+  (let ((size (vector-fold (lambda (a c) (* c (dim-len a))) 1 dims)))
+    (make-ra-raw (make-typed-array type value size)
+                 (- (ra-pos-first 0 dims))
+                 dims)))
 
 (define (ra-transpose ra exch)
   (let ((dims (make-vector (+ 1 (vector-fold max 0 exch)) #f)))
@@ -389,7 +389,7 @@
               (throw 'bad-lo))
             odim))))
      (%ra-dims ra) exch)
-    (make-ra (%ra-data ra) (%ra-zero ra) dims)))
+    (make-ra-raw (%ra-data ra) (%ra-zero ra) dims)))
 
 
 ; ----------------
@@ -402,9 +402,9 @@
                       (make-dim (- (cadr b) (car b) -1) (car b) i))
                  (array-shape a)
                  (shared-array-increments a)))))
-    (make-ra (shared-array-root a)
-             (- (shared-array-offset a) (ra-pos-first 0 dims))
-             dims)))
+    (make-ra-raw (shared-array-root a)
+                 (- (shared-array-offset a) (ra-pos-first 0 dims))
+                 dims)))
 
 (define (ra->array ra)
   (when (eq? 'd (%ra-type ra))
@@ -459,9 +459,9 @@
 ; create (rank(ra) - k) slices that we'll use to iterate by bumping their zeros.
     (let ((frame ra)
           (ra (map (lambda (ra)
-                     (make-ra (%%ra-data ra)
-                              (ra-pos-first (%%ra-zero ra) (vector-take (%%ra-dims ra) kk))
-                              (vector-drop (%%ra-dims ra) kk)))
+                     (make-ra-raw (%%ra-data ra)
+                                  (ra-pos-first (%%ra-zero ra) (vector-take (%%ra-dims ra) kk))
+                                  (vector-drop (%%ra-dims ra) kk)))
                 ra)))
       (let loop-rank ((k 0))
         (if (= k kk)
@@ -494,9 +494,9 @@
 ; create (rank(ra) - k) slices that we'll use to iterate by bumping their zeros.
       (let* ((frame ra)
              (ra (map (lambda (ra)
-                        (make-ra (%%ra-data ra)
-                                 (ra-pos-first (%%ra-zero ra) (vector-take (%%ra-dims ra) u))
-                                 (vector-drop (%%ra-dims ra) u)))
+                        (make-ra-raw (%%ra-data ra)
+                                     (ra-pos-first (%%ra-zero ra) (vector-take (%%ra-dims ra) u))
+                                     (vector-drop (%%ra-dims ra) u)))
                    ra)))
 ; since we'll unroll, special case for rank 0
         (if (zero? u)
@@ -635,9 +635,9 @@
              (%let ((frame ...) (ra_ ...) identity)
                (%let ((ra ...) (frame ...)
                       (lambda (ro)
-                        (make-ra (%%ra-data ro)
-                                 (ra-pos-first (%%ra-zero ro) (vector-take (%%ra-dims ro) k))
-                                 (vector-drop (%%ra-dims ro) k))))
+                        (make-ra-raw (%%ra-data ro)
+                                     (ra-pos-first (%%ra-zero ro) (vector-take (%%ra-dims ro) k))
+                                     (vector-drop (%%ra-dims ro) k))))
                  (receive (los lens) (apply ra-slice-for-each-check k (%list frame ...))
 ; since we'll unroll, special case for rank 0
                    (if (zero? k)
@@ -892,29 +892,35 @@
     (throw 'zero-rank-ra-has-no-length ra))
   (dim-len (vector-ref (%%ra-dims ra) 0)))
 
+(define (make-typed-ra type value . d)
+  (make-ra-new type value (apply c-dims d)))
+
+(define (make-ra value . d)
+  (make-ra-new #t value (apply c-dims d)))
+
 (define (make-shared-ra oldra mapfunc . d)
   (check-ra oldra)
-  (receive (dims size) (c-dims-size d) ; only lo len, won't use step
-    (let* ((newrank (vector-length dims))
-           (los (vector->list (vector-map dim-lo dims)))
-           (ref (apply ra-pos (%%ra-zero oldra) (%%ra-dims oldra) (apply mapfunc los)))
-           (dims (vector-map
-                  (lambda (dim step) (make-dim (dim-len dim) (dim-lo dim) step))
-                  dims
-                  (let ((steps (make-vector newrank 0)))
-                    (let loop ((k 0))
-                      (cond
-                       ((= k newrank) steps)
-                       (else
-                        (vector-set!
-                         steps k
-                         (if (positive? (dim-len (vector-ref dims k)))
-                           (let ((ii (list-copy los)))
-                             (list-set! ii k (+ 1 (list-ref los k)))
-                             (- (apply ra-pos (%%ra-zero oldra) (%%ra-dims oldra) (apply mapfunc ii)) ref))
-                           0))
-                        (loop (+ k 1)))))))))
-      (make-ra (%%ra-data oldra) (- ref (ra-pos-first 0 dims)) dims))))
+  (let* ((dims (apply c-dims d)) ; only lo len, won't use step
+         (newrank (vector-length dims))
+         (los (vector->list (vector-map dim-lo dims)))
+         (ref (apply ra-pos (%%ra-zero oldra) (%%ra-dims oldra) (apply mapfunc los)))
+         (dims (vector-map
+                (lambda (dim step) (make-dim (dim-len dim) (dim-lo dim) step))
+                dims
+                (let ((steps (make-vector newrank 0)))
+                  (let loop ((k 0))
+                    (cond
+                     ((= k newrank) steps)
+                     (else
+                      (vector-set!
+                       steps k
+                       (if (positive? (dim-len (vector-ref dims k)))
+                         (let ((ii (list-copy los)))
+                           (list-set! ii k (+ 1 (list-ref los k)))
+                           (- (apply ra-pos (%%ra-zero oldra) (%%ra-dims oldra) (apply mapfunc ii)) ref))
+                         0))
+                      (loop (+ k 1)))))))))
+    (make-ra-raw (%%ra-data oldra) (- ref (ra-pos-first 0 dims)) dims)))
 
 ; FIXME use ra-reverse and maybe ra-slice-for-each
 (define (ra->list ra)

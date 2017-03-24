@@ -5,7 +5,7 @@
 
 + make-ra-new, make-ra-data
 + ra-slice-for-each, ra-map!, ra-for-each, ra-transpose, ra-cell, ra-ref, ra-set!
-+ make-shared-ra, ra->list, list->ra, list->typed-ra
++ make-ra, make-shared-ra, ra->list, list->ra, list->typed-ra
 
 * refactor macros
 * speed
