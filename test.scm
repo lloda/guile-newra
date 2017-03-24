@@ -249,6 +249,7 @@
       (ra6a (make-ra-data (vector-copy #(1 2 3 4 5 6)) (c-dims '(1 2) '(1 3)))))
   (test-equal "#%2@1:2@1:3((1 2 3) (4 5 6))" (ra->string (ra-copy! ra6a ra5a)))
   (test-assert (ra-equal? ra6a ra5a))
+  (test-assert (ra-equal? ra6a ra5a ra6a))
   (set! (ra5a 1 1) 99)
   (test-assert (not (ra-equal? ra5a ra6a)))
   (set! (ra6a 1 1) 99)
@@ -256,6 +257,8 @@
   (test-equal "#%2@1:2@1:3((x x x) (x x x))" (ra->string (ra-fill! ra5a 'x)))
   (test-equal "#%2@1:2@1:3((x x x) (x x x))" (ra->string ra5a))
   (test-assert (not (ra-equal? ra6a ra5a)))
+  (test-assert (not (ra-equal? (string->ra "#%(1 2 3)") (string->ra "#%(1 2 3 4)"))))
+  (test-assert (not (ra-equal? (string->ra "#%1f64(1 2 3)") (string->ra "#%(1 2 3)"))))
   (test-assert (ra-equal? (make-ra-data #(99 99 99 99) (c-dims '(1 2) '(1 2)))
                           (ra-fill! (make-ra-data (vector 1 2 3 4) (c-dims '(1 2) '(1 2))) 99))))
 

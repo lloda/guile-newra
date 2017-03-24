@@ -597,7 +597,7 @@
     ((_ k n (ra frame))
      (for-each (lambda (ra frame) (%stepk k n (ra frame))) ra frame))))
 
-; this is taken out from %slice-loop to limit what is specialized per argument types.
+; Extracted from %slice-loop to be specialized for each combination of argument types.
 (define-syntax %op-loop
   (lambda (stx)
     (syntax-case stx ()
@@ -626,9 +626,8 @@
                        (%stepk k 1 (ra frame) ...)
                        (loop-dim (- i 1))))))))))))))
 
-; this variant of %op-loop avoids updating/rolling back %%ra-zero and instead
-; keeps indices on the stack. The improvement from this is somewhat
-; unreasonable...
+; This variant of %op-loop avoids updating/rolling back %%ra-zero and instead
+; keeps indices on the stack. The improvement is somewhat unreasonable...
 ; FIXME (maybe?) unusable for list ra (since %%ra-zero/%%ra-step are used directly).
 (define-syntax %op-loop-z
   (lambda (stx)
@@ -751,14 +750,14 @@
    ((op-once op-loop . r)
     (%slice-loop (ra-rank (car r)) op-once op-loop %apply-list %apply-let r))))
 
-(define-syntax %%default
+(define-syntax %default
   (syntax-rules ()
     ((_ %op ra ...)
      (slice-loop-fun (%op-once-z %op ra ...)
                      (%op-loop-z %op ra ...)
                      ra ...))))
 
-(define-syntax %%apply-default
+(define-syntax %apply-default
   (syntax-rules ()
     ((_ %apply-op ra)
      (apply slice-loop-fun
@@ -776,12 +775,12 @@
                  (syntax-rules ()
                    ((_ (ra z) ...)
                     (%op (vref-ra vset!-ra ra z) ...)))))
-             (%%default %op-op ra ...)))))))
+             (%default %op-op ra ...)))))))
 
 ; FIXME Refactor
 ; FIXME Maybe partial dispatch? i.e. the first type is supported but not the others.
 ; FIXME Compile cases on demand.
-(define-syntax %%dispatch
+(define-syntax %dispatch
   (lambda (stx)
     (syntax-case stx ()
       ((_ %typed-op %op ra)
@@ -791,7 +790,7 @@
                       #`((#,tag-ra)
                          (%%subop %typed-op (#,vref-ra #,vset!-ra ra)))))
                 syntax-accessors-1)
-           (else (%%default %op ra))))
+           (else (%default %op ra))))
       ((_ %typed-op %op ra rb)
        #`(case (ra-type ra)
            #,@(map (match-lambda
@@ -803,10 +802,10 @@
                                       #`((#,tag-rb)
                                          (%%subop %typed-op (#,vref-ra #,vset!-ra ra) (#,vref-rb #,vset!-rb rb)))))
                                 syntax-accessors-2)
-                           (else (%%default %op ra rb)))
+                           (else (%default %op ra rb)))
                          rb)))
                 syntax-accessors-2)
-           (else (%%default %op ra rb))))
+           (else (%default %op ra rb))))
       ((_ %typed-op %op ra rb rc)
        #`(case (ra-type ra)
            #,@(map (match-lambda
@@ -822,36 +821,44 @@
                                                       #`((#,tag-rc)
                                                          (%%subop %typed-op (#,vref-ra #,vset!-ra ra) (#,vref-rb #,vset!-rb rb) (#,vref-rc #,vset!-rc rc)))))
                                                 syntax-accessors-3)
-                                           (else (%%default %op ra rb rc))))))
+                                           (else (%default %op ra rb rc))))))
                                 syntax-accessors-3)
-                           (else (%%default %op ra rb rc)))
+                           (else (%default %op ra rb rc)))
                          rb)))
                 syntax-accessors-3)
-           (else (%%default %op ra rb rc)))))))
+           (else (%default %op ra rb rc)))))))
 
 (define (ra-for-each op ra . rx)
+  "ra-for-each op rx ...
+
+   Apply op to each tuple of elements from ras RX ..."
   (let-syntax
       ((%typed-fe
         (syntax-rules ()
-          ((_ (vref-rx vset!-rx rx z) ...)
-           (op (vref-rx (%%ra-data rx) z) ...))))
+          ((_ (vref-ra vset!-ra ra za) ...)
+           (op (vref-ra (%%ra-data ra) za) ...))))
        (%fe
         (syntax-rules ()
-          ((_ (rx zx) ...)
-           (op ((%%ra-vref rx) (%%ra-data rx) zx) ...))))
+          ((_ (ra za) ...)
+           (op ((%%ra-vref ra) (%%ra-data ra) za) ...))))
        (%apply-fe
         (syntax-rules ()
-          ((_ ra)
-           (apply op (map (lambda (a) ((%%ra-vref a) (%%ra-data a) (%%ra-zero a))) ra))))))
+          ((_ rx)
+           (apply op (map (lambda (ra) ((%%ra-vref ra) (%%ra-data ra) (%%ra-zero ra))) rx))))))
     (apply (case-lambda
-            (() (%%dispatch %typed-fe %fe ra))
-            ((rb) (%%dispatch %typed-fe %fe ra rb))
-            ((rb rc) (%%dispatch %typed-fe %fe ra rb rc))
-            (rx (%%apply-default %apply-fe (cons ra rx))))
-      rx)
-    ra))
+            (() (%dispatch %typed-fe %fe ra))
+            ((rb) (%dispatch %typed-fe %fe ra rb))
+            ((rb rc) (%dispatch %typed-fe %fe ra rb rc))
+            (rx (%apply-default %apply-fe (cons ra rx))))
+      rx)))
 
 (define (ra-map! ra op . rx)
+  "ra-map! ra op rx ...
+
+   Apply op to each tuple of elements from ras RX ... and store the result in
+   the matching position of ra RA. All the RX .. must have the same shape as RA.
+
+   Returns the updated ra RA."
   (let-syntax
       ((%typed-map!
         (syntax-rules ()
@@ -865,18 +872,23 @@
             (op ((%%ra-vref rx) (%%ra-data rx) zx) ...)))))
        (%apply-map!
         (syntax-rules ()
-          ((_ ra)
-           ((%%ra-vset! (car ra)) (%%ra-data (car ra)) (%%ra-zero (car ra))
-            (apply op (map (lambda (a) ((%%ra-vref a) (%%ra-data a) (%%ra-zero a))) (cdr ra))))))))
+          ((_ rx)
+           ((%%ra-vset! (car rx)) (%%ra-data (car rx)) (%%ra-zero (car rx))
+            (apply op (map (lambda (ra) ((%%ra-vref ra) (%%ra-data ra) (%%ra-zero ra))) (cdr rx))))))))
     (apply (case-lambda
-            (() (%%dispatch %typed-map! %map! ra))
-            ((rb) (%%dispatch %typed-map! %map! ra rb))
-            ((rb rc) (%%dispatch %typed-map! %map! ra rb rc))
-            (rx (%%apply-default %apply-map! (cons ra rx))))
+            (() (%dispatch %typed-map! %map! ra))
+            ((rb) (%dispatch %typed-map! %map! ra rb))
+            ((rb rc) (%dispatch %typed-map! %map! ra rb rc))
+            (rx (%apply-default %apply-map! (cons ra rx))))
       rx)
     ra))
 
 (define (ra-fill! ra fill)
+  "ra-fill! ra fill
+
+   Fill ra RA with value FILL. RA must be of a type compatible with FILL.
+
+   This function returns the filled ra RA."
   (let-syntax
       ((%typed-fill!
         (syntax-rules ()
@@ -886,10 +898,16 @@
         (syntax-rules ()
           ((_ (ra za))
            ((%%ra-vset! ra) (%%ra-data ra) za fill)))))
-    (%%dispatch %typed-fill! %fill! ra)
+    (%dispatch %typed-fill! %fill! ra)
     ra))
 
 (define (ra-copy! ra rb)
+  "ra-copy! ra rb
+
+   Copy the contents of ra RA into ra RB. The two ras must have the same shape and be
+   of compatible types.
+
+   This function returns the updated ra RB."
   (let-syntax
       ((%typed-copy!
         (syntax-rules ()
@@ -901,34 +919,44 @@
           ((_ (ra za) (rb zb))
            ((%%ra-vset! rb) (%%ra-data rb) zb
             ((%%ra-vref ra) (%%ra-data ra) za))))))
-    (%%dispatch %typed-copy! %copy! ra rb)
+    (%dispatch %typed-copy! %copy! ra rb)
     rb))
 
-(define (ra-equal? ra rb)
+(define (ra-equal? . rx)
+  "ra-equal? rx ...
+
+   Return #t if the ras RX ... have the same shape and all the elements are
+   EQUAL? between them, or #f otherwise."
   (let/ec exit
     (let-syntax
         ((%typed-equal?
           (syntax-rules ()
-            ((_ (vref-ra vset!-ra ra za) (vref-rb vset!-rb rb zb))
-             (unless (equal? (vref-ra (%%ra-data ra) za)
-                             (vref-rb (%%ra-data rb) zb))
+            ((_ (vref-ra vset!-ra ra za) ...)
+             (unless (equal? (vref-ra (%%ra-data ra) za) ...)
                (exit #f)))))
          (%equal?
           (syntax-rules ()
-            ((_ (ra za) (rb zb))
-             (unless (equal? ((%%ra-vref ra) (%%ra-data ra) za)
-                             ((%%ra-vref rb) (%%ra-data rb) zb))
+            ((_ (ra za) ...)
+             (unless (equal? ((%%ra-vref ra) (%%ra-data ra) za) ...)
                (exit #f))))))
-      (and (eq? (%%ra-type ra) (%%ra-type rb))
-           (begin
-             (vector-for-each
-              (lambda (a b)
-                (unless (and (= (dim-lo a) (dim-lo b))
-                             (= (dim-len a) (dim-len b)))
-                  (exit #f)))
-              (%%ra-dims ra) (%%ra-dims rb))
-             (%%dispatch %typed-equal? %equal? ra rb)
-             #t)))))
+      (or (null? rx)
+          (null? (cdr rx))
+          (let ((da (ra-dims (car rx)))
+                (ta (ra-type (car rx))))
+            (for-each (lambda (rb)
+                        (unless (eq? ta (ra-type rb))
+                          (exit #f))
+                        (vector-for-each
+                         (lambda (da db)
+                           (unless (and (= (dim-lo da) (dim-lo db)) (= (dim-len da) (dim-len db)))
+                             (exit #f)))
+                         da (ra-dims rb)))
+                      (cdr rx))
+            (apply (case-lambda
+                    ((ra rb) (%dispatch %typed-equal? %equal? ra rb))
+                    (rx (apply ra-for-each (lambda x (unless (apply equal? x) (exit #f))) rx)))
+              rx)
+            #t)))))
 
 
 ; ----------------
@@ -936,14 +964,24 @@
 ; ----------------
 
 (define-inlinable (ra-length ra)
+  "ra-length ra
+
+   Return the length of the first dimension of ra RA. It is an error if RA has
+   zero rank."
   (unless (positive? (%ra-rank ra))
     (throw 'zero-rank-ra-has-no-length ra))
   (dim-len (vector-ref (%%ra-dims ra) 0)))
 
 (define (make-typed-ra type value . d)
+  "make-typed-ra type value d ...
+
+   FIXME."
   (make-ra-new type value (apply c-dims d)))
 
 (define (make-ra value . d)
+  "make-ra value d ...
+
+   Equivalent to (make-typed-ra #t value d ...)."
   (make-ra-new #t value (apply c-dims d)))
 
 (define (make-shared-ra oldra mapfunc . d)
@@ -972,6 +1010,11 @@
 
 ; FIXME use ra-reverse and maybe ra-slice-for-each
 (define (ra->list ra)
+  "ra->list ra
+
+   Return a nested list of the elements of ra RA. For example, if RA is a 1-rank
+   ra, the list contains the elements of RA; if RA is a 2-rank ra, the list
+   contains a list for each of the rows of RA; and so on."
   (let ((rank (ra-rank ra))
         (dims (ra-dims ra)))
     (cond
