@@ -124,7 +124,7 @@
     (throw 'dim-ref-out-of-range dim i))
   (+ (dim-lo dim) (* (dim-step dim) i)))
 
-(define (dim-check dim i)
+(define-inlinable (dim-check dim i)
   (unless (and (<= (dim-lo dim) i) (< i (dim-end dim)))
     (throw 'dim-check-out-of-range dim i))
   i)
@@ -262,14 +262,28 @@
 ; ----------------
 
 ; FIXME we'll optimize these I think
-(define (ra-pos zero dims . i_)
-  (let loop ((i i_) (j 0) (pos zero))
-    (if (null? i)
-      pos
-      (if (>= j (vector-length dims))
-        (throw 'too-many-indices i_)
-        (let ((dim (vector-ref dims j)))
-          (loop (cdr i) (+ j 1) (+ pos (* (dim-check dim (car i)) (dim-step dim)))))))))
+(define ra-pos
+  (letrec-syntax
+      ((%args
+        (syntax-rules ()
+          ((_ pos dims j)
+           pos)
+          ((_ pos dims j i0 i ...)
+           (let ((dim (vector-ref dims j)))
+             (%args (+ pos (* (dim-check dim i0) (dim-step dim))) dims (+ j 1) i ...))))))
+    (case-lambda
+     ((zero dims) (%args zero dims 0))
+     ((zero dims i0) (%args zero dims 0 i0))
+     ((zero dims i0 i1) (%args zero dims 0 i0 i1))
+     ((zero dims i0 i1 i2) (%args zero dims 0 i0 i1 i2))
+     ((zero dims . i_)
+      (let loop ((pos zero) (j 0) (i i_))
+        (if (null? i)
+          pos
+          (if (>= j (vector-length dims))
+            (throw 'too-many-indices i_)
+            (let ((dim (vector-ref dims j)))
+              (loop (+ pos (* (dim-check dim (car i)) (dim-step dim))) (+ j 1) (cdr i))))))))))
 
 ; lowest position on data.
 (define (ra-pos-lo ra)
@@ -343,15 +357,43 @@
                (apply ra-pos (%%ra-zero ra) (%%ra-dims ra) i)
                (vector-drop (%%ra-dims ra) (length i))))
 
-(define (ra-cell ra . i)
-  (check-ra ra)
-  (let ((pos (apply ra-pos (%%ra-zero ra) (%%ra-dims ra) i))
-        (leni (length i)))
-    (if (= (%%ra-rank ra) leni)
-      ((%%ra-vref ra) (%%ra-data ra) pos)
-      (make-ra-raw (%%ra-data ra)
-                   pos
-                   (vector-drop (%%ra-dims ra) leni)))))
+(define-syntax %length
+  (syntax-rules ()
+    ((_) 0)
+    ((_ i0 i ...) (+ 1 (%length i ...)))))
+
+; Unhappy about writing these things twice.
+(define ra-cell
+  (letrec-syntax
+      ((%args
+        (syntax-rules ()
+          ((_ ra i ...) (ra-pos (%%ra-zero ra) (%%ra-dims ra) i ...))))
+       (%cell
+        (syntax-rules ()
+          ((_ ra i ...)
+           (begin
+             (check-ra ra)
+             (let ((pos (%args ra i ...))
+                   (leni (%length i ...)))
+               (if (= (%%ra-rank ra) leni)
+                 ((%%ra-vref ra) (%%ra-data ra) pos)
+                 (make-ra-raw (%%ra-data ra)
+                              pos
+                              (vector-drop (%%ra-dims ra) leni)))))))))
+    (case-lambda
+     ((ra) (%cell ra))
+     ((ra i0) (%cell ra i0))
+     ((ra i0 i1) (%cell ra i0 i1))
+     ((ra i0 i1 i2) (%cell ra i0 i1 i2))
+     ((ra . i)
+      (check-ra ra)
+      (let ((pos (apply ra-pos (%%ra-zero ra) (%%ra-dims ra) i))
+            (leni (length i)))
+        (if (= (%%ra-rank ra) leni)
+          ((%%ra-vref ra) (%%ra-data ra) pos)
+          (make-ra-raw (%%ra-data ra)
+                       pos
+                       (vector-drop (%%ra-dims ra) leni))))))))
 
 
 ; ----------------
@@ -963,14 +1005,14 @@
 ; misc functions for Guile compatibility
 ; ----------------
 
-(define-inlinable (ra-length ra)
-  "ra-length ra
+(define* (ra-length ra #:optional (k 0))
+  "ra-length ra [dim 0]
 
-   Return the length of the first dimension of ra RA. It is an error if RA has
+   Return the length of the dimension DIM of ra RA. It is an error if RA has
    zero rank."
   (unless (positive? (%ra-rank ra))
     (throw 'zero-rank-ra-has-no-length ra))
-  (dim-len (vector-ref (%%ra-dims ra) 0)))
+  (dim-len (vector-ref (%%ra-dims ra) k)))
 
 (define (make-typed-ra type value . d)
   "make-typed-ra type value d ...
