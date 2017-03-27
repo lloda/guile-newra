@@ -11,7 +11,7 @@
 ;;; Code:
 
 (define-module (newra test)
-  #:export (ra-map*! array-map*! array-print*))
+  #:export (ra-map*! array-map*! array-print* %ra-loop ra-loop array-loop))
 
 (import (newra newra)
         (only (rnrs base) vector-map vector-for-each) (rnrs io ports) (srfi srfi-4 gnu))
@@ -97,3 +97,40 @@
                 (when (< j hi)
                   (put-char port #\space)))
               (put-char port #\)))))))))
+
+(define-syntax %ra-loop-inner
+  (lambda (stx-inner)
+    (syntax-case stx-inner ()
+      ((_ lens k u body nn ...)
+       (let ((uu (syntax->datum #'u)))
+         (if (= uu (syntax->datum #'k))
+           #'body
+           (with-syntax ((nu (list-ref #'(nn ...) uu)))
+             #`(let ((end (vector-ref lens u)))
+                 (let loop ((nu 0))
+                   (unless (= nu end)
+                     (%ra-loop-inner lens k #,(+ uu 1) body nn ...)
+                     (loop (+ nu 1))))))))))))
+
+(define-syntax %ra-loop
+  (lambda (stx)
+    (syntax-case stx ()
+      ((_ lens k (i ...) body)
+       #'(begin
+           (unless (= (vector-length lens) k) (throw 'bad-rank))
+           (%ra-loop-inner lens k 0 body i ...))))))
+
+(define (loop-fun dims f)
+  (case (vector-length dims)
+    ((0) (%ra-loop dims 0 () (f)))
+    ((1) (%ra-loop dims 1 (i) (f i)))
+    ((2) (%ra-loop dims 2 (i j) (f i j)))
+    ((3) (%ra-loop dims 3 (i j k) (f i j k)))
+    ((4) (%ra-loop dims 4 (i j k l) (f i j k l)))
+    (else (throw 'not-implemented))))
+
+(define (ra-loop ra f)
+  (loop-fun (vector-map dim-len (ra-dims ra)) f))
+
+(define (array-loop a f)
+  (loop-fun (list->vector (array-dimensions a)) f))

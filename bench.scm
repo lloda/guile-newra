@@ -18,68 +18,6 @@
 ; benchmarks
 ; -----------------------
 
-(define-syntax %ra-loop-inner
-  (lambda (stx-inner)
-    (syntax-case stx-inner ()
-      ((_ lens k u body nn ...)
-       (let ((uu (syntax->datum #'u)))
-         (if (= uu (syntax->datum #'k))
-           #'body
-           (with-syntax ((nu (list-ref #'(nn ...) uu)))
-             #`(let ((end (vector-ref lens u)))
-                 (let loop ((nu 0))
-                   (unless (= nu end)
-                     (%ra-loop-inner lens k #,(+ uu 1) body nn ...)
-                     (loop (+ nu 1))))))))))))
-
-(define-syntax %ra-loop
-  (lambda (stx)
-    (syntax-case stx ()
-      ((_ lens k (i ...) body)
-       #'(begin
-           (unless (= (vector-length lens) k) (throw 'bad-rank))
-           (%ra-loop-inner lens k 0 body i ...))))))
-
-(define (loop-fun dims f)
-  (case (vector-length dims)
-    ((0) (%ra-loop dims 0 () (f)))
-    ((1) (%ra-loop dims 1 (i) (f i)))
-    ((2) (%ra-loop dims 2 (i j) (f i j)))
-    ((3) (%ra-loop dims 3 (i j k) (f i j k)))
-    ((4) (%ra-loop dims 4 (i j k l) (f i j k l)))
-    (else (throw 'not-implemented))))
-
-(define (ra-loop ra f)
-  (loop-fun (vector-map dim-len (ra-dims ra)) f))
-
-(define (array-loop a f)
-  (loop-fun (list->vector (array-dimensions a)) f))
-
-(define ra0 (make-ra-data (make-dim 1) (c-dims)))
-(define ra1 (make-ra-data (make-dim (* 2)) (c-dims 2)))
-(define ra2 (make-ra-data (make-dim (* 2 3)) (c-dims 2 3)))
-(define ra3 (make-ra-data (make-dim (* 2 3 4)) (c-dims 2 3 4)))
-
-(%ra-loop (vector-map dim-len (ra-dims ra0)) 0 () (display (ra0)))
-(%ra-loop (vector-map dim-len (ra-dims ra1)) 1 (i) (display (+ i i)))
-(%ra-loop (vector-map dim-len (ra-dims ra2)) 2 (i j) (display (+ i j)))
-(%ra-loop (vector-map dim-len (ra-dims ra3)) 3 (i j k) (display (+ i j k)))
-
-(define a0 (ra->array (as-ra ra0 #:type #t)))
-(define a1 (ra->array (as-ra ra1 #:type #t)))
-(define a2 (ra->array (as-ra ra2 #:type #t)))
-(define a3 (ra->array (as-ra ra3 #:type #t)))
-
-(ra-loop ra0 (lambda () (display (ra0))))
-(ra-loop ra1 (lambda (i) (display (ra1 i))))
-(ra-loop ra2 (lambda (i j) (display (ra2 i j))))
-(ra-loop ra3 (lambda (i j k) (display (ra3 i j k))))
-
-(array-loop a0 (lambda () (display (array-ref a0))))
-(array-loop a1 (lambda (i) (display (array-ref a1 i))))
-(array-loop a2 (lambda (i j) (display (array-ref a2 i j))))
-(array-loop a3 (lambda (i j k) (display (array-ref a3 i j k))))
-
 (define m #e1e5)
 (format #t "\nra-cell (applicable function) / array-ref\n==========\n")
 (for-each

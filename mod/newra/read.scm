@@ -40,7 +40,7 @@
     (cond ((char-whitespace? c) (get-char port) (loop (lookahead-char port)))
           (else c))))
 
-; FIXME eventually replace these.
+; FIXME eventually replace these. Say, don't resize but make a list of vectors and cat once at the end.
 
 (define (make-root type size) (make-typed-array type *unspecified* size))
 (define (root-type root) (array-type root))
@@ -216,6 +216,6 @@
                   ((= i lenk)
                    (unless (null? l) (throw 'mismatched-list-length-dim (- rank 1 (length len)))))
                 (loop-rank len (car l)))))))))
-; FIXME c-dims takes len | (lo hi) as in Guile, but I'd prefer len | (lo len)
+; FIXME c-dims takes len | (lo hi) as in Guile, but I'd prefer len | (len lo)
       (make-ra-data
        temp (apply c-dims (map (lambda (lo len) (list lo (+ lo len -1))) lo len)))))) ; FIXME

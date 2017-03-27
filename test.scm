@@ -33,10 +33,49 @@
 ; -----------------------
 
 (test-equal
- 6 ((@@ (newra newra) vector-fold) (lambda (a c) (+ c (car a))) 0 #((1) (2) (3))))
+    6 ((@@ (newra newra) vector-fold) (lambda (a c) (+ c (car a))) 0 #((1) (2) (3))))
 
 (test-equal
- #(2 3) ((@@ (newra newra) vector-clip) #(1 2 3 4) 1 3))
+    #(2 3) ((@@ (newra newra) vector-clip) #(1 2 3 4) 1 3))
+
+; loop-fun from (newra test) FIXME may become ra-index-map!
+
+(define ra0 (make-ra-data (make-dim 1) (c-dims)))
+(define ra1 (make-ra-data (make-dim (* 2)) (c-dims 2)))
+(define ra2 (make-ra-data (make-dim (* 2 3)) (c-dims 2 3)))
+(define ra3 (make-ra-data (make-dim (* 2 3 4)) (c-dims 2 3 4)))
+
+(test-equal "0"
+  (with-output-to-string (lambda () (%ra-loop (vector-map dim-len (ra-dims ra0)) 0 () (display (ra0))))))
+(test-equal "01"
+  (with-output-to-string (lambda () (%ra-loop (vector-map dim-len (ra-dims ra1)) 1 (i) (display (+ i))))))
+(test-equal "012123"
+  (with-output-to-string (lambda () (%ra-loop (vector-map dim-len (ra-dims ra2)) 2 (i j) (display (+ i j))))))
+(test-equal "012312342345123423453456"
+  (with-output-to-string (lambda () (%ra-loop (vector-map dim-len (ra-dims ra3)) 3 (i j k) (display (+ i j k))))))
+
+(define a0 (ra->array (as-ra ra0 #:type #t)))
+(define a1 (ra->array (as-ra ra1 #:type #t)))
+(define a2 (ra->array (as-ra ra2 #:type #t)))
+(define a3 (ra->array (as-ra ra3 #:type #t)))
+
+(test-equal "(0)"
+  (call-with-output-string (lambda (o) (ra-loop ra0 (lambda () (format o "(~a)" (ra0)))))))
+(test-equal "(0)(1)"
+  (call-with-output-string (lambda (o) (ra-loop ra1 (lambda (i) (format o "(~a)" (ra1 i)))))))
+(test-equal "(0)(1)(2)(3)(4)(5)"
+  (call-with-output-string (lambda (o) (ra-loop ra2 (lambda (i j) (format o "(~a)" (ra2 i j)))))))
+(test-equal "(0)(1)(2)(3)(4)(5)(6)(7)(8)(9)(10)(11)(12)(13)(14)(15)(16)(17)(18)(19)(20)(21)(22)(23)"
+  (call-with-output-string (lambda (o) (ra-loop ra3 (lambda (i j k) (format o "(~a)" (ra3 i j k)))))))
+
+(test-equal "(0)"
+  (call-with-output-string (lambda (o) (array-loop a0 (lambda () (format o "(~a)" (array-ref a0)))))))
+(test-equal "(0)(1)"
+  (call-with-output-string (lambda (o) (array-loop a1 (lambda (i) (format o "(~a)" (array-ref a1 i)))))))
+(test-equal "(0)(1)(2)(3)(4)(5)"
+  (call-with-output-string (lambda (o) (array-loop a2 (lambda (i j) (format o "(~a)" (array-ref a2 i j)))))))
+(test-equal "(0)(1)(2)(3)(4)(5)(6)(7)(8)(9)(10)(11)(12)(13)(14)(15)(16)(17)(18)(19)(20)(21)(22)(23)"
+  (call-with-output-string (lambda (o) (array-loop a3 (lambda (i j k) (format o "(~a)" (array-ref a3 i j k)))))))
 
 
 ; -----------------------
@@ -172,49 +211,49 @@
 (test-equal 0 (ra-length ra-empty2))
 
 (for-each
-  (lambda (ra-slice-for-each)
-    (test-begin (procedure-name ra-slice-for-each))
+ (lambda (ra-slice-for-each)
+   (test-begin (procedure-name ra-slice-for-each))
 
-    (test-equal "#%2d@1:0@2:0()\n"
-                (call-with-output-string
-                 (lambda (s) (ra-slice-for-each 0 (lambda (o) (format s "~a\n" o)) ra-empty0))))
-    (test-equal "#%2d@1:1@2:0(())\n"
-                (call-with-output-string
-                 (lambda (s) (ra-slice-for-each 0 (lambda (o) (format s "~a\n" o)) ra-empty1))))
-    (test-equal "#%2d@1:0@2:1()\n"
-                (call-with-output-string
-                 (lambda (s) (ra-slice-for-each 0 (lambda (o) (format s "~a\n" o)) ra-empty2))))
+   (test-equal "#%2d@1:0@2:0()\n"
+     (call-with-output-string
+      (lambda (s) (ra-slice-for-each 0 (lambda (o) (format s "~a\n" o)) ra-empty0))))
+   (test-equal "#%2d@1:1@2:0(())\n"
+     (call-with-output-string
+      (lambda (s) (ra-slice-for-each 0 (lambda (o) (format s "~a\n" o)) ra-empty1))))
+   (test-equal "#%2d@1:0@2:1()\n"
+     (call-with-output-string
+      (lambda (s) (ra-slice-for-each 0 (lambda (o) (format s "~a\n" o)) ra-empty2))))
 
-    (test-equal "#%2@1:2@1:3((1 2 3) (4 5 6))\n"
-                (call-with-output-string
-                 (lambda (s) (ra-slice-for-each 0 (lambda (o) (format s "~a\n" o)) ra6))))
-    (test-equal "#%1@1:3(1 2 3)\n#%1@1:3(4 5 6)\n"
-                (call-with-output-string
-                 (lambda (s) (ra-slice-for-each 1 (lambda (o) (format s "~a\n" o)) ra6))))
-    (test-equal "1\n2\n3\n4\n5\n6\n"
-                (call-with-output-string
-                 (lambda (s) (ra-slice-for-each 2 (lambda (o) (format s "~a\n" (ra-ref o))) ra6))))
+   (test-equal "#%2@1:2@1:3((1 2 3) (4 5 6))\n"
+     (call-with-output-string
+      (lambda (s) (ra-slice-for-each 0 (lambda (o) (format s "~a\n" o)) ra6))))
+   (test-equal "#%1@1:3(1 2 3)\n#%1@1:3(4 5 6)\n"
+     (call-with-output-string
+      (lambda (s) (ra-slice-for-each 1 (lambda (o) (format s "~a\n" o)) ra6))))
+   (test-equal "1\n2\n3\n4\n5\n6\n"
+     (call-with-output-string
+      (lambda (s) (ra-slice-for-each 2 (lambda (o) (format s "~a\n" (ra-ref o))) ra6))))
 
-    (test-equal "2\n4\n6\n8\n10\n12\n"
-                (call-with-output-string
-                 (lambda (s) (ra-slice-for-each 2 (lambda (a b) (format s "~a\n" (+ (ra-ref a) (ra-ref b)))) ra6 ra7a))))
-    (test-equal "2\n4\n6\n8\n10\n12\n"
-                (call-with-output-string
-                 (lambda (s) (ra-slice-for-each 2 (lambda (a b) (format s "~a\n" (+ (ra-ref a) (ra-ref b)))) ra6 ra7b))))
+   (test-equal "2\n4\n6\n8\n10\n12\n"
+     (call-with-output-string
+      (lambda (s) (ra-slice-for-each 2 (lambda (a b) (format s "~a\n" (+ (ra-ref a) (ra-ref b)))) ra6 ra7a))))
+   (test-equal "2\n4\n6\n8\n10\n12\n"
+     (call-with-output-string
+      (lambda (s) (ra-slice-for-each 2 (lambda (a b) (format s "~a\n" (+ (ra-ref a) (ra-ref b)))) ra6 ra7b))))
 
-    (test-equal "(#%2@1:2@1:3((1 2 3) (4 5 6)) #%2d@1:2@1:3((1 2 3) (4 5 6)) #%2@1:2@1:3((1 2 3) (4 5 6)))\n"
-                (call-with-output-string
-                 (lambda (s) (ra-slice-for-each 0 (lambda x (format s "~a\n" x)) ra6 ra7a ra7b))))
-    (test-equal "(#%1@1:3(1 2 3) #%1d@1:3(1 2 3) #%1@1:3(1 2 3))\n(#%1@1:3(4 5 6) #%1d@1:3(4 5 6) #%1@1:3(4 5 6))\n"
-                (call-with-output-string
-                 (lambda (s) (ra-slice-for-each 1 (lambda x (format s "~a\n" x)) ra6 ra7a ra7b))))
-    (test-equal "(#%0(1) #%0d(1) #%0(1))\n(#%0(2) #%0d(2) #%0(2))\n(#%0(3) #%0d(3) #%0(3))\n(#%0(4) #%0d(4) #%0(4))\n(#%0(5) #%0d(5) #%0(5))\n(#%0(6) #%0d(6) #%0(6))\n"
-                (call-with-output-string
-                 (lambda (s) (ra-slice-for-each 2 (lambda x (format s "~a\n" x)) ra6 ra7a ra7b))))
+   (test-equal "(#%2@1:2@1:3((1 2 3) (4 5 6)) #%2d@1:2@1:3((1 2 3) (4 5 6)) #%2@1:2@1:3((1 2 3) (4 5 6)))\n"
+     (call-with-output-string
+      (lambda (s) (ra-slice-for-each 0 (lambda x (format s "~a\n" x)) ra6 ra7a ra7b))))
+   (test-equal "(#%1@1:3(1 2 3) #%1d@1:3(1 2 3) #%1@1:3(1 2 3))\n(#%1@1:3(4 5 6) #%1d@1:3(4 5 6) #%1@1:3(4 5 6))\n"
+     (call-with-output-string
+      (lambda (s) (ra-slice-for-each 1 (lambda x (format s "~a\n" x)) ra6 ra7a ra7b))))
+   (test-equal "(#%0(1) #%0d(1) #%0(1))\n(#%0(2) #%0d(2) #%0(2))\n(#%0(3) #%0d(3) #%0(3))\n(#%0(4) #%0d(4) #%0(4))\n(#%0(5) #%0d(5) #%0(5))\n(#%0(6) #%0d(6) #%0(6))\n"
+     (call-with-output-string
+      (lambda (s) (ra-slice-for-each 2 (lambda x (format s "~a\n" x)) ra6 ra7a ra7b))))
 
-    (test-end (procedure-name ra-slice-for-each)))
-  (list ra-slice-for-each-1 ra-slice-for-each-2
-        ra-slice-for-each-3 ra-slice-for-each-4))
+   (test-end (procedure-name ra-slice-for-each)))
+ (list ra-slice-for-each-1 ra-slice-for-each-2
+       ra-slice-for-each-3 ra-slice-for-each-4))
 
 
 ; -----------------------
@@ -264,41 +303,41 @@
 
 (test-begin "ra-for-each")
 (test-equal "(10 0 10)(9 1 9)(8 2 8)(7 3 7)(6 4 6)(5 5 5)(4 6 4)(3 7 3)(2 8 2)(1 9 1)"
-            (call-with-output-string (lambda (s) (ra-for-each (lambda x (display x s)) ra13 ra12 ra13))))
+  (call-with-output-string (lambda (s) (ra-for-each (lambda x (display x s)) ra13 ra12 ra13))))
 (test-end "ra-for-each")
 
 (ra-map! ra11 (lambda () (random 100)))
 
 (for-each
-  (match-lambda
-    ((ra-map! name)
-      (test-begin (string-append "3 args - " name))
-      (test-equal "#%1:10(-10 -8 -6 -4 -2 0 2 4 6 8)"
-                  (call-with-output-string (cute display (ra-map! ra11 - ra12 ra13) <>)))
-      (test-end (string-append "3 args - " name))))
-  `((,(cut ra-map*! ra-slice-for-each-1  <...>) "fe1")
-    (,(cut ra-map*! ra-slice-for-each-2  <...>) "fe2")
-    (,(cut ra-map*! ra-slice-for-each-3  <...>) "fe3")
-    (,(cut ra-map*! ra-slice-for-each-4  <...>) "fe4")
-    (,ra-map! "ra-map!")))
+ (match-lambda
+   ((ra-map! name)
+    (test-begin (string-append "3 args - " name))
+    (test-equal "#%1:10(-10 -8 -6 -4 -2 0 2 4 6 8)"
+      (call-with-output-string (cute display (ra-map! ra11 - ra12 ra13) <>)))
+    (test-end (string-append "3 args - " name))))
+ `((,(cut ra-map*! ra-slice-for-each-1  <...>) "fe1")
+   (,(cut ra-map*! ra-slice-for-each-2  <...>) "fe2")
+   (,(cut ra-map*! ra-slice-for-each-3  <...>) "fe3")
+   (,(cut ra-map*! ra-slice-for-each-4  <...>) "fe4")
+   (,ra-map! "ra-map!")))
 
 ; test with enough args to hit the arglist version.
 (for-each
-  (match-lambda
-    ((ra-map! name)
-      (test-begin (string-append "4 args - " name))
-      (test-equal "#%1:10(-10 -9 -8 -7 -6 -5 -4 -3 -2 -1)"
-                  (call-with-output-string (cute display (ra-map! ra11 - ra12 ra13 ra12) <>)))
-      (test-end (string-append "4 args - " name))))
-  `((,(cut ra-map*! ra-slice-for-each-1  <...>) "fe1")
-    (,(cut ra-map*! ra-slice-for-each-2  <...>) "fe2")
-    (,(cut ra-map*! ra-slice-for-each-3  <...>) "fe3")
-    (,(cut ra-map*! ra-slice-for-each-4  <...>) "fe4")
-    (,ra-map! "ra-map!")))
+ (match-lambda
+   ((ra-map! name)
+    (test-begin (string-append "4 args - " name))
+    (test-equal "#%1:10(-10 -9 -8 -7 -6 -5 -4 -3 -2 -1)"
+      (call-with-output-string (cute display (ra-map! ra11 - ra12 ra13 ra12) <>)))
+    (test-end (string-append "4 args - " name))))
+ `((,(cut ra-map*! ra-slice-for-each-1  <...>) "fe1")
+   (,(cut ra-map*! ra-slice-for-each-2  <...>) "fe2")
+   (,(cut ra-map*! ra-slice-for-each-3  <...>) "fe3")
+   (,(cut ra-map*! ra-slice-for-each-4  <...>) "fe4")
+   (,ra-map! "ra-map!")))
 
 (test-begin "ra-for-each")
 (test-equal "(10 0 10 0)(9 1 9 1)(8 2 8 2)(7 3 7 3)(6 4 6 4)(5 5 5 5)(4 6 4 6)(3 7 3 7)(2 8 2 8)(1 9 1 9)"
-            (call-with-output-string (lambda (s) (ra-for-each (lambda x (display x s)) ra13 ra12 ra13 ra12))))
+  (call-with-output-string (lambda (s) (ra-for-each (lambda x (display x s)) ra13 ra12 ra13 ra12))))
 (test-end "ra-for-each")
 
 
@@ -321,19 +360,19 @@
 (for-each
  (lambda (str)
    (test-equal (format #f "#%3~a:2:2:2(((1 2) (3 4)) ((5 6) (7 8)))" str)
-               (ra->string (string->ra (format #f "#%3~a(((1 2) (3 4)) ((5 6) (7 8)))" str))))
+     (ra->string (string->ra (format #f "#%3~a(((1 2) (3 4)) ((5 6) (7 8)))" str))))
    (test-equal (format #f "#%2~a:2:2((1 2) (3 4))" str)
-               (ra->string (string->ra (format #f "#%2~a((1 2) (3 4))" str))))
+     (ra->string (string->ra (format #f "#%2~a((1 2) (3 4))" str))))
    (test-equal (format #f "#%1~a:4(1 2 3 4)" str)
-               (ra->string (string->ra (format #f "#%1~a(1 2 3 4)" str))))
+     (ra->string (string->ra (format #f "#%1~a(1 2 3 4)" str))))
    (test-equal (format #f "#%1~a:12(1 2 3 4 5 6 7 8 9 10 11 12)" str)
-               (ra->string (string->ra (format #f "#%1~a(1 2 3 4 5 6 7 8 9 10 11 12)" str))))
+     (ra->string (string->ra (format #f "#%1~a(1 2 3 4 5 6 7 8 9 10 11 12)" str))))
    (test-equal (format #f "#%2~a@1:2@1:2((1 2) (3 4))" str)
-               (ra->string (string->ra (format #f "#%2~a@1@1((1 2) (3 4))" str))))
+     (ra->string (string->ra (format #f "#%2~a@1@1((1 2) (3 4))" str))))
    (test-equal (format #f "#%2~a@1:2@1:2((1 2) (3 4))" str)
-               (ra->string (string->ra (format #f "#%2~a@1@1:2((1 2) (3 4))" str))))
+     (ra->string (string->ra (format #f "#%2~a@1@1:2((1 2) (3 4))" str))))
    (test-equal (format #f "#%2~a@-1:2@1:2((1 2) (3 4))" str)
-               (ra->string (string->ra (format #f "#%2~a@-1@1((1 2) (3 4))" str)))))
+     (ra->string (string->ra (format #f "#%2~a@-1@1((1 2) (3 4))" str)))))
  '("s32" ""))
 
 (test-equal "#%0(#(1 2 3))" (ra->string (string->ra "#%0(#(1 2 3))")))
