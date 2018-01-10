@@ -361,6 +361,8 @@
  (lambda (str)
    (test-equal (format #f "#%3~a:2:2:2(((1 2) (3 4)) ((5 6) (7 8)))" str)
      (ra->string (string->ra (format #f "#%3~a(((1 2) (3 4)) ((5 6) (7 8)))" str))))
+   (test-equal (format #f "#%3~a:2:2:2(((1 2) (3 4)) ((5 6) (7 8)))" str)
+     (ra->string (string->ra (format #f "#%3~a[((1 2) [3 4]) [[5 6] (7 8)]]" str))))
    (test-equal (format #f "#%2~a:2:2((1 2) (3 4))" str)
      (ra->string (string->ra (format #f "#%2~a((1 2) (3 4))" str))))
    (test-equal (format #f "#%1~a:4(1 2 3 4)" str)
@@ -377,6 +379,9 @@
 
 (test-equal "#%0(#(1 2 3))" (ra->string (string->ra "#%0(#(1 2 3))")))
 (test-equal "#%1f64:3(1.0 2.0 3.0)" (ra->string (string->ra "#%1f64(1 2 3)")))
+
+(test-equal "#%0(#%1:3(1 2 3))" (ra->string (string->ra "#%0[#%[1 2 3]]")))
+(test-equal "#%1f64:3(1.0 2.0 3.0)" (ra->string (string->ra "#%1f64[1 2 3]")))
 
 
 ; -----------------------

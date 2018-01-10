@@ -1,5 +1,5 @@
 
-; (c) Daniel Llorens - 2017
+; (c) Daniel Llorens - 2017, 2018
 
 ; This library is free software; you can redistribute it and/or modify it under
 ; the terms of the GNU General Public License as published by the Free
@@ -76,97 +76,125 @@
                       (root-resize temp (ceiling (* (+ n j) 3/2)))
                       temp))))))))
 
+(define (delim-pair c)
+  (match c
+    (#\[ #\])
+    (#\( #\))
+    (#\] #\[)
+    (#\) #\()))
+
+(define (delim-open? c)
+  (match c
+    ((or #\[ #\() #t)
+    (else #f)))
+
+(define (delim-close? c)
+  (match c
+    ((or #\] #\)) #t)
+    (else #f)))
+
 (read-hash-extend
- #\%
- (lambda (chr port)
-   (let* ((c (lookahead-char port))
-          (rank (if (char-numeric? c)
-                  (let ((rank (read-number port)))
-                    (if (negative? rank)
-                      (throw 'bad-rank rank)
-                      rank))
-                  1))
-          (type (read-delimited ":@(" port 'peek))
-          (type (if (zero? (string-length type)) #t (string->symbol type)))
-          (lo (make-vector rank 0))
-          (len (make-vector rank #f)))
-     (let loop ((k 0))
-       (let ((c (lookahead-char port)))
-         (cond
-          ((eqv? c #\@)
-           (unless (< k rank) (throw 'too-many-dimensions-for-rank k rank))
-           (get-char port)
-           (vector-set! lo k (read-number port))
-           (let ((c (lookahead-char port)))
-             (cond ((eqv? c #\:)
-                    (unless (< k rank) (throw 'too-many-dimensions-for-rank k rank))
-                    (get-char port)
-                    (vector-set! len k (read-number port)))
-                   (else
-                    (vector-set! len k #f)))
-             (loop (+ k 1))))
-          ((eqv? c #\:)
-           (unless (< k rank) (throw 'too-many-dimensions-for-rank k rank))
-           (get-char port)
-           (vector-set! len k (read-number port))
-           (vector-set! lo k 0)
-           (loop (+ k 1)))
-          (else
-           (unless (eqv? c #\() (throw 'expected-open-paren c))
-           (unless (or (zero? k) (= k rank)) (throw 'too-few-dimensions-for-rank k rank))))))
+    #\%
+  (lambda (chr port)
+    (let* ((c (lookahead-char port))
+           (rank (if (char-numeric? c)
+                   (let ((rank (read-number port)))
+                     (if (negative? rank)
+                       (throw 'bad-rank rank)
+                       rank))
+                   1))
+           (type (read-delimited ":@([" port 'peek))
+           (type (if (zero? (string-length type)) #t (string->symbol type)))
+           (lo (make-vector rank 0))
+           (len (make-vector rank #f)))
+      (let loop ((k 0))
+        (let ((c (lookahead-char port)))
+          (cond
+           ((eqv? c #\@)
+            (unless (< k rank) (throw 'too-many-dimensions-for-rank k rank))
+            (get-char port)
+            (vector-set! lo k (read-number port))
+            (let ((c (lookahead-char port)))
+              (cond ((eqv? c #\:)
+                     (unless (< k rank) (throw 'too-many-dimensions-for-rank k rank))
+                     (get-char port)
+                     (vector-set! len k (read-number port)))
+                    (else
+                     (vector-set! len k #f)))
+              (loop (+ k 1))))
+           ((eqv? c #\:)
+            (unless (< k rank) (throw 'too-many-dimensions-for-rank k rank))
+            (get-char port)
+            (vector-set! len k (read-number port))
+            (vector-set! lo k 0)
+            (loop (+ k 1)))
+           (else
+            (unless (or (zero? k) (= k rank)) (throw 'too-few-dimensions-for-rank k rank))
+            (unless (delim-open? c) (throw 'expected-open-paren c))
+            (let ((delim-stack (list c)))
 ; read content here
-     (cond
-      ((zero? rank)
-       (get-char port)
-       (let ((item (read port)))
-         (get-char port)
-         (make-ra-new #t item #())))
-      (else
-       (receive (temp resize-temp) (make-temp-root len type)
-         (let ((j 0))
-           (let loop-rank ((k rank))
-             (cond
+              (cond
+               ((zero? rank)
+                (get-char port)
+                (let ((item (read port)))
+                  (get-char port)
+                  (make-ra-new #t item #())))
+               (else
+                (receive (temp resize-temp) (make-temp-root len type)
+                  (let ((j 0))
+                    (let loop-rank ((k rank))
+                      (cond
 ; read element
-              ((zero? k)
-               (set! temp (resize-temp temp (+ j 1)))
-               (root-set! temp j (read port))
-               (set! j (+ j 1)))
+                       ((zero? k)
+                        (set! temp (resize-temp temp (+ j 1)))
+                        (root-set! temp j (read port))
+                        (set! j (+ j 1)))
 ; read slice
-              (else
-               (let ((c (skip-whitespace port)))
-                 (unless (eqv? #\( c) (throw 'expected-open-paren-at-dim (- rank k) c))
-                 (get-char port))
-               (let ((lenk (vector-ref len (- rank k))))
-                 (cond
+                       (else
+                        (let ((c (skip-whitespace port)))
+                          (unless (delim-open? c) (throw 'expected-open-paren-at-dim (- rank k) c))
+                          (set! delim-stack (cons c delim-stack))
+                          (get-char port))
+                        (let ((lenk (vector-ref len (- rank k))))
+                          (cond
 ; read a whole slice when the dimension is known
-                  ((and (= k 1) lenk)
-                   (set! temp (resize-temp temp (+ j lenk)))
-                   (do ((i 0 (+ i 1))) ((= i lenk))
-                     (root-set! temp (+ j i) (read port)))
-                   (set! j (+ j lenk))
-                   (let ((c (skip-whitespace port)))
-                     (unless (eqv? #\) c) (throw 'too-many-elements-in-dim (- rank k) c lenk))
-                     (get-char port)))
+                           ((and (= k 1) lenk)
+                            (set! temp (resize-temp temp (+ j lenk)))
+                            (do ((i 0 (+ i 1))) ((= i lenk))
+                              (root-set! temp (+ j i) (read port)))
+                            (set! j (+ j lenk))
+                            (let ((c (skip-whitespace port)))
+                              (unless (delim-close? c)
+                                (throw 'too-many-elements-in-dim (- rank k) c lenk))
+                              (unless (eqv? (delim-pair c) (car delim-stack))
+                                (throw 'mismatched-delimiters-in-dim (- rank k) c lenk))
+                              (set! delim-stack (cdr delim-stack))
+                              (get-char port)))
 ; general case, feeling for the end
-                  (else
-                   (let loop-dim ((i 0))
-                     (let ((c (skip-whitespace port)))
-                       (cond
-                        ((eqv? #\) c)
-                         (get-char port)
-                         (cond
-                          ((not lenk)
-                           (vector-set! len (- rank k) i))
-                          ((< i lenk)
-                           (throw 'too-few-elements-in-dim (- rank k) i lenk))))
-                        ((or (not lenk) (< i lenk))
-                         (loop-rank (- k 1))
-                         (loop-dim (+ i 1)))
-                        (else
-                         (throw 'too-many-elements-on-dim (- rank k))))))))))))
-           (make-ra-data (root-resize temp (vector-fold * 1 len))
-                         (apply c-dims
-                           (vector->list (vector-map (lambda (lo len) (list lo (+ lo len -1))) lo len))))))))))) ; FIXME
+                           (else
+                            (let loop-dim ((i 0))
+                              (let ((c (skip-whitespace port)))
+                                (cond
+                                 ((delim-close? c)
+                                  (unless (eqv? (delim-pair c) (car delim-stack))
+                                    (throw 'mismatched-delimiters-in-dim (- rank k) c lenk))
+                                  (set! delim-stack (cdr delim-stack))
+                                  (get-char port)
+                                  (cond
+                                   ((not lenk)
+                                    (vector-set! len (- rank k) i))
+                                   ((< i lenk)
+                                    (throw 'too-few-elements-in-dim (- rank k) i lenk))))
+                                 ((or (not lenk) (< i lenk))
+                                  (loop-rank (- k 1))
+                                  (loop-dim (+ i 1)))
+                                 (else
+                                  (throw 'too-many-elements-on-dim (- rank k))))))))))))
+                    (make-ra-data
+                     (root-resize temp (vector-fold * 1 len))
+                     (apply c-dims
+                       (vector->list (vector-map (lambda (lo len) (list lo (+ lo len -1)))
+                                                 lo len)))))))))))))))) ; FIXME
 
 (define (list->ra rank l)
   (list->typed-ra #t rank l))
