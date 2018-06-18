@@ -1,18 +1,16 @@
 
-+ done
-* WIP
-- todo
+* DONE make-ra-new, make-ra-data
+* DONE ra-slice-for-each, ra-map!, ra-for-each, ra-transpose, ra-cell, ra-ref, ra-set!
+* DONE make-ra, make-shared-ra, ra->list, list->ra, list->typed-ra
+* DONE ra-iota, ra-i
 
-+ make-ra-new, make-ra-data
-+ ra-slice-for-each, ra-map!, ra-for-each, ra-transpose, ra-cell, ra-ref, ra-set!
-+ make-ra, make-shared-ra, ra->list, list->ra, list->typed-ra
-
+* as-ra
 * refactor macros
 * speed
 
-- ra-index-map!
-- drag-along facility / delayed ops
-- high level slicing
-- compatibility with root vectors
-- as-ra
-- hooks into C / replace array-*.
+* TODO ra-index-map!
+* TODO hook ploy-like facility
+* TODO drag-along facility / delayed ops
+* TODO high level slicing
+* TODO root vectors are handled as 1D ra objects
+* TODO hooks into C / replace array-*.

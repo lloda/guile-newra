@@ -1,5 +1,5 @@
 
-; (c) Daniel Llorens - 2016-2017
+; (c) Daniel Llorens - 2016-2018
 
 ; This library is free software; you can redistribute it and/or modify it under
 ; the terms of the GNU General Public License as published by the Free
@@ -20,8 +20,7 @@
             ra-transpose
             ra-slice-for-each ra-slice-for-each-1 ra-slice-for-each-2 ra-slice-for-each-3 ra-slice-for-each-4
             ra-fill! ra-copy! ra-equal? ra-map! ra-for-each
-            ra-length make-ra make-typed-ra make-shared-ra ra->list
-            as-ra))
+            ra-length make-ra make-typed-ra make-shared-ra ra->list))
 
 (import (srfi srfi-9) (srfi srfi-9 gnu) (only (srfi srfi-1) fold every) (srfi srfi-8)
         (srfi srfi-4 gnu) (srfi srfi-26) (ice-9 match) (ice-9 control)
@@ -1076,14 +1075,3 @@
               (if (< i (dim-lo dimk))
                 l
                 (loop-dim (cons (loop-rank (- k 1) (ra-cell ra i)) l) (- i 1))))))))))))
-
-
-; ----------------
-; as-ra FIXME partial implementation.
-; ----------------
-
-(define* (as-ra ra #:key (type (ra-type ra)) (new? #f))
-  (cond ((and (eq? (ra-type ra) type) (not new?)) ra)
-        (else (ra-copy! ra (make-ra-new
-                            type *unspecified*
-                            (apply c-dims (map dim-len (vector->list (ra-dims ra)))))))))

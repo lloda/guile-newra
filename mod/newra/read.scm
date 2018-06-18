@@ -15,9 +15,9 @@
   #:export (list->ra list->typed-ra))
 
 (import (newra newra) (newra tools)
-        (only (rnrs base) vector-map) (only (srfi srfi-1) fold unzip2 car+cdr)
-        (rnrs io ports) (srfi srfi-8)
-        (srfi srfi-26) (ice-9 match) (ice-9 rdelim))
+        (rnrs io ports) (srfi srfi-8) (srfi srfi-26) (ice-9 match) (ice-9 rdelim)
+        (only (rnrs base) vector-map)
+        (only (srfi srfi-1) fold unzip2 car+cdr))
 
 (define vector-fold (@@ (newra newra) vector-fold))
 
@@ -40,8 +40,7 @@
     (cond ((char-whitespace? c) (get-char port) (loop (lookahead-char port)))
           (else c))))
 
-; FIXME eventually replace these. Say, don't resize but make a list of vectors and cat once at the end.
-
+; FIXME eventually replace these. Don't resize but make a list of vectors and cat once at the end.
 (define (make-root type size) (make-typed-array type *unspecified* size))
 (define (root-type root) (array-type root))
 (define (root-length root) (array-length root))

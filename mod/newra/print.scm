@@ -1,6 +1,6 @@
 
 ; Replacement for Guile C-based arrays - Printing
-; (c) Daniel Llorens - 2017
+; (c) Daniel Llorens - 2017-2018
 
 ; This library is free software; you can redistribute it and/or modify it under
 ; the terms of the GNU General Public License as published by the Free
@@ -25,7 +25,7 @@
   (display #\% port)
   (display (ra-rank ra) port)
   (let ((type (ra-type ra)))
-    (unless (eq? #t type)
+    (unless (case type ((#t d) #t) (else #f))
       (display type port)))
   (vector-for-each
    (lambda (dim)

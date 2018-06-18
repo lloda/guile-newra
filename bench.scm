@@ -8,7 +8,7 @@
 ; Software Foundation; either version 3 of the License, or (at your option) any
 ; later version.
 
-(import (newra newra) (newra print) (newra tools) (newra test) (newra read)
+(import (newra newra) (newra print) (newra tools) (newra test) (newra read) (newra lib)
         (only (rnrs base) vector-map)
         (srfi srfi-26) (srfi srfi-8) (only (srfi srfi-1) fold iota)
         (ice-9 match) (ice-9 format))
