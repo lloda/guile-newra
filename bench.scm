@@ -13,6 +13,8 @@
         (srfi srfi-26) (srfi srfi-8) (only (srfi srfi-1) fold iota)
         (ice-9 match) (ice-9 format))
 
+(format #t "~a\n~!" (version))
+
 
 ; -----------------------
 ; benchmarks
