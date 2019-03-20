@@ -576,7 +576,7 @@
                   (if (= k u)
 ; unrolled dimensions.
                     (let loop ((i lenm))
-; BUG no fresh slice descriptor like in array-slice-for-each.
+; no fresh slice descriptor like in array-slice-for-each. That should be all right in newra, b/c the descriptors can be copied.
                       (apply op ra)
                       (cond
                        ((zero? i)
@@ -728,7 +728,8 @@
                  (receive (los lens) (apply ra-slice-for-each-check k (%list frame ...))
 ; since we'll unroll, special case for rank 0
                    (if (zero? k)
-; BUG no fresh slice descriptor like in array-slice-for-each. See also below.
+; no fresh slice descriptor like in array-slice-for-each. That should be all right in newra, b/c the descriptors can be copied.
+; see also below.
                      (op-once ra ...)
                      (let/ec exit
 ; check early so we can save a step in the loop later.
@@ -780,7 +781,7 @@
 ; special rank-0 versions, ra-for-each, ra-map!, ra-copy!, ra-equal?
 ; ----------------
 
-; If op-loop takes 2 args as a rest list, here we must do that too.
+; If op-loop takes 2 args as a rest list, here we must do that as well.
 (define slice-loop-fun
   (case-lambda
    ((op-once op-loop r0)
@@ -819,8 +820,8 @@
                     (%op (vref-ra vset!-ra ra z) ...)))))
              (%default %op-op ra ...)))))))
 
-; FIXME Refactor
-; FIXME Maybe partial dispatch? i.e. the first type is supported but not the others.
+; FIXME Refactor :-/
+; FIXME Partial dispatch? i.e. the first type is supported but not the others.
 ; FIXME Compile cases on demand.
 (define-syntax %dispatch
   (lambda (stx)
