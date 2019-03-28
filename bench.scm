@@ -235,6 +235,32 @@
 
 
 ; -----------------------
+; ra-index-map!
+; -----------------------
+
+(define m #e1e5)
+(format #t "\nra-index-map!\n==========\n")
+(for-each
+  (lambda (type)
+    (format #t "\ntype dst ~a\n----------\n" type)
+    (for-each
+      (lambda (rank)
+        (let* ((op (lambda x (apply + x)))
+               (n (inexact->exact (ceiling (expt m (/ rank)))))
+               (nn (make-list rank n))
+               (len (fold * 1 nn))
+               (scale (* 1e3 (/ m len)))
+               (ra (ra-map! (make-ra-new type 0 (apply c-dims nn)) (lambda () (random n))))
+               (array (ra->array ra)))
+          (format #t "rank ~a (nn ~a)\n" rank nn)
+          (format #t "ra1~20t~9,4f\n" (* scale (time (ra-index-map! ra op))))
+          (format #t "array2~20t~9,4f\n" (* scale (time (array-index-map! array op))))
+          (unless (array-equal? (ra->array ra) array) (throw 'bad-ra-index-map!-benchmark))))
+      (iota 2 1)))
+  (list #t 'f64))
+
+
+; -----------------------
 ; some profiling...
 ; -----------------------
 

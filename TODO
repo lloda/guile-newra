@@ -2,13 +2,11 @@
 
 Help: [C-uc .] insert timestamp [C-cc] flip checkbox [C-uucc] partial flip checkbox [C-ct] flip TODO.
 
-* TODO compatibility with existing Guile arrays [4/5]
-  * [X]  make-ra-new, make-ra-data
+* TODO compatibility with existing Guile arrays [5/5]
   * [X] ra-slice-for-each, ra-map!, ra-for-each, ra-transpose, ra-cell, ra-ref, ra-set!
   * [X] make-ra, make-shared-ra, ra->list, list->ra, list->typed-ra
   * [X] ra-iota, ra-i
-
-  * [ ] ra-index-map!
+  * [X] ra-index-map!
 
 * TODO guile-ploy functionality [0/2]
   * [ ] high level slicing
@@ -18,13 +16,12 @@ Help: [C-uc .] insert timestamp [C-cc] flip checkbox [C-uucc] partial flip check
 
 * TODO replace Guile arrays [0/4]
   * [ ] hooks into C
-  * [ ] compilation
+  * [ ] compilation of literals
   * [ ] replace all names
-  * [ ] tests
 
 * TODO quality of life [0/3]
   * [ ] refactor macros
-  * [ ] special rank-1 cases for e.g. copy or fill in the unroll section (e.g. bytevector-copy).
+  * [ ] special rank-1 (or higher!) cases for e.g. copy or fill in the unroll section (e.g. bytevector-copy).
   * [ ] bench tracking
   * [ ] parameters to control print format (eg print sizes/strides, truncate...)
 

@@ -131,7 +131,7 @@
 
 
 ; ----------------
-; array type
+; the array/view type
 ; ----------------
 
 (define <ra-vtable>
@@ -157,7 +157,8 @@
 ;; data:    a container (function) addressable by a single integer
 ;; address: into data.
 ;; zero:    address that corresponds to all the ra indices = 0.
-;; %%:      skip check for ra?, when it's already done.
+;; %:       regular macro.
+;; %%:      skip ra? check.
 
 (define-syntax %%rastruct-ref (syntax-rules () ((_ a n) (struct-ref a n))))
 (define-syntax %%rastruct-set! (syntax-rules () ((_ a n o) (struct-set! a n o))))
@@ -261,7 +262,7 @@
 ; compute addresses
 ; ----------------
 
-; FIXME we'll optimize these I think
+; FIXME probably worth optimizing
 (define ra-pos
   (letrec-syntax
       ((%args
@@ -476,6 +477,10 @@
 ; ra-slice-for-each, several versions
 ; ----------------
 
+; ra-slice-for-each-1/2/3/4 do the same thing at increasing levels of inlining
+; and complication. We keep them to test them against each other. The last one
+; is the default.
+
 ; Unlike Guile's array-for-each, etc. this one is strict —every dimension must match.
 (define (ra-slice-for-each-check k . ra)
   (unless (pair? ra)
@@ -494,7 +499,7 @@
       (throw 'mismatched-len len))
     (values lo len)))
 
-; naive
+; naive, slice recursively.
 (define (ra-slice-for-each-1 kk op . ra)
   (receive (los lens) (apply ra-slice-for-each-check kk ra)
 ; we pick a (-k)-slice for each ra and then just move along.
@@ -521,7 +526,7 @@
                 ra)))
       (let loop-rank ((k 0))
         (if (= k kk)
-; BUG no fresh slice descriptor like in array-slice-for-each.
+; no fresh slice descriptor like in array-slice-for-each.
           (apply op ra)
           (let  ((lenk (vector-ref lens k)))
             (let loop-dim ((i 0))
@@ -947,8 +952,8 @@
 (define (ra-copy! ra rb)
   "ra-copy! ra rb
 
-   Copy the contents of ra RA into ra RB. The two ras must have the same shape and be
-   of compatible types.
+   Copy the contents of ra RA into ra RB. RA and RB must have the same shape and
+   be of compatible types.
 
    This function returns the updated ra RB."
   (let-syntax
