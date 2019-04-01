@@ -1,5 +1,5 @@
 
-; (c) Daniel Llorens - 2016-2018
+; (c) Daniel Llorens - 2016-2019
 
 ; This library is free software; you can redistribute it and/or modify it under
 ; the terms of the GNU General Public License as published by the Free
@@ -207,7 +207,7 @@
     ((d) (throw 'no-dim-make))
     (else (throw 'bad-ra-data-type type))))
 
-(define (pick-typed-vector-functions v)
+(define (pick-root-functions v)
   (cond ((vector? v)    (values  #t    vector-length     vector-ref     vector-set!   ))
         ((c64vector? v) (values  'c64  c64vector-length  c64vector-ref  c64vector-set!))
         ((c32vector? v) (values  'c32  c32vector-length  c32vector-ref  c32vector-set!))
@@ -266,7 +266,7 @@
   (unless (vector? dims) (throw 'bad-dims dims))
   (vector-for-each (lambda (dim) (unless (dim? dim) (throw 'bad-dim dim))) dims)
 ; after check
-  (receive (type vlen vref vset!) (pick-typed-vector-functions data)
+  (receive (type vlen vref vset!) (pick-root-functions data)
     (make-ra* data zero dims type vlen vref vset!)))
 
 

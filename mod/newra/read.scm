@@ -1,5 +1,5 @@
 
-; (c) Daniel Llorens - 2017, 2018
+; (c) Daniel Llorens - 2017-2019
 
 ; This library is free software; you can redistribute it and/or modify it under
 ; the terms of the GNU General Public License as published by the Free
@@ -40,23 +40,23 @@
     (cond ((char-whitespace? c) (get-char port) (loop (lookahead-char port)))
           (else c))))
 
-(define pick-typed-vector-functions (@@ (newra newra) pick-typed-vector-functions))
+(define pick-root-functions (@@ (newra newra) pick-root-functions))
 (define pick-make-root (@@ (newra newra) pick-make-root))
 
 (define (make-root type size)
   ((pick-make-root type) size))
 
 (define (root-type root)
-  (receive (type vlen vref vset!) (pick-typed-vector-functions root) type))
+  (receive (type vlen vref vset!) (pick-root-functions root) type))
 
 (define (root-length root)
-  (receive (type vlen vref vset!) (pick-typed-vector-functions root) (vlen root)))
+  (receive (type vlen vref vset!) (pick-root-functions root) (vlen root)))
 
 (define (root-ref root i)
-  (receive (type vlen vref vset!) (pick-typed-vector-functions root) (vref root i)))
+  (receive (type vlen vref vset!) (pick-root-functions root) (vref root i)))
 
 (define (root-set! root o i)
-  (receive (type vlen vref vset!) (pick-typed-vector-functions root) (vset! root i o)))
+  (receive (type vlen vref vset!) (pick-root-functions root) (vset! root i o)))
 
 ; Don't resize but make a list of vectors and cat once at the end.
 (define (root-resize old newsize)
