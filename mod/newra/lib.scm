@@ -11,7 +11,7 @@
 ;;; Code:
 
 (define-module (newra lib)
-  #:export (ra-index-map!
+  #:export (ra-index-map! ra-length make-ra make-typed-ra make-shared-ra ra->list
             array->ra ra->array as-ra
             ra-i ra-iota))
 
@@ -44,8 +44,80 @@
 
 
 ; ----------------
-; ra-index-map!
+; misc functions for Guile compatibility
 ; ----------------
+
+(define* (ra-length ra #:optional (k 0))
+  "ra-length ra [dim 0]
+
+   Return the length of the dimension DIM of ra RA. It is an error if RA has
+   zero rank."
+  (unless (positive? (ra-rank ra))
+    (throw 'zero-rank-ra-has-no-length ra))
+  (dim-len (vector-ref (%%ra-dims ra) k)))
+
+(define (make-typed-ra type value . d)
+  "make-typed-ra type value d ...
+
+   FIXME."
+  (make-ra-new type value (apply c-dims d)))
+
+(define (make-ra value . d)
+  "make-ra value d ...
+
+   Equivalent to (make-typed-ra #t value d ...)."
+  (make-ra-new #t value (apply c-dims d)))
+
+(define (make-shared-ra oldra mapfunc . d)
+  (check-ra oldra)
+  (let* ((dims (apply c-dims d)) ; only lo len, won't use step
+         (newrank (vector-length dims))
+         (los (vector->list (vector-map dim-lo dims)))
+         (ref (apply ra-pos (%%ra-zero oldra) (%%ra-dims oldra) (apply mapfunc los)))
+         (dims (vector-map
+                (lambda (dim step) (make-dim (dim-len dim) (dim-lo dim) step))
+                dims
+                (let ((steps (make-vector newrank 0)))
+                  (let loop ((k 0))
+                    (cond
+                     ((= k newrank) steps)
+                     (else
+                      (vector-set!
+                       steps k
+                       (if (positive? (dim-len (vector-ref dims k)))
+                         (let ((ii (list-copy los)))
+                           (list-set! ii k (+ 1 (list-ref los k)))
+                           (- (apply ra-pos (%%ra-zero oldra) (%%ra-dims oldra) (apply mapfunc ii)) ref))
+                         0))
+                      (loop (+ k 1)))))))))
+    (make-ra-raw (%%ra-data oldra) (- ref (ra-pos-first 0 dims)) dims)))
+
+; FIXME use ra-reverse and maybe ra-slice-for-each
+
+(define (ra->list ra)
+  "ra->list ra
+
+   Return a nested list of the elements of ra RA. For example, if RA is a 1-rank
+   ra, the list contains the elements of RA; if RA is a 2-rank ra, the list
+   contains a list for each of the rows of RA; and so on."
+  (let ((rank (ra-rank ra))
+        (dims (ra-dims ra)))
+    (cond
+     ((zero? rank) (ra-ref ra))
+     (else
+      (let loop-rank ((k rank) (ra ra))
+        (let ((dimk (vector-ref dims (- rank k))))
+          (cond
+           ((= 1 k)
+            (let loop-dim ((l '()) (i (dim-hi dimk)))
+              (if (< i (dim-lo dimk))
+                l
+                (loop-dim (cons (ra-ref ra i) l) (- i 1)))))
+           (else
+            (let loop-dim ((l '()) (i (dim-hi dimk)))
+              (if (< i (dim-lo dimk))
+                l
+                (loop-dim (cons (loop-rank (- k 1) (ra-cell ra i)) l) (- i 1))))))))))))
 
 ; Similar to (@ (newra newra) ra-for-each-slice-1) - since we cannot unroll. It
 ; might be cheaper to go Fortran order (building the index lists back to front);

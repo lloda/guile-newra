@@ -11,15 +11,16 @@
 ;;; Code:
 
 (define-module (newra newra)
-  #:export (make-ra-raw ra? ra-data ra-zero ra-dims ra-vlen ra-vref ra-vset!
+  #:export (ra?
+            make-ra-raw ra-data ra-zero ra-dims ra-vlen ra-vref ra-vset!
+            check-ra %%ra-rank %%ra-data %%ra-zero %%ra-dims
             ra-rank ra-type make-ra-new make-ra-data
             make-dim dim? dim-len dim-lo dim-hi dim-step dim-ref c-dims
             ra-pos ra-pos-first ra-pos-hi ra-pos-lo
             ra-slice ra-cell ra-ref ra-set!
             ra-transpose
             ra-slice-for-each ra-slice-for-each-1 ra-slice-for-each-2 ra-slice-for-each-3 ra-slice-for-each-4
-            ra-fill! ra-copy! ra-equal? ra-map! ra-for-each
-            ra-length make-ra make-typed-ra make-shared-ra ra->list))
+            ra-fill! ra-copy! ra-equal? ra-map! ra-for-each))
 
 (import (srfi srfi-9) (srfi srfi-9 gnu) (only (srfi srfi-1) fold every) (srfi srfi-8)
         (srfi srfi-4 gnu) (srfi srfi-26) (ice-9 match) (ice-9 control)
@@ -814,7 +815,7 @@
                     (%op (vref-ra vset!-ra ra z) ...)))))
              (%default %op-op ra ...)))))))
 
-; FIXME Refactor :-/
+; FIXME Zero, one, infinity :-|
 ; FIXME Partial dispatch? i.e. the first type is supported but not the others.
 ; FIXME Compile cases on demand.
 (define-syntax %dispatch
@@ -825,7 +826,8 @@
            #,@(map (match-lambda
                      ((tag-ra vref-ra vset!-ra)
                       #`((#,tag-ra)
-                         (%%subop %typed-op (#,vref-ra #,vset!-ra ra)))))
+                         (%%subop %typed-op
+                                  (#,vref-ra #,vset!-ra ra)))))
                 syntax-accessors-1)
            (else (%default %op ra))))
       ((_ %typed-op %op ra rb)
@@ -837,7 +839,9 @@
                            #,@(map (match-lambda
                                      ((tag-rb vref-rb vset!-rb)
                                       #`((#,tag-rb)
-                                         (%%subop %typed-op (#,vref-ra #,vset!-ra ra) (#,vref-rb #,vset!-rb rb)))))
+                                         (%%subop %typed-op
+                                                  (#,vref-ra #,vset!-ra ra)
+                                                  (#,vref-rb #,vset!-rb rb)))))
                                 syntax-accessors-2)
                            (else (%default %op ra rb)))
                          rb)))
@@ -856,7 +860,10 @@
                                            #,@(map (match-lambda
                                                      ((tag-rc vref-rc vset!-rc)
                                                       #`((#,tag-rc)
-                                                         (%%subop %typed-op (#,vref-ra #,vset!-ra ra) (#,vref-rb #,vset!-rb rb) (#,vref-rc #,vset!-rc rc)))))
+                                                         (%%subop %typed-op
+                                                                  (#,vref-ra #,vset!-ra ra)
+                                                                  (#,vref-rb #,vset!-rb rb)
+                                                                  (#,vref-rc #,vset!-rc rc)))))
                                                 syntax-accessors-3)
                                            (else (%default %op ra rb rc))))))
                                 syntax-accessors-3)
@@ -994,79 +1001,3 @@
                     (rx (apply ra-for-each (lambda x (unless (apply equal? x) (exit #f))) rx)))
               rx)
             #t)))))
-
-
-; ----------------
-; misc functions for Guile compatibility
-; ----------------
-
-(define* (ra-length ra #:optional (k 0))
-  "ra-length ra [dim 0]
-
-   Return the length of the dimension DIM of ra RA. It is an error if RA has
-   zero rank."
-  (unless (positive? (%ra-rank ra))
-    (throw 'zero-rank-ra-has-no-length ra))
-  (dim-len (vector-ref (%%ra-dims ra) k)))
-
-(define (make-typed-ra type value . d)
-  "make-typed-ra type value d ...
-
-   FIXME."
-  (make-ra-new type value (apply c-dims d)))
-
-(define (make-ra value . d)
-  "make-ra value d ...
-
-   Equivalent to (make-typed-ra #t value d ...)."
-  (make-ra-new #t value (apply c-dims d)))
-
-(define (make-shared-ra oldra mapfunc . d)
-  (check-ra oldra)
-  (let* ((dims (apply c-dims d)) ; only lo len, won't use step
-         (newrank (vector-length dims))
-         (los (vector->list (vector-map dim-lo dims)))
-         (ref (apply ra-pos (%%ra-zero oldra) (%%ra-dims oldra) (apply mapfunc los)))
-         (dims (vector-map
-                (lambda (dim step) (make-dim (dim-len dim) (dim-lo dim) step))
-                dims
-                (let ((steps (make-vector newrank 0)))
-                  (let loop ((k 0))
-                    (cond
-                     ((= k newrank) steps)
-                     (else
-                      (vector-set!
-                       steps k
-                       (if (positive? (dim-len (vector-ref dims k)))
-                         (let ((ii (list-copy los)))
-                           (list-set! ii k (+ 1 (list-ref los k)))
-                           (- (apply ra-pos (%%ra-zero oldra) (%%ra-dims oldra) (apply mapfunc ii)) ref))
-                         0))
-                      (loop (+ k 1)))))))))
-    (make-ra-raw (%%ra-data oldra) (- ref (ra-pos-first 0 dims)) dims)))
-
-; FIXME use ra-reverse and maybe ra-slice-for-each
-(define (ra->list ra)
-  "ra->list ra
-
-   Return a nested list of the elements of ra RA. For example, if RA is a 1-rank
-   ra, the list contains the elements of RA; if RA is a 2-rank ra, the list
-   contains a list for each of the rows of RA; and so on."
-  (let ((rank (ra-rank ra))
-        (dims (ra-dims ra)))
-    (cond
-     ((zero? rank) (ra-ref ra))
-     (else
-      (let loop-rank ((k rank) (ra ra))
-        (let ((dimk (vector-ref dims (- rank k))))
-          (cond
-           ((= 1 k)
-            (let loop-dim ((l '()) (i (dim-hi dimk)))
-              (if (< i (dim-lo dimk))
-                l
-                (loop-dim (cons (ra-ref ra i) l) (- i 1)))))
-           (else
-            (let loop-dim ((l '()) (i (dim-hi dimk)))
-              (if (< i (dim-lo dimk))
-                l
-                (loop-dim (cons (loop-rank (- k 1) (ra-cell ra i)) l) (- i 1))))))))))))
