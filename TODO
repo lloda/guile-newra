@@ -7,7 +7,7 @@ Help: [C-uc .] insert timestamp [C-cc] flip checkbox [C-uucc] partial flip check
   * [X] make-ra, make-shared-ra, ra->list, list->ra, list->typed-ra
   * [X] ra-iota, ra-i
   * [X] ra-index-map!
-  * [ ] ra-* functions work on root vectors
+  * [ ] root vectors are equivalent to rank-1 newra objects
 
 * TODO guile-ploy functionality [0/4]
   * [ ] high level slicing
@@ -27,6 +27,5 @@ Help: [C-uc .] insert timestamp [C-cc] flip checkbox [C-uucc] partial flip check
   * [ ] bench tracking
   * [ ] parameters to control print format (eg print sizes/strides, truncate...)
 
-* TODO ra:: functionality [0/2]
+* TODO ra:: functionality [0/1]
   * [ ] drag-along facility / delayed ops
-  * [ ] root vectors are handled as 1D ra objects (?)
