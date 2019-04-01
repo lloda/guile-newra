@@ -40,12 +40,25 @@
     (cond ((char-whitespace? c) (get-char port) (loop (lookahead-char port)))
           (else c))))
 
-; FIXME eventually replace these. Don't resize but make a list of vectors and cat once at the end.
-(define (make-root type size) (make-typed-array type *unspecified* size))
-(define (root-type root) (array-type root))
-(define (root-length root) (array-length root))
-(define (root-ref root i) (array-ref root i))
-(define (root-set! root i o) (array-set! root o i))
+(define pick-typed-vector-functions (@@ (newra newra) pick-typed-vector-functions))
+(define pick-make-root (@@ (newra newra) pick-make-root))
+
+(define (make-root type size)
+  ((pick-make-root type) size))
+
+(define (root-type root)
+  (receive (type vlen vref vset!) (pick-typed-vector-functions root) type))
+
+(define (root-length root)
+  (receive (type vlen vref vset!) (pick-typed-vector-functions root) (vlen root)))
+
+(define (root-ref root i)
+  (receive (type vlen vref vset!) (pick-typed-vector-functions root) (vref root i)))
+
+(define (root-set! root o i)
+  (receive (type vlen vref vset!) (pick-typed-vector-functions root) (vset! root i o)))
+
+; Don't resize but make a list of vectors and cat once at the end.
 (define (root-resize old newsize)
   (let ((oldsize (root-length old)))
     (if (= newsize oldsize)
@@ -54,7 +67,7 @@
             (size (min oldsize newsize)))
         (let loop ((j 0))
           (cond ((= j size) new)
-                (else (root-set! new j (root-ref old j))
+                (else (root-set! new (root-ref old j) j)
                       (loop (+ j 1)))))))))
 
 (define (make-temp-root len type)
@@ -146,7 +159,7 @@
 ; read element
                        ((zero? k)
                         (set! temp (resize-temp temp (+ j 1)))
-                        (root-set! temp j (read port))
+                        (root-set! temp (read port) j)
                         (set! j (+ j 1)))
 ; read slice
                        (else
@@ -160,7 +173,7 @@
                            ((and (= k 1) lenk)
                             (set! temp (resize-temp temp (+ j lenk)))
                             (do ((i 0 (+ i 1))) ((= i lenk))
-                              (root-set! temp (+ j i) (read port)))
+                              (root-set! temp (read port) (+ j i)))
                             (set! j (+ j lenk))
                             (let ((c (skip-whitespace port)))
                               (unless (delim-close? c)
@@ -225,7 +238,7 @@
         (cond
 ; read element
          ((null? len)
-          (root-set! temp j l)
+          (root-set! temp l j)
           (set! j (+ j 1)))
          (else
           (receive (lenk len) (car+cdr len)
@@ -235,7 +248,7 @@
               (do ((i 0 (+ i 1)) (l l (cdr l)))
                   ((= i lenk)
                    (unless (null? l) (throw 'mismatched-list-length-dim (- rank 1))))
-                (root-set! temp (+ j i) (car l)))
+                (root-set! temp (car l) (+ j i)))
               (set! j (+ j lenk)))
 ; general case
              (else

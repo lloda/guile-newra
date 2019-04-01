@@ -11,9 +11,36 @@
 ;;; Code:
 
 (define-module (newra lib)
-  #:export (ra-index-map! ra-i ra-iota as-ra))
+  #:export (ra-index-map!
+            array->ra ra->array as-ra
+            ra-i ra-iota))
 
-(import (newra newra) (only (srfi srfi-1) fold) (srfi srfi-71) (srfi srfi-26))
+(import (newra newra) (only (srfi srfi-1) fold) (srfi srfi-71) (srfi srfi-26)
+        (only (rnrs base) vector-map))
+
+
+; ----------------
+; transition help
+; ----------------
+
+(define (array->ra a)
+  (let ((dims (list->vector
+               (map (lambda (b i)
+                      (make-dim (- (cadr b) (car b) -1) (car b) i))
+                 (array-shape a)
+                 (shared-array-increments a)))))
+    (make-ra-raw (shared-array-root a)
+                 (- (shared-array-offset a) (ra-pos-first 0 dims))
+                 dims)))
+
+(define (ra->array ra)
+  (when (eq? 'd (ra-type ra))
+    (throw 'nonconvertible-type (ra-type ra)))
+  (apply make-shared-array (ra-data ra)
+         (lambda i (list (apply ra-pos (ra-zero ra) (ra-dims ra) i)))
+         (vector->list
+          (vector-map (lambda (dim) (list (dim-lo dim) (dim-hi dim)))
+                      (ra-dims ra)))))
 
 
 ; ----------------

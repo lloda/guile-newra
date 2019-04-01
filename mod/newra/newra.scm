@@ -14,7 +14,6 @@
   #:export (make-ra-raw ra? ra-data ra-zero ra-dims ra-vlen ra-vref ra-vset!
             ra-rank ra-type make-ra-new make-ra-data
             make-dim dim? dim-len dim-lo dim-hi dim-step dim-ref c-dims
-            array->ra ra->array
             ra-pos ra-pos-first ra-pos-hi ra-pos-lo
             ra-slice ra-cell ra-ref ra-set!
             ra-transpose
@@ -186,6 +185,27 @@
 (define (ra-vset! a) (%ra-vset! a))
 
 (define-inlinable (%%ra-step a k) (dim-step (vector-ref (%%ra-dims a) k)))
+
+(define (pick-make-root type)
+  (case type
+    ((#t) make-vector)
+    ((c64) make-c64vector)
+    ((c32) make-c32vector)
+    ((f64) make-f64vector)
+    ((f32) make-f32vector)
+    ((s64) make-s64vector)
+    ((s32) make-s32vector)
+    ((s16) make-s16vector)
+    ((s8) make-s8vector)
+    ((u64) make-u64vector)
+    ((u32) make-u32vector)
+    ((u16) make-u16vector)
+    ((u8) make-u8vector)
+    ((a) make-string)
+    ((b) make-bitvector)
+; @TODO extend this idea
+    ((d) (throw 'no-dim-make))
+    (else (throw 'bad-ra-data-type type))))
 
 (define (pick-typed-vector-functions v)
   (cond ((vector? v)    (values  #t    vector-length     vector-ref     vector-set!   ))
@@ -418,8 +438,9 @@
                  dims)))
 
 (define (make-ra-new type value dims)
-  (let ((size (vector-fold (lambda (a c) (* c (dim-len a))) 1 dims)))
-    (make-ra-raw (make-typed-array type value size)
+  (let ((size (vector-fold (lambda (a c) (* c (dim-len a))) 1 dims))
+        (make (pick-make-root type)))
+    (make-ra-raw (if (unspecified? value) (make size) (make size value))
                  (- (ra-pos-first 0 dims))
                  dims)))
 
@@ -439,30 +460,6 @@
             odim))))
      (%ra-dims ra) exch)
     (make-ra-raw (%ra-data ra) (%ra-zero ra) dims)))
-
-
-; ----------------
-; transition help
-; ----------------
-
-(define (array->ra a)
-  (let ((dims (list->vector
-               (map (lambda (b i)
-                      (make-dim (- (cadr b) (car b) -1) (car b) i))
-                 (array-shape a)
-                 (shared-array-increments a)))))
-    (make-ra-raw (shared-array-root a)
-                 (- (shared-array-offset a) (ra-pos-first 0 dims))
-                 dims)))
-
-(define (ra->array ra)
-  (when (eq? 'd (%ra-type ra))
-    (throw 'nonconvertible-type (%ra-type ra)))
-  (apply make-shared-array (%ra-data ra)
-         (lambda i (list (apply ra-pos (%ra-zero ra) (%ra-dims ra) i)))
-         (vector->list
-          (vector-map (lambda (dim) (list (dim-lo dim) (dim-hi dim)))
-                      (%ra-dims ra)))))
 
 
 ; ----------------
@@ -518,7 +515,7 @@
                 ra)))
       (let loop-rank ((k 0))
         (if (= k kk)
-; no fresh slice descriptor like in array-slice-for-each.
+; no fresh slice descriptor like in array-slice-for-each. See below.
           (apply op ra)
           (let  ((lenk (vector-ref lens k)))
             (let loop-dim ((i 0))
