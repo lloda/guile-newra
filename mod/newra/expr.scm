@@ -16,20 +16,31 @@
 
 
 ; ----------------
-; verbs w/o return values
+; 1.a verbs w/o return values
 ; ----------------
 
 
 ; ----------------
-; composition w/o return values.
+; 1.b application (rank extension) of verbs w/o return values.
+; ----------------
+
+
+
+; ----------------
+; 2.c composition of verbs w/o return values.
 ; ----------------
 
 
 ; ----------------
-; return values
+; 2.a return values
 ; ----------------
 
 
 ; ----------------
-; composition with return values
+; 2.b application with return values
+; ----------------
+
+
+; ----------------
+; 2.c composition with return values
 ; ----------------

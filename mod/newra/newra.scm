@@ -51,14 +51,6 @@
 ; misc
 ; ----------------
 
-(define (struct-length s)
-  (* 1/2 (string-length (symbol->string (struct-layout s)))))
-
-(define (struct->vector s)
-  (let* ((v (make-vector (struct-length s))))
-    (array-index-map! v (lambda (i) (struct-ref s i)))
-    v))
-
 (define vector-fold
   (case-lambda
    ((kons knil)
