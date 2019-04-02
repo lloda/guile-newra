@@ -1,19 +1,28 @@
 
-; Replacement for Guile C-based array system - Benchmarks
 ; (c) Daniel Llorens - 2016-2017
-; Run with $GUILE -L mod -s bench.scm
 
 ; This library is free software; you can redistribute it and/or modify it under
 ; the terms of the GNU General Public License as published by the Free
 ; Software Foundation; either version 3 of the License, or (at your option) any
 ; later version.
 
+; Replacement for Guile C-based array system - Benchmarks
+; Run with $GUILE -L mod -s bench.scm
+
 (import (newra newra) (newra print) (newra tools) (newra test) (newra read) (newra lib)
+        (ice-9 popen) (ice-9 rdelim)
         (only (rnrs base) vector-map)
         (srfi srfi-26) (srfi srfi-8) (only (srfi srfi-1) fold iota)
         (ice-9 match) (ice-9 format))
 
-(format #t "~a\n~!" (version))
+(define (command-output cmd . args)
+  (let* ((p (apply open-pipe* OPEN_READ cmd args))
+         (s (read-delimited "" p))
+         (ec (status:exit-val (close-pipe p))))
+    (values s ec)))
+
+(format #t "Guile ~a\n~!" (version))
+(format #t "newra ~a\n~!" (command-output "git" "describe" "--always" "--dirty"))
 
 (define (format-header . x)
   (apply format #t
@@ -52,26 +61,30 @@
              (raf-cell (case-lambda ((i) (set! ras (+ ras (ra-ref ra i))))
                                     ((i j) (set! ras (+ ras (ra-ref ra i j))))
                                     ((i j k) (set! ras (+ ras (ra-ref ra i j k))))
-                                    ((i j k l) (set! ras (+ ras (ra-ref ra i j k l))))))
+                                    ((i j k l) (set! ras (+ ras (ra-ref ra i j k l))))
+                                    ((i j k l m) (set! ras (+ ras (ra-ref ra i j k l m))))))
              (raf-ref (case-lambda ((i) (set! ras (+ ras (ra-cell ra i))))
                                    ((i j) (set! ras (+ ras (ra-cell ra i j))))
                                    ((i j k) (set! ras (+ ras (ra-cell ra i j k))))
-                                   ((i j k l) (set! ras (+ ras (ra-cell ra i j k l))))))
+                                   ((i j k l) (set! ras (+ ras (ra-cell ra i j k l))))
+                                   ((i j k l m) (set! ras (+ ras (ra-cell ra i j k l m))))))
              (raf-appl (case-lambda ((i) (set! ras (+ ras (ra i))))
                                     ((i j) (set! ras (+ ras (ra i j))))
                                     ((i j k) (set! ras (+ ras (ra i j k))))
-                                    ((i j k l) (set! ras (+ ras (ra i j k l))))))
+                                    ((i j k l) (set! ras (+ ras (ra i j k l))))
+                                    ((i j k l m) (set! ras (+ ras (ra i j k l m))))))
              (af (case-lambda ((i) (set! as (+ as (array-ref a i))))
                               ((i j) (set! as (+ as (array-ref a i j))))
                               ((i j k) (set! as (+ ras (array-ref a i j k))))
-                              ((i j k l) (set! as (+ ras (array-ref a i j k l)))))))
+                              ((i j k l) (set! as (+ ras (array-ref a i j k l))))
+                              ((i j k l m) (set! as (+ ras (array-ref a i j k l m)))))))
         (unless (= ras as) (throw 'error-in-ra-cell-array-ref-check))
-        (format #t "rank ~a (nn ~a)" rank nn)
+        (format #t "rank ~a ~a:" rank nn)
         (format-line (* scale (time (ra-loop ra raf-cell)))
                      (* scale (time (ra-loop ra raf-ref)))
                      (* scale (time (ra-loop ra raf-appl)))
                      (* scale (time (array-loop a af))))))
-    (iota 4 1)))
+    (iota 5 1)))
  '(#t f64))
 
 (define m #e1e5)
@@ -94,7 +107,7 @@
                 (a20 (ra->array ra20))
                 (a21 (ra->array ra21))
                 (a22 (ra->array ra22)))
-           (format #t "rank ~a (nn ~a)" rank nn)
+           (format #t "rank ~a ~a:" rank nn)
            (case nargs
              ((3)
               (format-line (* scale (time (ra-map*! ra-slice-for-each-4 ra20 - ra21 ra22)))
@@ -131,7 +144,7 @@
                    (ra21 (ra-map! (make-ra-new typedst 0 (apply c-dims nn)) (lambda () (random n))))
                    (a20 (ra->array ra20))
                    (a21 (ra->array ra21)))
-              (format #t "rank ~a (nn ~a)" rank nn)
+              (format #t "rank ~a ~a:" rank nn)
               (format-line (* scale (time (ra-copy! ra21 ra20)))
                            (* scale (time (array-copy! a21 a20))))))
         (iota 6 1)))
@@ -152,7 +165,7 @@
                    (scale (* 1e3 (/ m len)))
                    (ra20 (make-ra-new type *unspecified* (apply c-dims nn)))
                    (a20 (ra->array ra20)))
-              (format #t "rank ~a (nn ~a)" rank nn)
+              (format #t "rank ~a ~a:" rank nn)
               (format-line (* scale (time (ra-fill! ra20 77)))
                            (* scale (time (array-fill! a20 77))))))
         (iota 6 1)))
@@ -174,7 +187,7 @@
                    (ra21 (ra-copy! ra20 (make-ra-new type 0 (apply c-dims nn))))
                    (a20 (ra->array ra20))
                    (a21 (ra->array ra21)))
-              (format #t "rank ~a (nn ~a)" rank nn)
+              (format #t "rank ~a ~a:" rank nn)
               (format-line (* scale (time (ra-equal? ra20 ra21)))
                            (* scale (time (array-equal? a20 a21))))))
         (iota 6 1)))
@@ -194,7 +207,7 @@
                    (scale (* 1e3 (/ m len)))
                    (ra (ra-map! (make-ra-new type 0 (apply c-dims nn)) (lambda () (random n))))
                    (a (ra->array ra)))
-              (format #t "rank ~a (nn ~a)" rank nn)
+              (format #t "rank ~a ~a:" rank nn)
               (format-line (* scale (time (call-with-output-file "/dev/null" (cut display ra <>))))
                            (* scale (time (call-with-output-file "/dev/null" (cut array-print* a <>))))
                            (* scale (time (call-with-output-file "/dev/null" (cut display a <>)))))))
@@ -218,7 +231,7 @@
                    (sra2 (call-with-output-string (cut (@@ (newra print) ra-print) ra <> #:dims? #f)))
                    (a (ra->array ra))
                    (sa (call-with-output-string (cut display a <>))))
-              (format #t "rank ~a (nn ~a)" rank nn)
+              (format #t "rank ~a ~a:" rank nn)
               (let ((rb #f) (b #f))
                 (format-line (* scale (time (set! rb (call-with-input-string sra1 read))))
                              (* scale (time (set! rb (call-with-input-string sra2 read))))
@@ -242,7 +255,7 @@
                    (ra (ra-map! (make-ra-new type 0 (apply c-dims nn)) (lambda () (random n))))
                    (la (ra->list ra))
                    (shape (map (lambda (len) (list 0 (- len 1))) nn)))
-              (format #t "rank ~a (nn ~a)" rank nn)
+              (format #t "rank ~a ~a:" rank nn)
               (let ((rb #f) (b #f))
                 (format-line (* scale (time (set! rb (list->ra rank la))))
                              (* scale (time (set! b (list->array rank la))))
@@ -273,7 +286,7 @@
                    (scale (* 1e3 (/ m len)))
                    (ra (ra-map! (make-ra-new type 0 (apply c-dims nn)) (lambda () (random n))))
                    (array (ra->array ra)))
-              (format #t "rank ~a (nn ~a)" rank nn)
+              (format #t "rank ~a ~a:" rank nn)
               (format-line (* scale (time (ra-index-map! ra op)))
                            (* scale (time (array-index-map! array op))))
               (unless (array-equal? (ra->array ra) array) (throw 'bad-ra-index-map!-benchmark))))

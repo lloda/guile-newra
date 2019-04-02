@@ -1,12 +1,13 @@
 
-; Replacement for Guile C-based array system - Tests
 ; (c) Daniel Llorens - 2016-2018
-; Run with $GUILE -L mod -s test.scm
 
 ; This library is free software; you can redistribute it and/or modify it under
 ; the terms of the GNU General Public License as published by the Free
 ; Software Foundation; either version 3 of the License, or (at your option) any
 ; later version.
+
+; Replacement for Guile C-based array system - Tests
+; Run with $GUILE -L mod -s test.scm
 
 (import (srfi srfi-64)
         (newra newra) (newra test) (newra print) (newra tools) (newra read) (newra lib)

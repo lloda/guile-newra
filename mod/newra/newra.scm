@@ -126,10 +126,11 @@
 ; the array/view type
 ; ----------------
 
+; fields are: [apply setter data zero dims type vlen vref vset!]
 (define <ra-vtable>
   (make-struct/no-tail
    <applicable-struct-with-setter-vtable>
-   (make-struct-layout (string-append "pwpw" "pwpwpwpwpwpwpw"))))
+   (make-struct-layout "pwpwpwpwpwpwpwpwpw")))
 
 (define-inlinable (ra? o)
   (and (struct? o) (eq? <ra-vtable> (struct-vtable o))))
@@ -152,17 +153,17 @@
 ;; %:       regular macro.
 ;; %%:      skip ra? check.
 
-(define-syntax %%rastruct-ref (syntax-rules () ((_ a n) (struct-ref a n))))
-(define-syntax %%rastruct-set! (syntax-rules () ((_ a n o) (struct-set! a n o))))
+(define-syntax %%struct-ref (syntax-rules () ((_ a n) (struct-ref a n))))
+(define-syntax %%struct-set! (syntax-rules () ((_ a n o) (struct-set! a n o))))
 
-(define-inlinable (%%ra-data a) (%%rastruct-ref a 2))
-(define-inlinable (%%ra-zero a) (%%rastruct-ref a 3))
-(define-inlinable (%%ra-zero-set! a z) (%%rastruct-set! a 3 z)) ; set on iteration. FIXME immutable record?
-(define-inlinable (%%ra-dims a) (%%rastruct-ref a 4))
-(define-inlinable (%%ra-type a) (%%rastruct-ref a 5))
-(define-inlinable (%%ra-vlen a) (%%rastruct-ref a 6))
-(define-inlinable (%%ra-vref a) (%%rastruct-ref a 7))
-(define-inlinable (%%ra-vset! a) (%%rastruct-ref a 8))
+(define-inlinable (%%ra-data a) (%%struct-ref a 2))
+(define-inlinable (%%ra-zero a) (%%struct-ref a 3))
+(define-inlinable (%%ra-zero-set! a z) (%%struct-set! a 3 z)) ; set on iteration. FIXME immutable record?
+(define-inlinable (%%ra-dims a) (%%struct-ref a 4))
+(define-inlinable (%%ra-type a) (%%struct-ref a 5))
+(define-inlinable (%%ra-vlen a) (%%struct-ref a 6))
+(define-inlinable (%%ra-vref a) (%%struct-ref a 7))
+(define-inlinable (%%ra-vset! a) (%%struct-ref a 8))
 
 (define-syntax %rastruct-ref (syntax-rules () ((_ a n) (begin (check-ra a) (struct-ref a n)))))
 (define-syntax %rastruct-set! (syntax-rules () ((_ a n o) (begin (check-ra a) (struct-set! a n o)))))
@@ -204,7 +205,7 @@
     ((u8) make-u8vector)
     ((a) make-string)
     ((b) make-bitvector)
-; @TODO extend this idea
+; TODO extend this idea to drag-along
     ((d) (throw 'no-dim-make))
     (else (throw 'bad-ra-data-type type))))
 
@@ -224,9 +225,12 @@
         ((u8vector? v)  (values  'u8   u8vector-length   u8vector-ref   u8vector-set! ))
         ((string? v)    (values  'a    string-length     string-ref     string-set!   ))
         ((bitvector? v) (values  'b    bitvector-length  bitvector-ref  bitvector-set!))
-; @TODO extend this idea to 'non-strict arrays' (cf Racket), to a method for drag-along
+; TODO extend this idea to drag-along
         ((dim? v)       (values  'd    dim-len           dim-ref        (cut throw 'no-dim-set! <...>)))
         (else (throw 'bad-ra-data-type v))))
+
+; These tables are used to inline specific type cases in %dispatch.
+; We handle fewer types with 2 & 3 arguments to limit the combinatory explosion.
 
 (eval-when (expand load eval)
   (define syntax-accessors-1
@@ -290,6 +294,7 @@
      ((zero dims i0) (%args zero dims 0 i0))
      ((zero dims i0 i1) (%args zero dims 0 i0 i1))
      ((zero dims i0 i1 i2) (%args zero dims 0 i0 i1 i2))
+     ((zero dims i0 i1 i2 i3) (%args zero dims 0 i0 i1 i2 i3))
      ((zero dims . i_)
       (let loop ((pos zero) (j 0) (i i_))
         (if (null? i)
@@ -339,42 +344,52 @@
 (define-inlinable (%ra-rank a) (vector-length (%ra-dims a)))
 (define (ra-rank a) (%ra-rank a))
 
+(define-syntax %length
+  (syntax-rules ()
+    ((_) 0)
+    ((_ i0 i ...) (+ 1 (%length i ...)))))
+
 (define ra-ref
-  (case-lambda
-   ((ra)
-    (check-ra ra)
-    (unless (zero? (%%ra-rank ra))
-      (throw 'bad-number-of-indices (%%ra-rank ra) 0))
-    ((%%ra-vref ra) (%%ra-data ra) (%%ra-zero ra)))
-   ((ra . i)
-    (check-ra ra)
-    (unless (= (%ra-rank ra) (length i))
-      (throw 'bad-number-of-indices (%ra-rank ra) (length i)))
-    ((%%ra-vref ra) (%%ra-data ra) (apply ra-pos (%%ra-zero ra) (%%ra-dims ra) i)))))
+  (let-syntax
+      ((%args
+        (syntax-rules  ()
+          ((_ ra i ...)
+           (begin
+             (check-ra ra)
+             (unless (= (%ra-rank ra) (%length i ...))
+               (throw 'bad-number-of-indices (%ra-rank ra) (%length i ...)))
+             ((%%ra-vref ra) (%%ra-data ra) (ra-pos (%%ra-zero ra) (%%ra-dims ra) i ...)))))))
+    (case-lambda
+      ((ra) (%args ra))
+      ((ra . i)
+       (check-ra ra)
+       (unless (= (%ra-rank ra) (length i))
+         (throw 'bad-number-of-indices (%ra-rank ra) (length i)))
+       ((%%ra-vref ra) (%%ra-data ra) (apply ra-pos (%%ra-zero ra) (%%ra-dims ra) i))))))
 
 (define ra-set!
+  (let-syntax
+      ((%args
+        (syntax-rules ()
+          ((_ ra o i ...)
+           (begin
+             (check-ra ra)
+             (unless (= (%ra-rank ra) (%length i ...))
+               (throw 'bad-number-of-indices (%ra-rank ra) (%length i ...)))
+             ((%%ra-vset! ra) (%%ra-data ra) (ra-pos (%%ra-zero ra) (%%ra-dims ra) i ...) o))))))
   (case-lambda
-   ((ra o)
-    (check-ra ra)
-    (unless (zero? (%%ra-rank ra))
-      (throw 'bad-number-of-indices (%%ra-rank ra) 0))
-    ((%%ra-vset! ra) (%%ra-data ra) (%%ra-zero ra) o))
-   ((ra o . i)
-    (check-ra ra)
-    (unless (= (%ra-rank ra) (length i))
-      (throw 'bad-number-of-indices (%ra-rank ra) (length i)))
-    ((%%ra-vset! ra) (%%ra-data ra) (apply ra-pos (%%ra-zero ra) (%%ra-dims ra) i) o))))
+    ((ra o) (%args ra o))
+    ((ra o . i)
+     (check-ra ra)
+     (unless (= (%ra-rank ra) (length i))
+       (throw 'bad-number-of-indices (%ra-rank ra) (length i)))
+     ((%%ra-vset! ra) (%%ra-data ra) (apply ra-pos (%%ra-zero ra) (%%ra-dims ra) i) o)))))
 
 (define (ra-slice ra . i)
   (check-ra ra)
   (make-ra-raw (%%ra-data ra)
                (apply ra-pos (%%ra-zero ra) (%%ra-dims ra) i)
                (vector-drop (%%ra-dims ra) (length i))))
-
-(define-syntax %length
-  (syntax-rules ()
-    ((_) 0)
-    ((_ i0 i ...) (+ 1 (%length i ...)))))
 
 ; Unhappy about writing these things twice.
 (define ra-cell
@@ -391,23 +406,20 @@
                    (leni (%length i ...)))
                (if (= (%%ra-rank ra) leni)
                  ((%%ra-vref ra) (%%ra-data ra) pos)
-                 (make-ra-raw (%%ra-data ra)
-                              pos
-                              (vector-drop (%%ra-dims ra) leni)))))))))
+                 (make-ra-raw (%%ra-data ra) pos (vector-drop (%%ra-dims ra) leni)))))))))
     (case-lambda
      ((ra) (%cell ra))
      ((ra i0) (%cell ra i0))
      ((ra i0 i1) (%cell ra i0 i1))
      ((ra i0 i1 i2) (%cell ra i0 i1 i2))
+     ((ra i0 i1 i2 i3) (%cell ra i0 i1 i2 i3))
      ((ra . i)
       (check-ra ra)
       (let ((pos (apply ra-pos (%%ra-zero ra) (%%ra-dims ra) i))
             (leni (length i)))
         (if (= (%%ra-rank ra) leni)
           ((%%ra-vref ra) (%%ra-data ra) pos)
-          (make-ra-raw (%%ra-data ra)
-                       pos
-                       (vector-drop (%%ra-dims ra) leni))))))))
+          (make-ra-raw (%%ra-data ra) pos (vector-drop (%%ra-dims ra) leni))))))))
 
 
 ; ----------------

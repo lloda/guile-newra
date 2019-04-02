@@ -127,6 +127,7 @@
     ((2) (%ra-loop dims 2 (i j) (f i j)))
     ((3) (%ra-loop dims 3 (i j k) (f i j k)))
     ((4) (%ra-loop dims 4 (i j k l) (f i j k l)))
+    ((5) (%ra-loop dims 5 (i j k l m) (f i j k l m)))
     (else (throw 'not-implemented))))
 
 (define (ra-loop ra f)
