@@ -436,6 +436,16 @@
 
 
 ; -----------------------
+; ra-dimensions, ra-shape
+; -----------------------
+
+(test-equal '((-1 3) (0 4))
+  (ra-shape (make-ra 'foo '(-1 3) 5)))
+(test-equal '((-1 3) 5)
+  (ra-dimensions (make-ra 'foo '(-1 3) 5)))
+
+
+; -----------------------
 ; the end.
 ; -----------------------
 

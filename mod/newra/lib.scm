@@ -11,7 +11,9 @@
 ;;; Code:
 
 (define-module (newra lib)
-  #:export (ra-index-map! ra-length make-ra make-typed-ra make-shared-ra ra->list
+  #:export (ra-index-map!
+            ra-length make-ra make-typed-ra make-shared-ra ra->list
+            ra-dimensions ra-shape
             array->ra ra->array as-ra
             ra-i ra-iota))
 
@@ -46,6 +48,33 @@
 ; ----------------
 ; misc functions for Guile compatibility
 ; ----------------
+
+(define (ra-shape ra)
+  "ra-shape ra
+
+   Return a list with the lower and upper bounds of each dimension of RA.
+
+   (ra-shape (make-ra 'foo '(-1 3) 5)) ==> ((-1 3) (0 4))
+
+   See also: ra-dimensions"
+  (map (lambda (dim) (list (dim-lo dim) (dim-hi dim))) (vector->list (ra-dims ra))))
+
+(define (ra-dimensions ra)
+  "ra-dimensions ra
+
+   Like ra-shape, but if the lower bound for a given dimension is zero, return
+   the size of that dimension instead of a lower bound - upper bound pair.
+
+   (ra-shape (make-ra 'foo '(-1 3) 5)) ==> ((-1 3) (0 4))
+   (ra-dimensions (make-ra 'foo '(-1 3) 5)) ==> ((-1 3) 5)
+
+   See also: ra-shape"
+  (map (lambda (dim)
+         (let ((lo (dim-lo dim)))
+           (if (zero? lo)
+             (dim-len dim)
+             (list lo (dim-hi dim)))))
+    (vector->list (ra-dims ra))))
 
 (define* (ra-length ra #:optional (k 0))
   "ra-length ra [dim 0]
