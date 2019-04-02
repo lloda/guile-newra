@@ -129,7 +129,7 @@
 (define <ra-vtable>
   (make-struct/no-tail
    <applicable-struct-with-setter-vtable>
-   (make-struct-layout (string-append "pwpw" "prpwprprprprpr"))))
+   (make-struct-layout (string-append "pwpw" "pwpwpwpwpwpwpw"))))
 
 (define-inlinable (ra? o)
   (and (struct? o) (eq? <ra-vtable> (struct-vtable o))))
