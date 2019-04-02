@@ -431,6 +431,8 @@
 
 (test-equal "#%2:2:3(((0 0) (0 1) (0 2)) ((1 0) (1 1) (1 2)))"
   (ra->string (let ((x (make-ra 0 2 3))) (ra-index-map! x (lambda x x)))))
+(test-equal "#%0(99)"
+  (ra->string (let ((x (make-ra 0))) (ra-index-map! x (lambda x 99)))))
 
 
 ; -----------------------

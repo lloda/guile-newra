@@ -144,16 +144,28 @@
    See also: ra-iota ra-i"
 
   (let* ((kk (ra-rank ra))
-         ((values los lens) ((@@ (newra newra) ra-slice-for-each-check) kk ra)))
-    (let loop-rank ((k 0) (ra ra) (ii '()))
-      (if (= k kk)
-        (ra-set! ra (apply op ii))
+         ((values los lens) ((@@ (newra newra) ra-slice-for-each-check) kk ra))
+         (ii (make-list kk)))
+    (if (= kk 0)
+      (ra-set! ra (apply op ii))
+      (let loop-rank ((k 0) (ra ra) (endi ii))
         (let* ((lo (vector-ref los k))
                (end (+ lo (vector-ref lens k))))
-          (let loop-dim ((i lo))
-            (unless (= i end)
-              (loop-rank (+ k 1) (ra-slice ra i) (append ii (list i)))
-              (loop-dim (+ i 1))))))))
+          (if (= (+ 1 k) kk)
+            (let loop-dim ((i lo))
+              (if (= i end)
+                (set-car! endi lo)
+                (begin
+                  (set-car! endi i)
+                  (ra-set! ra (apply op ii) i)
+                  (loop-dim (+ i 1)))))
+            (let loop-dim ((i lo))
+              (if (= i end)
+                (set-car! endi lo)
+                (begin
+                  (set-car! endi i)
+                  (loop-rank (+ k 1) (ra-slice ra i) (cdr endi))
+                  (loop-dim (+ i 1))))))))))
   ra)
 
 
