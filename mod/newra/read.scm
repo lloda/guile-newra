@@ -1,6 +1,6 @@
+; -*- mode: scheme; coding: utf-8 -*-
 
 ; (c) Daniel Llorens - 2017-2019
-
 ; This library is free software; you can redistribute it and/or modify it under
 ; the terms of the GNU General Public License as published by the Free
 ; Software Foundation; either version 3 of the License, or (at your option) any
@@ -19,7 +19,7 @@
         (only (rnrs base) vector-map)
         (only (srfi srfi-1) fold unzip2 car+cdr))
 
-(define vector-fold (@@ (newra newra) vector-fold))
+(define vector-fold (@@ (newra base) vector-fold))
 
 ; take a looked ahead 'c'. FIXME shouldn't look ahead the last one and then again in the caller.
 (define (read-number port)

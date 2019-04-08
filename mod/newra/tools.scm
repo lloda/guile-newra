@@ -1,11 +1,14 @@
+; -*- mode: scheme; coding: utf-8 -*-
 
-; Replacement for Guile C-based arrays - Stand on its own
 ; (c) Daniel Llorens - 2017
-
 ; This library is free software; you can redistribute it and/or modify it under
 ; the terms of the GNU General Public License as published by the Free
 ; Software Foundation; either version 3 of the License, or (at your option) any
 ; later version.
+
+;;; Commentary:
+; Utilities.
+;;; Code:
 
 (define-module (newra tools)
   #:export (time walltime repeat define-constant syntax->list))

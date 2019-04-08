@@ -16,6 +16,10 @@ Help: [C-uc .] insert timestamp [C-cc] flip checkbox [C-uucc] partial flip check
   * [ ] as-ra
   * [ ] output types
 
+* TODO ra-ra functionality [0/2]
+  * [ ] tensor indices
+  * [ ] unsized index vectors
+
 * TODO replace Guile arrays [0/3]
   * [ ] hooks into C
   * [ ] compilation of literals
