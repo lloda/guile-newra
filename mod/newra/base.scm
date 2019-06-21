@@ -146,8 +146,17 @@
   (letrec ((ra
             (make-struct/no-tail
              <ra-vtable>
-             (lambda i (apply ra-cell ra i))
-             (match-lambda* ((i ... o) (apply ra-set! ra o i))) ; it should be easier :-/
+             (case-lambda
+               (() (ra-cell ra))
+               ((i0) (ra-cell ra i0))
+               ((i0 i1) (ra-cell ra i0 i1))
+               (i (apply ra-cell ra i)))
+; it should be easier :-/
+             (match-lambda*
+               ((o) (ra-set! ra o))
+               ((i0 o) (ra-set! ra o i0))
+               ((i0 i1 o) (ra-set! ra o i0 i1))
+               ((i ... o) (apply ra-set! ra o i)))
              data zero dims type vlen vref vset!)))
     ra))
 
@@ -329,6 +338,8 @@
              ((%%ra-vref ra) (%%ra-data ra) (ra-pos (%%ra-zero ra) (%%ra-dims ra) i ...)))))))
     (case-lambda
       ((ra) (%args ra))
+      ((ra i0) (%args ra i0))
+      ((ra i0 i1) (%args ra i0 i1))
       ((ra . i)
        (check-ra ra)
        (unless (= (%ra-rank ra) (length i))
@@ -347,6 +358,8 @@
              ((%%ra-vset! ra) (%%ra-data ra) (ra-pos (%%ra-zero ra) (%%ra-dims ra) i ...) o))))))
   (case-lambda
     ((ra o) (%args ra o))
+    ((ra o i0) (%args ra o i0))
+    ((ra o i0 i1) (%args ra o i0 i1))
     ((ra o . i)
      (check-ra ra)
      (unless (= (%ra-rank ra) (length i))
