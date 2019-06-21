@@ -109,13 +109,13 @@
     (when (< len 0) (throw 'bad-dim-len len))
     (make-dim* len lo step))))
 
-(define (dim-end dim)
+(define-inlinable (dim-end dim)
   (+ (dim-lo dim) (dim-len dim)))
 
-(define (dim-hi dim)
+(define-inlinable (dim-hi dim)
   (+ (dim-lo dim) (dim-len dim) -1))
 
-(define (dim-ref dim i)
+(define-inlinable (dim-ref dim i)
   (unless (and (<= 0 i) (< i (dim-len dim)))
     (throw 'dim-ref-out-of-range dim i))
   (+ (dim-lo dim) (* (dim-step dim) i)))
