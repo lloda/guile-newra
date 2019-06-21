@@ -83,23 +83,23 @@
 ; array->ra, ra->array, printers
 ; -----------------------
 
-(define ra0 (array->ra #(1 2 3)))
-(define ra1 (array->ra #@1(1 2 3)))
-(define ra2 (array->ra #2((1 2) (3 4))))
-(define ra3 (array->ra #2@1@1((1 2) (3 4))))
-(define ra4 (array->ra #0(99)))
+(let* ((ra0 (array->ra #(1 2 3)))
+       (ra1 (array->ra #@1(1 2 3)))
+       (ra2 (array->ra #2((1 2) (3 4))))
+       (ra3 (array->ra #2@1@1((1 2) (3 4))))
+       (ra4 (array->ra #0(99))))
 
-(test-equal (ra->string ra0) "#%1:3(1 2 3)")
-(test-equal (ra->string ra1) "#%1@1:3(1 2 3)")
-(test-equal (ra->string ra2) "#%2:2:2((1 2) (3 4))")
-(test-equal (ra->string ra3) "#%2@1:2@1:2((1 2) (3 4))")
-(test-equal (ra->string ra4) "#%0(99)")
+  (test-equal (ra->string ra0) "#%1:3(1 2 3)")
+  (test-equal (ra->string ra1) "#%1@1:3(1 2 3)")
+  (test-equal (ra->string ra2) "#%2:2:2((1 2) (3 4))")
+  (test-equal (ra->string ra3) "#%2@1:2@1:2((1 2) (3 4))")
+  (test-equal (ra->string ra4) "#%0(99)")
 
-(test-equal  #(1 2 3)            (ra->array ra0))
-(test-equal  #@1(1 2 3)          (ra->array ra1))
-(test-equal  #2((1 2) (3 4))     (ra->array ra2))
-(test-equal  #2@1@1((1 2) (3 4)) (ra->array ra3))
-(test-equal  #0(99)              (ra->array ra4))
+  (test-equal  #(1 2 3)            (ra->array ra0))
+  (test-equal  #@1(1 2 3)          (ra->array ra1))
+  (test-equal  #2((1 2) (3 4))     (ra->array ra2))
+  (test-equal  #2@1@1((1 2) (3 4)) (ra->array ra3))
+  (test-equal  #0(99)              (ra->array ra4)))
 
 
 ; -----------------------
@@ -128,34 +128,38 @@
 ; make-shared-ra
 ; -----------------------
 
-(test-equal "#%0(99)" (ra->string (make-shared-ra ra4 (lambda () '()))))
+(let* ((ra2 (array->ra #2((1 2) (3 4))))
+       (ra3 (array->ra #2@1@1((1 2) (3 4))))
+       (ra4 (array->ra #0(99))))
 
-(test-equal "#%1:2(1 4)" (ra->string (make-shared-ra ra2 (lambda (i) (list i i)) 2)))
-(test-equal "#%1:2(1 3)" (ra->string (make-shared-ra ra2 (lambda (i) (list i 0)) 2)))
-(test-equal "#%1:2(2 4)" (ra->string (make-shared-ra ra2 (lambda (i) (list i 1)) 2)))
-(test-equal "#%1:2(1 2)" (ra->string (make-shared-ra ra2 (lambda (j) (list 0 j)) 2)))
-(test-equal "#%1:2(3 4)" (ra->string (make-shared-ra ra2 (lambda (j) (list 1 j)) 2)))
+  (test-equal "#%0(99)" (ra->string (make-shared-ra ra4 (lambda () '()))))
 
-(test-equal "#%1@1:2(1 4)" (ra->string (make-shared-ra ra3 (lambda (i) (list i i)) '(1 2))))
-(test-equal "#%1@1:2(1 3)" (ra->string (make-shared-ra ra3 (lambda (i) (list i 1)) '(1 2))))
-(test-equal "#%1@1:2(2 4)" (ra->string (make-shared-ra ra3 (lambda (i) (list i 2)) '(1 2))))
-(test-equal "#%1@1:2(1 2)" (ra->string (make-shared-ra ra3 (lambda (j) (list 1 j)) '(1 2))))
-(test-equal "#%1@1:2(3 4)" (ra->string (make-shared-ra ra3 (lambda (j) (list 2 j)) '(1 2))))
+  (test-equal "#%1:2(1 4)" (ra->string (make-shared-ra ra2 (lambda (i) (list i i)) 2)))
+  (test-equal "#%1:2(1 3)" (ra->string (make-shared-ra ra2 (lambda (i) (list i 0)) 2)))
+  (test-equal "#%1:2(2 4)" (ra->string (make-shared-ra ra2 (lambda (i) (list i 1)) 2)))
+  (test-equal "#%1:2(1 2)" (ra->string (make-shared-ra ra2 (lambda (j) (list 0 j)) 2)))
+  (test-equal "#%1:2(3 4)" (ra->string (make-shared-ra ra2 (lambda (j) (list 1 j)) 2)))
+
+  (test-equal "#%1@1:2(1 4)" (ra->string (make-shared-ra ra3 (lambda (i) (list i i)) '(1 2))))
+  (test-equal "#%1@1:2(1 3)" (ra->string (make-shared-ra ra3 (lambda (i) (list i 1)) '(1 2))))
+  (test-equal "#%1@1:2(2 4)" (ra->string (make-shared-ra ra3 (lambda (i) (list i 2)) '(1 2))))
+  (test-equal "#%1@1:2(1 2)" (ra->string (make-shared-ra ra3 (lambda (j) (list 1 j)) '(1 2))))
+  (test-equal "#%1@1:2(3 4)" (ra->string (make-shared-ra ra3 (lambda (j) (list 2 j)) '(1 2)))))
 
 
 ; -----------------------
 ; make-ra-new, make-ra
 ; -----------------------
 
-(define ra5 (make-ra-new #t 0 (c-dims '(1 3) '(1 2))))
-(array-index-map! (ra-data ra5) (lambda i i))
-(test-equal (ra->string ra5) "#%2@1:3@1:2(((0) (1)) ((2) (3)) ((4) (5)))")
-(test-equal 3 (ra-length ra5))
+(let* ((ra5 (make-ra-new #t 0 (c-dims '(1 3) '(1 2)))))
+  (array-index-map! (ra-data ra5) (lambda i i))
+  (test-equal (ra->string ra5) "#%2@1:3@1:2(((0) (1)) ((2) (3)) ((4) (5)))")
+  (test-equal 3 (ra-length ra5)))
 
-(define ra5 (make-typed-ra 's64 0 '(1 3) '(1 2)))
-(array-index-map! (ra-data ra5) (lambda i (car i)))
-(test-equal (ra->string ra5) "#%2s64@1:3@1:2((0 1) (2 3) (4 5))")
-(test-equal 3 (ra-length ra5))
+(let* ((ra5 (make-typed-ra 's64 0 '(1 3) '(1 2))))
+  (array-index-map! (ra-data ra5) (lambda i (car i)))
+  (test-equal (ra->string ra5) "#%2s64@1:3@1:2((0 1) (2 3) (4 5))")
+  (test-equal 3 (ra-length ra5)))
 
 
 ; -----------------------

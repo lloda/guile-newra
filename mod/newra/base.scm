@@ -332,7 +332,6 @@
         (syntax-rules  ()
           ((_ ra i ...)
            (begin
-             (check-ra ra)
              (unless (= (%ra-rank ra) (%length i ...))
                (throw 'bad-number-of-indices (%ra-rank ra) (%length i ...)))
              ((%%ra-vref ra) (%%ra-data ra) (ra-pos (%%ra-zero ra) (%%ra-dims ra) i ...)))))))
@@ -341,7 +340,6 @@
       ((ra i0) (%args ra i0))
       ((ra i0 i1) (%args ra i0 i1))
       ((ra . i)
-       (check-ra ra)
        (unless (= (%ra-rank ra) (length i))
          (throw 'bad-number-of-indices (%ra-rank ra) (length i)))
        ((%%ra-vref ra) (%%ra-data ra) (apply ra-pos (%%ra-zero ra) (%%ra-dims ra) i))))))
@@ -352,19 +350,17 @@
         (syntax-rules ()
           ((_ ra o i ...)
            (begin
-             (check-ra ra)
              (unless (= (%ra-rank ra) (%length i ...))
                (throw 'bad-number-of-indices (%ra-rank ra) (%length i ...)))
              ((%%ra-vset! ra) (%%ra-data ra) (ra-pos (%%ra-zero ra) (%%ra-dims ra) i ...) o))))))
-  (case-lambda
-    ((ra o) (%args ra o))
-    ((ra o i0) (%args ra o i0))
-    ((ra o i0 i1) (%args ra o i0 i1))
-    ((ra o . i)
-     (check-ra ra)
-     (unless (= (%ra-rank ra) (length i))
-       (throw 'bad-number-of-indices (%ra-rank ra) (length i)))
-     ((%%ra-vset! ra) (%%ra-data ra) (apply ra-pos (%%ra-zero ra) (%%ra-dims ra) i) o)))))
+    (case-lambda
+      ((ra o) (%args ra o))
+      ((ra o i0) (%args ra o i0))
+      ((ra o i0 i1) (%args ra o i0 i1))
+      ((ra o . i)
+       (unless (= (%ra-rank ra) (length i))
+         (throw 'bad-number-of-indices (%ra-rank ra) (length i)))
+       ((%%ra-vset! ra) (%%ra-data ra) (apply ra-pos (%%ra-zero ra) (%%ra-dims ra) i) o)))))
 
 (define (ra-slice ra . i)
   (check-ra ra)
