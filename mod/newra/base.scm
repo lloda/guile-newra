@@ -255,7 +255,7 @@
 ; compute addresses
 ; ----------------
 
-; FIXME probably worth optimizing
+; FIXME probably worth inlining
 (define ra-pos
   (letrec-syntax
       ((%args
@@ -339,6 +339,7 @@
       ((ra) (%args ra))
       ((ra i0) (%args ra i0))
       ((ra i0 i1) (%args ra i0 i1))
+      ((ra i0 i1 i2) (%args ra i0 i1 i2))
       ((ra . i)
        (unless (= (%ra-rank ra) (length i))
          (throw 'bad-number-of-indices (%ra-rank ra) (length i)))
@@ -357,6 +358,7 @@
       ((ra o) (%args ra o))
       ((ra o i0) (%args ra o i0))
       ((ra o i0 i1) (%args ra o i0 i1))
+      ((ra o i0 i1 i2) (%args ra o i0 i1 i2))
       ((ra o . i)
        (unless (= (%ra-rank ra) (length i))
          (throw 'bad-number-of-indices (%ra-rank ra) (length i)))

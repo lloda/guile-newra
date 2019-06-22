@@ -10,10 +10,8 @@
 ; Run with $GUILE -L mod -s bench.scm
 
 (import (newra newra) (newra print) (newra tools) (newra test) (newra read) (newra lib)
-        (ice-9 popen) (ice-9 rdelim)
-        (only (rnrs base) vector-map)
-        (srfi srfi-26) (srfi srfi-8) (only (srfi srfi-1) fold iota)
-        (ice-9 match) (ice-9 format))
+        (ice-9 popen) (ice-9 rdelim) (srfi :26) (srfi :8) (only (srfi :1) fold iota)
+        (ice-9 match) (ice-9 format) (only (rnrs base) vector-map))
 
 (define (command-output cmd . args)
   (let* ((p (apply open-pipe* OPEN_READ cmd args))

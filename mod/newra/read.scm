@@ -15,9 +15,9 @@
   #:export (list->ra list->typed-ra))
 
 (import (newra newra) (newra tools)
-        (rnrs io ports) (srfi srfi-8) (srfi srfi-26) (ice-9 match) (ice-9 rdelim)
+        (rnrs io ports) (srfi :8) (srfi :26) (ice-9 match) (ice-9 rdelim)
         (only (rnrs base) vector-map)
-        (only (srfi srfi-1) fold unzip2 car+cdr))
+        (only (srfi :1) fold unzip2 car+cdr))
 
 (define vector-fold (@@ (newra base) vector-fold))
 

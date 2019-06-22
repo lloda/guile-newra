@@ -14,8 +14,7 @@
 (define-module (newra print)
   #:export (ra-print-prefix ra-print))
 
-(import (rnrs io ports) (rnrs base) (srfi srfi-1) (srfi srfi-4 gnu)
-        (newra newra) (srfi srfi-26))
+(import (rnrs io ports) (rnrs base) (srfi :1) (srfi :4 gnu) (srfi :26) (newra newra))
 
 ; FIXME still need to extend (truncated-print).
 

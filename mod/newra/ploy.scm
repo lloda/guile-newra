@@ -12,7 +12,7 @@
 
 (define-module (newra ploy))
 
-(import (newra newra) (only (srfi srfi-1) fold) (srfi srfi-71) (srfi srfi-26))
+(import (newra newra) (only (srfi :1) fold) (srfi :71) (srfi :26))
 
 
 ; ----------------

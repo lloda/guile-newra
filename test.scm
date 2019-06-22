@@ -9,10 +9,9 @@
 ; Replacement for Guile C-based array system - Tests
 ; Run with $GUILE -L mod -s test.scm
 
-(import (srfi srfi-64)
-        (newra newra) (newra test) (newra print) (newra tools) (newra read) (newra lib)
+(import (newra newra) (newra test) (newra print) (newra tools) (newra read) (newra lib)
         (only (rnrs base) vector-map)
-        (srfi srfi-26) (srfi srfi-8) (only (srfi srfi-1) fold iota)
+        (srfi :64) (srfi :26) (srfi :8) (only (srfi :1) fold iota)
         (ice-9 match))
 
 (define (throws-exception? k thunk)

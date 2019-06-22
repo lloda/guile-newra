@@ -11,14 +11,17 @@ Help: [C-uc .] insert timestamp [C-cc] flip checkbox [C-uucc] partial flip check
   * [ ] root vectors are equivalent to rank-1 newra objects
 
 * TODO guile-ploy functionality [0/4]
+  * [ ] generalized prefix matching
   * [ ] high level slicing
   * [ ] verbs, w/rank
   * [ ] as-ra
   * [ ] output types
 
-* TODO ra-ra functionality [0/2]
+* TODO ra-ra functionality [0/3]
+  * [ ] undefined size, for broadcasting
   * [ ] tensor indices
   * [ ] unsized index vectors
+  * [ ] drag-along facility / delayed ops
 
 * TODO replace Guile arrays [0/3]
   * [ ] hooks into C
@@ -31,6 +34,3 @@ Help: [C-uc .] insert timestamp [C-cc] flip checkbox [C-uucc] partial flip check
   * [ ] loop attack heuristics (different orders...)
   * [ ] bench tracking
   * [ ] parameters to control print format (eg print sizes/strides, truncate...)
-
-* TODO ra:: functionality [0/1]
-  * [ ] drag-along facility / delayed ops
