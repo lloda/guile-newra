@@ -1,4 +1,5 @@
 ; -*- mode: scheme; coding: utf-8 -*-
+; Replacement for Guile C-based array system - Benchmarks
 
 ; (c) Daniel Llorens - 2016-2017
 ; This library is free software; you can redistribute it and/or modify it under
@@ -6,7 +7,6 @@
 ; Software Foundation; either version 3 of the License, or (at your option) any
 ; later version.
 
-; Replacement for Guile C-based array system - Benchmarks
 ; Run with $GUILE -L mod -s bench.scm
 
 (import (newra newra) (newra print) (newra tools) (newra test) (newra read) (newra lib)
@@ -143,7 +143,7 @@
                      (a20 (ra->array ra20))
                      (a21 (ra->array ra21)))
                 (format #t "rank ~a ~a:" rank nn)
-                (format-line (* scale (time (ra-copy! ra21 ra20)))
+                (format-line (* scale (time (ra-copy! ra20 ra21)))
                              (* scale (time (array-copy! a21 a20))))))
           (iota 6 1)))
     (list #t 'f64 #t)
@@ -182,7 +182,7 @@
                      (len (fold * 1 nn))
                      (scale (* 1e3 (/ m len)))
                      (ra20 (ra-map! (make-ra-new type 0 (apply c-dims nn)) (lambda () (random n))))
-                     (ra21 (ra-copy! ra20 (make-ra-new type 0 (apply c-dims nn))))
+                     (ra21 (ra-copy! (make-ra-new type 0 (apply c-dims nn)) ra20))
                      (a20 (ra->array ra20))
                      (a21 (ra->array ra21)))
                 (format #t "rank ~a ~a:" rank nn)
@@ -310,7 +310,7 @@
        (s (call-with-output-string (cut display ra1 <>)))
        (prof (lambda () (call-with-input-string s read)))
        (prof (lambda () (ra-fill! ra0 99)))
-       (prof (lambda () (ra-copy! ra1 ra2)))
+       (prof (lambda () (ra-copy! ra2 ra1)))
        (prof (lambda () (ra-map! ra0 * ra1 ra2)))
        )
   (statprof prof #:count-calls? #t)

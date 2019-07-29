@@ -20,8 +20,8 @@
         (srfi srfi-4 gnu) (srfi :26) (ice-9 match) (ice-9 control)
         (only (rnrs base) vector-map vector-for-each))
 
-; These tables are used to inline specific type cases in %dispatch.
-; We handle fewer types with 2 & 3 arguments to limit the combinatory explosion.
+; These tables are used to inline specific type combinations in %dispatch.
+; We handle fewer types with 2 & 3 arguments to limit the explosion in compile time.
 
 (eval-when (expand load eval)
   (define syntax-accessors-1
@@ -260,7 +260,7 @@
 
 ; This variant of %op-loop avoids updating/rolling back %%ra-zero and instead
 ; keeps indices on the stack. The improvement is somewhat unreasonable...
-; FIXME (maybe?) unusable for list ra (since %%ra-zero/%%ra-step are used directly).
+; FIXME (maybe?) unusable for list ra (since %%ra-zero / %%ra-step are used directly).
 (define-syntax %op-loop-z
   (lambda (stx)
     (syntax-case stx ()
@@ -470,7 +470,7 @@
 (define (ra-for-each op ra . rx)
   "ra-for-each op rx ...
 
-   Apply op to each tuple of elements from ras RX ..."
+   Apply OP to each tuple of elements from ras RX ..."
   (let-syntax
       ((%typed-fe
         (syntax-rules ()
@@ -492,12 +492,16 @@
       rx)))
 
 (define (ra-map! ra op . rx)
-  "ra-map! ra op rx ...
+  "
+ra-map! ra op rx ...
 
-   Apply op to each tuple of elements from ras RX ... and store the result in
-   the matching position of ra RA. All the RX .. must have the same shape as RA.
+Apply OP to each tuple of elements from ras RX ... and store the result in
+the matching position of ra RA. All the RX ... must have the same shape as RA.
 
-   Returns the updated ra RA."
+Returns the updated ra RA.
+
+See also: ra-for-each ra-copy! ra-fill!
+"
   (let-syntax
       ((%typed-map!
         (syntax-rules ()
@@ -523,11 +527,15 @@
     ra))
 
 (define (ra-fill! ra fill)
-  "ra-fill! ra fill
+  "
+ra-fill! ra fill
 
-   Fill ra RA with value FILL. RA must be of a type compatible with FILL.
+Fill ra RA with value FILL. RA must be of a type compatible with FILL.
 
-   This function returns the filled ra RA."
+This function returns the filled ra RA.
+
+See also: ra-copy! ra-map!
+"
   (let-syntax
       ((%typed-fill!
         (syntax-rules ()
@@ -541,31 +549,37 @@
     ra))
 
 (define (ra-copy! ra rb)
-  "ra-copy! ra rb
+  "
+ra-copy! ra rb
 
-   Copy the contents of ra RA into ra RB. RA and RB must have the same shape and
-   be of compatible types.
+Copy the contents of ra RB into ra RA. RA and RB must have the same shape and
+be of compatible types.
 
-   This function returns the updated ra RB."
+This function returns the updated ra RA.
+
+See also: ra-fill! ra-map!
+"
   (let-syntax
       ((%typed-copy!
         (syntax-rules ()
           ((_ (vref-ra vset!-ra ra za) (vref-rb vset!-rb rb zb))
-           (vset!-rb (%%ra-data rb) zb
-                     (vref-ra (%%ra-data ra) za)))))
+           (vset!-ra (%%ra-data ra) za (vref-rb (%%ra-data rb) zb)))))
        (%copy!
         (syntax-rules ()
           ((_ (ra za) (rb zb))
-           ((%%ra-vset! rb) (%%ra-data rb) zb
-            ((%%ra-vref ra) (%%ra-data ra) za))))))
+           ((%%ra-vset! ra) (%%ra-data ra) za ((%%ra-vref rb) (%%ra-data rb) zb))))))
     (%dispatch %typed-copy! %copy! ra rb)
-    rb))
+    ra))
 
 (define (ra-equal? . rx)
-  "ra-equal? rx ...
+  "
+ra-equal? rx ...
 
-   Return #t if the ras RX ... have the same shape and all the elements are
-   EQUAL? between them, or #f otherwise."
+Return #t if the ras RX ... have the same shape and all the elements are
+EQUAL? between them, or #f otherwise.
+
+See also: ra-map! ra-for-each
+"
   (let/ec exit
     (let-syntax
         ((%typed-equal?

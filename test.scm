@@ -1,4 +1,5 @@
 ; -*- mode: scheme; coding: utf-8 -*-
+; Replacement for Guile C-based array system - Tests
 
 ; (c) Daniel Llorens - 2016-2018
 ; This library is free software; you can redistribute it and/or modify it under
@@ -6,7 +7,6 @@
 ; Software Foundation; either version 3 of the License, or (at your option) any
 ; later version.
 
-; Replacement for Guile C-based array system - Tests
 ; Run with $GUILE -L mod -s test.scm
 
 (import (newra newra) (newra test) (newra print) (newra tools) (newra read) (newra lib)
@@ -309,10 +309,10 @@
 (test-equal 10 (ra-length ra12))
 (test-equal 10 (ra-length ra13))
 
-(test-equal "#%1:10(0 1 2 3 4 5 6 7 8 9)" (ra->string (ra-copy! ra12 ra11)))
+(test-equal "#%1:10(0 1 2 3 4 5 6 7 8 9)" (ra->string (ra-copy! ra11 ra12)))
 (let ((ra5a (make-ra-new #t 0 (c-dims '(1 2) '(1 3))))
       (ra6a (make-ra-data (vector-copy #(1 2 3 4 5 6)) (c-dims '(1 2) '(1 3)))))
-  (test-equal "#%2@1:2@1:3((1 2 3) (4 5 6))" (ra->string (ra-copy! ra6a ra5a)))
+  (test-equal "#%2@1:2@1:3((1 2 3) (4 5 6))" (ra->string (ra-copy! ra5a ra6a)))
   (test-assert (ra-equal? ra6a ra5a))
   (test-assert (ra-equal? ra6a ra5a ra6a))
   (set! (ra5a 1 1) 99)

@@ -50,25 +50,29 @@
 ; ----------------
 
 (define (ra-shape ra)
-  "ra-shape ra
+  "
+ra-shape ra
 
-   Return a list with the lower and upper bounds of each dimension of RA.
+Return a list with the lower and upper bounds of each dimension of RA.
 
-   (ra-shape (make-ra 'foo '(-1 3) 5)) ==> ((-1 3) (0 4))
+(ra-shape (make-ra 'foo '(-1 3) 5)) ==> ((-1 3) (0 4))
 
-   See also: ra-dimensions"
+See also: ra-rank ra-dimensions ra-length
+"
   (map (lambda (dim) (list (dim-lo dim) (dim-hi dim))) (vector->list (ra-dims ra))))
 
 (define (ra-dimensions ra)
-  "ra-dimensions ra
+  "
+ra-dimensions ra
 
-   Like ra-shape, but if the lower bound for a given dimension is zero, return
-   the size of that dimension instead of a lower bound - upper bound pair.
+Like ra-shape, but if the lower bound for a given dimension is zero, return
+the size of that dimension instead of a lower bound - upper bound pair.
 
-   (ra-shape (make-ra 'foo '(-1 3) 5)) ==> ((-1 3) (0 4))
-   (ra-dimensions (make-ra 'foo '(-1 3) 5)) ==> ((-1 3) 5)
+(ra-shape (make-ra 'foo '(-1 3) 5)) ==> ((-1 3) (0 4))
+(ra-dimensions (make-ra 'foo '(-1 3) 5)) ==> ((-1 3) 5)
 
-   See also: ra-shape"
+See also: ra-rank ra-shape ra-length
+"
   (map (lambda (dim)
          (let ((lo (dim-lo dim)))
            (if (zero? lo)
@@ -77,24 +81,38 @@
     (vector->list (ra-dims ra))))
 
 (define* (ra-length ra #:optional (k 0))
-  "ra-length ra [dim 0]
+  "
+ra-length ra [dim 0]
 
-   Return the length of the dimension DIM of ra RA. It is an error if RA has
-   zero rank."
+Return the length of the dimension DIM of ra RA. It is an error if RA has zero
+rank.
+
+See also: ra-shape ra-dimensions
+"
   (unless (positive? (ra-rank ra))
     (throw 'zero-rank-ra-has-no-length ra))
   (dim-len (vector-ref (%%ra-dims ra) k)))
 
 (define (make-typed-ra type value . d)
-  "make-typed-ra type value d ...
+  "
+make-typed-ra type value d ...
 
-   FIXME."
+Return a new ra of type TYPE and dimensions D. The ra will be initialized with
+VALUE. VALUE may be *unspecified*, in which case the ra may be left
+uninitialized.
+
+See also: make-ra
+"
   (make-ra-new type value (apply c-dims d)))
 
 (define (make-ra value . d)
-  "make-ra value d ...
+  "
+make-ra value d ...
 
-   Equivalent to (make-typed-ra #t value d ...)."
+Equivalent to (make-typed-ra #t value d ...).
+
+See also: make-typed-ra
+"
   (make-ra-new #t value (apply c-dims d)))
 
 (define (make-shared-ra oldra mapfunc . d)
@@ -124,11 +142,15 @@
 ; FIXME use ra-reverse and maybe ra-slice-for-each
 
 (define (ra->list ra)
-  "ra->list ra
+  "
+ra->list ra
 
-   Return a nested list of the elements of ra RA. For example, if RA is a 1-rank
-   ra, the list contains the elements of RA; if RA is a 2-rank ra, the list
-   contains a list for each of the rows of RA; and so on."
+Return a nested list of the elements of ra RA. For example, if RA is a 1-rank
+ra, the list contains the elements of RA; if RA is a 2-rank ra, the list
+contains a list for each of the rows of RA; and so on.
+
+See also: as-ra
+"
   (let ((rank (ra-rank ra))
         (dims (ra-dims ra)))
     (cond
@@ -155,23 +177,24 @@
 ; be building index lists.
 
 (define (ra-index-map! ra op)
-  "ra-index-map! ra op -> ra
+  "
+ra-index-map! ra op -> ra
 
-   Apply OP to the indices of each element of RA in turn, storing
-   the result in the corresponding element.  The value returned and
-   the order of application are unspecified.
+Apply OP to the indices of each element of RA in turn, storing
+the result in the corresponding element.  The value returned and
+the order of application are unspecified.
 
-   This function returns the modified RA.
+This function returns the modified RA.
 
-   For example:
+For example:
 
-   guile> (define x (make-ra 0 2 3))
-   guile> (ra-index-map! x (lambda x x))
-   guile> x
-   #%2:2:3(((0 0) (0 1) (0 2)) ((1 0) (1 1) (1 2)))
+guile> (define x (make-ra 0 2 3))
+guile> (ra-index-map! x (lambda x x))
+guile> x
+#%2:2:3(((0 0) (0 1) (0 2)) ((1 0) (1 1) (1 2)))
 
-   See also: ra-iota ra-i"
-
+See also: ra-iota ra-i
+"
   (let* ((kk (ra-rank ra))
          ((values los lens) ((@@ (newra newra) ra-slice-for-each-check) kk ra))
          (ii (make-list kk)))
@@ -204,9 +227,10 @@
 
 (define* (as-ra ra #:key (type (ra-type ra)) (new? #f))
   (cond ((and (eq? (ra-type ra) type) (not new?)) ra)
-        (else (ra-copy! ra (make-ra-new
-                            type *unspecified*
-                            (apply c-dims (map dim-len (vector->list (ra-dims ra)))))))))
+        (else (ra-copy! (make-ra-new
+                         type *unspecified*
+                         (apply c-dims (map dim-len (vector->list (ra-dims ra)))))
+                        ra))))
 
 
 ; ----------------
