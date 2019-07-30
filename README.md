@@ -9,7 +9,9 @@ The C API shouldn't be affected. Once you get an array handle it makes no sense 
 
 ## Status
 
-The old array compatibility layer is mostly finished, with only a naming change (`array-xxx` becomes `ra-xxx`). The `newra` versions of the `map`/`for-each` functions are significantly faster already, but the `-ref` are slower and some of the functions that have a fast path in C, such as `array-fill!` or `array-copy!`, are a lot slower in `newra`. This all seems fixable, and besides the Scheme compiler is only improving as Guile 3.0 aproaches.
+The old array compatibility layer is mostly finished, with only a naming change (`array-xxx` becomes `ra-xxx`). The `newra` versions of the `map` and `for-each` functions are significantly faster already, but the `-ref` functions are a bit slower and some of the functions that have a fast path in C, such as `array-fill!` or `array-copy!`, can be lot slower in `newra`, depending on the types of the arguments.
+
+These issues seems fixable, and besides, the Scheme compiler is only improving as Guile 3.0 aproaches.
 
 Compared with the old arrays, `newra` already offers free index vectors and applicable-settable arrays. And if a `newra` operation takes too long, you can actually interrupt it :p
 
