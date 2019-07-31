@@ -211,12 +211,12 @@
 (define (list->ra rank l)
   (list->typed-ra #t rank l))
 
-; FIXME looks up all lengths even when
+; FIXME looks up all lengths first. Is that necessary?
+
 (define (list->typed-ra type shape l)
   (define (list-len l rank)
-    (reverse!
-     (let loop ((k rank) (l l))
-       (if (zero? k) '() (cons (length l) (loop (- k 1) (car l)))))))
+    (let loop ((k rank) (l l))
+      (if (zero? k) '() (cons (length l) (loop (- k 1) (car l))))))
   (receive (rank lo len)
       (cond
        ((number? shape)
@@ -247,7 +247,7 @@
              ((null? len)
               (do ((i 0 (+ i 1)) (l l (cdr l)))
                   ((= i lenk)
-                   (unless (null? l) (throw 'mismatched-list-length-dim (- rank 1))))
+                   (unless (null? l) (throw 'mismatched-list-length-dim l lenk (- rank 1))))
                 (root-set! temp (car l) (+ j i)))
               (set! j (+ j lenk)))
 ; general case

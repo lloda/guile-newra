@@ -59,5 +59,6 @@
 (define a0 (make-ra 0 2 3 4))
 (define a1 (make-ra 0 2 3))
 
-(ra-map! a1 - a1)
-(ra-map! a0 - a1)
+(ra-for-each (lambda (a b) 3) a0 a0)
+(ra-for-each (lambda (a b) 3) a0 a1)
+(ra-for-each! a0 - a1)
