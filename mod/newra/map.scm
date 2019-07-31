@@ -147,8 +147,7 @@
 ; since we'll unroll, special case for rank 0
         (if (zero? u)
           (apply op ra)
-; we'll do a normal rank-loop in [0..u) and unroll dimensions [u..k); u must be found.
-; the last axis of the frame can always be unrolled, so we start checking from the one before.
+; we'll do a normal rank-loop in [0..u) and unroll dimensions [u..k); u must be searched.
           (let* ((u (- u 1))
                  (step (map (lambda (frame) (%%ra-step frame u)) frame)))
             (receive (u len)
@@ -293,8 +292,7 @@
                      (let/ec exit
 ; check early so we can save a step in the loop later.
                        (vector-for-each (lambda (len) (when (zero? len) (exit))) lens)
-; we'll do a normal rank-loop in [0..u) and unroll dimensions [u..k); u must be found.
-; the last axis of the frame can always be unrolled, so we start checking from the one before.
+; we'll do a normal rank-loop in [0..u) and unroll dimensions [u..k); u must be searched.
                        (let ((u (- k 1)))
                          (%let ((step ...) (frame ...) (lambda (frome) (%%ra-step frome u)))
                            (receive (u len)
