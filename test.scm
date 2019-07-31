@@ -24,7 +24,7 @@
 (define (ra->string ra) (call-with-output-string (cut display ra <>)))
 (define (string->ra s) (call-with-input-string s read))
 
-(set! test-log-to-file #f)
+(set! test-log-to-file #t)
 (test-begin "newra")
 
 
@@ -280,6 +280,60 @@
    (test-end (procedure-name ra-slice-for-each)))
  (list ra-slice-for-each-1 ra-slice-for-each-2
        ra-slice-for-each-3 ra-slice-for-each-4))
+
+
+; -----------------------
+; ra-slice-for-each compatibility - from guile/test-suite/tests/array-map.test
+; -----------------------
+
+(for-each
+    (match-lambda
+      ((name ra-slice-for-each list->ra list->typed-ra make-ra ra-copy!
+             make-shared-ra array->ra ra->array ra-set! ra-ref)
+       (let ((test-name (format #f "~a" name)))
+         (test-begin test-name)
+; 1 argument frame rank 1
+         (test-equal
+           #2((1 3 9) (2 7 8))
+           (ra->array
+            (let* ((a (list->ra 2 '((9 1 3) (7 8 2)))))
+              (ra-slice-for-each 1 (lambda (a) (sort! (ra->array a) <)) a)
+              a)))
+; 1 argument frame rank 1, non-zero base indices
+         (test-equal
+           #2@1@1((1 3 9) (2 7 8))
+           (ra->array
+            (let* ((a (make-ra *unspecified* '(1 2) '(1 3)))
+                   (b (array->ra #2@1@1((9 1 3) (7 8 2)))))
+              (ra-copy! a b)
+              (ra-slice-for-each 1 (lambda (a) (sort! (ra->array a) <)) a)
+              a)))
+; 2 arguments frame rank 1
+         (test-equal
+           #f64(8 -1)
+           (ra->array
+            (let* ((x (list->typed-ra 'f64 2 '((9 1) (7 8))))
+                   (y (array->ra (f64vector 99 99))))
+              (ra-slice-for-each 1 (lambda (y x) (ra-set! y (- (ra-ref x 0) (ra-ref x 1)))) y x)
+              y)))
+; regression: zero-sized frame loop without unrolling
+         (test-equal
+           99
+           (let* ((x 99)
+                  (o (make-ra 0. 0 3 2)))
+             (ra-slice-for-each 2
+                                (lambda (o a0 a1)
+                                  (set! x 0))
+                                o
+                                (make-shared-ra (make-ra 1. 0 1) (const '(0 0)) 0 3)
+                                (make-ra 2. 0 3))
+             x))
+         (test-end (format #f "~a" name)))))
+  `(("oldra" ,array-slice-for-each ,list->array ,list->typed-array ,make-array ,(lambda (a b) (array-copy! b a))
+     ,make-shared-array ,(lambda (x) x) ,(lambda (x) x) ,array-set! ,array-ref)
+    ("newra" ,ra-slice-for-each ,list->ra ,list->typed-ra ,make-ra ,ra-copy!
+     ,make-shared-ra ,array->ra ,ra->array ,ra-set! ,ra-ref)
+    ))
 
 
 ; -----------------------
