@@ -329,10 +329,12 @@
                                 (make-ra 2. 0 3))
              x))
          (test-end (format #f "~a" name)))))
-  `(("oldra" ,array-slice-for-each ,list->array ,list->typed-array ,make-array ,(lambda (a b) (array-copy! b a))
-     ,make-shared-array ,(lambda (x) x) ,(lambda (x) x) ,array-set! ,array-ref)
-    ("newra" ,ra-slice-for-each ,list->ra ,list->typed-ra ,make-ra ,ra-copy!
-     ,make-shared-ra ,array->ra ,ra->array ,ra-set! ,ra-ref)
+  `(("oldra" ,array-slice-for-each ,list->array ,list->typed-array
+     ,make-array ,(lambda (a b) (array-copy! b a)) ,make-shared-array
+     ,(lambda (x) x) ,(lambda (x) x) ,array-set! ,array-ref)
+    ("newra" ,ra-slice-for-each ,list->ra ,list->typed-ra
+     ,make-ra ,ra-copy! ,make-shared-ra
+     ,array->ra ,ra->array ,ra-set! ,ra-ref)
     ))
 
 

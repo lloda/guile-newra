@@ -117,27 +117,34 @@ See also: make-typed-ra
 
 (define (make-shared-ra oldra mapfunc . d)
   (check-ra oldra)
-  (let* ((dims (apply c-dims d)) ; only lo len, won't use step
-         (newrank (vector-length dims))
-         (los (vector->list (vector-map dim-lo dims)))
-         (ref (apply ra-pos (%%ra-zero oldra) (%%ra-dims oldra) (apply mapfunc los)))
-         (dims (vector-map
-                (lambda (dim step) (make-dim (dim-len dim) (dim-lo dim) step))
-                dims
-                (let ((steps (make-vector newrank 0)))
-                  (let loop ((k 0))
-                    (cond
-                     ((= k newrank) steps)
-                     (else
-                      (vector-set!
-                       steps k
-                       (if (positive? (dim-len (vector-ref dims k)))
-                         (let ((ii (list-copy los)))
-                           (list-set! ii k (+ 1 (list-ref los k)))
-                           (- (apply ra-pos (%%ra-zero oldra) (%%ra-dims oldra) (apply mapfunc ii)) ref))
-                         0))
-                      (loop (+ k 1)))))))))
-    (make-ra-raw (%%ra-data oldra) (- ref (ra-pos-first 0 dims)) dims)))
+; get lo & len, won't use step except if the result is empty.
+  (let* ((dims (apply c-dims d))
+         (newrank (vector-length dims)))
+; if the result *is* empty then it has no valid indices, so we cannot call mapfunc.
+    (let emptycheck ((k 0))
+      (if (< k newrank)
+        (if (positive? (dim-len (vector-ref dims k)))
+          (emptycheck (+ 1 k))
+          (make-ra-raw (%%ra-data oldra) (%%ra-zero oldra) dims))
+        (let* ((los (vector->list (vector-map dim-lo dims)))
+               (ref (apply ra-pos (%%ra-zero oldra) (%%ra-dims oldra) (apply mapfunc los)))
+               (dims (vector-map
+                      (lambda (dim step) (make-dim (dim-len dim) (dim-lo dim) step))
+                      dims
+                      (let ((steps (make-vector newrank 0)))
+                        (let loop ((k 0))
+                          (cond
+                           ((= k newrank) steps)
+                           (else
+                            (vector-set!
+                             steps k
+                             (if (positive? (dim-len (vector-ref dims k)))
+                               (let ((ii (list-copy los)))
+                                 (list-set! ii k (+ 1 (list-ref los k)))
+                                 (- (apply ra-pos (%%ra-zero oldra) (%%ra-dims oldra) (apply mapfunc ii)) ref))
+                               0))
+                            (loop (+ k 1)))))))))
+          (make-ra-raw (%%ra-data oldra) (- ref (ra-pos-first 0 dims)) dims))))))
 
 ; FIXME use ra-reverse and maybe ra-slice-for-each
 

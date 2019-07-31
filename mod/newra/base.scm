@@ -39,7 +39,7 @@
 ;; index:       into an axis.
 ;; lo:          lowest index in a dim
 ;; hi:          highest index in a dim
-;; end:         one past the highest index
+;; end:         one past hi
 ;; len:         length of a dim = end-lo
 ;; lenm:        len - 1.
 ;; v:           a vector
