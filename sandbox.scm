@@ -13,6 +13,11 @@
         (rnrs io ports) (srfi srfi-8)
         (srfi srfi-26) (ice-9 match))
 
+
+; -----------------------
+; can't remember
+; -----------------------
+
 (define ra0 (array->ra #(1 2 3)))
 (define ra1 (array->ra #@1(1 2 3)))
 (define ra2 (array->ra #2((1 2) (3 4))))
@@ -45,3 +50,14 @@
      (case tag ((opt) (macro param args ...)) ... (else (throw 'bad-tag tag))))))
 
 (%tag-dispatch 'TWO display (ONE TWO) ('one 'two))
+
+
+; -----------------------
+; prefix matching
+; -----------------------
+
+(define a0 (make-ra 0 2 3 4))
+(define a1 (make-ra 0 2 3))
+
+(ra-map! a1 - a1)
+(ra-map! a0 - a1)

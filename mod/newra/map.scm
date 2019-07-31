@@ -278,12 +278,12 @@
          #`(let ((k k_))
 ; create (rank(ra) - k) slices that we'll use to iterate by bumping their zeros.
              (%let ((frame ...) (ra_ ...) identity)
-               (%let ((ra ...) (frame ...)
-                      (lambda (ro)
-                        (make-ra-raw (%%ra-data ro)
-                                     (ra-pos-first (%%ra-zero ro) (vector-take (%%ra-dims ro) k))
-                                     (vector-drop (%%ra-dims ro) k))))
-                 (receive (los lens) (apply ra-slice-for-each-check k (%list frame ...))
+               (receive (los lens) (apply ra-slice-for-each-check k (%list frame ...))
+                 (%let ((ra ...) (frame ...)
+                        (lambda (ro)
+                          (make-ra-raw (%%ra-data ro)
+                                       (ra-pos-first (%%ra-zero ro) (vector-take (%%ra-dims ro) k))
+                                       (vector-drop (%%ra-dims ro) k))))
 ; since we'll unroll, special case for rank 0
                    (if (zero? k)
 ; no fresh slice descriptor like in array-slice-for-each. That should be all right in newra, b/c the descriptors can be copied.
