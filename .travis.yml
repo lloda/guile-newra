@@ -1,0 +1,14 @@
+
+dist: bionic
+sudo: required
+
+script:
+ - (guile -L mod test.scm)
+
+matrix:
+  include:
+   - os: linux
+     addons:
+       apt:
+         packages:
+           - guile-2.2

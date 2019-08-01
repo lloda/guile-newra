@@ -512,5 +512,4 @@
 ; -----------------------
 
 (test-end "newra")
-(unless (zero? (test-runner-fail-count (test-runner-current)))
-  (error "FAILED test.scm"))
+(exit (test-runner-fail-count (test-runner-current)))
