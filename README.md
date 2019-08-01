@@ -1,4 +1,6 @@
 
+# ![(travis build status)](https://travis-ci.org/lloda/guile-newra.svg?branch=master) #
+
 ## Newra
 
 guile-newra (`newra`) wants to replace the old (2.2/3.0) Guile array system, which is mostly implemented in C.

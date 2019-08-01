@@ -12,3 +12,6 @@ matrix:
        apt:
          packages:
            - guile-2.2
+
+before_install:
+    - sudo apt-get install guile-2.2
