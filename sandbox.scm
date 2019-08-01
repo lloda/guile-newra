@@ -8,10 +8,9 @@
 
 ; Trying things.
 
-(import (newra newra) (newra print) (newra tools)
-        (only (rnrs base) vector-map) (only (srfi srfi-1) fold)
-        (rnrs io ports) (srfi srfi-8)
-        (srfi srfi-26) (ice-9 match))
+(import (newra newra) (newra print) (newra tools) (rnrs io ports)
+        (srfi :8) (srfi :26) (ice-9 match) (only (srfi :1) fold)
+        (only (rnrs base) vector-map))
 
 
 ; -----------------------

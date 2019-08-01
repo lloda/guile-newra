@@ -17,7 +17,7 @@
             array->ra ra->array as-ra
             ra-i ra-iota))
 
-(import (newra newra) (only (srfi srfi-1) fold) (srfi srfi-71) (srfi srfi-26)
+(import (newra newra) (only (srfi :1) fold) (srfi :8) (srfi :26)
         (only (rnrs base) vector-map))
 
 
@@ -203,29 +203,29 @@ guile> x
 See also: ra-iota ra-i
 "
   (let* ((kk (ra-rank ra))
-         ((values los lens) ((@@ (newra newra) ra-slice-for-each-check) kk ra))
          (ii (make-list kk)))
-    (if (= kk 0)
-      (ra-set! ra (apply op ii))
-      (let loop-rank ((k 0) (ra ra) (endi ii))
-        (let* ((lo (vector-ref los k))
-               (end (+ lo (vector-ref lens k))))
-          (if (= (+ 1 k) kk)
-            (let loop-dim ((i lo))
-              (if (= i end)
-                (set-car! endi lo)
-                (begin
-                  (set-car! endi i)
-                  (ra-set! ra (apply op ii) i)
-                  (loop-dim (+ i 1)))))
-            (let loop-dim ((i lo))
-              (if (= i end)
-                (set-car! endi lo)
-                (begin
-                  (set-car! endi i)
-                  (loop-rank (+ k 1) (ra-slice ra i) (cdr endi))
-                  (loop-dim (+ i 1))))))))))
-  ra)
+    (receive (los lens) ((@@ (newra newra) ra-slice-for-each-check) kk ra)
+      (if (= kk 0)
+        (ra-set! ra (apply op ii))
+        (let loop-rank ((k 0) (ra ra) (endi ii))
+          (let* ((lo (vector-ref los k))
+                 (end (+ lo (vector-ref lens k))))
+            (if (= (+ 1 k) kk)
+              (let loop-dim ((i lo))
+                (if (= i end)
+                  (set-car! endi lo)
+                  (begin
+                    (set-car! endi i)
+                    (ra-set! ra (apply op ii) i)
+                    (loop-dim (+ i 1)))))
+              (let loop-dim ((i lo))
+                (if (= i end)
+                  (set-car! endi lo)
+                  (begin
+                    (set-car! endi i)
+                    (loop-rank (+ k 1) (ra-slice ra i) (cdr endi))
+                    (loop-dim (+ i 1))))))))))
+    ra))
 
 
 ; ----------------
