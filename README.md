@@ -1,4 +1,3 @@
-
 # ![(travis build status)](https://travis-ci.org/lloda/guile-newra.svg?branch=master) #
 
 ## Newra

@@ -15,11 +15,9 @@
         (ice-9 match))
 
 (define (throws-exception? k thunk)
-  (catch #t (lambda () (thunk) #f)
-         (lambda (kk . args)
-           (if (eq? k kk)
-             (cons kk args)
-             #f))))
+  (catch #t
+    (lambda () (thunk) #f)
+    (lambda args (if (eq? k (car args)) args #f))))
 
 (define (ra->string ra) (call-with-output-string (cut display ra <>)))
 (define (string->ra s) (call-with-input-string s read))
@@ -505,6 +503,30 @@
   (ra-shape (make-ra 'foo '(-1 3) 5)))
 (test-equal '((-1 3) 5)
   (ra-dimensions (make-ra 'foo '(-1 3) 5)))
+
+
+; -----------------------
+; raw prefix match
+; -----------------------
+
+(define ra0 (ra-i 2 3))
+(define ra1 (ra-i 2))
+
+(test-equal
+  "#%2:2:3((0 1 2) (3 4 5))-#%1:2(0 1)|"
+  (call-with-output-string
+   (lambda (o) (ra-slice-for-each 0 (lambda (ra0 ra1) (format o "~a-~a|" ra0 ra1)) ra0 ra1))))
+(test-equal
+  "#%1:3(0 1 2)-#%0(0)|#%1:3(3 4 5)-#%0(1)|"
+  (call-with-output-string
+   (lambda (o) (ra-slice-for-each 1 (lambda (ra0 ra1) (format o "~a-~a|" ra0 ra1)) ra0 ra1))))
+(test-equal
+  "#%0(0)-#%0(0)|#%0(1)-#%0(0)|#%0(2)-#%0(0)|#%0(3)-#%0(1)|#%0(4)-#%0(1)|#%0(5)-#%0(1)|"
+  (call-with-output-string
+   (lambda (o) (ra-slice-for-each 2 (lambda (ra0 ra1) (format o "~a-~a|" ra0 ra1)) ra0 ra1))))
+(test-assert
+ (throws-exception? 'unset-len-for-dim
+                    (lambda () (ra-slice-for-each 3 (lambda (ra0 ra1) 0) ra0 ra1))))
 
 
 ; -----------------------

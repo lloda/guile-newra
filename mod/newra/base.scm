@@ -21,7 +21,8 @@
             ra-slice ra-cell ra-ref ra-set!
             ra-transpose
 ; for internal (newra) use, don't re-export
-            vector-drop vector-take vector-fold vector-clip
+            make-dim*
+            vector-drop vector-fold vector-clip
             <ra-vtable> pick-root-functions pick-make-root
             %ra-data %ra-zero %ra-zero-set! %ra-dims %ra-type %ra-vlen %ra-vref %ra-vset! %ra-rank
             %%ra-data %%ra-zero %%ra-zero-set! %%ra-dims %%ra-type %%ra-vlen %%ra-vref %%ra-vset! %%ra-rank
@@ -52,7 +53,7 @@
 
 
 ; ----------------
-; misc
+; misc - FIXME remove if unused
 ; ----------------
 
 (define vector-fold
@@ -304,13 +305,18 @@
 
 ; first position of the array (when all indices = dim-lo)
 ; useful for some types of loops, or to transition from Guile C arrays.
-(define (ra-pos-first zero dims)
-  (let loop ((j (vector-length dims)) (pos zero))
-    (if (<= j 0)
-      pos
-      (let* ((j (- j 1))
-             (dim (vector-ref dims j)))
-        (loop j (+ pos (* (dim-lo dim) (dim-step dim))))))))
+(define ra-pos-first
+  (case-lambda
+   ((zero dims)
+    (ra-pos-first zero dims (vector-length dims)))
+   ((zero dims k)
+; min - enable prefix match, ignoring dead axes [(vector-length dims) ... (- k 1)]
+    (let loop ((j (min k (vector-length dims))) (pos zero))
+      (if (<= j 0)
+        pos
+        (let* ((j (- j 1))
+               (dim (vector-ref dims j)))
+          (loop j (+ pos (* (dim-lo dim) (dim-step dim))))))))))
 
 
 ; ----------------

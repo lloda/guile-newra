@@ -62,27 +62,41 @@
 ; ra-slice-for-each, several versions
 ; ----------------
 
-; ra-slice-for-each-1/2/3/4 do the same thing at increasing levels of inlining
-; and complication. We keep them to test them against each other. The last one
-; is the default.
+(define (match-len? a b)
+  (and a b (= a b)))
 
-; Unlike Guile's array-for-each, etc. this one is strict —every dimension must match.
+; ra-slice-for-each-1/2/3/4 do the same thing at increasing levels of inlining
+; and complication, except that the last one is the only one that supports
+; prefix matching. We keep the others for testing.
+
+; Unlike Guile's array-for-each, etc. this one is strict; every dimension must match.
 (define (ra-slice-for-each-check k . ra)
   (unless (pair? ra)
     (throw 'missing-arguments))
-  (for-each
-      (lambda (ra)
-        (check-ra ra)
-        (unless (<= k (%%ra-rank ra))
-          (throw 'bad-ranks k (%%ra-rank ra))))
-    ra)
-  (let* ((dims (map (compose (cut vector-take <> k) %%ra-dims) ra))
-         (lo (vector-map dim-lo (car dims)))
-         (len (vector-map dim-len (car dims))))
-    (unless (every (lambda (rb) (equal? lo (vector-map dim-lo rb))) (cdr dims))
-      (throw 'mismatched-lo lo))
-    (unless (every (lambda (rb) (equal? len (vector-map dim-len rb))) (cdr dims))
-      (throw 'mismatched-len len))
+  (let ((len (make-vector k #f))
+        (lo (make-vector k #f)))
+    (for-each (lambda (ra)
+                (check-ra ra)
+                (let ((framek (min k (%%ra-rank ra))))
+                  (do ((j 0 (+ j 1))) ((= j framek))
+                    (let* ((dimj (vector-ref (%%ra-dims ra) j))
+                           (lenj (dim-len dimj))
+                           (lenj0 (vector-ref len j))
+                           (loj (dim-lo dimj))
+                           (loj0 (vector-ref lo j)))
+                      (if lenj0
+                        (begin
+                          (unless (match-len? lenj0 lenj)
+                            (throw 'mismatched-len-at-dim j lenj0 lenj))
+; valid len means lo must be matched
+                          (unless (= loj0 loj)
+                            (throw 'mismatched-lo-at-dim j loj0 loj)))
+                        (begin
+                          (vector-set! len j lenj)
+                          (vector-set! lo j loj)))))))
+      ra)
+    (do ((j 0 (+ j 1))) ((= j k))
+      (unless (vector-ref len j) (throw 'unset-len-for-dim j)))
     (values lo len)))
 
 ; naive, slice recursively.
@@ -100,16 +114,19 @@
                 (loop-rank (+ k 1) rai)
                 (loop-dim (+ i 1))))))))))
 
+(define (make-ra-raw-prefix ra kk)
+  (make-ra-raw (%%ra-data ra)
+               (ra-pos-first (%%ra-zero ra) (%%ra-dims ra) kk)
+               (if (< kk (%%ra-rank ra))
+                 (vector-drop (%%ra-dims ra) kk)
+                 #())))
+
 ; moving slice
 (define (ra-slice-for-each-2 kk op . ra)
   (receive (los lens) (apply ra-slice-for-each-check kk ra)
 ; create (rank(ra) - k) slices that we'll use to iterate by bumping their zeros.
     (let ((frame ra)
-          (ra (map (lambda (ra)
-                     (make-ra-raw (%%ra-data ra)
-                                  (ra-pos-first (%%ra-zero ra) (vector-take (%%ra-dims ra) kk))
-                                  (vector-drop (%%ra-dims ra) kk)))
-                ra)))
+          (ra (map (cut make-ra-raw-prefix <> kk) ra)))
       (let loop-rank ((k 0))
         (if (= k kk)
 ; no fresh slice descriptor like in array-slice-for-each. See below.
@@ -140,11 +157,7 @@
       (vector-for-each (lambda (len) (when (zero? len) (exit))) lens)
 ; create (rank(ra) - k) slices that we'll use to iterate by bumping their zeros.
       (let* ((frame ra)
-             (ra (map (lambda (ra)
-                        (make-ra-raw (%%ra-data ra)
-                                     (ra-pos-first (%%ra-zero ra) (vector-take (%%ra-dims ra) u))
-                                     (vector-drop (%%ra-dims ra) u)))
-                   ra)))
+             (ra (map (cut make-ra-raw-prefix <> u) ra)))
 ; since we'll unroll, special case for rank 0
         (if (zero? u)
           (apply op ra)
@@ -197,6 +210,12 @@
 ; ra-slice-for-each, macro version
 ; ----------------
 
+(define-inlinable (%%ra-step-prefix a k)
+  (let ((dims (%%ra-dims a)))
+    (if (< k (vector-length dims))
+      (dim-step (vector-ref dims k))
+      0)))
+
 (define-syntax %list
   (syntax-rules ()
     ((_ a ...) (list a ...))))
@@ -211,7 +230,7 @@
 (define-syntax %stepk
   (syntax-rules ()
     ((_ k n (ra frame) ...)
-     (begin (%%ra-zero-set! ra (+ (%%ra-zero ra) (* n (%%ra-step frame k)))) ...))))
+     (begin (%%ra-zero-set! ra (+ (%%ra-zero ra) (* n (%%ra-step-prefix frame k)))) ...))))
 
 (define-syntax %apply-list
   (syntax-rules ()
@@ -281,10 +300,7 @@
              (%let ((frame ...) (ra_ ...) identity)
                (receive (los lens) (apply ra-slice-for-each-check k (%list frame ...))
                  (%let ((ra ...) (frame ...)
-                        (lambda (ro)
-                          (make-ra-raw (%%ra-data ro)
-                                       (ra-pos-first (%%ra-zero ro) (vector-take (%%ra-dims ro) k))
-                                       (vector-drop (%%ra-dims ro) k))))
+                        (cut make-ra-raw-prefix <> k))
 ; since we'll unroll, special case for rank 0
                    (if (zero? k)
 ; no fresh slice descriptor like in array-slice-for-each. That should be all right in newra, b/c the descriptors can be copied.
@@ -295,14 +311,14 @@
                        (vector-for-each (lambda (len) (when (zero? len) (exit))) lens)
 ; we'll do a normal rank-loop in [0..u) and unroll dimensions [u..k); u must be searched.
                        (let ((u (- k 1)))
-                         (%let ((step ...) (frame ...) (lambda (frome) (%%ra-step frome u)))
+                         (%let ((step ...) (frame ...) (lambda (frome) (%%ra-step-prefix frome u)))
                            (receive (u len)
                                (let loop ((u u) (len 1) (s step) ...)
                                  (let ((lenu (vector-ref lens u)))
                                    (if (zero? u)
                                      (values u (* len lenu))
                                      (%let ((ss ...) (s ...) (cut * lenu <>))
-                                       (%let ((sm ...) (frame ...) (lambda (frome) (%%ra-step frome (- u 1))))
+                                       (%let ((sm ...) (frame ...) (lambda (frome) (%%ra-step-prefix frome (- u 1))))
                                          (if (and (equal? ss sm) ...)
                                            (loop (- u 1) (* len lenu) ss ...)
                                            (values u (* len lenu))))))))
@@ -363,7 +379,7 @@
                    (let loop-dim ((i (- (vector-ref lens k) 1)) (z z) ...)
                      (loop-rank (+ k 1) z ...)
                      (unless (zero? i)
-                       (loop-dim (- i 1) (+ z (%%ra-step frame k)) ...))))))))))))
+                       (loop-dim (- i 1) (+ z (%%ra-step-prefix frame k)) ...))))))))))))
 
 (define-syntax %op-once-z
   (lambda (stx)
