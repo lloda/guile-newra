@@ -12,7 +12,7 @@
 
 (define-module (newra newra))
 
-(import (newra base) (newra map))
+(import (newra base) (newra map) (newra print))
 
 (re-export ra?
            make-ra-raw ra-data ra-zero ra-dims ra-vlen ra-vref ra-vset!

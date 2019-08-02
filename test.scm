@@ -9,7 +9,7 @@
 
 ; Run with $GUILE -L mod -s test.scm
 
-(import (newra newra) (newra test) (newra print) (newra tools) (newra read) (newra lib)
+(import (newra newra) (newra test) (newra tools) (newra read) (newra lib)
         (only (rnrs base) vector-map)
         (srfi :64) (srfi :26) (srfi :8) (only (srfi :1) fold iota)
         (ice-9 match))

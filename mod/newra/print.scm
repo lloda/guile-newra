@@ -8,13 +8,15 @@
 
 ;;; Commentary:
 ;; Printer for ra objects. They start with #% instead of #, otherwise the syntax
-;; is the same as for regular Guile arrays.
+;; is the same as for regular Guile arrays. Loading this module installs the
+;; printer.
 ;;; Code:
 
 (define-module (newra print)
   #:export (ra-print-prefix ra-print))
 
-(import (rnrs io ports) (rnrs base) (srfi :1) (srfi :4 gnu) (srfi :26) (newra newra))
+(import (rnrs io ports) (rnrs base) (srfi :1) (srfi :4 gnu) (srfi :26)
+        (newra base) (newra map))
 
 ; FIXME still need to extend (truncated-print).
 
