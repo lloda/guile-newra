@@ -393,13 +393,17 @@
 (define slice-loop-fun
   (case-lambda
    ((op-once op-loop r0)
-    (%slice-loop (ra-rank r0) op-once op-loop %list %let r0))
+    (%slice-loop (ra-rank r0)
+                 op-once op-loop %list %let r0))
    ((op-once op-loop r0 r1)
-    (%slice-loop (ra-rank r0) op-once op-loop %list %let r0 r1))
+    (%slice-loop (max (ra-rank r0) (ra-rank r1))
+                 op-once op-loop %list %let r0 r1))
    ((op-once op-loop r0 r1 r2)
-    (%slice-loop (ra-rank r0) op-once op-loop %list %let r0 r1 r2))
+    (%slice-loop (max (ra-rank r0) (ra-rank r1) (ra-rank r2))
+                 op-once op-loop %list %let r0 r1 r2))
    ((op-once op-loop . r)
-    (%slice-loop (ra-rank (car r)) op-once op-loop %apply-list %apply-let r))))
+    (%slice-loop (fold (lambda (a b) (max b (ra-rank a))) 0 r)
+                 op-once op-loop %apply-list %apply-let r))))
 
 (define-syntax %default
   (syntax-rules ()

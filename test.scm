@@ -31,10 +31,10 @@
 ; -----------------------
 
 (test-equal
-    6 ((@@ (newra newra) vector-fold) (lambda (a c) (+ c (car a))) 0 #((1) (2) (3))))
+  6 ((@@ (newra newra) vector-fold) (lambda (a c) (+ c (car a))) 0 #((1) (2) (3))))
 
 (test-equal
-    #(2 3) ((@@ (newra newra) vector-clip) #(1 2 3 4) 1 3))
+  #(2 3) ((@@ (newra newra) vector-clip) #(1 2 3 4) 1 3))
 
 ; loop-fun from (newra test) FIXME may become ra-index-map!
 
@@ -509,29 +509,61 @@
 ; raw prefix match
 ; -----------------------
 
-(define ra0 (ra-i 2 3))
-(define ra1 (ra-i 2))
+(let ((ra0 (ra-i 2 3))
+      (ra1 (ra-i 2)))
+  (test-equal
+    "#%2:2:3((0 1 2) (3 4 5))-#%1:2(0 1)|"
+    (call-with-output-string
+     (lambda (o) (ra-slice-for-each 0 (lambda (ra0 ra1) (format o "~a-~a|" ra0 ra1)) ra0 ra1))))
+  (test-equal
+    "#%1:3(0 1 2)-#%0(0)|#%1:3(3 4 5)-#%0(1)|"
+    (call-with-output-string
+     (lambda (o) (ra-slice-for-each 1 (lambda (ra0 ra1) (format o "~a-~a|" ra0 ra1)) ra0 ra1))))
+  (test-equal
+    "#%0(0)-#%0(0)|#%0(1)-#%0(0)|#%0(2)-#%0(0)|#%0(3)-#%0(1)|#%0(4)-#%0(1)|#%0(5)-#%0(1)|"
+    (call-with-output-string
+     (lambda (o) (ra-slice-for-each 2 (lambda (ra0 ra1) (format o "~a-~a|" ra0 ra1)) ra0 ra1))))
+  (test-assert
+   (throws-exception? 'unset-len-for-dim
+                      (lambda () (ra-slice-for-each 3 (lambda (ra0 ra1) 0) ra0 ra1)))))
 
-(test-equal
-  "#%2:2:3((0 1 2) (3 4 5))-#%1:2(0 1)|"
-  (call-with-output-string
-   (lambda (o) (ra-slice-for-each 0 (lambda (ra0 ra1) (format o "~a-~a|" ra0 ra1)) ra0 ra1))))
-(test-equal
-  "#%1:3(0 1 2)-#%0(0)|#%1:3(3 4 5)-#%0(1)|"
-  (call-with-output-string
-   (lambda (o) (ra-slice-for-each 1 (lambda (ra0 ra1) (format o "~a-~a|" ra0 ra1)) ra0 ra1))))
-(test-equal
-  "#%0(0)-#%0(0)|#%0(1)-#%0(0)|#%0(2)-#%0(0)|#%0(3)-#%0(1)|#%0(4)-#%0(1)|#%0(5)-#%0(1)|"
-  (call-with-output-string
-   (lambda (o) (ra-slice-for-each 2 (lambda (ra0 ra1) (format o "~a-~a|" ra0 ra1)) ra0 ra1))))
+
+; -----------------------
+; prefix match on item (not cell) variants
+; -----------------------
+
 (test-assert
- (throws-exception? 'unset-len-for-dim
-                    (lambda () (ra-slice-for-each 3 (lambda (ra0 ra1) 0) ra0 ra1))))
+ (ra-equal?
+  (string->ra "#%1:2(-2 -5)")
+  (let ((ra0 (ra-copy #t (ra-i 2 3)))
+        (ra1 (ra-copy #t (ra-i 2))))
+    (ra-map! ra1 - ra0))))
+
+(test-assert
+ (ra-equal?
+  (string->ra "#%2:2:3((0 0 0) (-1 -1 -1))")
+  (let ((ra0 (ra-copy #t (ra-i 2 3)))
+        (ra1 (ra-copy #t (ra-i 2))))
+    (ra-map! ra0 - ra1))))
+
+(test-assert
+ (ra-equal?
+  (string->ra "#%3:4:3:2(((0 0) (1 1) (2 2)) ((3 3) (4 4) (5 5)) ((6 6) (7 7) (8 8)) ((9 9) (10 10) (11 11)))")
+  (ra-copy! (make-ra 99 4 3 2) (ra-i 4 3))))
+
+
+; -----------------------
+; next ...
+; -----------------------
+
+; (make-dim #f 0 1) ~ tensorindex
+; (make-dim #f 0 0) ~ dead axis
+; make-ra with dead axes
 
 
 ; -----------------------
 ; the end.
 ; -----------------------
 
-(test-end "newra")
-(exit (test-runner-fail-count (test-runner-current)))
+;; (test-end "newra")
+;; (exit (test-runner-fail-count (test-runner-current)))

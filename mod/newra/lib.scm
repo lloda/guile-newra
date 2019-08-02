@@ -15,7 +15,8 @@
             ra-length make-ra make-typed-ra make-shared-ra ra->list
             ra-dimensions ra-shape
             array->ra ra->array as-ra
-            ra-i ra-iota))
+            ra-i ra-iota
+            ra-copy))
 
 (import (newra newra) (only (srfi :1) fold) (srfi :8) (srfi :26)
         (only (rnrs base) vector-map))
@@ -249,3 +250,22 @@ See also: ra-iota ra-i
 
 (define* (ra-iota len #:optional (lo 0) (step 1))
   (make-ra-data (make-dim len lo step) (c-dims len)))
+
+
+; ----------------
+; oldra has array-copy in (ice-9 arrays). Something of the sort.
+; ----------------
+
+(define ra-copy
+  (case-lambda
+  "
+ra [type]
+
+Return a copy of ra RA with type TYPE. TYPE defaults to (ra-type RA) if not
+given.
+
+See also: ra-copy! as-ra
+"
+   ((ra) (ra-copy (ra-type ra) ra))
+   ((type ra) (let ((rb (apply make-typed-ra type *unspecified* (ra-shape ra))))
+                (ra-copy! rb ra)))))

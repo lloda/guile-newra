@@ -10,7 +10,8 @@ Help: [C-uc .] insert timestamp [C-cc] flip checkbox [C-uucc] partial flip check
   * [X] ra-shape ra-dimensions
   * [ ] root vectors are equivalent to rank-1 newra objects
 
-* TODO guile-ploy functionality [0/4]
+* TODO guile-ploy functionality [1/6]
+  * [X] raw prefix matching
   * [ ] generalized prefix matching
   * [ ] high level slicing
   * [ ] verbs, w/rank
