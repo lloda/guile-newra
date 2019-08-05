@@ -10,6 +10,13 @@ Help: [C-uc .] insert timestamp [C-cc] flip checkbox [C-uucc] partial flip check
   * [X] ra-shape ra-dimensions
   * [ ] root vectors are equivalent to rank-1 newra objects
 
+* TODO undefined sizes [0/5]
+  * [ ] printing and reading of 'd typed arrays
+  * [ ] printing with infinite axes
+  * [ ] printing with dead axes
+  * [ ] reading of arrays with inf axes
+  * [ ] reading of arrays with dead axes
+
 * TODO guile-ploy functionality [1/6]
   * [X] raw prefix matching
   * [ ] generalized prefix matching
@@ -19,12 +26,14 @@ Help: [C-uc .] insert timestamp [C-cc] flip checkbox [C-uucc] partial flip check
   * [ ] output types
 
 * TODO ra-ra functionality [0/3]
-  * [ ] undefined size, for broadcasting
+  * [ ] broadcasting
   * [ ] tensor indices
   * [ ] unsized index vectors
   * [ ] drag-along facility / delayed ops
 
-* TODO replace Guile arrays [0/3]
+* TODO replace Guile arrays [0/5]
+  * [ ] truncated-print support
+  * [ ] equal? support
   * [ ] hooks into C
   * [ ] compilation of literals
   * [ ] replace all names
