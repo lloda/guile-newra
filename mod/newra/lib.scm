@@ -246,7 +246,7 @@ See also: ra-iota ra-i
 ; ----------------
 
 (define (ra-i . i)
-  (make-ra-data (make-dim (and (every identity i) (fold * 1 i))) (apply c-dims i)))
+  (make-ra-data (make-dim #f) (apply c-dims i)))
 
 (define* (ra-iota len #:optional (lo 0) (step 1))
   (make-ra-data (make-dim len lo step) (c-dims len)))
