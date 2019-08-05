@@ -16,10 +16,11 @@
             ra-dimensions ra-shape
             array->ra ra->array as-ra
             ra-i ra-iota
-            ra-copy))
+            ra-copy
+            ra-transpose))
 
-(import (newra newra) (only (srfi :1) fold every) (srfi :8) (srfi :26)
-        (only (rnrs base) vector-map))
+(import (newra base) (newra map) (only (srfi :1) fold every) (srfi :8) (srfi :26)
+        (only (rnrs base) vector-map vector-for-each))
 
 
 ; ----------------
@@ -188,9 +189,9 @@ See also: as-ra
   "
 ra-index-map! ra op -> ra
 
-Apply OP to the indices of each element of RA in turn, storing
-the result in the corresponding element.  The value returned and
-the order of application are unspecified.
+Apply OP to the indices of each element of RA in turn, storing the result in the
+corresponding element.  The value returned and the order of application are
+unspecified.
 
 This function returns the modified RA.
 
@@ -259,9 +260,9 @@ See also: ra-iota ra-i
 (define ra-copy
   (case-lambda
   "
-ra [type]
+ra [type] -> rb
 
-Return a copy of ra RA with type TYPE. TYPE defaults to (ra-type RA) if not
+Return a copy RB of ra RA with type TYPE. TYPE defaults to (ra-type RA) if not
 given.
 
 See also: ra-copy! as-ra
@@ -269,3 +270,47 @@ See also: ra-copy! as-ra
    ((ra) (ra-copy (ra-type ra) ra))
    ((type ra) (let ((rb (apply make-typed-ra type *unspecified* (ra-shape ra))))
                 (ra-copy! rb ra)))))
+
+
+; ----------------
+; transpose
+; ----------------
+
+(define (ra-transpose ra dst)
+  "
+ra-transpose ra dst -> rb
+
+Transpose the ra RA. DST must be a vector of integers, and it must be as long as
+the rank of RA. Each axis i = 0 ... (ra-rank ra)-1 is transposed to axis k =
+(DST i) of RB. Therefore the rank of RB is 1+max(k).
+
+An axis k of RB may be referenced multiple times in DST, by RA axes i ... . In
+that case the size of k is the smallest of the sizes of i ..., and the step of k
+is the sum of all the steps of i ... . The lower bounds of i ... must all be the
+same.
+
+Any axis of RB that is not referenced in DST is a `dead' axis with undefined
+dimension and step 0.
+
+See also: make-ra-data make-ra-new
+"
+  (let ((dims (make-vector (+ 1 (vector-fold max 0 dst)) #f)))
+    (vector-for-each
+     (lambda (odim dst)
+       (vector-set!
+        dims dst
+        (let ((ndim (vector-ref dims dst)))
+          (if ndim
+            (if (= (dim-lo odim) (dim-lo ndim))
+              (make-dim (let* ((nd (dim-len ndim)) (od (dim-len odim)))
+                          (if nd (and od (min nd od)) od))
+                        (dim-lo ndim)
+                        (+ (dim-step odim) (dim-step ndim)))
+              (throw 'bad-lo))
+            odim))))
+     (%ra-dims ra) dst)
+; if not for lo we could have just initialized dims with (make-dim #f 0 0).
+    (do ((j 0 (+ j 1))) ((= j (vector-length dims)))
+      (if (not (vector-ref dims j))
+        (vector-set! dims j (make-dim #f 0 0))))
+    (make-ra-raw (%ra-data ra) (%ra-zero ra) dims)))

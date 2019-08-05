@@ -52,20 +52,5 @@
 
 
 ; -----------------------
-; prefix matching
+; generalized selector
 ; -----------------------
-
-; (make-dim #f 0 1) ~ tensorindex
-; (make-dim #f 0 0) ~ dead axis
-; make-ra with dead axes
-
-(import (newra newra) (newra tools) (newra lib) (rnrs io ports)
-        (srfi :8) (srfi :26) (ice-9 match) (only (srfi :1) fold)
-        (only (rnrs base) vector-map)
-        (newra base))
-
-; dead axis
-(make-dim #f 0 1)
-
-; make-ra with dead axes
-(make-dim #f 0 0)

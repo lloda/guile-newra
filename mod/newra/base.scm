@@ -19,7 +19,6 @@
             make-dim dim? dim-len dim-lo dim-hi dim-step dim-ref c-dims
             ra-pos ra-pos-first ra-pos-hi ra-pos-lo
             ra-slice ra-cell ra-ref ra-set!
-            ra-transpose
 ; for internal (newra) use, don't re-export
             make-dim*
             vector-drop vector-fold vector-clip
@@ -452,20 +451,3 @@ See also: make-ra-data make-ra-new
     (make-ra-raw (if (unspecified? value) (make size) (make size value))
                  (- (ra-pos-first 0 dims))
                  dims)))
-
-(define (ra-transpose ra exch)
-  (let ((dims (make-vector (+ 1 (vector-fold max 0 exch)) #f)))
-    (vector-for-each
-     (lambda (odim exch)
-       (vector-set!
-        dims exch
-        (let ((ndim (vector-ref dims exch)))
-          (if ndim
-            (if (= (dim-lo odim) (dim-lo ndim))
-              (make-dim (min (dim-len odim) (dim-len ndim))
-                        (dim-lo ndim)
-                        (+ (dim-step odim) (dim-step ndim)))
-              (throw 'bad-lo))
-            odim))))
-     (%ra-dims ra) exch)
-    (make-ra-raw (%ra-data ra) (%ra-zero ra) dims)))

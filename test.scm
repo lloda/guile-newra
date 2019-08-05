@@ -9,10 +9,9 @@
 
 ; Run with $GUILE -L mod -s test.scm
 
-(import (newra newra) (newra test) (newra tools) (newra read) (newra lib)
-        (only (rnrs base) vector-map)
+(import (newra newra) (newra test) (newra tools) (newra read)
         (srfi :64) (srfi :26) (srfi :8) (only (srfi :1) fold iota)
-        (ice-9 match))
+        (ice-9 match) (only (rnrs base) vector-map))
 
 (define (throws-exception? k thunk)
   (catch #t
@@ -586,6 +585,15 @@
    (ra-map! (make-ra #f 2 3) +
             (make-ra-data #(10 20) (vector (make-dim 2 0 1) (make-dim #f 0 0)))
             (make-ra-data #(1 2 3) (vector (make-dim #f 0 0) (make-dim 3 0 1))))))
+
+; using generalized transpose
+
+(test-equal
+  #2((11 12 13) (21 22 23))
+  (ra->array
+   (ra-map! (make-ra #f 2 3) +
+            (ra-iota 2 10 10)
+            (ra-transpose (ra-iota 3 1 1) #(1)))))
 
 
 ; -----------------------
