@@ -149,7 +149,7 @@
 
 (define (make-ra* data zero dims type vlen vref vset!)
   (letrec ((ra
-            (make-struct/no-tail
+            (make-struct/simple
              <ra-vtable>
              (case-lambda
                (() (ra-cell ra))
