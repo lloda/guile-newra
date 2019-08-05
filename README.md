@@ -14,9 +14,15 @@ The old array compatibility layer is mostly finished, with only a naming change 
 
 These issues seems fixable, and besides, the Scheme compiler is only improving as Guile 3.0 aproaches.
 
-Compared with the old arrays, `newra` already offers free index vectors and applicable-settable arrays. And if a `newra` operation takes too long, you can actually interrupt it :p
+Compared with the old arrays, `newra` already offers:
 
-I'm now drafting some higher level functionality, which can be followed in the `TODO` file.
+* Applicable arrays: `((array->ra #(1 2 3 4)) 3)` returns `4`.
+* Settable arrays: `(set! ((make-ra #f 2 3) 1 1) 99)` returns `#%:2:3((#f #f #f) (#f 99 #f))`.
+* Lazy index vectors (`ra-iota`, `ra-i`). These may be infinite: `((ra-iota #f 1) (- #e1e20 1))` returns `100000000000000000000`.
+
+And if a `newra` operation takes too long, you can actually interrupt it :p
+
+I'm now drafting some higher level functionality, which can be tracked in the `TODO` file.
 
 ## Transition guide
 

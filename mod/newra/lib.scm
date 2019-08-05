@@ -249,7 +249,7 @@ See also: ra-iota ra-i
   (make-ra-data (make-dim #f) (apply c-dims i)))
 
 (define* (ra-iota len #:optional (lo 0) (step 1))
-  (make-ra-data (make-dim len lo step) (c-dims len)))
+  (make-ra-data (make-dim #f lo step) (c-dims len)))
 
 
 ; ----------------

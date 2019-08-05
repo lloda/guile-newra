@@ -349,6 +349,7 @@
 (set! (ra9 0 3) 22)
 (test-equal (ra->string ra9) "#%2@-1:2@1:3((99 77 88) (33 11 22))")
 (test-equal 2 (ra-length ra9))
+(test-equal #2@-1:2@1:3((99 77 88) (33 44 22)) (ra->array (set! (ra9 0 2) 44)))
 
 
 ; -----------------------
