@@ -553,17 +553,31 @@
 
 
 ; -----------------------
-; next ...
+; inf dims I - (make-dim #f) = (make-dim #f 0 1)
 ; -----------------------
 
-; (make-dim #f 0 1) ~ tensorindex
-; (make-dim #f 0 0) ~ dead axis
-; make-ra with dead axes
+(test-assert (ra-equal? (ra-i 3) (make-ra-data (make-dim #f) (c-dims 3))))
+
+; inf index vector
+(test-assert (not (dim-len (make-dim #f))))
+
+; make an array out of inf index vector
+(test-assert (ra-equal? (ra-i 3) (make-ra-data (make-dim #f) (c-dims 3))))
+
+; make an inf array
+(let ((rainf (make-ra-data (make-dim #f) (c-dims #f))))
+  (throws-exception? 'unset-len-for-dim (lambda () (ra-for-each pk rainf)))
+  (test-equal #(10 8 6) (ra->array (ra-map! (make-ra #f 3) - (ra-iota 3 10 -1) rainf)))
+  (test-equal #(-10 -8 -6) (ra->array (ra-map! (make-ra #f 3) - rainf (ra-iota 3 10 -1)))))
+
+(let ((rainf (ra-i #f 3 4)))
+  (test-equal #(1204 1205 1206 1207) (ra->array (ra-copy #t (rainf 100 1))))
+  (test-equal '(#f 3 4) (ra-dimensions rainf)))
 
 
 ; -----------------------
 ; the end.
 ; -----------------------
 
-;; (test-end "newra")
-;; (exit (test-runner-fail-count (test-runner-current)))
+(test-end "newra")
+(exit (test-runner-fail-count (test-runner-current)))

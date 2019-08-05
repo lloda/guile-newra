@@ -63,7 +63,7 @@
 ; ----------------
 
 (define (match-len? a b)
-  (and a b (= a b)))
+  (or (not a) (not b) (= a b)))
 
 ; ra-slice-for-each-1/2/3/4 do the same thing at increasing levels of inlining
 ; and complication, except that the last one is the only one that supports
@@ -79,18 +79,18 @@
                 (check-ra ra)
                 (let ((framek (min k (%%ra-rank ra))))
                   (do ((j 0 (+ j 1))) ((= j framek))
-                    (let* ((dimj (vector-ref (%%ra-dims ra) j))
+                    (let* ((lenj0 (vector-ref len j))
+                           (loj0 (vector-ref lo j))
+                           (dimj (vector-ref (%%ra-dims ra) j))
                            (lenj (dim-len dimj))
-                           (lenj0 (vector-ref len j))
-                           (loj (dim-lo dimj))
-                           (loj0 (vector-ref lo j)))
+                           (loj (dim-lo dimj)))
                       (if lenj0
                         (begin
                           (unless (match-len? lenj0 lenj)
-                            (throw 'mismatched-len-at-dim j lenj0 lenj))
+                            (throw 'mismatched-lens lenj0 lenj 'at-dim j))
 ; valid len means lo must be matched
                           (unless (= loj0 loj)
-                            (throw 'mismatched-lo-at-dim j loj0 loj)))
+                            (throw 'mismatched-los loj0 loj 'at-dim j)))
                         (begin
                           (vector-set! len j lenj)
                           (vector-set! lo j loj)))))))

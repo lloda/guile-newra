@@ -35,7 +35,7 @@
          (display (dim-lo dim) port)))
      (when dims?
        (display #\: port)
-       (display (dim-len dim) port)))
+       (display (or (dim-len dim) 'f) port)))
    (ra-dims ra)))
 
 (define* (ra-print ra port #:key (dims? #t))
@@ -51,23 +51,26 @@
         (display #\) port))
       (let loop ((k 0) (b base))
         (let* ((dim (vector-ref (ra-dims ra) k))
+               (i (dim-step dim))
                (lo (dim-lo dim))
-               (hi (+ lo (dim-len dim) -1))
-               (i (dim-step dim)))
-          (display #\( port)
-          (cond
-           ((= (- rank 1) k)
-            (do ((j lo (+ 1 j)) (b b (+ b i)))
-                ((> j hi))
-              (display (ref b) port)
-              (when (< j hi)
-                (display #\space port))))
-           (else
-            (do ((j lo (+ 1 j)) (b b (+ b i)))
-                ((> j hi))
-              (loop (+ k 1) b)
-              (when (< j hi)
-                (display #\space port)))))
-          (display #\) port))))))
+               (len (dim-len dim)))
+; if len is #f then this is not back-readable. FIXME?
+          (if len
+            (let ((hi (+ lo len -1)))
+              (display #\( port)
+              (cond
+               ((= (- rank 1) k)
+                (do ((j lo (+ 1 j)) (b b (+ b i)))
+                    ((> j hi))
+                  (display (ref b) port)
+                  (when (< j hi)
+                    (display #\space port))))
+               (else
+                (do ((j lo (+ 1 j)) (b b (+ b i)))
+                    ((> j hi))
+                  (loop (+ k 1) b)
+                  (when (< j hi)
+                    (display #\space port)))))
+              (display #\) port))))))))
 
 (struct-set! (@@ (newra newra) <ra-vtable>) vtable-index-printer ra-print)

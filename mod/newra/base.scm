@@ -28,8 +28,9 @@
             %%ra-data %%ra-zero %%ra-zero-set! %%ra-dims %%ra-type %%ra-vlen %%ra-vref %%ra-vset! %%ra-rank
             %%ra-step))
 
-(import (srfi :9) (srfi srfi-9 gnu) (only (srfi :1) fold every) (srfi :8) (srfi srfi-4 gnu)
-        (srfi :26) (ice-9 match) (ice-9 control) (only (rnrs base) vector-for-each))
+(import (srfi :9) (srfi srfi-9 gnu) (only (srfi :1) fold every) (srfi :8)
+        (srfi srfi-4 gnu) (srfi :26) (srfi :2) (ice-9 match) (ice-9 control)
+        (only (rnrs base) vector-for-each))
 
 
 ; ----------------
@@ -107,7 +108,7 @@
    ((len) (make-dim* len 0 1))
    ((len lo) (make-dim* len lo 1))
    ((len lo step)
-    (when (< len 0) (throw 'bad-dim-len len))
+    (when (and len (< len 0)) (throw 'bad-dim-len len))
     (make-dim* len lo step))))
 
 (define-inlinable (dim-end dim)
@@ -117,14 +118,17 @@
   (+ (dim-lo dim) (dim-len dim) -1))
 
 (define-inlinable (dim-ref dim i)
-  (unless (and (<= 0 i) (< i (dim-len dim)))
-    (throw 'dim-ref-out-of-range dim i))
+  (and-let* ((len (dim-len dim)))
+    (unless (and (<= 0 i) (< i len))
+      (throw 'dim-ref-out-of-range dim i)))
   (+ (dim-lo dim) (* (dim-step dim) i)))
 
 (define-inlinable (dim-check dim i)
-  (unless (and (<= (dim-lo dim) i) (< i (dim-end dim)))
-    (throw 'dim-check-out-of-range dim i))
-  i)
+  (let ((len (dim-len dim))
+        (lo (dim-lo dim)))
+    (if (and (>= i lo) (or (not len) (< i (+ len lo))))
+      i
+      (throw 'dim-check-out-of-range dim i))))
 
 
 ; ----------------
@@ -411,6 +415,15 @@
 ; ----------------
 
 (define (c-dims . d)
+  "
+c-dims d ...
+
+Compute dim-vector for C-order (row-major) array of sizes D ...
+
+The first size may given as #f, which indicates an infinite dimension.
+
+See also: make-ra-data make-ra-new
+"
   (list->vector
    (let loop ((d d))
      (match d
@@ -429,10 +442,7 @@
           (cons (make-dim len 0 (* (dim-len (car next)) (dim-step (car next)))) next)))))))
 
 (define (make-ra-data data dims)
-  (let ((size (vector-fold (lambda (a c) (* c (dim-len a))) 1 dims)))
-    (make-ra-raw data
-                 (- (ra-pos-first 0 dims))
-                 dims)))
+  (make-ra-raw data (- (ra-pos-first 0 dims)) dims))
 
 (define (make-ra-new type value dims)
   (let ((size (vector-fold (lambda (a c) (* c (dim-len a))) 1 dims))

@@ -18,7 +18,7 @@
             ra-i ra-iota
             ra-copy))
 
-(import (newra newra) (only (srfi :1) fold) (srfi :8) (srfi :26)
+(import (newra newra) (only (srfi :1) fold every) (srfi :8) (srfi :26)
         (only (rnrs base) vector-map))
 
 
@@ -246,7 +246,7 @@ See also: ra-iota ra-i
 ; ----------------
 
 (define (ra-i . i)
-  (make-ra-data (make-dim (fold * 1 i)) (apply c-dims i)))
+  (make-ra-data (make-dim (and (every identity i) (fold * 1 i))) (apply c-dims i)))
 
 (define* (ra-iota len #:optional (lo 0) (step 1))
   (make-ra-data (make-dim len lo step) (c-dims len)))

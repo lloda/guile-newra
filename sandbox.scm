@@ -55,9 +55,17 @@
 ; prefix matching
 ; -----------------------
 
-(define a0 (make-ra 0 2 3 4))
-(define a1 (make-ra 0 2 3))
+; (make-dim #f 0 1) ~ tensorindex
+; (make-dim #f 0 0) ~ dead axis
+; make-ra with dead axes
 
-(ra-for-each (lambda (a b) 3) a0 a0)
-(ra-for-each (lambda (a b) 3) a0 a1)
-(ra-for-each! a0 - a1)
+(import (newra newra) (newra tools) (newra lib) (rnrs io ports)
+        (srfi :8) (srfi :26) (ice-9 match) (only (srfi :1) fold)
+        (only (rnrs base) vector-map)
+        (newra base))
+
+; dead axis
+(make-dim #f 0 1)
+
+; make-ra with dead axes
+(make-dim #f 0 0)

@@ -22,7 +22,7 @@ I'm now drafting some higher level functionality, which can be followed in the `
 
 Originally I wanted `newra` to be a drop-in replacement for the old array system, reusing the same function names and all. Now I think it's better to have a parallel system where some of the flaws of old system can be cleaned up. Still it's important that programs using the old system can be easily ported to the new one.
 
-With that in mind, here is what you'd have to change. Note that the `ra-` names are not final, and neither is the `#%` read syntax. I'm not sure yet how the old array syntax will be absorbed — maybe old array objects will be converted transparently for a while.
+With that in mind, here is what you'd have to change. Note that the `ra-` names are not final, and neither is the `#%` read syntax. I'm not sure yet how the old array syntax will be absorbed — maybe old array objects will be converted transparently for a while. Some of these are bugs that will eventually be fixed.
 
 * The read syntax is like that of the old system except for an extra `%`, so `#2f64((1 2) (3 4))` becomes `#%2f64((1 2) (3 4))`. The compiler doesn't support the new literal type yet. You can work around this like `(string->ra "#%2f64((1 2) (3 4))")`.
 
@@ -39,6 +39,8 @@ With that in mind, here is what you'd have to change. Note that the `ra-` names 
 
 * Most `ra-` functions try to return something useful even when the corresponding `array-` functions do not. For example `(array-fill! (make-array 0 3) 4)` returns `*unspecified*`, but `(ra-fill! (make-ra 0 3) 4)` returns `#%1:3(4 4 4)`.
 
+* The default writer defaults to printing all the sizes of the array, so `(ra-i 3 2)` prints as `#%2:3:2((0 1) (2 3) (4 5))`. Note that `#2:3:2((0 1) (2 3) (4 5))` is a valid read syntax in the old system, just not the default.
+
 * `truncated-print` doesn't support `ra` types, you'll get a lone `#` if truncation is necessary at all.
 
-* The default writer defaults to printing all the sizes of the array, so `(ra-i 3 2)` prints as `#%2:3:2((0 1) (2 3) (4 5))`. Note that `#2:3:2((0 1) (2 3) (4 5))` is a valid read syntax in the old system, just not the default.
+* `equal?` doesn't support `ra` types, so it works the same as `eqv?`.
