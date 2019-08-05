@@ -276,41 +276,44 @@ See also: ra-copy! as-ra
 ; transpose
 ; ----------------
 
-(define (ra-transpose ra dst)
+(define (ra-transpose ra . axes)
   "
-ra-transpose ra dst -> rb
+ra-transpose ra axes ... -> rb
 
-Transpose the ra RA. DST must be a vector of integers, and it must be as long as
+Transpose the ra RA. AXES must be a list of integers, and it must be as long as
 the rank of RA. Each axis i = 0 ... (ra-rank ra)-1 is transposed to axis k =
-(DST i) of RB. Therefore the rank of RB is 1+max(k).
+(AXES i) of RB. Therefore the rank of RB is 1+max(k).
 
-An axis k of RB may be referenced multiple times in DST, by RA axes i ... . In
+An axis k of RB may be referenced multiple times in AXES, by RA axes i ... . In
 that case the size of k is the smallest of the sizes of i ..., and the step of k
 is the sum of all the steps of i ... . The lower bounds of i ... must all be the
 same.
 
-Any axis of RB that is not referenced in DST is a `dead' axis with undefined
+Any axis of RB that is not referenced in AXES is a `dead' axis with undefined
 dimension and step 0.
 
 See also: make-ra-data make-ra-new
 "
-  (let ((dims (make-vector (+ 1 (vector-fold max 0 dst)) #f)))
-    (vector-for-each
-     (lambda (odim dst)
-       (vector-set!
-        dims dst
-        (let ((ndim (vector-ref dims dst)))
-          (if ndim
-            (if (= (dim-lo odim) (dim-lo ndim))
-              (make-dim (let* ((nd (dim-len ndim)) (od (dim-len odim)))
-                          (if nd (and od (min nd od)) od))
-                        (dim-lo ndim)
-                        (+ (dim-step odim) (dim-step ndim)))
-              (throw 'bad-lo))
-            odim))))
-     (%ra-dims ra) dst)
+  (let ((ndims (make-vector (+ 1 (fold max 0 axes)) #f))
+        (odims (%ra-dims ra)))
+    (do ((i 0 (+ i 1))
+         (axes axes (cdr axes)))
+        ((= i (vector-length odims)))
+      (let* ((k (car axes))
+             (odim (vector-ref odims i))
+             (ndim (vector-ref ndims k)))
+        (vector-set!
+         ndims k
+         (if ndim
+           (if (= (dim-lo odim) (dim-lo ndim))
+             (make-dim (let* ((nd (dim-len ndim)) (od (dim-len odim)))
+                         (if nd (and od (min nd od)) od))
+                       (dim-lo ndim)
+                       (+ (dim-step odim) (dim-step ndim)))
+             (throw 'bad-lo))
+           odim))))
 ; if not for lo we could have just initialized dims with (make-dim #f 0 0).
-    (do ((j 0 (+ j 1))) ((= j (vector-length dims)))
-      (if (not (vector-ref dims j))
-        (vector-set! dims j (make-dim #f 0 0))))
-    (make-ra-raw (%ra-data ra) (%ra-zero ra) dims)))
+    (do ((k 0 (+ k 1))) ((= k (vector-length ndims)))
+      (if (not (vector-ref ndims k))
+        (vector-set! ndims k (make-dim #f 0 0))))
+    (make-ra-raw (%ra-data ra) (%ra-zero ra) ndims)))

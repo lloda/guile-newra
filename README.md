@@ -19,10 +19,10 @@ These issues seems fixable, and besides, the Scheme compiler is only improving a
 Compared with the old arrays, `newra` offers a growing list of features:
 
 * Applicable arrays: `((array->ra #(1 2 3 4)) 3)` returns `4`.
-* Settable arrays: `(set! ((make-ra #f 2 3) 1 1) 99)` returns `#%:2:3((#f #f #f) (#f 99 #f))`.
+* Settable arrays: `(set! ((make-ra #f 2 3) 1 1) 99)` returns `#%2:2:3((#f #f #f) (#f 99 #f))`.
 * Lazy index vectors (`ra-iota`, `ra-i`). These may be infinite: `((ra-iota #f 1) (- #e1e20 1))` returns `100000000000000000000`.
 * Rank extension by prefix matching: `(ra-map! (make-ra 'x 2 3) + (ra-i 2 3) (ra-iota 2 0 10))` returns `#%2:2:3((0 1 2) (13 14 15))`. Prefix matching supports undefined dimensions; the previous expression and `(ra-map! (make-ra 'x 2 3) + (ra-i #f 3) (ra-iota #f 0 10))` are equivalent.
-* Generalized transpose: axes not mentioned in the transposed axis list become axes with undefined size and zero step (‘dead’ axes). This can be used for broadcasting. For example, given `(define I (ra-iota #f 1))` and `(define J (ra-transpose (ra-iota #f 1) #(1)))`, then `(ra-map! (make-ra 'x 10 10) * I J)` is a multiplication table.
+* Generalized transpose: axes not mentioned in the transposed axis list become axes with undefined size and zero step (‘dead’ axes). This can be used for broadcasting. For example, given `(define I (ra-iota #f 1))` and `(define J (ra-transpose (ra-iota #f 1) 1))`, then `(ra-map! (make-ra 'x 10 10) * I J)` is a multiplication table.
 * Since `newra` is written entirely in Scheme, if a `newra` operation takes too long, you can actually interrupt it, which is not the case in the old system.
 
 I'm now drafting some higher level functionality, which can be tracked in the `TODO` file.
@@ -41,7 +41,7 @@ With that in mind, here is what you'd have to change. Note that the `ra-` names 
 
 * For most of the old functions there is an equivalent new one where you rename `array-xxx` to `ra-xxx`. Two exceptions:
 
-  + The equivalent of `transpose-array` is `ra-transpose`. The transposed axes are given as a vector instead of a rest list.
+  + The equivalent of `transpose-array` is `ra-transpose`.
   + The equivalent of `(array-copy! src dst)` is `(ra-copy! dst src)`. This follows `array-map!` / `ra-map!` and `array-fill!` / `ra-fill!` which both use the first argument as destination.
 
 * Most `ra-` functions try to return something useful even when the corresponding `array-` functions do not. For example `(array-fill! (make-array 0 3) 4)` returns `*unspecified*`, but `(ra-fill! (make-ra 0 3) 4)` returns `#%1:3(4 4 4)`.
@@ -52,8 +52,8 @@ With that in mind, here is what you'd have to change. Note that the `ra-` names 
 
 * The read syntax is like that of the old system except for an extra `%`, so `#2f64((1 2) (3 4))` becomes `#%2f64((1 2) (3 4))`. The compiler doesn't support the new literal type yet. You can work around this like `(string->ra "#%2f64((1 2) (3 4))")`.
 
-* The default writer doesn't handle undefined size arrays as well as it could. For example `(ra-transpose (ra-i 2) #(1))` prints as `#%2:f:2`, but the contents are finite, so they could be printed.
+* The default writer doesn't handle undefined size arrays as well as it could. For example `(ra-transpose (ra-i 2) 1)` prints as `#%2:f:2`, but the contents are finite, so they could be printed.
 
-* `truncated-print` doesn't support `ra` types, you'll get a lone `#` if truncation is necessary at all.
+* `truncated-print` doesn't support `newra` types, you'll get a lone `#` if truncation is necessary at all.
 
-* `equal?` doesn't support `ra` types, so it does just `eqv?`.
+* `equal?` doesn't support `newra` types, so it does just `eqv?`.

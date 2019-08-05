@@ -214,12 +214,12 @@
 ; ra-transpose
 ; -----------------------
 
-(test-equal (ra->string (ra-transpose ra7a #(1 0))) "#%2@1:3@1:2((1 4) (2 5) (3 6))")
-(test-equal (ra->string (ra-transpose ra7b #(1 0))) "#%2@1:3@1:2((1 4) (2 5) (3 6))")
-(test-equal (ra->string (ra-transpose ra7a #(0 1))) "#%2@1:2@1:3((1 2 3) (4 5 6))")
-(test-equal (ra->string (ra-transpose ra7b #(0 1))) "#%2@1:2@1:3((1 2 3) (4 5 6))")
-(test-equal (ra->string (ra-transpose ra7a #(0 0))) "#%1@1:2(1 5)")
-(test-equal (ra->string (ra-transpose ra7b #(0 0))) "#%1@1:2(1 5)")
+(test-equal (ra->string (ra-transpose ra7a 1 0)) "#%2@1:3@1:2((1 4) (2 5) (3 6))")
+(test-equal (ra->string (ra-transpose ra7b 1 0)) "#%2@1:3@1:2((1 4) (2 5) (3 6))")
+(test-equal (ra->string (ra-transpose ra7a 0 1)) "#%2@1:2@1:3((1 2 3) (4 5 6))")
+(test-equal (ra->string (ra-transpose ra7b 0 1)) "#%2@1:2@1:3((1 2 3) (4 5 6))")
+(test-equal (ra->string (ra-transpose ra7a 0 0)) "#%1@1:2(1 5)")
+(test-equal (ra->string (ra-transpose ra7b 0 0)) "#%1@1:2(1 5)")
 
 
 ; -----------------------
@@ -593,7 +593,7 @@
   (ra->array
    (ra-map! (make-ra #f 2 3) +
             (ra-iota 2 10 10)
-            (ra-transpose (ra-iota 3 1 1) #(1)))))
+            (ra-transpose (ra-iota 3 1 1) 1))))
 
 
 ; -----------------------
