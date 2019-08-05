@@ -148,7 +148,7 @@
 
 (define (make-ra* data zero dims type vlen vref vset!)
   (letrec ((ra
-            (make-struct/simple
+            (make-struct/no-tail ; FIXME use /simple on Guile 3.
              <ra-vtable>
              (case-lambda
                (() (ra-cell ra))
