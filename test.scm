@@ -576,6 +576,18 @@
 
 
 ; -----------------------
+; inf dims II - (make-dim #f 0 0) = dead axis
+; -----------------------
+
+(test-equal
+  #2((11 12 13) (21 22 23))
+  (ra->array
+   (ra-map! (make-ra #f 2 3) +
+            (make-ra-data #(10 20) (vector (make-dim 2 0 1) (make-dim #f 0 0)))
+            (make-ra-data #(1 2 3) (vector (make-dim #f 0 0) (make-dim 3 0 1))))))
+
+
+; -----------------------
 ; the end.
 ; -----------------------
 
