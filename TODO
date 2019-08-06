@@ -10,25 +10,18 @@ Help: [C-uc .] insert timestamp [C-cc] flip checkbox [C-uucc] partial flip check
   * [X] ra-shape ra-dimensions
   * [ ] root vectors are equivalent to rank-1 newra objects
 
-* TODO undefined sizes [0/5]
-  * [ ] printing and reading of 'd typed arrays
-  * [ ] printing with infinite axes
-  * [ ] printing with dead axes
-  * [ ] reading of arrays with inf axes
-  * [ ] reading of arrays with dead axes
-
-* TODO guile-ploy functionality [1/6]
+* TODO guile-ploy functionality [2/6]
   * [X] raw prefix matching
-  * [ ] generalized prefix matching
+  * [X] generalized prefix matching
   * [ ] high level slicing
   * [ ] verbs, w/rank
   * [ ] as-ra
   * [ ] output types
 
-* TODO ra-ra functionality [0/3]
-  * [ ] broadcasting
-  * [ ] tensor indices
-  * [ ] unsized index vectors
+* TODO ra-ra functionality [3/4]
+  * [X] unsized index vectors
+  * [X] tensor indices
+  * [X] broadcasting
   * [ ] drag-along facility / delayed ops
 
 * TODO replace Guile arrays [0/5]
@@ -37,6 +30,13 @@ Help: [C-uc .] insert timestamp [C-cc] flip checkbox [C-uucc] partial flip check
   * [ ] hooks into C
   * [ ] compilation of literals
   * [ ] replace all names
+
+* TODO friendlier undefined sizes [0/5]
+  * [ ] printing and reading of 'd typed arrays
+  * [ ] printing with infinite axes
+  * [ ] printing with dead axes
+  * [ ] reading of arrays with inf axes
+  * [ ] reading of arrays with dead axes
 
 * TODO quality of life [0/5]
   * [ ] refactor macros

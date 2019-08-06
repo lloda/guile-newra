@@ -29,7 +29,7 @@ I'm now drafting some higher level functionality, which can be tracked in the `T
 
 ## Transition guide
 
-Originally I wanted `newra` to be a drop-in replacement for the old array system, reusing the same function names and all. Now I think it's better to have a parallel system where some of the flaws of old system can be cleaned up. Still it's important that programs using the old system can be easily ported to the new one.
+Originally I wanted `newra` to be a drop-in replacement for the old array system, reusing the same function names and all. Now I think it's better to have a parallel system where some of the flaws of old system can be cleaned up. Still it's important that programs can be easily ported to the new system.
 
 With that in mind, here is what you'd have to change. Note that the `ra-` names are not final, and neither is the `#%` read syntax. I'm not sure yet how the old array syntax will be absorbed — maybe old array objects will be converted transparently for a while. Some of these are bugs that will eventually be fixed.
 
