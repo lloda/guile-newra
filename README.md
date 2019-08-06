@@ -12,7 +12,7 @@ Except for the tests and for the pair of functions `ra->array` / `array->ra`, `n
 
 ## Status
 
-The old array compatibility layer is mostly finished, with only a naming change (`array-xxx` becomes `ra-xxx`). The `newra` versions of the `map` and `for-each` functions are significantly faster already, but the `-ref` functions are a bit slower and some of the functions that have a fast path in C, such as `array-fill!` or `array-copy!`, can be lot slower in `newra`, depending on the types of the arguments.
+The old array compatibility layer is mostly finished, with only a naming change (`array-xxx` becomes `ra-xxx`). The `newra` versions of the `map` and `for-each` functions are significantly faster already, but the `-ref` / `-set!` functions are a bit slower and some of the functions that have a fast path in C, such as `array-fill!` or `array-copy!`, can be lot slower in `newra`, depending on the types of the arguments.
 
 These issues seems fixable, and besides, the Scheme compiler is only improving as Guile 3.0 aproaches.
 

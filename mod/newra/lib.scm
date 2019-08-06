@@ -29,8 +29,7 @@
 
 (define (array->ra a)
   (let ((dims (list->vector
-               (map (lambda (b i)
-                      (make-dim (- (cadr b) (car b) -1) (car b) i))
+               (map (lambda (b i) (make-dim (- (cadr b) (car b) -1) (car b) i))
                  (array-shape a)
                  (shared-array-increments a)))))
     (make-ra-raw (shared-array-root a)
@@ -42,9 +41,8 @@
     (throw 'nonconvertible-type (ra-type ra)))
   (apply make-shared-array (ra-data ra)
          (lambda i (list (apply ra-pos (ra-zero ra) (ra-dims ra) i)))
-         (vector->list
-          (vector-map (lambda (dim) (list (dim-lo dim) (dim-hi dim)))
-                      (ra-dims ra)))))
+         (vector->list (vector-map (lambda (dim) (list (dim-lo dim) (dim-hi dim)))
+                                   (ra-dims ra)))))
 
 
 ; ----------------
@@ -260,7 +258,8 @@ See also: ra-iota ra-i
 (define ra-copy
   (case-lambda
   "
-ra [type] -> rb
+ra-copy ra -> rb
+ra-copy type ra -> rb
 
 Return a copy RB of ra RA with type TYPE. TYPE defaults to (ra-type RA) if not
 given.

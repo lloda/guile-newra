@@ -33,11 +33,12 @@
 
 
 ; ----------------
-;; Glossary
+;; Conventions
 ; ----------------
 
+;; ra:          an array-type view created by make-ra*
 ;; dim:         each axis of an ra, or its bounds, as many as the rank.
-;; index:       into an axis.
+;; index:       integer as axis argument
 ;; lo:          lowest index in a dim
 ;; hi:          highest index in a dim
 ;; end:         one past hi
@@ -154,12 +155,16 @@
                (() (ra-cell ra))
                ((i0) (ra-cell ra i0))
                ((i0 i1) (ra-cell ra i0 i1))
+               ((i0 i1 i2) (ra-cell ra i0 i1 i2))
+               ((i0 i1 i2 i3) (ra-cell ra i0 i1 i2 i3))
                (i (apply ra-cell ra i)))
 ; it should be easier :-/
              (match-lambda*
                ((o) (ra-set! ra o))
                ((i0 o) (ra-set! ra o i0))
                ((i0 i1 o) (ra-set! ra o i0 i1))
+               ((i0 i1 i2 o) (ra-set! ra o i0 i1 i2))
+               ((i0 i1 i2 i3 o) (ra-set! ra o i0 i1 i2 i3))
                ((i ... o) (apply ra-set! ra o i)))
              data zero dims type vlen vref vset!)))
     ra))
@@ -259,30 +264,29 @@
 ; compute addresses
 ; ----------------
 
-; FIXME probably worth inlining
+(define-syntax %ra-pos
+  (syntax-rules ()
+    ((_ j pos dims)
+     pos)
+    ((_ j pos dims i0 i ...)
+     (let ((dim (vector-ref dims j)))
+       (%ra-pos (+ j 1) (+ pos (* (dim-check dim i0) (dim-step dim))) dims i ...)))))
+
 (define ra-pos
-  (letrec-syntax
-      ((%args
-        (syntax-rules ()
-          ((_ pos dims j)
-           pos)
-          ((_ pos dims j i0 i ...)
-           (let ((dim (vector-ref dims j)))
-             (%args (+ pos (* (dim-check dim i0) (dim-step dim))) dims (+ j 1) i ...))))))
-    (case-lambda
-     ((zero dims) (%args zero dims 0))
-     ((zero dims i0) (%args zero dims 0 i0))
-     ((zero dims i0 i1) (%args zero dims 0 i0 i1))
-     ((zero dims i0 i1 i2) (%args zero dims 0 i0 i1 i2))
-     ((zero dims i0 i1 i2 i3) (%args zero dims 0 i0 i1 i2 i3))
-     ((zero dims . i_)
-      (let loop ((pos zero) (j 0) (i i_))
-        (if (null? i)
-          pos
-          (if (>= j (vector-length dims))
-            (throw 'too-many-indices i_)
-            (let ((dim (vector-ref dims j)))
-              (loop (+ pos (* (dim-check dim (car i)) (dim-step dim))) (+ j 1) (cdr i))))))))))
+  (case-lambda
+   ((zero dims) (%ra-pos 0 zero dims))
+   ((zero dims i0) (%ra-pos 0 zero dims i0))
+   ((zero dims i0 i1) (%ra-pos 0 zero dims i0 i1))
+   ((zero dims i0 i1 i2) (%ra-pos 0 zero dims i0 i1 i2))
+   ((zero dims i0 i1 i2 i3) (%ra-pos 0 zero dims i0 i1 i2 i3))
+   ((zero dims . i_)
+    (let loop ((j 0) (pos zero) (i i_))
+      (if (null? i)
+        pos
+        (if (>= j (vector-length dims))
+          (throw 'too-many-indices i_)
+          (let ((dim (vector-ref dims j)))
+            (loop (+ j 1) (+ pos (* (dim-check dim (car i)) (dim-step dim))) (cdr i)))))))))
 
 ; lowest position on data.
 (define (ra-pos-lo ra)
@@ -343,12 +347,13 @@
            (begin
              (unless (= (%ra-rank ra) (%length i ...))
                (throw 'bad-number-of-indices (%ra-rank ra) (%length i ...)))
-             ((%%ra-vref ra) (%%ra-data ra) (ra-pos (%%ra-zero ra) (%%ra-dims ra) i ...)))))))
+             ((%%ra-vref ra) (%%ra-data ra) (%ra-pos 0 (%%ra-zero ra) (%%ra-dims ra) i ...)))))))
     (case-lambda
       ((ra) (%args ra))
       ((ra i0) (%args ra i0))
       ((ra i0 i1) (%args ra i0 i1))
       ((ra i0 i1 i2) (%args ra i0 i1 i2))
+      ((ra i0 i1 i2 i3) (%args ra i0 i1 i2 i3))
       ((ra . i)
        (unless (= (%ra-rank ra) (length i))
          (throw 'bad-number-of-indices (%ra-rank ra) (length i)))
@@ -362,13 +367,14 @@
            (begin
              (unless (= (%ra-rank ra) (%length i ...))
                (throw 'bad-number-of-indices (%ra-rank ra) (%length i ...)))
-             ((%%ra-vset! ra) (%%ra-data ra) (ra-pos (%%ra-zero ra) (%%ra-dims ra) i ...) o)
+             ((%%ra-vset! ra) (%%ra-data ra) (%ra-pos 0 (%%ra-zero ra) (%%ra-dims ra) i ...) o)
              ra)))))
     (case-lambda
       ((ra o) (%args ra o))
       ((ra o i0) (%args ra o i0))
       ((ra o i0 i1) (%args ra o i0 i1))
       ((ra o i0 i1 i2) (%args ra o i0 i1 i2))
+      ((ra o i0 i1 i2 i3) (%args ra o i0 i1 i2 i3))
       ((ra o . i)
        (unless (= (%ra-rank ra) (length i))
          (throw 'bad-number-of-indices (%ra-rank ra) (length i)))
@@ -386,7 +392,7 @@
   (letrec-syntax
       ((%args
         (syntax-rules ()
-          ((_ ra i ...) (ra-pos (%%ra-zero ra) (%%ra-dims ra) i ...))))
+          ((_ ra i ...) (%ra-pos 0 (%%ra-zero ra) (%%ra-dims ra) i ...))))
        (%cell
         (syntax-rules ()
           ((_ ra i ...)
