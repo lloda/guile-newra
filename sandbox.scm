@@ -54,3 +54,14 @@
 ; -----------------------
 ; generalized selector
 ; -----------------------
+
+; ...
+
+
+; -----------------------
+; define-inlinable-case-lambda
+; -----------------------
+
+(import (newra newra) (newra tools) (rnrs io ports)
+        (srfi :8) (srfi :26) (ice-9 match) (only (srfi :1) fold)
+        (only (rnrs base) vector-map))

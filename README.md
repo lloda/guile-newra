@@ -12,7 +12,7 @@ Except for the tests and for the pair of functions `ra->array` / `array->ra`, `n
 
 ## Status
 
-The old array compatibility layer is mostly finished, with only a naming change (`array-xxx` becomes `ra-xxx`). The `newra` versions of the `map` and `for-each` functions are significantly faster already, but the `-ref` / `-set!` functions are a bit slower and some of the functions that have a fast path in C, such as `array-fill!` or `array-copy!`, can be lot slower in `newra`, depending on the types of the arguments.
+The old array compatibility layer is mostly finished, with only a naming change (`array-xxx` becomes `ra-xxx`). The `newra` versions of the `map` and `for-each` functions are significantly faster already, but the `-ref` / `-set!` functions are a bit slower and some of the functions that have a fast path in C, such as `array-fill!` or `array-copy!`, can be a lot slower in `newra`, depending on the types of the arguments.
 
 These issues seems fixable, and besides, the Scheme compiler is only improving as Guile 3.0 aproaches.
 
@@ -50,7 +50,7 @@ With that in mind, here is what you'd have to change. Note that the `ra-` names 
 
 ## Some obvious defects
 
-* The read syntax is like that of the old system except for an extra `%`, so `#2f64((1 2) (3 4))` becomes `#%2f64((1 2) (3 4))`. The compiler doesn't support the new literal type yet. You can work around this like `(string->ra "#%2f64((1 2) (3 4))")`.
+* The read syntax is like that of the old system except for an extra `%`, so `#2f64((1 2) (3 4))` becomes `#%2f64((1 2) (3 4))`. The compiler doesn't support the new literal type yet. You can work around this using the reader (`(call-with-input-string "#%2f64((1 2) (3 4))" read)`) or e.g. `(list->ra 'f64 2 '((1 2) (3 4)))`.
 
 * The default writer doesn't handle undefined size arrays as well as it could. For example `(ra-transpose (ra-i 2) 1)` prints as `#%2:f:2`, but the contents are finite, so they could be printed.
 

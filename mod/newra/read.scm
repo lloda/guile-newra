@@ -14,7 +14,7 @@
 (define-module (newra read)
   #:export (list->ra list->typed-ra))
 
-(import (newra newra) (newra tools)
+(import (newra base) (newra map) (newra tools)
         (rnrs io ports) (srfi :8) (srfi :26) (ice-9 match) (ice-9 rdelim)
         (only (rnrs base) vector-map)
         (only (srfi :1) fold unzip2 car+cdr))
@@ -208,12 +208,39 @@
                        (vector->list (vector-map (lambda (lo len) (list lo (+ lo len -1)))
                                                  lo len)))))))))))))))) ; FIXME
 
-(define (list->ra rank l)
-  (list->typed-ra #t rank l))
+; The docstring is from Guile's list->typed-array.
+
+(define list->ra
+  (case-lambda
+   "
+list->ra shape l -> ra
+list->ra type shape l -> ra
+
+Convert the nested list L to a RA of type TYPE. TYPE defaults to #t.
+
+The argument SHAPE determines the number of dimensions of the array and their
+shape.  It is either an exact integer, giving the number of dimensions directly,
+or a list whose length specifies the number of dimensions and each element
+specified the lower and optionally the upper bound of the corresponding
+dimension.  When the element is list of two elements, these elements give the
+lower and upper bounds.  When it is an exact integer, it gives only the lower
+bound.
+
+See also: list->typed-ra ra->list ra-copy ra-copy! as-ra
+"
+   ((shape l) (list->typed-ra #t shape l))
+   ((type shape l) (list->typed-ra type shape l))))
 
 ; FIXME looks up all lengths first. Is that necessary?
 
 (define (list->typed-ra type shape l)
+   "
+list->typed-ra type shape l -> ra
+
+Equivalent to (list->ra TYPE SHAPE L).
+
+See also: list->ra ra->list ra-copy ra-copy! as-ra
+"
   (define (list-len l rank)
     (let loop ((k rank) (l l))
       (if (zero? k) '() (cons (length l) (loop (- k 1) (car l))))))

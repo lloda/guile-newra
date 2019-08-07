@@ -483,6 +483,8 @@
 
 (test-equal "#%1f64@1:3(1.0 2.0 3.0)" (ra->string (list->typed-ra 'f64 '(1) '(1 2 3))))
 (test-equal "#%1f64@1:3(1.0 2.0 3.0)" (ra->string (list->typed-ra 'f64 '((1 3)) '(1 2 3))))
+(test-equal "#%1f64@-1:3(1.0 2.0 3.0)" (ra->string (list->ra 'f64 '(-1) '(1 2 3))))
+(test-equal "#%1f64@-1:3(1.0 2.0 3.0)" (ra->string (list->ra 'f64 '((-1 1)) '(1 2 3))))
 
 
 ; -----------------------
