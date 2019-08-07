@@ -55,7 +55,7 @@ With that in mind, here is what you'd have to change. Note that the `ra-` names 
 
 * The read syntax is like that of the old system except for an extra `%`, so `#2f64((1 2) (3 4))` becomes `#%2f64((1 2) (3 4))`. The compiler doesn't support the new literal type yet. You can work around this using the reader (`(call-with-input-string "#%2f64((1 2) (3 4))" read)`) or e.g. `(list->ra 'f64 2 '((1 2) (3 4)))`.
 
-* The default writer doesn't handle undefined size arrays as well as it could. For example `(ra-transpose (ra-i 2) 1)` prints as `#%2:f:2`, but the contents are finite, so they could be printed.
+* The default reader and printer don't handle undefined size arrays as well as they could. For example `(ra-transpose (ra-i 2) 1)` prints as `#%2:d:2((0 1))`, but this cannot be read back. `(ra-iota #f)` prints as `#%1:f`.
 
 * `truncated-print` doesn't support `newra` types, you'll get a lone `#` if truncation is necessary at all.
 

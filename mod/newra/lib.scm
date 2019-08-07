@@ -307,9 +307,10 @@ See also: make-ra-data make-ra-new
   (let ((ndims (make-vector (+ 1 (fold max 0 axes)) #f))
         (odims (%ra-dims ra)))
     (do ((i 0 (+ i 1))
-         (axes axes (cdr axes)))
-        ((= i (vector-length odims)))
-      (let* ((k (car axes))
+         (axesr axes (cdr axesr)))
+        ((= i (vector-length odims))
+         (unless (null? axesr) (throw 'bad-number-of-axes axes 'should-be i)))
+      (let* ((k (car axesr))
              (odim (vector-ref odims i))
              (ndim (vector-ref ndims k)))
         (vector-set!

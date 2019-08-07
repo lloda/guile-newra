@@ -16,7 +16,7 @@
   #:export (ra-print-prefix ra-print))
 
 (import (rnrs io ports) (rnrs base) (srfi :1) (srfi :4 gnu) (srfi :26)
-        (newra base) (newra map))
+        (ice-9 match) (newra base) (newra map))
 
 ; FIXME still need to extend (truncated-print).
 
@@ -35,7 +35,11 @@
          (display (dim-lo dim) port)))
      (when dims?
        (display #\: port)
-       (display (or (dim-len dim) 'f) port)))
+       (display (match (dim-len dim)
+; print len of dead axes with 'd and of infinite axes with 'f.
+                  (#f (if (zero? (dim-step dim)) 'd  'f))
+                  (len len))
+                port)))
    (ra-dims ra)))
 
 (define* (ra-print ra port #:key (dims? #t))
@@ -53,9 +57,9 @@
         (let* ((dim (vector-ref (ra-dims ra) k))
                (i (dim-step dim))
                (lo (dim-lo dim))
-               (len (dim-len dim)))
-; if len is #f then this is not back-readable. FIXME?
-          (if len
+; print dead axes as if of size 1. Infinite arrays aren't printed (FIXME?)
+               (len (or (dim-len dim) (if (zero? i) 1 #f))))
+          (when len
             (let ((hi (+ lo len -1)))
               (display #\( port)
               (cond

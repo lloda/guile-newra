@@ -95,7 +95,11 @@
   (test-equal  #@1(1 2 3)          (ra->array ra1))
   (test-equal  #2((1 2) (3 4))     (ra->array ra2))
   (test-equal  #2@1@1((1 2) (3 4)) (ra->array ra3))
-  (test-equal  #0(99)              (ra->array ra4)))
+  (test-equal  #0(99)              (ra->array ra4))
+
+; dead axes
+
+  (test-equal "#%2:d:10((0 1 2 3 4 5 6 7 8 9))" (ra->string (ra-transpose (ra-i 10) 1))))
 
 
 ; -----------------------
