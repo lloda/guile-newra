@@ -121,26 +121,26 @@
   (ra->string (ra-iota 0)))
 
 ; -----------------------
-; make-shared-ra
+; make-ra-shared
 ; -----------------------
 
 (let* ((ra2 (array->ra #2((1 2) (3 4))))
        (ra3 (array->ra #2@1@1((1 2) (3 4))))
        (ra4 (array->ra #0(99))))
 
-  (test-equal "#%0(99)" (ra->string (make-shared-ra ra4 (lambda () '()))))
+  (test-equal "#%0(99)" (ra->string (make-ra-shared ra4 (lambda () '()))))
 
-  (test-equal "#%1:2(1 4)" (ra->string (make-shared-ra ra2 (lambda (i) (list i i)) 2)))
-  (test-equal "#%1:2(1 3)" (ra->string (make-shared-ra ra2 (lambda (i) (list i 0)) 2)))
-  (test-equal "#%1:2(2 4)" (ra->string (make-shared-ra ra2 (lambda (i) (list i 1)) 2)))
-  (test-equal "#%1:2(1 2)" (ra->string (make-shared-ra ra2 (lambda (j) (list 0 j)) 2)))
-  (test-equal "#%1:2(3 4)" (ra->string (make-shared-ra ra2 (lambda (j) (list 1 j)) 2)))
+  (test-equal "#%1:2(1 4)" (ra->string (make-ra-shared ra2 (lambda (i) (list i i)) 2)))
+  (test-equal "#%1:2(1 3)" (ra->string (make-ra-shared ra2 (lambda (i) (list i 0)) 2)))
+  (test-equal "#%1:2(2 4)" (ra->string (make-ra-shared ra2 (lambda (i) (list i 1)) 2)))
+  (test-equal "#%1:2(1 2)" (ra->string (make-ra-shared ra2 (lambda (j) (list 0 j)) 2)))
+  (test-equal "#%1:2(3 4)" (ra->string (make-ra-shared ra2 (lambda (j) (list 1 j)) 2)))
 
-  (test-equal "#%1@1:2(1 4)" (ra->string (make-shared-ra ra3 (lambda (i) (list i i)) '(1 2))))
-  (test-equal "#%1@1:2(1 3)" (ra->string (make-shared-ra ra3 (lambda (i) (list i 1)) '(1 2))))
-  (test-equal "#%1@1:2(2 4)" (ra->string (make-shared-ra ra3 (lambda (i) (list i 2)) '(1 2))))
-  (test-equal "#%1@1:2(1 2)" (ra->string (make-shared-ra ra3 (lambda (j) (list 1 j)) '(1 2))))
-  (test-equal "#%1@1:2(3 4)" (ra->string (make-shared-ra ra3 (lambda (j) (list 2 j)) '(1 2)))))
+  (test-equal "#%1@1:2(1 4)" (ra->string (make-ra-shared ra3 (lambda (i) (list i i)) '(1 2))))
+  (test-equal "#%1@1:2(1 3)" (ra->string (make-ra-shared ra3 (lambda (i) (list i 1)) '(1 2))))
+  (test-equal "#%1@1:2(2 4)" (ra->string (make-ra-shared ra3 (lambda (i) (list i 2)) '(1 2))))
+  (test-equal "#%1@1:2(1 2)" (ra->string (make-ra-shared ra3 (lambda (j) (list 1 j)) '(1 2))))
+  (test-equal "#%1@1:2(3 4)" (ra->string (make-ra-shared ra3 (lambda (j) (list 2 j)) '(1 2)))))
 
 
 ; -----------------------
@@ -286,7 +286,7 @@
 (for-each
     (match-lambda
       ((name ra-slice-for-each list->ra list->typed-ra make-ra ra-copy!
-             make-shared-ra array->ra ra->array ra-set! ra-ref)
+             make-ra-shared array->ra ra->array ra-set! ra-ref)
        (let ((test-name (format #f "~a" name)))
          (test-begin test-name)
 ; 1 argument frame rank 1
@@ -322,7 +322,7 @@
                                 (lambda (o a0 a1)
                                   (set! x 0))
                                 o
-                                (make-shared-ra (make-ra 1. 0 1) (const '(0 0)) 0 3)
+                                (make-ra-shared (make-ra 1. 0 1) (const '(0 0)) 0 3)
                                 (make-ra 2. 0 3))
              x))
          (test-end (format #f "~a" name)))))
@@ -330,7 +330,7 @@
      ,make-array ,(lambda (a b) (array-copy! b a)) ,make-shared-array
      ,(lambda (x) x) ,(lambda (x) x) ,array-set! ,array-ref)
     ("newra" ,ra-slice-for-each ,list->ra ,list->typed-ra
-     ,make-ra ,ra-copy! ,make-shared-ra
+     ,make-ra ,ra-copy! ,make-ra-shared
      ,array->ra ,ra->array ,ra-set! ,ra-ref)
     ))
 

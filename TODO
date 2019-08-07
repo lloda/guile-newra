@@ -4,7 +4,7 @@ Help: [C-uc .] insert timestamp [C-cc] flip checkbox [C-uucc] partial flip check
 
 * TODO compatibility with existing Guile arrays [5/6]
   * [X] ra-slice-for-each ra-map! ra-for-each ra-transpose ra-cell ra-ref ra-set!
-  * [X] make-ra make-shared-ra ra->list list->ra list->typed-ra
+  * [X] make-ra make-ra-shared ra->list list->ra list->typed-ra
   * [X] ra-iota ra-i
   * [X] ra-index-map!
   * [X] ra-shape ra-dimensions

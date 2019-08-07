@@ -27,7 +27,7 @@
            ra-fill! ra-copy! ra-equal? ra-map! ra-for-each
 
            ra-index-map!
-           ra-length make-ra make-typed-ra make-shared-ra ra->list
+           ra-length make-ra make-typed-ra make-ra-shared ra->list
            ra-dimensions ra-shape
            array->ra ra->array as-ra
            ra-i ra-iota

@@ -12,7 +12,7 @@
 
 (define-module (newra lib)
   #:export (ra-index-map!
-            ra-length make-ra make-typed-ra make-shared-ra ra->list
+            ra-length make-ra make-typed-ra make-ra-shared ra->list
             ra-dimensions ra-shape
             array->ra ra->array as-ra
             ra-i ra-iota
@@ -115,7 +115,7 @@ See also: make-typed-ra
 "
   (make-ra-new #t value (apply c-dims d)))
 
-(define (make-shared-ra oldra mapfunc . d)
+(define (make-ra-shared oldra mapfunc . d)
   (check-ra oldra)
 ; get lo & len, won't use step except if the result is empty.
   (let* ((dims (apply c-dims d))
