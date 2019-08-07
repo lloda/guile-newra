@@ -13,7 +13,7 @@
 (define-module (newra lib)
   #:export (ra-index-map!
             ra-length make-ra make-typed-ra make-ra-shared ra->list
-            ra-dimensions ra-shape
+            ra-dimensions ra-shape ra-offset
             array->ra ra->array as-ra
             ra-i ra-iota
             ra-copy
@@ -145,6 +145,17 @@ See also: make-typed-ra
                                0))
                             (loop (+ k 1)))))))))
           (make-ra-raw (%%ra-data oldra) (- ref (ra-pos-first 0 dims)) dims))))))
+
+(define (ra-offset ra)
+  "
+ra-offset ra -> i
+
+Return the root vector index I that corresponds to all array indices being equal
+to the lower bounds of RA in each dimension.
+
+See also: ra-zero
+"
+  (ra-pos-first (ra-zero ra) (ra-dims ra)))
 
 ; FIXME use ra-reverse and maybe ra-slice-for-each
 

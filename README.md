@@ -39,8 +39,10 @@ With that in mind, here is what you'd have to change. Note that the `ra-` names 
 
 * The new system still supports non-zero base indices, but I'd advise against using them, because they aren't worth what they cost and I'm tempted to get rid of them.
 
-* For most of the old functions there is an equivalent new one where you rename `array-xxx` to `ra-xxx`. Exceptions:
+* For most of the old functions `array-xxx`, the equivalent function in `newra` is `ra-xxx`. Exceptions:
 
+  + The equivalent of `shared-array-root` is `ra-data`.
+  + The equivalent of `shared-array-offset` is `ra-offset`.
   + The equivalent of `make-shared-array` is `make-ra-shared`.
   + The equivalent of `transpose-array` is `ra-transpose`.
   + The equivalent of `(array-copy! src dst)` is `(ra-copy! dst src)`. This follows `array-map!` / `ra-map!` and `array-fill!` / `ra-fill!` which both use the first argument as destination.

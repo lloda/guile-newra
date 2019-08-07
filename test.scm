@@ -280,6 +280,31 @@
 
 
 ; -----------------------
+; ra-offset - from guile/test-suite/tests/arrays.test
+; -----------------------
+
+(test-begin "ra-offset")
+
+; plain vector
+(test-equal 0 (ra-offset (make-ra 0 4)))
+; plain array rank 2
+(test-equal 0 (ra-offset (make-ra 0 4 4)))
+; row of rank-2 array, I
+(test-equal 0 (ra-offset ((make-ra 0 5 3) 0)))
+; row of rank-2 array, II
+(test-equal 4 (ra-offset ((make-ra 0 6 4) 1)))
+; col of rank-2 array, I
+(test-equal 0 (ra-offset ((ra-transpose (make-ra 0 5 3) 1 0) 0)))
+; col of rank-2 array, II
+(test-equal 1 (ra-offset ((ra-transpose (make-ra 0 6 4) 1 0) 1)))
+; of inverted array; shared-array-root's doc is unclear as 'first' is unclear. But we do the same.
+(test-equal 2 (shared-array-offset (make-shared-array #(1 2 3) (lambda (i) (list (- 2 i))) 3)))
+(test-equal 2 (ra-offset (make-ra-shared (array->ra #(1 2 3)) (lambda (i) (list (- 2 i))) 3)))
+
+(test-end "ra-offset")
+
+
+; -----------------------
 ; ra-slice-for-each compatibility - from guile/test-suite/tests/array-map.test
 ; -----------------------
 

@@ -199,8 +199,26 @@
 (define-inlinable (%ra-vref a) (%rastruct-ref a 7))
 (define-inlinable (%ra-vset! a) (%rastruct-ref a 8))
 
-(define (ra-data a) (%ra-data a))
-(define (ra-zero a) (%ra-zero a))
+(define (ra-zero a)
+  "
+ra-offset ra -> i
+
+Return the index I into the root vector of RA that corresponds to all array
+indices being 0. Note that I may not be in the range of the root vector, e.g. if
+RA is empty or its lower bounds are not 0.
+
+See also: ra-zero
+"
+  (%ra-zero a))
+
+(define (ra-data a)
+  "
+ra-data ra -> v
+
+Return the root vector (or data vector) of RA.
+"
+  (%ra-data a))
+
 (define (ra-zero-set! a z) (%ra-zero-set! a z))
 (define (ra-dims a) (%ra-dims a))
 (define (ra-type a) (%ra-type a))
@@ -310,7 +328,7 @@
                (step (dim-step dim)))
           (loop (- j 1) (+ pos (* step (if (positive? step) (dim-hi dim) (dim-lo dim))))))))))
 
-; first position of the array (when all indices = dim-lo)
+; Index in data when all ra indices = dim-lo.
 ; useful for some types of loops, or to transition from Guile C arrays.
 (define ra-pos-first
   (case-lambda
