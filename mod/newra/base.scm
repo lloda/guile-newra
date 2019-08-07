@@ -20,7 +20,7 @@
             ra-pos ra-pos-first ra-pos-hi ra-pos-lo
             ra-slice ra-cell ra-ref ra-set!
 ; for internal (newra) use, don't re-export
-            make-dim*
+            make-dim* <dim>
             vector-drop vector-fold vector-clip
             <ra-vtable> pick-root-functions pick-make-root
             %ra-data %ra-zero %ra-zero-set! %ra-dims %ra-type %ra-vlen %ra-vref %ra-vset! %ra-rank
@@ -115,7 +115,8 @@
   (+ (dim-lo dim) (dim-len dim)))
 
 (define-inlinable (dim-hi dim)
-  (+ (dim-lo dim) (dim-len dim) -1))
+  (let ((len (dim-len dim)))
+    (and len (+ (dim-lo dim) (dim-len dim) -1))))
 
 (define-inlinable (dim-ref dim i)
   (and-let* ((len (dim-len dim)))
@@ -439,6 +440,8 @@ Return the root vector (or data vector) of RA.
 ; derived functions
 ; ----------------
 
+; FIXME avoid list->vector etc.
+
 (define (c-dims . d)
   "
 c-dims d ...
@@ -470,7 +473,11 @@ See also: make-ra-data make-ra-new
   (make-ra-raw data (- (ra-pos-first 0 dims)) dims))
 
 (define (make-ra-new type value dims)
-  (let ((size (vector-fold (lambda (a c) (* c (dim-len a))) 1 dims))
+  (let ((size (vector-fold
+               (lambda (a c)
+                 (* c (let ((len (dim-len a)))
+                        (or len (if (zero? (dim-step a)) 1 (throw 'cannot-make-new-ra-with-dims dims))))))
+               1 dims))
         (make (pick-make-root type)))
     (make-ra-raw (if (unspecified? value) (make size) (make size value))
                  (- (ra-pos-first 0 dims))

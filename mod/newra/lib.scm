@@ -19,8 +19,8 @@
             ra-copy
             ra-transpose))
 
-(import (newra base) (newra map) (only (srfi :1) fold every) (srfi :8) (srfi :26)
-        (only (rnrs base) vector-map vector-for-each))
+(import (newra base) (newra map) (only (srfi :1) fold every any) (srfi :8) (srfi :26)
+        (ice-9 match) (only (rnrs base) vector-map vector-for-each))
 
 
 ; ----------------
@@ -266,20 +266,38 @@ See also: ra-iota ra-i
 ; oldra has array-copy in (ice-9 arrays). Something of the sort.
 ; ----------------
 
+; FIXME handling of dead axes could be faster - maybe c-dims should be written differently.
+
 (define ra-copy
   (case-lambda
-  "
+   "
 ra-copy ra -> rb
 ra-copy type ra -> rb
 
-Return a copy RB of ra RA with type TYPE. TYPE defaults to (ra-type RA) if not
-given.
+Copy the contents of RA into a new ra RB of type TYPE and the same shape of
+RA. TYPE defaults to (ra-type RA) if not given.
+
+If RA has dead axes, those are preserved in RB.
 
 See also: ra-copy! as-ra
 "
    ((ra) (ra-copy (ra-type ra) ra))
-   ((type ra) (let ((rb (apply make-typed-ra type *unspecified* (ra-shape ra))))
-                (ra-copy! rb ra)))))
+   ((type ra)
+    (let* ((shape (map (lambda (dim)
+                         (list (dim-lo dim)
+                               (or (dim-hi dim)
+                                   (if (zero? (dim-step dim))
+                                     (dim-lo dim)
+                                     (throw 'cannot-copy-infinite-ra ra)))))
+                    (vector->list (ra-dims ra))))
+; copy destination needs the singletons else the lens don't match.
+; FIXME we could have dead axes match dead axes.
+           (rb (ra-copy! (make-ra-new type *unspecified* (apply c-dims shape)) ra)))
+; preserve dead axes in the result.
+      (if (any not (ra-dimensions ra))
+        (make-ra-raw (ra-data rb) (ra-zero rb)
+                     (vector-map (lambda (a b) (if (dim-len a) b a)) (ra-dims ra) (ra-dims rb)))
+        rb)))))
 
 
 ; ----------------

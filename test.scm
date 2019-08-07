@@ -627,6 +627,12 @@
             (ra-iota 2 10 10)
             (ra-transpose (ra-iota 3 1 1) 1))))
 
+; copying arrays with dead axes
+
+(let ((ra (ra-copy #t (ra-transpose (ra-i 3) 1))))
+  (test-equal "#%2:d:3((0 1 2))" (ra->string ra))
+  (test-equal #(0 1 2) (ra-data ra)))
+
 
 ; -----------------------
 ; the end.
