@@ -224,6 +224,7 @@
 (test-equal (ra->string (ra-transpose ra7b 0 1)) "#%2@1:2@1:3((1 2 3) (4 5 6))")
 (test-equal (ra->string (ra-transpose ra7a 0 0)) "#%1@1:2(1 5)")
 (test-equal (ra->string (ra-transpose ra7b 0 0)) "#%1@1:2(1 5)")
+(test-assert (throws-exception? 'bad-number-of-axes (lambda () (ra-transpose (ra-iota 3) 0 1))))
 
 
 ; -----------------------
