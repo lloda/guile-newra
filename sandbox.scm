@@ -68,5 +68,39 @@
 
 
 ; -----------------------
-; bugs
+; fold
 ; -----------------------
+
+...
+
+(ra-fold (lambda (a knil) (cons a knil)) '() (ra-iota 3))
+
+; think I need to extend %op-loop if I want to do this without set!
+
+(define (ra-fold kons knil ra . rx)
+  "
+ra-fold kons knil rx ...
+
+Reduce ras RX ... through procedure (KONS RX ... KNIL) -> KNIL'
+
+See also: ra-map! ra-slice-for-each
+"
+  (let-syntax
+      ((%typed-fold
+        (syntax-rules ()
+          ((_ (vref-ra vset!-ra ra da za) ...)
+           (op (vref-ra da za) ...))))
+       (%fold
+        (syntax-rules ()
+          ((_ (ra da za) ...)
+           (op ((%%ra-vref ra) da za) ...))))
+       (%apply-fold
+        (syntax-rules ()
+          ((_ rx)
+           (apply op (map (lambda (ra) ((%%ra-vref ra) (%%ra-data ra) (%%ra-zero ra))) rx))))))
+    (apply (case-lambda
+            (() (%dispatch %typed-fold %fold ra))
+            ((rb) (%dispatch %typed-fold %fold ra rb))
+            ((rb rc) (%dispatch %typed-fold %fold ra rb rc))
+            (rx (%apply-default %apply-fold (cons ra rx))))
+      rx)))

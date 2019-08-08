@@ -492,9 +492,13 @@
            (else (%default %op ra rb rc)))))))
 
 (define (ra-for-each op ra . rx)
-  "ra-for-each op rx ...
+  "
+ra-for-each op rx ...
 
-   Apply OP to each tuple of elements from ras RX ..."
+Apply OP to each tuple of elements from ras RX ...
+
+See also: ra-map! ra-slice-for-each
+"
   (let-syntax
       ((%typed-fe
         (syntax-rules ()
