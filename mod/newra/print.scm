@@ -44,7 +44,7 @@
 
 (define* (ra-print ra port #:key (dims? #t))
   (ra-print-prefix ra port #:dims? dims?)
-  (let ((base (ra-pos-first (ra-zero ra) (ra-dims ra)))
+  (let ((base (ra-offset (ra-zero ra) (ra-dims ra)))
         (ref (cute (ra-vref ra) (ra-root ra) <>))
         (rank (ra-rank ra)))
 ; special case

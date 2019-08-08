@@ -19,7 +19,7 @@
            check-ra %%ra-rank %%ra-root %%ra-zero %%ra-dims
            ra-rank ra-type make-ra-new make-ra-root
            make-dim dim? dim-len dim-lo dim-hi dim-step dim-ref c-dims
-           ra-pos ra-pos-first ra-pos-hi ra-pos-lo
+           ra-pos ra-offset ra-pos-hi ra-pos-lo
            ra-slice ra-cell ra-ref ra-set!
 
            ra-slice-for-each

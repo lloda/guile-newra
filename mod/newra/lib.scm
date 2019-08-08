@@ -13,7 +13,7 @@
 (define-module (newra lib)
   #:export (ra-index-map!
             ra-length make-ra make-typed-ra make-ra-shared ra->list
-            ra-dimensions ra-shape ra-offset
+            ra-dimensions ra-shape
             array->ra ra->array as-ra
             ra-i ra-iota
             ra-copy
@@ -33,7 +33,7 @@
                  (array-shape a)
                  (shared-array-increments a)))))
     (make-ra-raw (shared-array-root a)
-                 (- (shared-array-offset a) (ra-pos-first 0 dims))
+                 (- (shared-array-offset a) (ra-offset 0 dims))
                  dims)))
 
 (define (ra->array ra)
@@ -144,18 +144,7 @@ See also: make-typed-ra
                                  (- (apply ra-pos (%%ra-zero oldra) (%%ra-dims oldra) (apply mapfunc ii)) ref))
                                0))
                             (loop (+ k 1)))))))))
-          (make-ra-raw (%%ra-root oldra) (- ref (ra-pos-first 0 dims)) dims))))))
-
-(define (ra-offset ra)
-  "
-ra-offset ra -> i
-
-Return the root vector index I that corresponds to all array indices being equal
-to the lower bounds of RA in each dimension.
-
-See also: ra-zero
-"
-  (ra-pos-first (ra-zero ra) (ra-dims ra)))
+          (make-ra-raw (%%ra-root oldra) (- ref (ra-offset 0 dims)) dims))))))
 
 ; FIXME Depends on traversal order of ra-for-each.
 

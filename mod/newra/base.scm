@@ -17,7 +17,7 @@
             check-ra
             ra-rank ra-type make-ra-new make-ra-root
             make-dim dim? dim-len dim-lo dim-hi dim-step dim-ref c-dims
-            ra-pos ra-pos-first ra-pos-hi ra-pos-lo
+            ra-pos ra-offset ra-pos-hi ra-pos-lo
             ra-slice ra-cell ra-ref ra-set!
 ; for internal (newra) use, don't re-export
             make-dim* <dim>
@@ -329,12 +329,22 @@ Return the root vector (or data vector) of RA.
                (step (dim-step dim)))
           (loop (- j 1) (+ pos (* step (if (positive? step) (dim-hi dim) (dim-lo dim))))))))))
 
-; Index in data when all ra indices = dim-lo.
-; useful for some types of loops, or to transition from Guile C arrays.
-(define ra-pos-first
+(define ra-offset
   (case-lambda
+   "
+ra-offset ra -> i
+
+Return the root vector index I that corresponds to all array indices being equal
+to the lower bound of RA in each dimension.
+
+See also: ra-zero
+"
+   ((ra)
+    (let ((ra (check-ra ra)))
+      (ra-offset (%%ra-zero ra) (%%ra-dims ra))))
+; internally - useful for some types of loops, or to transition from Guile C arrays.
    ((zero dims)
-    (ra-pos-first zero dims (vector-length dims)))
+    (ra-offset zero dims (vector-length dims)))
    ((zero dims k)
 ; min - enable prefix match, ignoring dead axes [(vector-length dims) ... (- k 1)]
     (let loop ((j (min k (vector-length dims))) (pos zero))
@@ -470,7 +480,7 @@ See also: make-ra-root make-ra-new
           (cons (make-dim len 0 (* (dim-len (car next)) (dim-step (car next)))) next)))))))
 
 (define (make-ra-root data dims)
-  (make-ra-raw data (- (ra-pos-first 0 dims)) dims))
+  (make-ra-raw data (- (ra-offset 0 dims)) dims))
 
 (define (make-ra-new type value dims)
   (let ((size (vector-fold
@@ -480,5 +490,5 @@ See also: make-ra-root make-ra-new
                1 dims))
         (make (pick-make-root type)))
     (make-ra-raw (if (unspecified? value) (make size) (make size value))
-                 (- (ra-pos-first 0 dims))
+                 (- (ra-offset 0 dims))
                  dims)))

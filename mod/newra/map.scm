@@ -116,7 +116,7 @@
 
 (define (make-ra-raw-prefix ra kk)
   (make-ra-raw (%%ra-root ra)
-               (ra-pos-first (%%ra-zero ra) (%%ra-dims ra) kk)
+               (ra-offset (%%ra-zero ra) (%%ra-dims ra) kk)
                (if (< kk (%%ra-rank ra))
                  (vector-drop (%%ra-dims ra) kk)
                  #())))
