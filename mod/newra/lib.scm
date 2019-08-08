@@ -157,7 +157,7 @@ See also: ra-zero
 "
   (ra-pos-first (ra-zero ra) (ra-dims ra)))
 
-; FIXME use ra-reverse and maybe ra-slice-for-each
+; FIXME Depends on traversal order of ra-for-each.
 
 (define (ra->list ra)
   "
@@ -169,29 +169,28 @@ contains a list for each of the rows of RA; and so on.
 
 See also: as-ra
 "
-  (let ((rank (ra-rank ra))
-        (dims (ra-dims ra)))
+  (let ((ra (check-ra ra))
+        (rank (%%ra-rank ra)))
     (cond
      ((zero? rank) (ra-ref ra))
      (else
-      (let ((ra (ra-reverse ra (- (ra-rank ra) 1))))
-        (let loop-rank ((k rank) (ra ra))
-          (let ((dimk (vector-ref dims (- rank k))))
-            (cond
-             ((= 1 k)
-              (if (> (dim-len dimk) 20)
-                (let ((l '()))
-                  (ra-for-each (lambda (x) (set! l (cons x l))) ra)
-                  l)
-                (let loop-dim ((l '()) (i (dim-lo dimk)))
-                  (if (> i (dim-hi dimk))
-                    l
-                    (loop-dim (cons (ra-ref ra i) l) (+ i 1))))))
-             (else
-              (let loop-dim ((l '()) (i (dim-hi dimk)))
-                (if (< i (dim-lo dimk))
+      (let ((ra (apply ra-reverse ra (iota rank)))
+            (dimk (vector-ref (%%ra-dims ra) (- rank 1))))
+        (let loop-rank ((ra ra))
+          (cond
+           ((= 1 (%%ra-rank ra))
+            (if (> (dim-len dimk) 20)
+              (let ((l '()))
+                (ra-for-each (lambda (x) (set! l (cons x l))) ra)
+                l)
+              (let loop-dim ((l '()) (i (dim-lo dimk)))
+                (if (> i (dim-hi dimk))
                   l
-                  (loop-dim (cons (loop-rank (- k 1) (ra-cell ra i)) l) (- i 1)))))))))))))
+                  (loop-dim (cons (ra-ref ra i) l) (+ i 1))))))
+           (else
+            (let ((l '()))
+              (ra-slice-for-each 1 (lambda (x) (set! l (cons (loop-rank x) l))) ra)
+              l)))))))))
 
 ; Similar to (@ (newra newra) ra-for-each-slice-1) - since we cannot unroll. It
 ; might be cheaper to go Fortran order (building the index lists back to front);
