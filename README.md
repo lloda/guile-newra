@@ -41,7 +41,7 @@ With that in mind, here is what you'd have to change. Note that the `ra-` names 
 
 * For most of the old functions `array-xxx`, the equivalent function in `newra` is `ra-xxx`. Exceptions:
 
-  + The equivalent of `shared-array-root` is `ra-data`.
+  + The equivalent of `shared-array-root` is `ra-root`.
   + The equivalent of `shared-array-offset` is `ra-offset`.
   + The equivalent of `make-shared-array` is `make-ra-shared`.
   + The equivalent of `transpose-array` is `ra-transpose`.

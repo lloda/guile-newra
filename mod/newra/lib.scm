@@ -39,7 +39,7 @@
 (define (ra->array ra)
   (when (eq? 'd (ra-type ra))
     (throw 'nonconvertible-type (ra-type ra)))
-  (apply make-shared-array (ra-data ra)
+  (apply make-shared-array (ra-root ra)
          (lambda i (list (apply ra-pos (ra-zero ra) (ra-dims ra) i)))
          (vector->list (vector-map (lambda (dim) (list (dim-lo dim) (dim-hi dim)))
                                    (ra-dims ra)))))
@@ -125,7 +125,7 @@ See also: make-typed-ra
       (if (< k newrank)
         (if (positive? (dim-len (vector-ref dims k)))
           (emptycheck (+ 1 k))
-          (make-ra-raw (%%ra-data oldra) (%%ra-zero oldra) dims))
+          (make-ra-raw (%%ra-root oldra) (%%ra-zero oldra) dims))
         (let* ((los (vector->list (vector-map dim-lo dims)))
                (ref (apply ra-pos (%%ra-zero oldra) (%%ra-dims oldra) (apply mapfunc los)))
                (dims (vector-map
@@ -144,7 +144,7 @@ See also: make-typed-ra
                                  (- (apply ra-pos (%%ra-zero oldra) (%%ra-dims oldra) (apply mapfunc ii)) ref))
                                0))
                             (loop (+ k 1)))))))))
-          (make-ra-raw (%%ra-data oldra) (- ref (ra-pos-first 0 dims)) dims))))))
+          (make-ra-raw (%%ra-root oldra) (- ref (ra-pos-first 0 dims)) dims))))))
 
 (define (ra-offset ra)
   "
@@ -261,10 +261,10 @@ See also: ra-iota ra-i
 ; ----------------
 
 (define (ra-i . i)
-  (make-ra-data (make-dim #f) (apply c-dims i)))
+  (make-ra-root (make-dim #f) (apply c-dims i)))
 
 (define* (ra-iota len #:optional (lo 0) (step 1))
-  (make-ra-data (make-dim #f lo step) (c-dims len)))
+  (make-ra-root (make-dim #f lo step) (c-dims len)))
 
 
 ; ----------------
@@ -300,7 +300,7 @@ See also: ra-copy! as-ra
            (rb (ra-copy! (make-ra-new type *unspecified* (apply c-dims shape)) ra)))
 ; preserve dead axes in the result.
       (if (any not (ra-dimensions ra))
-        (make-ra-raw (ra-data rb) (ra-zero rb)
+        (make-ra-raw (ra-root rb) (ra-zero rb)
                      (vector-map (lambda (a b) (if (dim-len a) b a)) (ra-dims ra) (ra-dims rb)))
         rb)))))
 
@@ -327,7 +327,7 @@ See also: ra-transpose make-ra-shared
          (ndims (vector-copy (%%ra-dims ra))))
     (let loop ((k k) (zero (%%ra-zero ra)))
       (if (null? k)
-        (make-ra-raw (%%ra-data ra) zero ndims)
+        (make-ra-raw (%%ra-root ra) zero ndims)
         (match (vector-ref ndims (car k))
           (($ <dim> len lo step)
            (vector-set! ndims (car k) (make-dim len lo (- step)))
@@ -354,7 +354,7 @@ same.
 Any axis of RB that is not referenced in AXES is a `dead' axis with undefined
 dimension and step 0.
 
-See also: make-ra-data make-ra-new
+See also: make-ra-root make-ra-new
 "
   (let ((ndims (make-vector (+ 1 (fold max 0 axes)) #f))
         (odims (%ra-dims ra)))
@@ -379,4 +379,4 @@ See also: make-ra-data make-ra-new
     (do ((k 0 (+ k 1))) ((= k (vector-length ndims)))
       (if (not (vector-ref ndims k))
         (vector-set! ndims k (make-dim #f 0 0))))
-    (make-ra-raw (%ra-data ra) (%ra-zero ra) ndims)))
+    (make-ra-raw (%ra-root ra) (%ra-zero ra) ndims)))

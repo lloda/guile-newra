@@ -115,7 +115,7 @@
                 (loop-dim (+ i 1))))))))))
 
 (define (make-ra-raw-prefix ra kk)
-  (make-ra-raw (%%ra-data ra)
+  (make-ra-raw (%%ra-root ra)
                (ra-pos-first (%%ra-zero ra) (%%ra-dims ra) kk)
                (if (< kk (%%ra-rank ra))
                  (vector-drop (%%ra-dims ra) kk)
@@ -369,7 +369,7 @@
                      [(z ...) (generate-temporaries #'(ra_ ...))]
                      [(d ...) (generate-temporaries #'(ra_ ...))])
          #'(lambda (lens lenm u ra ... frame ... step ...)
-             (%let ((d ...) (ra ...) %%ra-data)
+             (%let ((d ...) (ra ...) %%ra-root)
                (let loop-rank ((k 0) (z (%%ra-zero ra)) ...)
                  (if (= k u)
                    (let loop-unrolled ((i lenm) (z z) ...)
@@ -387,7 +387,7 @@
       ((_ %op ra_ ...)
        (with-syntax ([(ra ...) (generate-temporaries #'(ra_ ...))])
          #'(lambda (ra ...)
-             (%op (ra (%%ra-data ra) (%%ra-zero ra)) ...)))))))
+             (%op (ra (%%ra-root ra) (%%ra-zero ra)) ...)))))))
 
 ; If op-loop takes 2 args as a rest list, here we must do that as well.
 (define slice-loop-fun
@@ -511,7 +511,7 @@ See also: ra-map! ra-slice-for-each
        (%apply-fe
         (syntax-rules ()
           ((_ rx)
-           (apply op (map (lambda (ra) ((%%ra-vref ra) (%%ra-data ra) (%%ra-zero ra))) rx))))))
+           (apply op (map (lambda (ra) ((%%ra-vref ra) (%%ra-root ra) (%%ra-zero ra))) rx))))))
     (apply (case-lambda
             (() (%dispatch %typed-fe %fe ra))
             ((rb) (%dispatch %typed-fe %fe ra rb))
@@ -544,8 +544,8 @@ See also: ra-for-each ra-copy! ra-fill!
        (%apply-map!
         (syntax-rules ()
           ((_ rx)
-           ((%%ra-vset! (car rx)) (%%ra-data (car rx)) (%%ra-zero (car rx))
-            (apply op (map (lambda (ra) ((%%ra-vref ra) (%%ra-data ra) (%%ra-zero ra))) (cdr rx))))))))
+           ((%%ra-vset! (car rx)) (%%ra-root (car rx)) (%%ra-zero (car rx))
+            (apply op (map (lambda (ra) ((%%ra-vref ra) (%%ra-root ra) (%%ra-zero ra))) (cdr rx))))))))
     (apply (case-lambda
             (() (%dispatch %typed-map! %map! ra))
             ((rb) (%dispatch %typed-map! %map! ra rb))

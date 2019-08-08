@@ -9,7 +9,7 @@ Help: [C-uc .] insert timestamp [C-cc] flip checkbox [C-uucc] partial flip check
   * [X] ra-iota ra-i
   * [X] ra-index-map!
   * [X] ra-shape ra-dimensions
-  * [X] ra-data ra-offset
+  * [X] ra-root ra-offset
   * [ ] root vectors are equivalent to rank-1 newra objects
 
 * TODO guile-ploy functionality [2/6]

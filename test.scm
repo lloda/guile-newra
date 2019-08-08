@@ -37,10 +37,10 @@
 
 ; loop-fun from (newra test) FIXME may become ra-index-map!
 
-(define ra0 (make-ra-data (make-dim 1) (c-dims)))
-(define ra1 (make-ra-data (make-dim (* 2)) (c-dims 2)))
-(define ra2 (make-ra-data (make-dim (* 2 3)) (c-dims 2 3)))
-(define ra3 (make-ra-data (make-dim (* 2 3 4)) (c-dims 2 3 4)))
+(define ra0 (make-ra-root (make-dim 1) (c-dims)))
+(define ra1 (make-ra-root (make-dim (* 2)) (c-dims 2)))
+(define ra2 (make-ra-root (make-dim (* 2 3)) (c-dims 2 3)))
+(define ra3 (make-ra-root (make-dim (* 2 3 4)) (c-dims 2 3 4)))
 
 (test-equal "0"
   (with-output-to-string (lambda () (%ra-loop (vector-map dim-len (ra-dims ra0)) 0 () (display (ra0))))))
@@ -152,23 +152,23 @@
 ; -----------------------
 
 (let* ((ra5 (make-ra-new #t 0 (c-dims '(1 3) '(1 2)))))
-  (array-index-map! (ra-data ra5) (lambda i i))
+  (array-index-map! (ra-root ra5) (lambda i i))
   (test-equal (ra->string ra5) "#%2@1:3@1:2(((0) (1)) ((2) (3)) ((4) (5)))")
   (test-equal 3 (ra-length ra5)))
 
 (let* ((ra5 (make-typed-ra 's64 0 '(1 3) '(1 2))))
-  (array-index-map! (ra-data ra5) (lambda i (car i)))
+  (array-index-map! (ra-root ra5) (lambda i (car i)))
   (test-equal (ra->string ra5) "#%2s64@1:3@1:2((0 1) (2 3) (4 5))")
   (test-equal 3 (ra-length ra5)))
 
 
 ; -----------------------
-; make-ra-data
+; make-ra-root
 ; -----------------------
 
-(define ra6 (make-ra-data #(1 2 3 4 5 6) (c-dims '(1 2) '(1 3))))
+(define ra6 (make-ra-root #(1 2 3 4 5 6) (c-dims '(1 2) '(1 3))))
 (test-equal (ra->string ra6) "#%2@1:2@1:3((1 2 3) (4 5 6))")
-(define ra7a (make-ra-data (make-dim 6 1) (c-dims '(1 2) '(1 3))))
+(define ra7a (make-ra-root (make-dim 6 1) (c-dims '(1 2) '(1 3))))
 (test-equal (ra->string ra7a) "#%2@1:2@1:3((1 2 3) (4 5 6))")
 (define ra7b (make-ra-raw #(1 4 2 5 3 6) -3 `#(,(make-dim 2 1 1) ,(make-dim 3 1 2))))
 (test-equal (ra->string ra7b) "#%2@1:2@1:3((1 2 3) (4 5 6))")
@@ -182,7 +182,7 @@
 ; ra-slice, ra-ref, ra-cell
 ; -----------------------
 
-(define ra8 (make-ra-data (make-dim 6 1) (c-dims '(1 2) '(1 3))))
+(define ra8 (make-ra-root (make-dim 6 1) (c-dims '(1 2) '(1 3))))
 (test-equal 2 (ra-length ra8))
 
 (test-equal (ra->string (ra-cell ra8)) "#%2@1:2@1:3((1 2 3) (4 5 6))")
@@ -240,9 +240,9 @@
   (test-equal "#%3:2:3:2(((7 6) (9 8) (11 10)) ((1 0) (3 2) (5 4)))" (ra->string (ra-reverse ra 2 0)))
   (test-assert (ra-equal? (ra-reverse ra 2 0) (ra-reverse ra 0 2)))
   (test-assert (ra-equal? (ra-reverse ra 2 0 1) (ra-reverse (ra-reverse (ra-reverse ra 0) 1) 2)))
-  (test-eq (ra-data ra) (ra-data (ra-reverse ra 2 0))))
+  (test-eq (ra-root ra) (ra-root (ra-reverse ra 2 0))))
 
-(let ((ra (make-ra-data #(1 2 3 4) (vector (make-dim 4 -1)))))
+(let ((ra (make-ra-root #(1 2 3 4) (vector (make-dim 4 -1)))))
   (test-equal "#%1@-1:4(4 3 2 1)" (ra->string (ra-reverse ra 0))))
 
 
@@ -252,9 +252,9 @@
 ; ra-slice-for-each
 ; -----------------------
 
-(define ra-empty0 (make-ra-data (make-dim 6 1) (c-dims '(1 0) '(2 1))))
-(define ra-empty1 (make-ra-data (make-dim 6 1) (c-dims '(1 1) '(2 1))))
-(define ra-empty2 (make-ra-data (make-dim 6 1) (c-dims '(1 0) '(2 2))))
+(define ra-empty0 (make-ra-root (make-dim 6 1) (c-dims '(1 0) '(2 1))))
+(define ra-empty1 (make-ra-root (make-dim 6 1) (c-dims '(1 1) '(2 1))))
+(define ra-empty2 (make-ra-root (make-dim 6 1) (c-dims '(1 0) '(2 2))))
 (test-equal 0 (ra-length ra-empty0))
 (test-equal 1 (ra-length ra-empty1))
 (test-equal 0 (ra-length ra-empty2))
@@ -390,7 +390,7 @@
 ; setter
 ; -----------------------
 
-(define ra9 (make-ra-data (make-vector 6) (c-dims '(-1 0) '(1 3))))
+(define ra9 (make-ra-root (make-vector 6) (c-dims '(-1 0) '(1 3))))
 (set! (ra9 -1 1) 99)
 (set! (ra9 -1 2) 77)
 (set! (ra9 -1 3) 88)
@@ -407,8 +407,8 @@
 ; -----------------------
 
 (define ra11 (make-ra-new #t 0 (c-dims 10)))
-(define ra12 (make-ra-data (make-dim 10) (c-dims 10)))
-(define ra13 (make-ra-data (make-dim 10 10 -1) (c-dims 10)))
+(define ra12 (make-ra-root (make-dim 10) (c-dims 10)))
+(define ra13 (make-ra-root (make-dim 10 10 -1) (c-dims 10)))
 
 (test-equal 10 (ra-length ra11))
 (test-equal 10 (ra-length ra12))
@@ -416,7 +416,7 @@
 
 (test-equal "#%1:10(0 1 2 3 4 5 6 7 8 9)" (ra->string (ra-copy! ra11 ra12)))
 (let ((ra5a (make-ra-new #t 0 (c-dims '(1 2) '(1 3))))
-      (ra6a (make-ra-data (vector-copy #(1 2 3 4 5 6)) (c-dims '(1 2) '(1 3)))))
+      (ra6a (make-ra-root (vector-copy #(1 2 3 4 5 6)) (c-dims '(1 2) '(1 3)))))
   (test-equal "#%2@1:2@1:3((1 2 3) (4 5 6))" (ra->string (ra-copy! ra5a ra6a)))
   (test-assert (ra-equal? ra6a ra5a))
   (test-assert (ra-equal? ra6a ra5a ra6a))
@@ -429,8 +429,8 @@
   (test-assert (not (ra-equal? ra6a ra5a)))
   (test-assert (not (ra-equal? (string->ra "#%(1 2 3)") (string->ra "#%(1 2 3 4)"))))
   (test-assert (not (ra-equal? (string->ra "#%1f64(1 2 3)") (string->ra "#%(1 2 3)"))))
-  (test-assert (ra-equal? (make-ra-data #(99 99 99 99) (c-dims '(1 2) '(1 2)))
-                          (ra-fill! (make-ra-data (vector 1 2 3 4) (c-dims '(1 2) '(1 2))) 99))))
+  (test-assert (ra-equal? (make-ra-root #(99 99 99 99) (c-dims '(1 2) '(1 2)))
+                          (ra-fill! (make-ra-root (vector 1 2 3 4) (c-dims '(1 2) '(1 2))) 99))))
 
 (test-begin "ra-for-each")
 (test-equal "(10 0 10)(9 1 9)(8 2 8)(7 3 7)(6 4 6)(5 5 5)(4 6 4)(3 7 3)(2 8 2)(1 9 1)"
@@ -609,16 +609,16 @@
 ; inf dims I - (make-dim #f) = (make-dim #f 0 1)
 ; -----------------------
 
-(test-assert (ra-equal? (ra-i 3) (make-ra-data (make-dim #f) (c-dims 3))))
+(test-assert (ra-equal? (ra-i 3) (make-ra-root (make-dim #f) (c-dims 3))))
 
 ; inf index vector
 (test-assert (not (dim-len (make-dim #f))))
 
 ; make an array out of inf index vector
-(test-assert (ra-equal? (ra-i 3) (make-ra-data (make-dim #f) (c-dims 3))))
+(test-assert (ra-equal? (ra-i 3) (make-ra-root (make-dim #f) (c-dims 3))))
 
 ; make an inf array
-(let ((rainf (make-ra-data (make-dim #f) (c-dims #f))))
+(let ((rainf (make-ra-root (make-dim #f) (c-dims #f))))
   (throws-exception? 'unset-len-for-dim (lambda () (ra-for-each pk rainf)))
   (test-equal #(10 8 6) (ra->array (ra-map! (make-ra #f 3) - (ra-iota 3 10 -1) rainf)))
   (test-equal #(-10 -8 -6) (ra->array (ra-map! (make-ra #f 3) - rainf (ra-iota 3 10 -1)))))
@@ -636,8 +636,8 @@
   #2((11 12 13) (21 22 23))
   (ra->array
    (ra-map! (make-ra #f 2 3) +
-            (make-ra-data #(10 20) (vector (make-dim 2 0 1) (make-dim #f 0 0)))
-            (make-ra-data #(1 2 3) (vector (make-dim #f 0 0) (make-dim 3 0 1))))))
+            (make-ra-root #(10 20) (vector (make-dim 2 0 1) (make-dim #f 0 0)))
+            (make-ra-root #(1 2 3) (vector (make-dim #f 0 0) (make-dim 3 0 1))))))
 
 ; using generalized transpose
 
@@ -652,7 +652,7 @@
 
 (let ((ra (ra-copy #t (ra-transpose (ra-i 3) 1))))
   (test-equal "#%2:d:3((0 1 2))" (ra->string ra))
-  (test-equal #(0 1 2) (ra-data ra)))
+  (test-equal #(0 1 2) (ra-root ra)))
 
 
 ; -----------------------

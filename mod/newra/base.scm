@@ -13,9 +13,9 @@
 (define-module (newra base)
   #:export (ra?
             make-ra-raw
-            ra-data ra-zero ra-zero-set! ra-dims ra-type ra-vlen ra-vref ra-vset!
+            ra-root ra-zero ra-zero-set! ra-dims ra-type ra-vlen ra-vref ra-vset!
             check-ra
-            ra-rank ra-type make-ra-new make-ra-data
+            ra-rank ra-type make-ra-new make-ra-root
             make-dim dim? dim-len dim-lo dim-hi dim-step dim-ref c-dims
             ra-pos ra-pos-first ra-pos-hi ra-pos-lo
             ra-slice ra-cell ra-ref ra-set!
@@ -23,8 +23,8 @@
             make-dim* <dim>
             vector-drop vector-fold vector-clip
             <ra-vtable> pick-root-functions pick-make-root
-            %ra-data %ra-zero %ra-zero-set! %ra-dims %ra-type %ra-vlen %ra-vref %ra-vset! %ra-rank
-            %%ra-data %%ra-zero %%ra-zero-set! %%ra-dims %%ra-type %%ra-vlen %%ra-vref %%ra-vset! %%ra-rank
+            %ra-root %ra-zero %ra-zero-set! %ra-dims %ra-type %ra-vlen %ra-vref %ra-vset! %ra-rank
+            %%ra-root %%ra-zero %%ra-zero-set! %%ra-dims %%ra-type %%ra-vlen %%ra-vref %%ra-vset! %%ra-rank
             %%ra-step))
 
 (import (srfi :9) (srfi srfi-9 gnu) (only (srfi :1) fold every) (srfi :8)
@@ -179,7 +179,7 @@
 (define-syntax %%struct-ref (syntax-rules () ((_ a n) (struct-ref a n))))
 (define-syntax %%struct-set! (syntax-rules () ((_ a n o) (struct-set! a n o))))
 
-(define-inlinable (%%ra-data a) (%%struct-ref a 2))
+(define-inlinable (%%ra-root a) (%%struct-ref a 2))
 (define-inlinable (%%ra-zero a) (%%struct-ref a 3))
 (define-inlinable (%%ra-zero-set! a z) (%%struct-set! a 3 z)) ; set on iteration. FIXME immutable record?
 (define-inlinable (%%ra-dims a) (%%struct-ref a 4))
@@ -191,7 +191,7 @@
 (define-syntax %rastruct-ref (syntax-rules () ((_ a n) (begin (check-ra a) (struct-ref a n)))))
 (define-syntax %rastruct-set! (syntax-rules () ((_ a n o) (begin (check-ra a) (struct-set! a n o)))))
 
-(define-inlinable (%ra-data a) (%rastruct-ref a 2))
+(define-inlinable (%ra-root a) (%rastruct-ref a 2))
 (define-inlinable (%ra-zero a) (%rastruct-ref a 3))
 (define-inlinable (%ra-zero-set! a z) (%rastruct-set! a 3 z))
 (define-inlinable (%ra-dims a) (%rastruct-ref a 4))
@@ -212,13 +212,13 @@ See also: ra-zero
 "
   (%ra-zero a))
 
-(define (ra-data a)
+(define (ra-root a)
   "
-ra-data ra -> v
+ra-root ra -> v
 
 Return the root vector (or data vector) of RA.
 "
-  (%ra-data a))
+  (%ra-root a))
 
 (define (ra-zero-set! a z) (%ra-zero-set! a z))
 (define (ra-dims a) (%ra-dims a))
@@ -248,7 +248,7 @@ Return the root vector (or data vector) of RA.
     ((b) make-bitvector)
 ; TODO extend this idea to drag-along
     ((d) (throw 'no-dim-make))
-    (else (throw 'bad-ra-data-type type))))
+    (else (throw 'bad-ra-root-type type))))
 
 (define (pick-root-functions v)
   (cond ((vector? v)    (values  #t    vector-length     vector-ref     vector-set!   ))
@@ -268,7 +268,7 @@ Return the root vector (or data vector) of RA.
         ((bitvector? v) (values  'b    bitvector-length  bitvector-ref  bitvector-set!))
 ; TODO extend this idea to drag-along
         ((dim? v)       (values  'd    dim-len           dim-ref        (cut throw 'no-dim-set! <...>)))
-        (else (throw 'bad-ra-data-type v))))
+        (else (throw 'bad-ra-root-type v))))
 
 ; low level, for conversions
 (define (make-ra-raw data zero dims)
@@ -366,7 +366,7 @@ Return the root vector (or data vector) of RA.
            (begin
              (unless (= (%ra-rank ra) (%length i ...))
                (throw 'bad-number-of-indices (%ra-rank ra) (%length i ...)))
-             ((%%ra-vref ra) (%%ra-data ra) (%ra-pos 0 (%%ra-zero ra) (%%ra-dims ra) i ...)))))))
+             ((%%ra-vref ra) (%%ra-root ra) (%ra-pos 0 (%%ra-zero ra) (%%ra-dims ra) i ...)))))))
     (case-lambda
       ((ra) (%args ra))
       ((ra i0) (%args ra i0))
@@ -376,7 +376,7 @@ Return the root vector (or data vector) of RA.
       ((ra . i)
        (unless (= (%ra-rank ra) (length i))
          (throw 'bad-number-of-indices (%ra-rank ra) (length i)))
-       ((%%ra-vref ra) (%%ra-data ra) (apply ra-pos (%%ra-zero ra) (%%ra-dims ra) i))))))
+       ((%%ra-vref ra) (%%ra-root ra) (apply ra-pos (%%ra-zero ra) (%%ra-dims ra) i))))))
 
 (define ra-set!
   (let-syntax
@@ -386,7 +386,7 @@ Return the root vector (or data vector) of RA.
            (begin
              (unless (= (%ra-rank ra) (%length i ...))
                (throw 'bad-number-of-indices (%ra-rank ra) (%length i ...)))
-             ((%%ra-vset! ra) (%%ra-data ra) (%ra-pos 0 (%%ra-zero ra) (%%ra-dims ra) i ...) o)
+             ((%%ra-vset! ra) (%%ra-root ra) (%ra-pos 0 (%%ra-zero ra) (%%ra-dims ra) i ...) o)
              ra)))))
     (case-lambda
       ((ra o) (%args ra o))
@@ -397,12 +397,12 @@ Return the root vector (or data vector) of RA.
       ((ra o . i)
        (unless (= (%ra-rank ra) (length i))
          (throw 'bad-number-of-indices (%ra-rank ra) (length i)))
-       ((%%ra-vset! ra) (%%ra-data ra) (apply ra-pos (%%ra-zero ra) (%%ra-dims ra) i) o)
+       ((%%ra-vset! ra) (%%ra-root ra) (apply ra-pos (%%ra-zero ra) (%%ra-dims ra) i) o)
        ra))))
 
 (define (ra-slice ra . i)
   (check-ra ra)
-  (make-ra-raw (%%ra-data ra)
+  (make-ra-raw (%%ra-root ra)
                (apply ra-pos (%%ra-zero ra) (%%ra-dims ra) i)
                (vector-drop (%%ra-dims ra) (length i))))
 
@@ -419,8 +419,8 @@ Return the root vector (or data vector) of RA.
                  (leni (%length i ...)))
              (check-ra ra)
              (if (= (%%ra-rank ra) leni)
-               ((%%ra-vref ra) (%%ra-data ra) pos)
-               (make-ra-raw (%%ra-data ra) pos (vector-drop (%%ra-dims ra) leni))))))))
+               ((%%ra-vref ra) (%%ra-root ra) pos)
+               (make-ra-raw (%%ra-root ra) pos (vector-drop (%%ra-dims ra) leni))))))))
     (case-lambda
      ((ra) (%cell ra))
      ((ra i0) (%cell ra i0))
@@ -432,8 +432,8 @@ Return the root vector (or data vector) of RA.
       (let ((pos (apply ra-pos (%%ra-zero ra) (%%ra-dims ra) i))
             (leni (length i)))
         (if (= (%%ra-rank ra) leni)
-          ((%%ra-vref ra) (%%ra-data ra) pos)
-          (make-ra-raw (%%ra-data ra) pos (vector-drop (%%ra-dims ra) leni))))))))
+          ((%%ra-vref ra) (%%ra-root ra) pos)
+          (make-ra-raw (%%ra-root ra) pos (vector-drop (%%ra-dims ra) leni))))))))
 
 
 ; ----------------
@@ -450,7 +450,7 @@ Compute dim-vector for C-order (row-major) array of sizes D ...
 
 The first size may given as #f, which indicates an infinite dimension.
 
-See also: make-ra-data make-ra-new
+See also: make-ra-root make-ra-new
 "
   (list->vector
    (let loop ((d d))
@@ -469,7 +469,7 @@ See also: make-ra-data make-ra-new
         (let ((next (loop rest)))
           (cons (make-dim len 0 (* (dim-len (car next)) (dim-step (car next)))) next)))))))
 
-(define (make-ra-data data dims)
+(define (make-ra-root data dims)
   (make-ra-raw data (- (ra-pos-first 0 dims)) dims))
 
 (define (make-ra-new type value dims)

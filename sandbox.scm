@@ -97,7 +97,7 @@ See also: ra-map! ra-slice-for-each
        (%apply-fold
         (syntax-rules ()
           ((_ rx)
-           (apply op (map (lambda (ra) ((%%ra-vref ra) (%%ra-data ra) (%%ra-zero ra))) rx))))))
+           (apply op (map (lambda (ra) ((%%ra-vref ra) (%%ra-root ra) (%%ra-zero ra))) rx))))))
     (apply (case-lambda
             (() (%dispatch %typed-fold %fold ra))
             ((rb) (%dispatch %typed-fold %fold ra rb))

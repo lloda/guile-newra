@@ -202,7 +202,7 @@
                                   (loop-dim (+ i 1)))
                                  (else
                                   (throw 'too-many-elements-on-dim (- rank k))))))))))))
-                    (make-ra-data
+                    (make-ra-root
                      (root-resize temp (vector-fold * 1 len))
                      (apply c-dims
                        (vector->list (vector-map (lambda (lo len) (list lo (+ lo len -1)))
@@ -284,5 +284,5 @@ See also: list->ra ra->list ra-copy ra-copy! as-ra
                    (unless (null? l) (throw 'mismatched-list-length-dim (- rank 1 (length len)))))
                 (loop-rank len (car l)))))))))
 ; FIXME c-dims takes len | (lo hi) as in Guile, but I'd prefer len | (len lo)
-      (make-ra-data
+      (make-ra-root
        temp (apply c-dims (map (lambda (lo len) (list lo (+ lo len -1))) lo len)))))) ; FIXME
