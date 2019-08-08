@@ -18,7 +18,7 @@ These issues seems fixable, and besides, the Scheme compiler is only improving a
 
 Compared with the old arrays, `newra` offers a growing list of features:
 
-* Applicable arrays: `((array->ra #(1 2 3 4)) 3)` returns `4`.
+* Applicable arrays: Given `(define ra (list->ra '((1 2) (3 4))))`, `(ra 1 1)` returns `4` and `(ra 0)` returns `#%1(1 2)`.
 * Settable arrays: `(set! ((make-ra #f 2 3) 1 1) 99)` returns `#%2:2:3((#f #f #f) (#f 99 #f))`.
 * Lazy index vectors (`ra-iota`, `ra-i`). These may be infinite: `((ra-iota #f 1) (- #e1e20 1))` returns `100000000000000000000`.
 * Rank extension by prefix matching: `(ra-map! (make-ra 'x 2 3) + (ra-i 2 3) (ra-iota 2 0 10))` returns `#%2:2:3((0 1 2) (13 14 15))`. Prefix matching supports undefined dimensions; the previous expression and `(ra-map! (make-ra 'x 2 3) + (ra-i #f 3) (ra-iota #f 0 10))` are equivalent.
