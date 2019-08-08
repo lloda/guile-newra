@@ -215,7 +215,7 @@
 
 
 ; -----------------------
-; ra-transpose
+; ra-transpose (see below for ra-transpose with dead axes)
 ; -----------------------
 
 (test-equal (ra->string (ra-transpose ra7a 1 0)) "#%2@1:3@1:2((1 4) (2 5) (3 6))")
@@ -225,6 +225,22 @@
 (test-equal (ra->string (ra-transpose ra7a 0 0)) "#%1@1:2(1 5)")
 (test-equal (ra->string (ra-transpose ra7b 0 0)) "#%1@1:2(1 5)")
 (test-assert (throws-exception? 'bad-number-of-axes (lambda () (ra-transpose (ra-iota 3) 0 1))))
+
+
+; -----------------------
+; ra-reverse
+; -----------------------
+
+(let ((ra (ra-i 2 3 2)))
+  (test-assert (ra-equal? ra (ra-reverse ra)))
+  (test-equal "#%3:2:3:2(((6 7) (8 9) (10 11)) ((0 1) (2 3) (4 5)))" (ra->string (ra-reverse ra 0)))
+  (test-equal "#%3:2:3:2(((4 5) (2 3) (0 1)) ((10 11) (8 9) (6 7)))" (ra->string (ra-reverse ra 1)))
+  (test-equal "#%3:2:3:2(((1 0) (3 2) (5 4)) ((7 6) (9 8) (11 10)))" (ra->string (ra-reverse ra 2)))
+  (test-equal "#%3:2:3:2(((5 4) (3 2) (1 0)) ((11 10) (9 8) (7 6)))" (ra->string (ra-reverse ra 1 2)))
+  (test-equal "#%3:2:3:2(((7 6) (9 8) (11 10)) ((1 0) (3 2) (5 4)))" (ra->string (ra-reverse ra 2 0)))
+  (test-assert (ra-equal? (ra-reverse ra 2 0) (ra-reverse ra 0 2)))
+  (test-assert (ra-equal? (ra-reverse ra 2 0 1) (ra-reverse (ra-reverse (ra-reverse ra 0) 1) 2)))
+  (test-eq (ra-data ra) (ra-data (ra-reverse ra 2 0))))
 
 
 ; -----------------------

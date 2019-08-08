@@ -32,6 +32,6 @@
            array->ra ra->array as-ra
            ra-i ra-iota
            ra-copy
-           ra-transpose
+           ra-transpose ra-reverse
 
            list->ra list->typed-ra)

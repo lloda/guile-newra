@@ -146,7 +146,7 @@
   (and (struct? o) (eq? <ra-vtable> (struct-vtable o))))
 
 (define-inlinable (check-ra o)
-  (unless (ra? o) (throw 'not-ra? o)))
+  (if (ra? o) o (throw 'not-ra? o)))
 
 (define (make-ra* data zero dims type vlen vref vset!)
   (letrec ((ra

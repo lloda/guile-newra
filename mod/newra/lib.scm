@@ -17,7 +17,7 @@
             array->ra ra->array as-ra
             ra-i ra-iota
             ra-copy
-            ra-transpose))
+            ra-reverse ra-transpose))
 
 (import (newra base) (newra map) (only (srfi :1) fold every any) (srfi :8) (srfi :26)
         (ice-9 match) (only (rnrs base) vector-map vector-for-each))
@@ -274,7 +274,7 @@ See also: ra-iota ra-i
 ra-copy ra -> rb
 ra-copy type ra -> rb
 
-Copy the contents of RA into a new ra RB of type TYPE and the same shape of
+Copy the contents of RA into a new ra RB of type TYPE and the same shape as
 RA. TYPE defaults to (ra-type RA) if not given.
 
 If RA has dead axes, those are preserved in RB.
@@ -301,6 +301,33 @@ See also: ra-copy! as-ra
 
 
 ; ----------------
+; reverse
+; ----------------
+
+(define (ra-reverse ra . k)
+  "
+ra-reverse ra k ...
+
+Reverse axes K ... of ra RA, 0 <= K < (ra-rank RA).
+
+Example:
+
+  (ra-reverse (ra-i 2 3) (
+
+See also: ra-transpose make-ra-shared
+"
+  (let* ((ra (check-ra ra))
+         (ndims (vector-copy (%%ra-dims ra))))
+    (let loop ((k k) (zero (%%ra-zero ra)))
+      (if (null? k)
+        (make-ra-raw (%%ra-data ra) zero ndims)
+        (match (vector-ref ndims (car k))
+          (($ <dim> len lo step)
+           (vector-set! ndims (car k) (make-dim len lo (- step)))
+           (loop (cdr k) (+ zero (+ lo (* (- len 1) step))))))))))
+
+
+; ----------------
 ; transpose
 ; ----------------
 
@@ -308,9 +335,9 @@ See also: ra-copy! as-ra
   "
 ra-transpose ra axes ... -> rb
 
-Transpose the ra RA. AXES must be a list of integers, and it must be as long as
-the rank of RA. Each axis i = 0 ... (ra-rank ra)-1 is transposed to axis k =
-(AXES i) of RB. Therefore the rank of RB is 1+max(k).
+Transpose the axes of ra RA. AXES must be a list of integers, and it must be as
+long as the rank of RA. Each axis i = 0 ... (ra-rank ra)-1 is transposed to axis
+k = (AXES i) of RB. Therefore the rank of RB is 1+max(k).
 
 An axis k of RB may be referenced multiple times in AXES, by RA axes i ... . In
 that case the size of k is the smallest of the sizes of i ..., and the step of k
