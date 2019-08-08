@@ -242,6 +242,11 @@
   (test-assert (ra-equal? (ra-reverse ra 2 0 1) (ra-reverse (ra-reverse (ra-reverse ra 0) 1) 2)))
   (test-eq (ra-data ra) (ra-data (ra-reverse ra 2 0))))
 
+(let ((ra (make-ra-data #(1 2 3 4) (vector (make-dim 4 -1)))))
+  (test-equal "#%1@-1:4(4 3 2 1)" (ra->string (ra-reverse ra 0))))
+
+
+
 
 ; -----------------------
 ; ra-slice-for-each

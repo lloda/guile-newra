@@ -174,19 +174,24 @@ See also: as-ra
     (cond
      ((zero? rank) (ra-ref ra))
      (else
-      (let loop-rank ((k rank) (ra ra))
-        (let ((dimk (vector-ref dims (- rank k))))
-          (cond
-           ((= 1 k)
-            (let loop-dim ((l '()) (i (dim-hi dimk)))
-              (if (< i (dim-lo dimk))
-                l
-                (loop-dim (cons (ra-ref ra i) l) (- i 1)))))
-           (else
-            (let loop-dim ((l '()) (i (dim-hi dimk)))
-              (if (< i (dim-lo dimk))
-                l
-                (loop-dim (cons (loop-rank (- k 1) (ra-cell ra i)) l) (- i 1))))))))))))
+      (let ((ra (ra-reverse ra (- (ra-rank ra) 1))))
+        (let loop-rank ((k rank) (ra ra))
+          (let ((dimk (vector-ref dims (- rank k))))
+            (cond
+             ((= 1 k)
+              (if (> (dim-len dimk) 20)
+                (let ((l '()))
+                  (ra-for-each (lambda (x) (set! l (cons x l))) ra)
+                  l)
+                (let loop-dim ((l '()) (i (dim-lo dimk)))
+                  (if (> i (dim-hi dimk))
+                    l
+                    (loop-dim (cons (ra-ref ra i) l) (+ i 1))))))
+             (else
+              (let loop-dim ((l '()) (i (dim-hi dimk)))
+                (if (< i (dim-lo dimk))
+                  l
+                  (loop-dim (cons (loop-rank (- k 1) (ra-cell ra i)) l) (- i 1)))))))))))))
 
 ; Similar to (@ (newra newra) ra-for-each-slice-1) - since we cannot unroll. It
 ; might be cheaper to go Fortran order (building the index lists back to front);
@@ -326,7 +331,7 @@ See also: ra-transpose make-ra-shared
         (match (vector-ref ndims (car k))
           (($ <dim> len lo step)
            (vector-set! ndims (car k) (make-dim len lo (- step)))
-           (loop (cdr k) (+ zero (+ lo (* (- len 1) step))))))))))
+           (loop (cdr k) (+ zero (* step (+ (* 2 lo) len -1))))))))))
 
 
 ; ----------------
