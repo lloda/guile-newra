@@ -308,11 +308,13 @@ See also: ra-copy! as-ra
   "
 ra-reverse ra k ...
 
-Reverse axes K ... of ra RA, 0 <= K < (ra-rank RA).
+Reverse axes K ... of ra RA, 0 <= K < (ra-rank RA). The contents of RA are not
+copied.
 
 Example:
 
-  (ra-reverse (ra-i 2 3) (
+  (ra-reverse (list->ra 2 '((0 1 2) (3 4 5))) 0 1)
+    -> #%2:2:3((2 1 0) (5 4 3)))
 
 See also: ra-transpose make-ra-shared
 "
