@@ -606,6 +606,19 @@
 
 
 ; -----------------------
+; ra-fold ra-fold*
+; -----------------------
+
+; these are slow :-/
+; numpy (1.16.2)  - time(np.sum(np.arange(1e8)))             ~ 0.15 s
+; octave (4.4.1)  - a = time(); b=sum(0:999999999); time()-a ~ 3.1 s
+; newra           - ,time (ra-fold + 0 (ra-iota #e1e8))      ~ 4.7 s
+
+(test-equal (* #e1e6 (- #e1e6 1) 1/2) (ra-fold + 0 (ra-iota #e1e6)))
+(test-equal (* #e1e6 (- #e1e6 1) 1/2) (ra-fold + 0 (ra-i 100 100 100)))
+
+
+; -----------------------
 ; inf dims I - (make-dim #f) = (make-dim #f 0 1)
 ; -----------------------
 

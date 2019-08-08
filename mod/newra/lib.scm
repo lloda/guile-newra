@@ -17,7 +17,8 @@
             array->ra ra->array as-ra
             ra-i ra-iota
             ra-copy
-            ra-reverse ra-transpose))
+            ra-reverse ra-transpose
+            ra-fold ra-fold*))
 
 (import (newra base) (newra map) (only (srfi :1) fold every any) (srfi :8) (srfi :26)
         (ice-9 match) (only (rnrs base) vector-map vector-for-each))
@@ -368,3 +369,59 @@ See also: make-ra-root make-ra-new
       (if (not (vector-ref ndims k))
         (vector-set! ndims k (make-dim #f 0 0))))
     (make-ra-raw (%ra-root ra) (%ra-zero ra) ndims)))
+
+
+; ----------------
+; fold - probably better ways to do this by fixing or extending (newra map)
+; ----------------
+
+(define ra-fold
+  (case-lambda
+   "
+ra-fold kons knil ra ...
+
+Reduce ra RA by (... (KONS RA1 ... (KONS RA0 ... KNIL)) ...) where
+(RA0 ...), (RA1 ...) is some sequence of the elements of RA ....
+
+See also: ra-fold* ra-map! ra-for-each ra-slice-for-each
+"
+   ((op init)
+    init)
+   ((op init a0)
+    (ra-for-each (lambda (x0) (set! init (op x0 init))) a0)
+    init)
+   ((op init a0 a1)
+    (ra-for-each (lambda (x0 x1) (set! init (op x0 x1 init))) a0 a1)
+    init)
+   ((op init a0 a1 a2)
+    (ra-for-each (lambda (x0 x1 x2) (set! init (op x0 x1 x2 init))) a0 a1 a2)
+    init)
+   ((op init . args)
+    (apply ra-for-each (lambda x (set! init (apply op (append! x (list init))))) args)
+    init)))
+
+; really prefer this order, possibly get rid of (ra-fold).
+(define ra-fold*
+  (case-lambda
+   "
+ra-fold* kons knil ra ...
+
+Reduce ra RA by (... (KONS (KONS KNIL RA0 ...) RA1 ... ) ...) where
+(RA0 ...), (RA1 ...) is some sequence of the elements of RA ....
+
+See also: ra-fold ra-map! ra-for-each ra-slice-for-each
+"
+   ((op init)
+    init)
+   ((op init a0)
+    (ra-for-each (lambda (x0) (set! init (op init x0))) a0)
+    init)
+   ((op init a0 a1)
+    (ra-for-each (lambda (x0 x1) (set! init (op init x0 x1))) a0 a1)
+    init)
+   ((op init a0 a1 a2)
+    (ra-for-each (lambda (x0 x1 x2) (set! init (op init x0 x1 x2))) a0 a1 a2)
+    init)
+   ((op init . args)
+    (apply ra-for-each (lambda x (set! init (apply op init x))) args)
+    init)))

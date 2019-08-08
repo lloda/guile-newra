@@ -33,5 +33,6 @@
            ra-i ra-iota
            ra-copy
            ra-transpose ra-reverse
+           ra-fold ra-fold*
 
            list->ra list->typed-ra)
