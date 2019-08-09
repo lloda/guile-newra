@@ -14,7 +14,8 @@
   #:export (ra-slice-for-each
             ra-slice-for-each-check
             ra-slice-for-each-1 ra-slice-for-each-2 ra-slice-for-each-3 ra-slice-for-each-4
-            ra-fill! ra-copy! ra-equal? ra-map! ra-for-each))
+            ra-fill! ra-copy! ra-map! ra-for-each
+            ra-every ra-any ra-equal?))
 
 (import (newra base) (srfi :9) (srfi srfi-9 gnu) (only (srfi :1) fold every) (srfi :8)
         (srfi srfi-4 gnu) (srfi :26) (ice-9 match) (ice-9 control)
@@ -580,7 +581,7 @@ See also: ra-copy! ra-map!
   "
 ra-copy! ra rb
 
-Copy the contents of ra RB into ra RA. RA and RB must have the same shape and
+Copy the contents of ra RB into ra RA. RA and RB must have matching shapes and
 be of compatible types.
 
 This function returns the updated ra RA.
@@ -599,12 +600,97 @@ See also: ra-fill! ra-map!
     (%dispatch %typed-copy! %copy! ra rb)
     ra))
 
+; FIXME refactor ra-any ra-every
+
+(define (ra-every pred? . rx)
+  "
+ra-every pred? rx ...
+
+RX must be RA of matching shapes. Return true if (PRED? RX ..) is true for every
+tuple of matching elements, otherwise return #f.
+
+See also: ra-any ra-equal? ra-fold
+"
+  (let/ec exit
+    (let-syntax
+        ((%typed-pred?
+          (syntax-rules ()
+            ((_ (vref-ra vset!-ra ra da za) ...)
+             (unless (pred? (vref-ra da za) ...)
+               (exit #f)))))
+         (%pred?
+          (syntax-rules ()
+            ((_ (ra da za) ...)
+             (unless (pred? ((%%ra-vref ra) da za) ...)
+               (exit #f))))))
+      (or (null? rx)
+          (begin
+            (apply (case-lambda
+                    ((ra) (%dispatch %typed-pred? %pred? ra))
+                    ((ra rb) (%dispatch %typed-pred? %pred? ra rb))
+                    ((ra rb rc) (%dispatch %typed-pred? %pred? ra rb rc))
+                    (rx (apply ra-for-each (lambda x (unless (apply pred? x) (exit #f))) rx)))
+              rx)
+            #t)))))
+
+(define (ra-any pred? . rx)
+  "
+ra-compare pred? rx ...
+
+RX must be ra of matching shapes. Return (PRED? RXi ..) is that is true for some
+tuple RXi ... of matching elements, otherwise return #f.
+
+For example:
+
+; find i, j such that A(i, j) is true
+
+(define I (ra-iota #f))
+(define J (ra-transpose (ra-iota #f) 1))
+(ra-any (lambda (a i j) (and a (vector i j))) A I J)
+
+See also: ra-every ra-equal? ra-fold
+"
+  (let/ec exit
+    (let-syntax
+        ((%typed-pred?
+          (syntax-rules ()
+            ((_ (vref-ra vset!-ra ra da za) ...)
+             (and=> (pred? (vref-ra da za) ...) exit))))
+         (%pred?
+          (syntax-rules ()
+            ((_ (ra da za) ...)
+             (and=> (pred? ((%%ra-vref ra) da za) ...) exit)))))
+      (or (null? rx)
+          (begin
+            (apply (case-lambda
+                    ((ra) (%dispatch %typed-pred? %pred? ra))
+                    ((ra rb) (%dispatch %typed-pred? %pred? ra rb))
+                    ((ra rb rc) (%dispatch %typed-pred? %pred? ra rb rc))
+                    (rx (apply ra-for-each (lambda x (and=> (apply pred? x) exit)) rx)))
+              rx)
+            #f)))))
+
+(define (equal-shapes? . rx)
+  (let/ec exit
+    (let ((da (ra-dims (car rx)))
+          (ta (ra-type (car rx))))
+      (for-each (lambda (rb)
+                  (unless (eq? ta (ra-type rb))
+                    (exit #f))
+                  (vector-for-each
+                   (lambda (da db)
+                     (unless (and (= (dim-lo da) (dim-lo db)) (= (dim-len da) (dim-len db)))
+                       (exit #f)))
+                   da (ra-dims rb)))
+        (cdr rx))
+      #t)))
+
 (define (ra-equal? . rx)
   "
 ra-equal? rx ...
 
-Return #t if the ras RX ... have the same shape and all the elements are
-EQUAL? between them, or #f otherwise.
+Return #t if the ras RX ... have the same shapes and their elements are EQUAL?,
+or #f otherwise.
 
 See also: ra-map! ra-for-each
 "
@@ -622,19 +708,10 @@ See also: ra-map! ra-for-each
                (exit #f))))))
       (or (null? rx)
           (null? (cdr rx))
-          (let ((da (ra-dims (car rx)))
-                (ta (ra-type (car rx))))
-            (for-each (lambda (rb)
-                        (unless (eq? ta (ra-type rb))
-                          (exit #f))
-                        (vector-for-each
-                         (lambda (da db)
-                           (unless (and (= (dim-lo da) (dim-lo db)) (= (dim-len da) (dim-len db)))
-                             (exit #f)))
-                         da (ra-dims rb)))
-                      (cdr rx))
-            (apply (case-lambda
-                    ((ra rb) (%dispatch %typed-equal? %equal? ra rb))
-                    (rx (apply ra-for-each (lambda x (unless (apply equal? x) (exit #f))) rx)))
-              rx)
-            #t)))))
+          (and (apply equal-shapes? rx)
+               (begin
+                 (apply (case-lambda
+                         ((ra rb) (%dispatch %typed-equal? %equal? ra rb))
+                         (rx (apply ra-for-each (lambda x (unless (apply equal? x) (exit #f))) rx)))
+                   rx)
+                 #t))))))

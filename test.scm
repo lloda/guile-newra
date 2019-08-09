@@ -621,6 +621,18 @@
 
 
 ; -----------------------
+; ra-any ra-every
+; -----------------------
+
+(test-assert (ra-every positive? (list->ra 1 '(1 2 3 4 5))))
+(test-equal -3 (ra-any (lambda (x) (and (negative? x) x)) (list->ra 1 '(1 2 -3 4 5))))
+(test-equal #(0 2) (ra-any (lambda (a i j) (and (zero? a) (vector i j)))
+                           (list->ra 2 '((3 4 0) (1 2 9)))
+                           (ra-iota #f)
+                           (ra-transpose (ra-iota #f) 1)))
+
+
+; -----------------------
 ; inf dims I - (make-dim #f) = (make-dim #f 0 1)
 ; -----------------------
 

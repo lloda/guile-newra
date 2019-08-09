@@ -21,7 +21,63 @@
             ra-fold ra-fold*))
 
 (import (newra base) (newra map) (only (srfi :1) fold every any iota) (srfi :8) (srfi :26)
-        (ice-9 match) (only (rnrs base) vector-map vector-for-each))
+        (ice-9 control) (ice-9 match) (only (rnrs base) vector-map vector-for-each))
+
+
+; ----------------
+; fold - probably better ways to do this by fixing or extending (newra map)
+; ----------------
+
+(define ra-fold
+  (case-lambda
+   "
+ra-fold kons knil ra ...
+
+Reduce ra RA by (... (KONS RA1 ... (KONS RA0 ... KNIL)) ...) where
+(RA0 ...), (RA1 ...) is some sequence of the elements of RA ....
+
+See also: ra-fold* ra-map! ra-for-each ra-slice-for-each
+"
+   ((op init)
+    init)
+   ((op init a0)
+    (ra-for-each (lambda (x0) (set! init (op x0 init))) a0)
+    init)
+   ((op init a0 a1)
+    (ra-for-each (lambda (x0 x1) (set! init (op x0 x1 init))) a0 a1)
+    init)
+   ((op init a0 a1 a2)
+    (ra-for-each (lambda (x0 x1 x2) (set! init (op x0 x1 x2 init))) a0 a1 a2)
+    init)
+   ((op init . args)
+    (apply ra-for-each (lambda x (set! init (apply op (append! x (list init))))) args)
+    init)))
+
+; really prefer this order, possibly get rid of (ra-fold).
+(define ra-fold*
+  (case-lambda
+   "
+ra-fold* kons knil ra ...
+
+Reduce ra RA by (... (KONS (KONS KNIL RA0 ...) RA1 ... ) ...) where
+(RA0 ...), (RA1 ...) is some sequence of the elements of RA ....
+
+See also: ra-fold ra-map! ra-for-each ra-slice-for-each
+"
+   ((op init)
+    init)
+   ((op init a0)
+    (ra-for-each (lambda (x0) (set! init (op init x0))) a0)
+    init)
+   ((op init a0 a1)
+    (ra-for-each (lambda (x0 x1) (set! init (op init x0 x1))) a0 a1)
+    init)
+   ((op init a0 a1 a2)
+    (ra-for-each (lambda (x0 x1 x2) (set! init (op init x0 x1 x2))) a0 a1 a2)
+    init)
+   ((op init . args)
+    (apply ra-for-each (lambda x (set! init (apply op init x))) args)
+    init)))
 
 
 ; ----------------
@@ -170,9 +226,7 @@ See also: as-ra
           (cond
            ((= 1 (%%ra-rank ra))
             (if (> (dim-len dimk) 20)
-              (let ((l '()))
-                (ra-for-each (lambda (x) (set! l (cons x l))) ra)
-                l)
+              (ra-fold cons '() ra)
               (let loop-dim ((l '()) (i (dim-lo dimk)))
                 (if (> i (dim-hi dimk))
                   l
@@ -234,8 +288,10 @@ See also: ra-iota ra-i
 
 
 ; ----------------
-; as-ra FIXME partial implementation.
+; functions not found in oldra, or significantly extended
 ; ----------------
+
+; FIXME partial implementation.
 
 (define* (as-ra ra #:key (type (ra-type ra)) (new? #f))
   (cond ((and (eq? (ra-type ra) type) (not new?)) ra)
@@ -244,22 +300,13 @@ See also: ra-iota ra-i
                          (apply c-dims (map dim-len (vector->list (ra-dims ra)))))
                         ra))))
 
-
-; ----------------
-; iota etc.
-; ----------------
-
 (define (ra-i . i)
   (make-ra-root (make-dim #f) (apply c-dims i)))
 
 (define* (ra-iota len #:optional (lo 0) (step 1))
   (make-ra-root (make-dim #f lo step) (c-dims len)))
 
-
-; ----------------
 ; oldra has array-copy in (ice-9 arrays). Something of the sort.
-; ----------------
-
 ; FIXME handling of dead axes could be faster - maybe c-dims should be written differently.
 
 (define ra-copy
@@ -293,11 +340,6 @@ See also: ra-copy! as-ra
                      (vector-map (lambda (a b) (if (dim-len a) b a)) (ra-dims ra) (ra-dims rb)))
         rb)))))
 
-
-; ----------------
-; reverse
-; ----------------
-
 (define (ra-reverse ra . k)
   "
 ra-reverse ra k ...
@@ -321,11 +363,6 @@ See also: ra-transpose make-ra-shared
           (($ <dim> len lo step)
            (vector-set! ndims (car k) (make-dim len lo (- step)))
            (loop (cdr k) (+ zero (* step (+ (* 2 lo) len -1))))))))))
-
-
-; ----------------
-; transpose
-; ----------------
 
 (define ra-transpose
   (case-lambda
@@ -378,59 +415,3 @@ See also: make-ra-root make-ra-new
         (if (not (vector-ref ndims k))
           (vector-set! ndims k (make-dim #f 0 0))))
       (make-ra-raw (%%ra-root ra) (%%ra-zero ra) ndims)))))
-
-
-; ----------------
-; fold - probably better ways to do this by fixing or extending (newra map)
-; ----------------
-
-(define ra-fold
-  (case-lambda
-   "
-ra-fold kons knil ra ...
-
-Reduce ra RA by (... (KONS RA1 ... (KONS RA0 ... KNIL)) ...) where
-(RA0 ...), (RA1 ...) is some sequence of the elements of RA ....
-
-See also: ra-fold* ra-map! ra-for-each ra-slice-for-each
-"
-   ((op init)
-    init)
-   ((op init a0)
-    (ra-for-each (lambda (x0) (set! init (op x0 init))) a0)
-    init)
-   ((op init a0 a1)
-    (ra-for-each (lambda (x0 x1) (set! init (op x0 x1 init))) a0 a1)
-    init)
-   ((op init a0 a1 a2)
-    (ra-for-each (lambda (x0 x1 x2) (set! init (op x0 x1 x2 init))) a0 a1 a2)
-    init)
-   ((op init . args)
-    (apply ra-for-each (lambda x (set! init (apply op (append! x (list init))))) args)
-    init)))
-
-; really prefer this order, possibly get rid of (ra-fold).
-(define ra-fold*
-  (case-lambda
-   "
-ra-fold* kons knil ra ...
-
-Reduce ra RA by (... (KONS (KONS KNIL RA0 ...) RA1 ... ) ...) where
-(RA0 ...), (RA1 ...) is some sequence of the elements of RA ....
-
-See also: ra-fold ra-map! ra-for-each ra-slice-for-each
-"
-   ((op init)
-    init)
-   ((op init a0)
-    (ra-for-each (lambda (x0) (set! init (op init x0))) a0)
-    init)
-   ((op init a0 a1)
-    (ra-for-each (lambda (x0 x1) (set! init (op init x0 x1))) a0 a1)
-    init)
-   ((op init a0 a1 a2)
-    (ra-for-each (lambda (x0 x1 x2) (set! init (op init x0 x1 x2))) a0 a1 a2)
-    init)
-   ((op init . args)
-    (apply ra-for-each (lambda x (set! init (apply op init x))) args)
-    init)))

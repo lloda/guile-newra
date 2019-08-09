@@ -24,7 +24,8 @@
 
            ra-slice-for-each
            ra-slice-for-each-1 ra-slice-for-each-2 ra-slice-for-each-3 ra-slice-for-each-4
-           ra-fill! ra-copy! ra-equal? ra-map! ra-for-each
+           ra-fill! ra-copy! ra-map! ra-for-each
+           ra-equal? ra-any ra-every
 
            ra-index-map!
            ra-length make-ra make-typed-ra make-ra-shared ra->list
