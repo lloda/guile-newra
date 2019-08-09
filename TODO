@@ -2,7 +2,7 @@
 
 Help: [C-uc .] insert timestamp [C-cc] flip checkbox [C-uucc] partial flip checkbox [C-ct] flip TODO.
 
-* TODO compatibility with existing Guile arrays [7/8]
+* TODO compatibility with existing Guile arrays [8/9]
   * [X] ra-slice-for-each ra-map! ra-for-each ra-cell ra-ref ra-set!
   * [X] ra-transpose ra-reverse
   * [X] make-ra make-ra-shared ra->list list->ra list->typed-ra
@@ -10,11 +10,12 @@ Help: [C-uc .] insert timestamp [C-cc] flip checkbox [C-uucc] partial flip check
   * [X] ra-index-map!
   * [X] ra-shape ra-dimensions
   * [X] ra-root ra-offset
-  * [X] ra-equal? ra-any ra-every
+  * [X] ra-equal?
   * [ ] root vectors are equivalent to rank-1 newra objects
 
-* TODO guile-ploy functionality [3/7]
+* TODO guile-ploy functionality [4/8]
   * [X] ra-fold ra-fold*
+  * [X] ra-any ra-every
   * [X] raw prefix matching
   * [X] generalized prefix matching
   * [ ] high level slicing
@@ -35,11 +36,11 @@ Help: [C-uc .] insert timestamp [C-cc] flip checkbox [C-uucc] partial flip check
   * [ ] compilation of literals
   * [ ] replace all names
 
-* TODO friendlier undefined sizes [1/6]
+* TODO friendlier undefined sizes [2/6]
   * [X] printing of 'd typed arrays
+  * [X] printing with dead axes
   * [ ] reading of 'd typed arrays
   * [ ] printing with infinite axes
-  * [ ] printing with dead axes
   * [ ] reading of arrays with inf axes
   * [ ] reading of arrays with dead axes
 
