@@ -492,36 +492,84 @@
                 syntax-accessors-3)
            (else (%default %op ra rb rc)))))))
 
-(define (ra-for-each op ra . rx)
-  "
+(define ra-for-each
+  (let-syntax
+      ((%%subop
+        (lambda (stx)
+          (syntax-case stx ()
+            ((_ op ra ...)
+             (with-syntax ([(vref-ra ...) (generate-temporaries #'(ra ...))]
+                           [(vset!-ra ...) (generate-temporaries #'(ra ...))]
+                           [(da ...) (generate-temporaries #'(ra ...))]
+                           [(za ...) (generate-temporaries #'(ra ...))])
+               #'(let-syntax
+                     ((%typed-fe
+                       (syntax-rules ()
+                         ((_ (vref-ra vset!-ra ra da za) ...)
+                          (op (vref-ra da za) ...))))
+                      (%fe
+                       (syntax-rules ()
+                         ((_ (ra da za) ...)
+                          (op ((%%ra-vref ra) da za) ...)))))
+                   (%dispatch %typed-fe %fe ra ...)))))))
+       (%%apply-subop
+        (lambda (stx)
+          (syntax-case stx ()
+            ((_ op rx)
+             #'(let-syntax
+                   ((%apply-fe
+                     (syntax-rules ()
+                       ((_ rx)
+                        (apply op (map (lambda (ra) ((%%ra-vref ra) (%%ra-root ra) (%%ra-zero ra))) rx))))))
+                 (%apply-default %apply-fe rx)))))))
+    (case-lambda
+     "
 ra-for-each op rx ...
 
 Apply OP to each tuple of elements from ras RX ...
 
 See also: ra-map! ra-slice-for-each
 "
-  (let-syntax
-      ((%typed-fe
-        (syntax-rules ()
-          ((_ (vref-ra vset!-ra ra da za) ...)
-           (op (vref-ra da za) ...))))
-       (%fe
-        (syntax-rules ()
-          ((_ (ra da za) ...)
-           (op ((%%ra-vref ra) da za) ...))))
-       (%apply-fe
-        (syntax-rules ()
-          ((_ rx)
-           (apply op (map (lambda (ra) ((%%ra-vref ra) (%%ra-root ra) (%%ra-zero ra))) rx))))))
-    (apply (case-lambda
-            (() (%dispatch %typed-fe %fe ra))
-            ((rb) (%dispatch %typed-fe %fe ra rb))
-            ((rb rc) (%dispatch %typed-fe %fe ra rb rc))
-            (rx (%apply-default %apply-fe (cons ra rx))))
-      rx)))
+     ((op ra) (%%subop op ra))
+     ((op ra rb) (%%subop op ra rb))
+     ((op ra rb rc) (%%subop op ra rb rc))
+     ((op . rx) (%%apply-subop op rx)))))
 
-(define (ra-map! ra op . rx)
-  "
+(define ra-map!
+  (let-syntax
+      ((%%subop
+        (lambda (stx)
+          (syntax-case stx ()
+            ((_ ra op rx ...)
+             (with-syntax ([(vref-rx ...) (generate-temporaries #'(rx ...))]
+                           [(vset!-rx ...) (generate-temporaries #'(rx ...))]
+                           [(dx ...) (generate-temporaries #'(rx ...))]
+                           [(zx ...) (generate-temporaries #'(rx ...))])
+               #'(let-syntax
+                     ((%typed-map!
+                       (syntax-rules ()
+                         ((_ (vref-ra vset!-ra ra da za) (vref-rx vset!-rx rx dx zx) ...)
+                          (vset!-ra da za (op (vref-rx dx zx) ...)))))
+                      (%map!
+                       (syntax-rules ()
+                         ((_ (ra da za) (rx dx zx) ...)
+                          ((%%ra-vset! ra) da za (op ((%%ra-vref rx) dx zx) ...))))))
+                   (%dispatch %typed-map! %map! ra rx ...)
+                   ra))))))
+       (%%apply-subop
+        (lambda (stx)
+          (syntax-case stx ()
+            ((_ ra op rx)
+             #'(let-syntax
+                   ((%apply-map!
+                     (syntax-rules ()
+                       ((_ rx)
+                        ((%%ra-vset! (car rx)) (%%ra-root (car rx)) (%%ra-zero (car rx))
+                         (apply op (map (lambda (rx) ((%%ra-vref rx) (%%ra-root rx) (%%ra-zero rx))) (cdr rx))))))))
+                 (%apply-default %apply-map! (cons ra rx))
+                 ra))))))
+    (case-lambda
+     "
 ra-map! ra op rx ...
 
 Apply OP to each tuple of elements from ras RX ... and store the result in
@@ -531,29 +579,10 @@ Returns the updated ra RA.
 
 See also: ra-for-each ra-copy! ra-fill!
 "
-  (let-syntax
-      ((%typed-map!
-        (syntax-rules ()
-          ((_ (vref-ra vset!-ra ra da za) (vref-rx vset!-rx rx dx zx) ...)
-           (vset!-ra da za
-                     (op (vref-rx dx zx) ...)))))
-       (%map!
-        (syntax-rules ()
-          ((_ (ra da za) (rx dx zx) ...)
-           ((%%ra-vset! ra) da za
-            (op ((%%ra-vref rx) dx zx) ...)))))
-       (%apply-map!
-        (syntax-rules ()
-          ((_ rx)
-           ((%%ra-vset! (car rx)) (%%ra-root (car rx)) (%%ra-zero (car rx))
-            (apply op (map (lambda (ra) ((%%ra-vref ra) (%%ra-root ra) (%%ra-zero ra))) (cdr rx))))))))
-    (apply (case-lambda
-            (() (%dispatch %typed-map! %map! ra))
-            ((rb) (%dispatch %typed-map! %map! ra rb))
-            ((rb rc) (%dispatch %typed-map! %map! ra rb rc))
-            (rx (%apply-default %apply-map! (cons ra rx))))
-      rx)
-    ra))
+     ((ra op) (%%subop ra op))
+     ((ra op rb) (%%subop ra op rb))
+     ((ra op rb rc) (%%subop ra op rb rc))
+     ((ra op . rx) (%%apply-subop ra op rx)))))
 
 (define (ra-fill! ra fill)
   "
