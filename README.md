@@ -52,7 +52,7 @@ With that in mind, here is what you'd have to change. Note that the `ra-` names 
 
 * The default writer defaults to printing all the sizes of the array, so `(ra-i 3 2)` prints as `#%2:3:2((0 1) (2 3) (4 5))`. Note that `#2:3:2((0 1) (2 3) (4 5))` is a valid read syntax in the old system, just not the default.
 
-## Some obvious defects
+## Defects
 
 * The read syntax is like that of the old system except for an extra `%`, so `#2f64((1 2) (3 4))` becomes `#%2f64((1 2) (3 4))`. The compiler doesn't support the new literal type yet. You can work around this using the reader like `(call-with-input-string "#%2f64((1 2) (3 4))" read)` or say `(list->ra 'f64 2 '((1 2) (3 4)))`.
 

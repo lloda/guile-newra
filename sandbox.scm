@@ -8,99 +8,174 @@
 
 ; Trying things.
 
-(import (newra newra) (newra tools) (rnrs io ports)
-        (srfi :8) (srfi :26) (ice-9 match) (only (srfi :1) fold)
+(import (newra newra) (newra tools) (newra base) (rnrs io ports)
+        (srfi :8) (srfi :26) (ice-9 match) (srfi :1)
         (only (rnrs base) vector-map))
 
-
-; -----------------------
-; can't remember
-; -----------------------
+(define (vector-append . a)
+  (let ((b (make-vector (fold (lambda (a c) (+ (vector-length a) c)) 0 a))))
+    (let loopa ((a a) (lo 0))
+      (if (null? a)
+        b
+        (let ((lena (vector-length (car a))))
+          (do ((j 0 (+ j 1)))
+              ((= j lena))
+            (vector-set! b (+ lo j) (vector-ref (car a) j)))
+          (loopa (cdr a) (+ lo lena)))))))
 
-(define ra0 (array->ra #(1 2 3)))
-(define ra1 (array->ra #@1(1 2 3)))
-(define ra2 (array->ra #2((1 2) (3 4))))
-(define ra3 (array->ra #2@1@1((1 2) (3 4))))
-(define ra4 (array->ra #3@1@1@-1(((1 2 3) (3 4 5)) ((4 5 6) (6 7 8)))))
-(define ra5 (array->ra #0(99)))
-
-(define v #(1 2 3 4))
-
-(define (vector->list-forward v)
-  (case (vector-length v)
-    ((0) '())
-    ((1) (list (vector-ref v 0)))
-    (else
-     (let ((first (list (vector-ref v 0))))
-       (let loop ((last first)  (i 1))
-         (if (= i (vector-length v))
-           first
-           (let ((next (list (vector-ref v i))))
-             (set-cdr! last next)
-             (loop next (+ i 1)))))))))
-
-
-,m (newra newra)
-
-; call macro with PARAM according to values OPT of TAG
-(define-syntax %tag-dispatch
-  (syntax-rules ()
-    ((_ tag macro (opt ...) (param ...) args ...)
-     (case tag ((opt) (macro param args ...)) ... (else (throw 'bad-tag tag))))))
-
-(%tag-dispatch 'TWO display (ONE TWO) ('one 'two))
+(vector-append #(1 2 3) #(x 5 6))
 
 
 ; -----------------------
-; generalized selector
+; from
 ; -----------------------
 
-; ...
+(define A (ra-map! (make-ra 0 10 10) + (ra-transpose (ra-iota 10) 1) (ra-iota 10 0 10)))
+(define b (ra-i 2))
+(define c (make-ra-root (make-dim #f 10 2) (vector (make-dim 3 1))))
+(define d (ra-i 2 2))
+
+; this is the pure beaten section.
+; FIXME write the unbeaten section.
+
+(define (fromb A . ai)
+  (let loopj ((j 0) (ii ai) (bzero (ra-zero A)) (bdims '()))
+    (if (null? ii)
+      (make-ra-raw (ra-root A) bzero
+                   (vector-append (apply vector-append (reverse! bdims))
+                                  (vector-drop (ra-dims A) (length ai))))
+      (let ((dimA (vector-ref (ra-dims A) j)))
+        (match (car ii)
+          ((? ra? i)
+           (match (ra-root i)
+             (($ <dim> rlen rlo rstep)
+              (let ((bdimsj (make-vector (ra-rank i))))
+                (let loopk ((k 0))
+                  (if (= k (ra-rank i))
+                    (loopj (+ j 1) (cdr ii)
+                           (+ bzero (* (dim-step dimA) (- (+ rlo (* rstep (ra-zero i))) (dim-lo dimA))))
+                           (cons bdimsj bdims))
+                    (match (vector-ref (ra-dims i) k)
+                      (($ <dim> ilen ilo istep)
+                       (vector-set! bdimsj k (make-dim ilen ilo (* (dim-step dimA) istep rstep)))
+                       (loopk (+ k 1))))))))
+             (x
+              (if (zero? (ra-rank i))
+                (loopj (+ j 1) (cdr ii)
+                  (+ bzero (* (dim-step dimA) (- (i) (dim-lo dimA))))
+                  bdims)
+                (throw 'not-yet x)))))
+          ((? integer? z)
+           (loopj (+ j 1) (cdr ii)
+                  (+ bzero (* (dim-step dimA) (- z (dim-lo dimA))))
+                  bdims)))))))
 
 
-; -----------------------
-; define-inlinable-case-lambda
-; -----------------------
+; ------------------------
+; one arg
+; ------------------------
 
-(import (newra newra) (newra tools) (rnrs io ports)
-        (srfi :8) (srfi :26) (ice-9 match) (only (srfi :1) fold)
-        (only (rnrs base) vector-map))
+; rank 0
+(fromb A (pk 'I (make-ra-root (make-dim #f 3) (vector))))
+(fromb A 2)
+(fromb A (make-ra 2))
+
+; rank 1
+(fromb A (pk 'I (ra-iota 3)))
+(fromb A (pk 'I (make-ra-root (make-dim #f) (vector (make-dim 3 1 1)))))
+(fromb A (pk 'I (make-ra-root (make-dim 3 1 1) (vector (make-dim 3 1 1)))))
+(fromb A (pk 'I (make-ra-root (make-dim 3 1 2) (vector (make-dim 3 1 1)))))
+(fromb A (pk 'I (make-ra-root (make-dim 6 1 1) (vector (make-dim 3 1 2)))))
+(fromb A (pk 'I (make-ra-root (make-dim #f 3 2) (vector (make-dim 2 1 3)))))
+
+; rank 2
+(fromb A (pk 'I (ra-i 2 2)))
+(fromb A (pk 'I (make-ra-root (make-dim #f 3) (vector (make-dim 2 1 2) (make-dim 2 1 3)))))
 
 
-; -----------------------
-; fold
-; -----------------------
+; ------------------------
+; two args
+; ------------------------
 
-...
+; rank 0 0
+(fromb A (pk 'I (make-ra-root (make-dim #f 3) (vector)))
+       (pk 'J (make-ra-root (make-dim #f 2) (vector))))
+(fromb A 3 (pk 'J (make-ra-root (make-dim #f 2) (vector))))
+(fromb A (pk 'I (make-ra-root (make-dim #f 3) (vector))) 2)
+(fromb A 3 2)
 
-(ra-fold (lambda (a knil) (cons a knil)) '() (ra-iota 3))
+; rank 1 1
+(fromb A (pk 'I (ra-iota 3)) (pk 'J (ra-iota 2 4)))
+(fromb A (pk 'I (make-ra-root (make-dim #f) (vector (make-dim 3 1 1))))
+       (pk 'J (make-ra-root (make-dim #f) (vector (make-dim 3 1 2)))))
+(fromb A (pk 'I (make-ra-root (make-dim 3 1 1) (vector (make-dim 3 1 1))))
+       (pk 'J (make-ra-root (make-dim 3 1 2) (vector (make-dim 3 1 1)))))
+(fromb A (pk 'I (make-ra-root (make-dim 3 1 2) (vector (make-dim 3 1 1))))
+       (pk 'J (make-ra-root (make-dim 6 1 1) (vector (make-dim 3 1 2)))))
+(fromb A (pk 'I (make-ra-root (make-dim 6 1 1) (vector (make-dim 3 1 2))))
+       (pk 'J (make-ra-root (make-dim 6 1 1) (vector (make-dim 3 1 2)))))
+(fromb A (pk 'I (make-ra-root (make-dim #f 3 2) (vector (make-dim 2 1 3))))
+       (pk 'J (make-ra-root (make-dim 6 1 1) (vector (make-dim 3 1 2)))))
 
-; think I need to extend %op-loop if I want to do this without set!
+; rank 2 2
+(fromb A (pk 'I (ra-i 3 3))
+       (pk 'J (ra-i 2 2)))
+(fromb A (pk 'I (make-ra-root (make-dim #f 3) (vector (make-dim 2 1 2) (make-dim 2 1 3))))
+       (pk 'J (make-ra-root (make-dim #f 3) (vector (make-dim 2 1 2) (make-dim 2 1 3)))))
 
-(define (ra-fold kons knil ra . rx)
-  "
-ra-fold kons knil rx ...
 
-Reduce ras RX ... through procedure (KONS RX ... KNIL) -> KNIL'
+(throw 'stop)
 
-See also: ra-map! ra-slice-for-each
-"
-  (let-syntax
-      ((%typed-fold
-        (syntax-rules ()
-          ((_ (vref-ra vset!-ra ra da za) ...)
-           (op (vref-ra da za) ...))))
-       (%fold
-        (syntax-rules ()
-          ((_ (ra da za) ...)
-           (op ((%%ra-vref ra) da za) ...))))
-       (%apply-fold
-        (syntax-rules ()
-          ((_ rx)
-           (apply op (map (lambda (ra) ((%%ra-vref ra) (%%ra-root ra) (%%ra-zero ra))) rx))))))
-    (apply (case-lambda
-            (() (%dispatch %typed-fold %fold ra))
-            ((rb) (%dispatch %typed-fold %fold ra rb))
-            ((rb rc) (%dispatch %typed-fold %fold ra rb rc))
-            (rx (%apply-default %apply-fold (cons ra rx))))
-      rx)))
+;; 
+;; ; -----------------------
+;; ; can't remember
+;; ; -----------------------
+
+;; (define ra0 (array->ra #(1 2 3)))
+;; (define ra1 (array->ra #@1(1 2 3)))
+;; (define ra2 (array->ra #2((1 2) (3 4))))
+;; (define ra3 (array->ra #2@1@1((1 2) (3 4))))
+;; (define ra4 (array->ra #3@1@1@-1(((1 2 3) (3 4 5)) ((4 5 6) (6 7 8)))))
+;; (define ra5 (array->ra #0(99)))
+
+;; (define v #(1 2 3 4))
+
+;; (define (vector->list-forward v)
+;;   (case (vector-length v)
+;;     ((0) '())
+;;     ((1) (list (vector-ref v 0)))
+;;     (else
+;;      (let ((first (list (vector-ref v 0))))
+;;        (let loop ((last first)  (i 1))
+;;          (if (= i (vector-length v))
+;;            first
+;;            (let ((next (list (vector-ref v i))))
+;;              (set-cdr! last next)
+;;              (loop next (+ i 1)))))))))
+
+
+;; ,m (newra newra)
+
+;; ; call macro with PARAM according to values OPT of TAG
+;; (define-syntax %tag-dispatch
+;;   (syntax-rules ()
+;;     ((_ tag macro (opt ...) (param ...) args ...)
+;;      (case tag ((opt) (macro param args ...)) ... (else (throw 'bad-tag tag))))))
+
+;; (%tag-dispatch 'TWO display (ONE TWO) ('one 'two))
+
+;; 
+;; ; -----------------------
+;; ; generalized selector
+;; ; -----------------------
+
+;; ; ...
+
+;; 
+;; ; -----------------------
+;; ; define-inlinable-case-lambda
+;; ; -----------------------
+
+;; (import (newra newra) (newra tools) (rnrs io ports)
+;;         (srfi :8) (srfi :26) (ice-9 match) (only (srfi :1) fold)
+;;         (only (rnrs base) vector-map))

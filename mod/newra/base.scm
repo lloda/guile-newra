@@ -205,8 +205,8 @@
 ra-offset ra -> i
 
 Return the index I into the root vector of RA that corresponds to all array
-indices being 0. Note that I may not be in the range of the root vector, e.g. if
-RA is empty or its lower bounds are not 0.
+indices being 0. Note that I may be outside the range of the root vector,
+e.g. if RA is empty or its lower bounds are not 0.
 
 See also: ra-zero
 "
@@ -216,7 +216,7 @@ See also: ra-zero
   "
 ra-root ra -> v
 
-Return the root vector (or data vector) of RA.
+Return the root vector (or data vector) V of RA.
 "
   (%ra-root a))
 
@@ -272,6 +272,13 @@ Return the root vector (or data vector) of RA.
 
 ; low level, for conversions
 (define (make-ra-raw data zero dims)
+  "
+make-ra-raw data zero dims -> ra
+
+Make new ra RA from root vector DATA, zero index ZERO and dim-vector DIMS.
+
+See also: ra-data ra-zero ra-dims
+"
   (unless (vector? dims) (throw 'bad-dims dims))
   (vector-for-each (lambda (dim) (unless (dim? dim) (throw 'bad-dim dim))) dims)
 ; after check
@@ -483,6 +490,14 @@ See also: make-ra-root make-ra-new
   (make-ra-raw data (- (ra-offset 0 dims)) dims))
 
 (define (make-ra-new type value dims)
+  "
+make-ra-new type value dims -> RA
+
+Make new ra RA of TYPE from dim-vector DIMS, and fill it with VALUE. VALUE may
+be *unspecified*.
+
+See also: make-dim ra-dims make-ra-root c-dims
+"
   (let ((size (vector-fold
                (lambda (a c)
                  (* c (let ((len (dim-len a)))
