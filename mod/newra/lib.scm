@@ -388,7 +388,10 @@ As a special case when no axes are given, (ra-transpose RA) is equivalent to
 See also: make-ra-root make-ra-new
 "
    ((ra)
-    (apply ra-transpose ra (iota (ra-rank ra) (- (ra-rank ra) 1) -1)))
+    (let ((r (ra-rank ra)))
+      (if (> r 1)
+        (apply ra-transpose ra (iota r (- r 1) -1))
+        ra)))
    ((ra . axes)
     (let* ((ra (check-ra ra))
            (ndims (make-vector (+ 1 (fold max 0 axes)) #f))
