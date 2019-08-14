@@ -314,7 +314,7 @@ See also: ra-data ra-zero ra-dims
           (let ((dim (vector-ref dims j)))
             (loop (+ j 1) (+ pos (* (dim-check dim (car i)) (dim-step dim))) (cdr i)))))))))
 
-; lowest position on data.
+; lowest position on data. FIXME remove?
 (define (ra-pos-lo ra)
   (check-ra ra)
   (let ((dims (%%ra-dims ra)))
@@ -323,9 +323,9 @@ See also: ra-data ra-zero ra-dims
         pos
         (let* ((dim (vector-ref dims j))
                (step (dim-step dim)))
-          (loop (- j 1) (+ pos (* step (if (positive? step) (dim-lo dim) (dim-hi dim))))))))))
+          (loop (- j 1) (+ pos (if (zero? step) 0 (* step (if (positive? step) (dim-lo dim) (dim-hi dim)))))))))))
 
-; highest position on data.
+; highest position on data. FIXME remove?
 (define (ra-pos-hi ra)
   (check-ra ra)
   (let ((dims (%%ra-dims ra)))
@@ -334,7 +334,7 @@ See also: ra-data ra-zero ra-dims
         pos
         (let* ((dim (vector-ref dims j))
                (step (dim-step dim)))
-          (loop (- j 1) (+ pos (* step (if (positive? step) (dim-hi dim) (dim-lo dim))))))))))
+          (loop (- j 1) (+ pos (if (zero? step) 0 (* step (if (positive? step) (dim-hi dim) (dim-lo dim)))))))))))
 
 (define ra-offset
   (case-lambda
@@ -359,7 +359,7 @@ See also: ra-zero
         pos
         (let* ((j (- j 1))
                (dim (vector-ref dims j)))
-          (loop j (+ pos (* (dim-lo dim) (dim-step dim))))))))))
+          (loop j (+ pos (* (or (dim-lo dim) 0) (dim-step dim))))))))))
 
 
 ; ----------------

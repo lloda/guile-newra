@@ -90,14 +90,14 @@
                           (unless (match-len? lenj0 lenj)
                             (throw 'mismatched-lens lenj0 lenj 'at-dim j))
 ; valid len means lo must be matched
-                          (unless (= loj0 loj)
+                          (unless (match-len? loj0 loj)
                             (throw 'mismatched-los loj0 loj 'at-dim j)))
                         (begin
                           (vector-set! len j lenj)
                           (vector-set! lo j loj)))))))
       ra)
     (do ((j 0 (+ j 1))) ((= j k))
-      (unless (vector-ref len j) (throw 'unset-len-for-dim j)))
+      (unless (and (vector-ref len j) (vector-ref lo j)) (throw 'unset-len-or-lo-for-dim j)))
     (values lo len)))
 
 ; naive, slice recursively.

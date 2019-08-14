@@ -590,7 +590,7 @@
     (call-with-output-string
      (lambda (o) (ra-slice-for-each 2 (lambda (ra0 ra1) (format o "~a-~a|" ra0 ra1)) ra0 ra1))))
   (test-assert
-   (throws-exception? 'unset-len-for-dim
+   (throws-exception? 'unset-len-or-lo-for-dim
                       (lambda () (ra-slice-for-each 3 (lambda (ra0 ra1) 0) ra0 ra1)))))
 
 

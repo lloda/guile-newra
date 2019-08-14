@@ -30,9 +30,9 @@
   (vector-for-each
    (lambda (dim)
      (let ((lo (dim-lo dim)))
-       (unless (zero? lo)
+       (unless (or (not lo) (zero? lo))
          (display #\@ port)
-         (display (dim-lo dim) port)))
+         (display (or lo 'f) port)))
      (when dims?
        (display #\: port)
        (display (match (dim-len dim)
@@ -60,17 +60,17 @@
 ; print dead axes as if of size 1. Infinite arrays aren't printed (FIXME?)
                (len (or (dim-len dim) (if (zero? i) 1 #f))))
           (when len
-            (let ((hi (+ lo len -1)))
+            (let ((hi (+ (or lo 0) len -1)))
               (display #\( port)
               (cond
                ((= (- rank 1) k)
-                (do ((j lo (+ 1 j)) (b b (+ b i)))
+                (do ((j (or lo 0) (+ 1 j)) (b b (+ b i)))
                     ((> j hi))
                   (display (ref b) port)
                   (when (< j hi)
                     (display #\space port))))
                (else
-                (do ((j lo (+ 1 j)) (b b (+ b i)))
+                (do ((j (or lo 0) (+ 1 j)) (b b (+ b i)))
                     ((> j hi))
                   (loop (+ k 1) b)
                   (when (< j hi)

@@ -132,7 +132,7 @@ See also: ra-rank ra-shape ra-length
 "
   (map (lambda (dim)
          (let ((lo (dim-lo dim)))
-           (if (zero? lo)
+           (if (or (not lo) (zero? lo))
              (dim-len dim)
              (list lo (dim-hi dim)))))
     (vector->list (ra-dims ra))))
@@ -324,12 +324,15 @@ See also: ra-copy! as-ra
 "
    ((ra) (ra-copy (ra-type ra) ra))
    ((type ra)
-    (let* ((shape (map (lambda (dim)
-                         (list (dim-lo dim)
-                               (or (dim-hi dim)
-                                   (if (zero? (dim-step dim))
-                                     (dim-lo dim)
-                                     (throw 'cannot-copy-infinite-ra ra)))))
+    (let* ((shape (map (match-lambda
+                         (($ <dim> len lo step)
+                          (let ((lo (or lo 0)))
+                            (list lo
+                                  (if len
+                                    (+ lo len -1)
+                                    (if (zero? step)
+                                      lo
+                                      (throw 'cannot-copy-infinite-ra ra)))))))
                     (vector->list (ra-dims ra))))
 ; copy destination needs the singletons else the lens don't match.
 ; FIXME we could have dead axes match dead axes.
@@ -413,8 +416,8 @@ See also: make-ra-root make-ra-new
                          (+ (dim-step odim) (dim-step ndim)))
                (throw 'bad-lo))
              odim))))
-; if not for lo we could have just initialized dims with (make-dim #f 0 0).
+; if not for lo we could have just initialized dims with (make-dim #f #f 0).
       (do ((k 0 (+ k 1))) ((= k (vector-length ndims)))
         (if (not (vector-ref ndims k))
-          (vector-set! ndims k (make-dim #f 0 0))))
+          (vector-set! ndims k (make-dim #f #f 0))))
       (make-ra-raw (%%ra-root ra) (%%ra-zero ra) ndims)))))

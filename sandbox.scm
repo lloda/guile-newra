@@ -168,6 +168,7 @@
 (fromu A (pk 'I (ra-iota 3)) (pk 'J (ra-iota 2 4)))
 (fromu A (pk 'I (make-ra-root (make-dim #f) (vector (make-dim 3 1 1))))
        (pk 'J (make-ra-root (make-dim #f) (vector (make-dim 3 1 2)))))
+
 (fromb A (pk 'I (make-ra-root (make-dim 3 1 1) (vector (make-dim 3 1 1))))
        (pk 'J (make-ra-root (make-dim 3 1 2) (vector (make-dim 3 1 1)))))
 (fromb A (pk 'I (make-ra-root (make-dim 3 1 2) (vector (make-dim 3 1 1))))
