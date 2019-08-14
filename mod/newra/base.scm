@@ -202,13 +202,13 @@
 
 (define (ra-zero a)
   "
-ra-offset ra -> i
+ra-zero ra -> i
 
 Return the index I into the root vector of RA that corresponds to all array
 indices being 0. Note that I may be outside the range of the root vector,
-e.g. if RA is empty or its lower bounds are not 0.
+for example if RA is empty or its lower bounds are not 0.
 
-See also: ra-zero
+See also: ra-offset
 "
   (%ra-zero a))
 

@@ -36,7 +36,7 @@
 (define d (ra-i 2 2))
 
 ; this is the pure beaten section.
-; FIXME write the unbeaten section.
+; FIXME preallocate the dim vector then run j k ... j ...
 
 (define (fromb A . ai)
   (let loopj ((j 0) (ii ai) (bzero (ra-zero A)) (bdims '()))
@@ -72,8 +72,17 @@
 
 
 ; ------------------------
-; one arg
+; this is the pure beaten section WIP
 ; ------------------------
+
+(define (fromu A . ai)
+  (let* ((bdims (apply c-dims (append-map (compose ra-shape check-ra) ai)))
+         (B (make-ra-new (ra-type A) *unspecified* bdims)))
+    B))
+
+
+; ------------------------
+; one arg
 
 ; rank 0
 (fromb A (pk 'I (make-ra-root (make-dim #f 3) (vector))))
@@ -95,7 +104,6 @@
 
 ; ------------------------
 ; two args
-; ------------------------
 
 ; rank 0 0
 (fromb A (pk 'I (make-ra-root (make-dim #f 3) (vector)))
@@ -123,6 +131,78 @@
 (fromb A (pk 'I (make-ra-root (make-dim #f 3) (vector (make-dim 2 1 2) (make-dim 2 1 3))))
        (pk 'J (make-ra-root (make-dim #f 3) (vector (make-dim 2 1 2) (make-dim 2 1 3)))))
 
+
+; ------------------------
+; this is the pure beaten section WIP
+
+(define (fromu A . ai)
+  (let* ((ai (map (match-lambda ((? ra? x) x) ((? integer? x) (make-ra x))) ai))
+         (bshape
+          (pk 'BSHAPE (append
+                       (append-map ra-shape ai)
+                       (map (lambda (dim) (list (dim-lo dim) (dim-hi dim))) (drop (vector->list (ra-dims A)) (length ai))))))
+         (bdims (pk 'BDIMS (apply c-dims bshape)))
+         (bstairs (pk 'STAIRS (reverse (cdr (fold (lambda (a c) (cons (+ (ra-rank a) (car c)) c)) '(0) ai)))))
+         (B (make-ra-new (ra-type A) *unspecified* bdims)))
+;FIXME must match lo on dead axes.
+;FIXME handle the rest axes (drop ... (length ai)) above.
+    (apply ra-map! B A
+           (map (lambda (ai stairs)
+                  (pk 'STAIRED (apply ra-transpose ai (iota (ra-rank ai) stairs))))
+             ai bstairs))))
+
+
+; ------------------------
+; two args
+
+; rank 0 0
+(fromu A (pk 'I (make-ra-root (make-dim #f 3) (vector)))
+       (pk 'J (make-ra-root (make-dim #f 2) (vector))))
+(fromu A 3 (pk 'J (make-ra-root (make-dim #f 2) (vector))))
+(fromu A (pk 'I (make-ra-root (make-dim #f 3) (vector))) 2)
+(fromu A 3 2)
+
+(throw 'stop)
+
+; rank 1 1
+(fromu A (pk 'I (ra-iota 3)) (pk 'J (ra-iota 2 4)))
+(fromu A (pk 'I (make-ra-root (make-dim #f) (vector (make-dim 3 1 1))))
+       (pk 'J (make-ra-root (make-dim #f) (vector (make-dim 3 1 2)))))
+(fromb A (pk 'I (make-ra-root (make-dim 3 1 1) (vector (make-dim 3 1 1))))
+       (pk 'J (make-ra-root (make-dim 3 1 2) (vector (make-dim 3 1 1)))))
+(fromb A (pk 'I (make-ra-root (make-dim 3 1 2) (vector (make-dim 3 1 1))))
+       (pk 'J (make-ra-root (make-dim 6 1 1) (vector (make-dim 3 1 2)))))
+(fromb A (pk 'I (make-ra-root (make-dim 6 1 1) (vector (make-dim 3 1 2))))
+       (pk 'J (make-ra-root (make-dim 6 1 1) (vector (make-dim 3 1 2)))))
+(fromb A (pk 'I (make-ra-root (make-dim #f 3 2) (vector (make-dim 2 1 3))))
+       (pk 'J (make-ra-root (make-dim 6 1 1) (vector (make-dim 3 1 2)))))
+
+; rank 2 2
+(fromb A (pk 'I (ra-i 3 3))
+       (pk 'J (ra-i 2 2)))
+(fromb A (pk 'I (make-ra-root (make-dim #f 3) (vector (make-dim 2 1 2) (make-dim 2 1 3))))
+       (pk 'J (make-ra-root (make-dim #f 3) (vector (make-dim 2 1 2) (make-dim 2 1 3)))))
+
+
+; ------------------------
+; one arg
+
+; rankp 0
+(fromu A (pk 'I (make-ra-root (make-dim #f 3) (vector))))
+(fromu A 2)
+(fromu A (make-ra 2))
+
+; rank 1
+(fromb A (pk 'I (ra-iota 3)))
+(fromu A (pk 'I (make-ra-root (make-dim #f) (vector (make-dim 3 1 1)))))
+(fromu A (pk 'I (make-ra-root (make-dim 3 1 1) (vector (make-dim 3 1 1)))))
+(fromu A (pk 'I (make-ra-root (make-dim 3 1 2) (vector (make-dim 3 1 1)))))
+(fromu A (pk 'I (make-ra-root (make-dim 6 1 1) (vector (make-dim 3 1 2)))))
+(fromu A (pk 'I (make-ra-root (make-dim #f 3 2) (vector (make-dim 2 1 3)))))
+
+; rank 2
+(fromb A (pk 'I (ra-i 2 2)))
+(fromb A (pk 'I (make-ra-root (make-dim #f 3) (vector (make-dim 2 1 2) (make-dim 2 1 3)))))
 
 (throw 'stop)
 
