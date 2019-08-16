@@ -23,6 +23,17 @@
 (import (newra base) (newra map) (only (srfi :1) fold every any iota) (srfi :8) (srfi :26)
         (ice-9 control) (ice-9 match) (only (rnrs base) vector-map vector-for-each))
 
+(define (vector-append . a)
+  (let ((b (make-vector (fold (lambda (a c) (+ (vector-length a) c)) 0 a))))
+    (let loopa ((a a) (lo 0))
+      (if (null? a)
+        b
+        (let ((lena (vector-length (car a))))
+          (do ((j 0 (+ j 1)))
+              ((= j lena))
+            (vector-set! b (+ lo j) (vector-ref (car a) j)))
+          (loopa (cdr a) (+ lo lena)))))))
+
 
 ; ----------------
 ; fold - probably better ways to do this by fixing or extending (newra map)
@@ -367,15 +378,13 @@ See also: ra-transpose make-ra-shared
            (vector-set! ndims (car k) (make-dim len lo (- step)))
            (loop (cdr k) (+ zero (* step (+ (* 2 lo) len -1))))))))))
 
-(define ra-transpose
-  (case-lambda
-   "
-ra-transpose ra -> rb
+(define (ra-transpose ra . axes)
+  "
 ra-transpose ra axes ... -> rb
 
-Transpose the axes of ra RA. AXES must be a list of integers, and it must be as
-long as the rank of RA. Each axis i = 0 ... (ra-rank ra)-1 is transposed to axis
-k = (AXES i) of RB. Therefore the rank of RB is 1+max(k).
+Transpose the axes of ra RA. AXES must be a list of integers, and it must not be
+longer than the rank of RA. Each axis i = 0 ... (ra-rank ra)-1 is transposed to
+axis k = (AXES i) of RB. Therefore the rank of RB is 1+max(k).
 
 An axis k of RB may be referenced multiple times in AXES, by RA axes i ... . In
 that case the size of k is the smallest of the sizes of i ..., and the step of k
@@ -385,39 +394,38 @@ same.
 Any axis of RB that is not referenced in AXES is a `dead' axis with undefined
 dimension and step 0.
 
-As a special case when no axes are given, (ra-transpose RA) is equivalent to
-(ra-transpose RA (R-1) (R-2) ... 0), where R is the rank of RA.
+Axes of RA that aren't listed in AXES are transposed to the end of RB's axes.
 
 See also: make-ra-root make-ra-new
 "
-   ((ra)
-    (let ((r (ra-rank ra)))
-      (if (> r 1)
-        (apply ra-transpose ra (iota r (- r 1) -1))
-        ra)))
-   ((ra . axes)
-    (let* ((ra (check-ra ra))
-           (ndims (make-vector (+ 1 (fold max 0 axes)) #f))
-           (odims (%%ra-dims ra)))
-      (do ((i 0 (+ i 1))
-           (axesr axes (cdr axesr)))
-          ((= i (vector-length odims))
-           (unless (null? axesr) (throw 'bad-number-of-axes axes 'should-be i)))
-        (let* ((k (car axesr))
-               (odim (vector-ref odims i))
-               (ndim (vector-ref ndims k)))
-          (vector-set!
-           ndims k
-           (if ndim
-             (if (= (dim-lo odim) (dim-lo ndim))
-               (make-dim (let* ((nd (dim-len ndim)) (od (dim-len odim)))
-                           (if nd (and od (min nd od)) od))
-                         (dim-lo ndim)
-                         (+ (dim-step odim) (dim-step ndim)))
-               (throw 'bad-lo))
-             odim))))
+  (let* ((ra (check-ra ra))
+         (odims (%%ra-dims ra))
+         (orank (vector-length odims))
+         (maxaxes (fold max -1 axes))
+         (ndims (make-vector (+ 1 maxaxes) #f)))
+    (do ((i 0 (+ i 1))
+         (axesr axes (cdr axesr)))
+        ((null? axesr)
 ; if not for lo we could have just initialized dims with (make-dim #f #f 0).
-      (do ((k 0 (+ k 1))) ((= k (vector-length ndims)))
-        (if (not (vector-ref ndims k))
-          (vector-set! ndims k (make-dim #f #f 0))))
-      (make-ra-raw (%%ra-root ra) (%%ra-zero ra) ndims)))))
+         (do ((k 0 (+ k 1)))
+             ((= k (vector-length ndims)))
+           (if (not (vector-ref ndims k))
+             (vector-set! ndims k (make-dim #f #f 0))))
+         (make-ra-raw (%%ra-root ra) (%%ra-zero ra)
+;
+                      (vector-append ndims (vector-drop odims i))))
+      (unless (< i orank)
+        (throw 'bad-number-of-axes axes 'should-be i))
+      (let* ((k (car axesr))
+             (odim (vector-ref odims i))
+             (ndim (vector-ref ndims k)))
+        (vector-set!
+         ndims k
+         (if ndim
+           (if (= (dim-lo odim) (dim-lo ndim))
+             (make-dim (let* ((nd (dim-len ndim)) (od (dim-len odim)))
+                         (if nd (and od (min nd od)) od))
+                       (dim-lo ndim)
+                       (+ (dim-step odim) (dim-step ndim)))
+             (throw 'bad-lo))
+           odim))))))

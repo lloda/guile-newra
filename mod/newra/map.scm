@@ -679,11 +679,14 @@ See also: ra-every ra-equal? ra-fold
                     (exit #f))
                   (vector-for-each
                    (lambda (da db)
-                     (unless (and (= (dim-lo da) (dim-lo db)) (= (dim-len da) (dim-len db)))
+                     (unless (and (eqv? (dim-lo da) (dim-lo db)) (eqv? (dim-len da) (dim-len db)))
                        (exit #f)))
                    da (ra-dims rb)))
         (cdr rx))
       #t)))
+
+; FIXME it's a bit silly that (ra-transpose (ra-i 9) 1) isn't ra-equal? to
+; itself because dead axes don't match each other.
 
 (define (ra-equal? . rx)
   "

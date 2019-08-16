@@ -220,24 +220,29 @@
 
 (test-equal (ra->string (ra-transpose ra7a 1 0)) "#%2@1:3@1:2((1 4) (2 5) (3 6))")
 (test-equal (ra->string (ra-transpose ra7b 1 0)) "#%2@1:3@1:2((1 4) (2 5) (3 6))")
-(test-equal (ra->string (ra-transpose ra7a)) "#%2@1:3@1:2((1 4) (2 5) (3 6))")
-(test-equal (ra->string (ra-transpose ra7b)) "#%2@1:3@1:2((1 4) (2 5) (3 6))")
 (test-equal (ra->string (ra-transpose ra7a 0 1)) "#%2@1:2@1:3((1 2 3) (4 5 6))")
 (test-equal (ra->string (ra-transpose ra7b 0 1)) "#%2@1:2@1:3((1 2 3) (4 5 6))")
 (test-equal (ra->string (ra-transpose ra7a 0 0)) "#%1@1:2(1 5)")
 (test-equal (ra->string (ra-transpose ra7b 0 0)) "#%1@1:2(1 5)")
 (test-assert (throws-exception? 'bad-number-of-axes (lambda () (ra-transpose (ra-iota 3) 0 1))))
-(let ((ra0 (make-ra 99))) (test-eq ra0 (ra-transpose ra0)))
+(let ((ra0 (make-ra 99))) (test-assert (ra-equal? ra0 (ra-transpose ra0))))
 
-; shortcut cases
+; other cases
 
+(test-equal (ra->string (ra-transpose ra7a)) "#%2@1:2@1:3((1 2 3) (4 5 6))")
+(test-equal (ra->string (ra-transpose ra7b)) "#%2@1:2@1:3((1 2 3) (4 5 6))")
 (let ((ra1 (ra-i 3)))
-  (test-eq ra1 (ra-transpose ra1))
   (test-assert (ra-equal? (ra-transpose ra1) (ra-transpose ra1 0)))
   (test-eq (ra-root ra1) (ra-root (ra-transpose ra1 0))))
 (let ((ra2 (ra-i 3 4)))
-  (test-assert (ra-equal? (ra-transpose ra2) (ra-transpose ra2 1 0)))
+  (test-assert (ra-equal? (ra-transpose ra2) (ra-transpose ra2 0 1)))
   (test-eq (ra-root ra2) (ra-root (ra-transpose ra2))))
+(let ((ra3 (ra-i 3 4 5)))
+  (test-assert (ra-equal? (ra-transpose ra3) (ra-transpose ra3 0 1 2)))
+  (test-eq (ra-root ra3) (ra-root (ra-transpose ra3)))
+  (test-assert (ra-equal? (ra-transpose ra3 1 0) (ra-transpose ra3 1 0 2)))
+; these two have a dead axes so the cannot be matched one to the other.
+  (test-equal (ra-dims (ra-transpose ra3 1)) (ra-dims (ra-transpose ra3 1 2 3))))
 
 
 ; -----------------------
