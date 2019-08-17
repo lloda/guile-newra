@@ -99,29 +99,29 @@
 
 ; dead axes
 
-  (test-equal "#%2:d:10((0 1 2 3 4 5 6 7 8 9))" (ra->string (ra-transpose (ra-i 10) 1))))
+  (test-equal "#%2d:d:10((0 1 2 3 4 5 6 7 8 9))" (ra->string (ra-transpose (ra-i 10) 1))))
 
 
 ; -----------------------
 ; ra-iota, ra-i
 ; -----------------------
 
-(test-equal "#%3:2:3:4(((0 1 2 3) (4 5 6 7) (8 9 10 11)) ((12 13 14 15) (16 17 18 19) (20 21 22 23)))"
+(test-equal "#%3d:2:3:4(((0 1 2 3) (4 5 6 7) (8 9 10 11)) ((12 13 14 15) (16 17 18 19) (20 21 22 23)))"
   (ra->string (ra-i 2 3 4)))
 
-(test-equal "#%3:2:0:4(() ())"
+(test-equal "#%3d:2:0:4(() ())"
   (ra->string (ra-i 2 0 4)))
 
-(test-equal "#%0(0)"
+(test-equal "#%0d(0)"
   (ra->string (ra-i)))
 
-(test-equal "#%1:4(9 8 7 6)"
+(test-equal "#%1d:4(9 8 7 6)"
   (ra->string (ra-iota 4 9 -1)))
 
-(test-equal "#%1:4(9 10 11 12)"
+(test-equal "#%1d:4(9 10 11 12)"
   (ra->string (ra-iota 4 9)))
 
-(test-equal "#%1:0()"
+(test-equal "#%1d:0()"
   (ra->string (ra-iota 0)))
 
 ; -----------------------
@@ -169,7 +169,7 @@
 (define ra6 (make-ra-root #(1 2 3 4 5 6) (c-dims '(1 2) '(1 3))))
 (test-equal (ra->string ra6) "#%2@1:2@1:3((1 2 3) (4 5 6))")
 (define ra7a (make-ra-root (make-dim 6 1) (c-dims '(1 2) '(1 3))))
-(test-equal (ra->string ra7a) "#%2@1:2@1:3((1 2 3) (4 5 6))")
+(test-equal (ra->string ra7a) "#%2d@1:2@1:3((1 2 3) (4 5 6))")
 (define ra7b (make-ra-raw #(1 4 2 5 3 6) -3 `#(,(make-dim 2 1 1) ,(make-dim 3 1 2))))
 (test-equal (ra->string ra7b) "#%2@1:2@1:3((1 2 3) (4 5 6))")
 
@@ -185,21 +185,21 @@
 (define ra8 (make-ra-root (make-dim 6 1) (c-dims '(1 2) '(1 3))))
 (test-equal 2 (ra-length ra8))
 
-(test-equal (ra->string (ra-cell ra8)) "#%2@1:2@1:3((1 2 3) (4 5 6))")
-(test-equal (ra->string (ra-cell ra8 1)) "#%1@1:3(1 2 3)")
-(test-equal (ra->string (ra-cell ra8 2)) "#%1@1:3(4 5 6)")
+(test-equal (ra->string (ra-cell ra8)) "#%2d@1:2@1:3((1 2 3) (4 5 6))")
+(test-equal (ra->string (ra-cell ra8 1)) "#%1d@1:3(1 2 3)")
+(test-equal (ra->string (ra-cell ra8 2)) "#%1d@1:3(4 5 6)")
 (test-equal 5 (ra-cell ra8 2 2))
 
 ; applicable!
-(test-equal (ra->string (ra8)) "#%2@1:2@1:3((1 2 3) (4 5 6))")
-(test-equal (ra->string (ra8 1)) "#%1@1:3(1 2 3)")
-(test-equal (ra->string (ra8 2)) "#%1@1:3(4 5 6)")
+(test-equal (ra->string (ra8)) "#%2d@1:2@1:3((1 2 3) (4 5 6))")
+(test-equal (ra->string (ra8 1)) "#%1d@1:3(1 2 3)")
+(test-equal (ra->string (ra8 2)) "#%1d@1:3(4 5 6)")
 (test-equal 5 (ra8 2 2))
 
-(test-equal (ra->string (ra-slice ra8)) "#%2@1:2@1:3((1 2 3) (4 5 6))")
-(test-equal (ra->string (ra-slice ra8 1)) "#%1@1:3(1 2 3)")
-(test-equal (ra->string (ra-slice ra8 2)) "#%1@1:3(4 5 6)")
-(test-equal (ra->string (ra-slice ra8 2 2)) "#%0(5)")
+(test-equal (ra->string (ra-slice ra8)) "#%2d@1:2@1:3((1 2 3) (4 5 6))")
+(test-equal (ra->string (ra-slice ra8 1)) "#%1d@1:3(1 2 3)")
+(test-equal (ra->string (ra-slice ra8 2)) "#%1d@1:3(4 5 6)")
+(test-equal (ra->string (ra-slice ra8 2 2)) "#%0d(5)")
 (test-equal 5 (ra-ref (ra-slice ra8 2 2)))
 
 (test-assert (throws-exception? 'bad-number-of-indices (lambda () (ra-ref ra8))))
@@ -218,18 +218,18 @@
 ; ra-transpose (see below for ra-transpose with dead axes)
 ; -----------------------
 
-(test-equal (ra->string (ra-transpose ra7a 1 0)) "#%2@1:3@1:2((1 4) (2 5) (3 6))")
+(test-equal (ra->string (ra-transpose ra7a 1 0)) "#%2d@1:3@1:2((1 4) (2 5) (3 6))")
 (test-equal (ra->string (ra-transpose ra7b 1 0)) "#%2@1:3@1:2((1 4) (2 5) (3 6))")
-(test-equal (ra->string (ra-transpose ra7a 0 1)) "#%2@1:2@1:3((1 2 3) (4 5 6))")
+(test-equal (ra->string (ra-transpose ra7a 0 1)) "#%2d@1:2@1:3((1 2 3) (4 5 6))")
 (test-equal (ra->string (ra-transpose ra7b 0 1)) "#%2@1:2@1:3((1 2 3) (4 5 6))")
-(test-equal (ra->string (ra-transpose ra7a 0 0)) "#%1@1:2(1 5)")
+(test-equal (ra->string (ra-transpose ra7a 0 0)) "#%1d@1:2(1 5)")
 (test-equal (ra->string (ra-transpose ra7b 0 0)) "#%1@1:2(1 5)")
 (test-assert (throws-exception? 'bad-number-of-axes (lambda () (ra-transpose (ra-iota 3) 0 1))))
 (let ((ra0 (make-ra 99))) (test-assert (ra-equal? ra0 (ra-transpose ra0))))
 
 ; other cases
 
-(test-equal (ra->string (ra-transpose ra7a)) "#%2@1:2@1:3((1 2 3) (4 5 6))")
+(test-equal (ra->string (ra-transpose ra7a)) "#%2d@1:2@1:3((1 2 3) (4 5 6))")
 (test-equal (ra->string (ra-transpose ra7b)) "#%2@1:2@1:3((1 2 3) (4 5 6))")
 (let ((ra1 (ra-i 3)))
   (test-assert (ra-equal? (ra-transpose ra1) (ra-transpose ra1 0)))
@@ -251,11 +251,11 @@
 
 (let ((ra (ra-i 2 3 2)))
   (test-assert (ra-equal? ra (ra-reverse ra)))
-  (test-equal "#%3:2:3:2(((6 7) (8 9) (10 11)) ((0 1) (2 3) (4 5)))" (ra->string (ra-reverse ra 0)))
-  (test-equal "#%3:2:3:2(((4 5) (2 3) (0 1)) ((10 11) (8 9) (6 7)))" (ra->string (ra-reverse ra 1)))
-  (test-equal "#%3:2:3:2(((1 0) (3 2) (5 4)) ((7 6) (9 8) (11 10)))" (ra->string (ra-reverse ra 2)))
-  (test-equal "#%3:2:3:2(((5 4) (3 2) (1 0)) ((11 10) (9 8) (7 6)))" (ra->string (ra-reverse ra 1 2)))
-  (test-equal "#%3:2:3:2(((7 6) (9 8) (11 10)) ((1 0) (3 2) (5 4)))" (ra->string (ra-reverse ra 2 0)))
+  (test-equal "#%3d:2:3:2(((6 7) (8 9) (10 11)) ((0 1) (2 3) (4 5)))" (ra->string (ra-reverse ra 0)))
+  (test-equal "#%3d:2:3:2(((4 5) (2 3) (0 1)) ((10 11) (8 9) (6 7)))" (ra->string (ra-reverse ra 1)))
+  (test-equal "#%3d:2:3:2(((1 0) (3 2) (5 4)) ((7 6) (9 8) (11 10)))" (ra->string (ra-reverse ra 2)))
+  (test-equal "#%3d:2:3:2(((5 4) (3 2) (1 0)) ((11 10) (9 8) (7 6)))" (ra->string (ra-reverse ra 1 2)))
+  (test-equal "#%3d:2:3:2(((7 6) (9 8) (11 10)) ((1 0) (3 2) (5 4)))" (ra->string (ra-reverse ra 2 0)))
   (test-assert (ra-equal? (ra-reverse ra 2 0) (ra-reverse ra 0 2)))
   (test-assert (ra-equal? (ra-reverse ra 2 0 1) (ra-reverse (ra-reverse (ra-reverse ra 0) 1) 2)))
   (test-eq (ra-root ra) (ra-root (ra-reverse ra 2 0))))
@@ -281,13 +281,13 @@
  (lambda (ra-slice-for-each)
    (test-begin (procedure-name ra-slice-for-each))
 
-   (test-equal "#%2@1:0@2:0()\n"
+   (test-equal "#%2d@1:0@2:0()\n"
      (call-with-output-string
       (lambda (s) (ra-slice-for-each 0 (lambda (o) (format s "~a\n" o)) ra-empty0))))
-   (test-equal "#%2@1:1@2:0(())\n"
+   (test-equal "#%2d@1:1@2:0(())\n"
      (call-with-output-string
       (lambda (s) (ra-slice-for-each 0 (lambda (o) (format s "~a\n" o)) ra-empty1))))
-   (test-equal "#%2@1:0@2:1()\n"
+   (test-equal "#%2d@1:0@2:1()\n"
      (call-with-output-string
       (lambda (s) (ra-slice-for-each 0 (lambda (o) (format s "~a\n" o)) ra-empty2))))
 
@@ -308,13 +308,13 @@
      (call-with-output-string
       (lambda (s) (ra-slice-for-each 2 (lambda (a b) (format s "~a\n" (+ (ra-ref a) (ra-ref b)))) ra6 ra7b))))
 
-   (test-equal "(#%2@1:2@1:3((1 2 3) (4 5 6)) #%2@1:2@1:3((1 2 3) (4 5 6)) #%2@1:2@1:3((1 2 3) (4 5 6)))\n"
+   (test-equal "(#%2@1:2@1:3((1 2 3) (4 5 6)) #%2d@1:2@1:3((1 2 3) (4 5 6)) #%2@1:2@1:3((1 2 3) (4 5 6)))\n"
      (call-with-output-string
       (lambda (s) (ra-slice-for-each 0 (lambda x (format s "~a\n" x)) ra6 ra7a ra7b))))
-   (test-equal "(#%1@1:3(1 2 3) #%1@1:3(1 2 3) #%1@1:3(1 2 3))\n(#%1@1:3(4 5 6) #%1@1:3(4 5 6) #%1@1:3(4 5 6))\n"
+   (test-equal "(#%1@1:3(1 2 3) #%1d@1:3(1 2 3) #%1@1:3(1 2 3))\n(#%1@1:3(4 5 6) #%1d@1:3(4 5 6) #%1@1:3(4 5 6))\n"
      (call-with-output-string
       (lambda (s) (ra-slice-for-each 1 (lambda x (format s "~a\n" x)) ra6 ra7a ra7b))))
-   (test-equal "(#%0(1) #%0(1) #%0(1))\n(#%0(2) #%0(2) #%0(2))\n(#%0(3) #%0(3) #%0(3))\n(#%0(4) #%0(4) #%0(4))\n(#%0(5) #%0(5) #%0(5))\n(#%0(6) #%0(6) #%0(6))\n"
+   (test-equal "(#%0(1) #%0d(1) #%0(1))\n(#%0(2) #%0d(2) #%0(2))\n(#%0(3) #%0d(3) #%0(3))\n(#%0(4) #%0d(4) #%0(4))\n(#%0(5) #%0d(5) #%0(5))\n(#%0(6) #%0d(6) #%0(6))\n"
      (call-with-output-string
       (lambda (s) (ra-slice-for-each 2 (lambda x (format s "~a\n" x)) ra6 ra7a ra7b))))
 
@@ -583,15 +583,15 @@
 (let ((ra0 (ra-i 2 3))
       (ra1 (ra-i 2)))
   (test-equal
-    "#%2:2:3((0 1 2) (3 4 5))-#%1:2(0 1)|"
+    "#%2d:2:3((0 1 2) (3 4 5))-#%1d:2(0 1)|"
     (call-with-output-string
      (lambda (o) (ra-slice-for-each 0 (lambda (ra0 ra1) (format o "~a-~a|" ra0 ra1)) ra0 ra1))))
   (test-equal
-    "#%1:3(0 1 2)-#%0(0)|#%1:3(3 4 5)-#%0(1)|"
+    "#%1d:3(0 1 2)-#%0d(0)|#%1d:3(3 4 5)-#%0d(1)|"
     (call-with-output-string
      (lambda (o) (ra-slice-for-each 1 (lambda (ra0 ra1) (format o "~a-~a|" ra0 ra1)) ra0 ra1))))
   (test-equal
-    "#%0(0)-#%0(0)|#%0(1)-#%0(0)|#%0(2)-#%0(0)|#%0(3)-#%0(1)|#%0(4)-#%0(1)|#%0(5)-#%0(1)|"
+    "#%0d(0)-#%0d(0)|#%0d(1)-#%0d(0)|#%0d(2)-#%0d(0)|#%0d(3)-#%0d(1)|#%0d(4)-#%0d(1)|#%0d(5)-#%0d(1)|"
     (call-with-output-string
      (lambda (o) (ra-slice-for-each 2 (lambda (ra0 ra1) (format o "~a-~a|" ra0 ra1)) ra0 ra1))))
   (test-assert

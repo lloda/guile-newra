@@ -65,3 +65,20 @@
 (import (newra newra) (newra tools) (rnrs io ports)
         (srfi :8) (srfi :26) (ice-9 match) (only (srfi :1) fold)
         (only (rnrs base) vector-map))
+
+
+; -----------------------
+; ra-from handling inf indices
+; -----------------------
+
+; ok
+(ra-from (ra-i 4) (ra-iota 2))
+
+; oops
+(ra-ref (ra-from (ra-i 4) (ra-iota #f)) 10)
+
+; ew
+(ra-ref (ra-from (ra-copy #t (ra-i 4)) (ra-iota #f)) 10)
+
+; actually I just need bounds checking...
+(ra-from (ra-i 4) (ra-iota 6))

@@ -25,7 +25,7 @@
   (display #\% port)
   (display (ra-rank ra) port)
   (let ((type (ra-type ra)))
-    (unless (case type ((#t d) #t) (else #f))
+    (unless (eq? #t type)
       (display type port)))
   (vector-for-each
    (lambda (dim)

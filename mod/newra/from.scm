@@ -108,9 +108,9 @@ B(i00 i01 ... i10 i11 ...) = A(i0(i00 i01 ...) i1(i10 i11 ...) ...)
 
 where I : i0 i1 ...
 
-As an optimization, if every one of the I is either 1) a ra of type 'd, 2) a ra
-of rank 0, or 3) any integer, the result B is a view of the original array A
-over the same root. In all other cases a new root is allocated.
+Additionally, if every one of the I is either 1) a ra of type 'd, 2) a ra of
+rank 0, or 3) any integer, the result B is a view of the original array A over
+the same root. In all other cases a new root is allocated.
 "
   (let loop ((n 0) (m 0) (ii i)
              (ib '()) (ibi '()) (tb '())
