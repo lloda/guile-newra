@@ -82,7 +82,7 @@
             (i (map (lambda (ai stairs)
                       (apply ra-transpose ai (iota (ra-rank ai) stairs)))
                  ai bstairs)))
-        (if #f ;; (= frame (ra-rank A))
+        (if (= frame (ra-rank A) (ra-rank B))
 ; optimization
           (apply ra-map! B A i)
           (apply ra-slice-for-each frame
