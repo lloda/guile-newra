@@ -697,14 +697,22 @@
   (test-equal "#%2:d:3((0 1 2))" (ra->string ra))
   (test-equal #(0 1 2) (ra-root ra)))
 
+
+; -----------------------
+; inf dims III - dimensions can be unbounded in both directions. For these the origin is 0.
+; -----------------------
 
-(define fromu (@@ (newra from) fromu))
-(define fromb (@@ (newra from) fromb))
+(let ((ii (make-ra-root (make-dim #f #f 1) (vector (make-dim #f #f 1)))))
+  (test-equal 99 (ra-ref ii 99))
+  (test-equal -99 (ra-ref ii -99)))
 
 
 ; -----------------------
 ; from
 ; -----------------------
+
+(define fromu (@@ (newra from) fromu))
+(define fromb (@@ (newra from) fromb))
 
 (define A (ra-map! (make-ra 0 10 10) + (ra-transpose (ra-iota 10) 1) (ra-iota 10 0 10)))
 (define b (ra-i 2))

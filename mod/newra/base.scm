@@ -94,7 +94,7 @@
 
 
 ; ----------------
-; dimension record, used both as that, and as delayed iota.
+; dimension record, used both as that, and as root as delayed iota.
 ; ----------------
 
 (define-immutable-record-type <dim>
@@ -120,14 +120,14 @@
 
 (define-inlinable (dim-ref dim i)
   (and-let* ((len (dim-len dim)))
-    (unless (and (<= 0 i) (< i len))
+    (unless (and (<= 0 i) (or (not len) (< i len)))
       (throw 'dim-ref-out-of-range dim i)))
-  (+ (dim-lo dim) (* (dim-step dim) i)))
+  (+ (or (dim-lo dim) 0) (* (dim-step dim) i)))
 
 (define-inlinable (dim-check dim i)
   (let ((len (dim-len dim))
         (lo (dim-lo dim)))
-    (if (and (>= i lo) (or (not len) (< i (+ len lo))))
+    (if (and (or (not lo) (>= i lo)) (or (not len) (< i (+ len lo))))
       i
       (throw 'dim-check-out-of-range dim i))))
 
