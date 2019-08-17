@@ -697,6 +697,106 @@
   (test-equal "#%2:d:3((0 1 2))" (ra->string ra))
   (test-equal #(0 1 2) (ra-root ra)))
 
+
+(define fromu (@@ (newra from) fromu))
+(define fromb (@@ (newra from) fromb))
+
+
+; -----------------------
+; from
+; -----------------------
+
+(define A (ra-map! (make-ra 0 10 10) + (ra-transpose (ra-iota 10) 1) (ra-iota 10 0 10)))
+(define b (ra-i 2))
+(define c (make-ra-root (make-dim #f 10 2) (vector (make-dim 3 1))))
+(define d (ra-i 2 2))
+
+(define iz (ra-i 3))
+(ra-from A iz)
+(ra-from A 0)
+(ra-from A (ra-copy #t (ra-iota 3)))
+(ra-from A (ra-iota 3) (ra-iota 2)) ; BUG
+
+
+; ------------------------
+; tests
+; ------------------------
+
+(define (test-from-from? id A . i)
+  (test-begin id)
+; beatable vs unbeatable
+  (test-assert (ra-equal? (apply fromb A i) (apply fromu A i)))
+; general as unbeatable (except integers), vs unbeatable
+  (test-assert (ra-equal? (apply ra-from A (map (lambda (x) (if (ra? x) (ra-copy #t x) x)) i))
+                          (apply fromu A i)))
+; general as beatable, vs beatable
+  (let ((X (apply ra-from A i))
+        (Y (apply fromb A i)))
+    (test-assert (ra-equal? X Y))
+; purely beatable indices preserve the root.
+    (test-eq (ra-root A) (ra-root Y))
+    (test-eq (ra-root A) (ra-root X)))
+; general as beatable, vs unbeatable
+  (test-assert (ra-equal? (apply ra-from A i) (apply fromu A i)))
+; general as unbeatable/beatable (2 args), vs unbeatable
+  (match i
+    ((i j)
+     (test-assert (ra-equal? (ra-from A (if (ra? i) (ra-copy #t i) i) j)
+                             (fromu A i j)))
+     (test-assert (ra-equal? (ra-from A i (if (ra? j) (ra-copy #t j) j))
+                             (fromu A i j))))
+    (else #f))
+  (test-end id))
+
+; ------------------------
+; one arg
+
+; rank 0
+(test-from-from? "00" A (make-ra-root (make-dim #f 3) (vector)))
+(test-from-from? "01" A 2)
+(test-from-from? "02" A (make-ra 2))
+
+; rank 1
+(test-from-from? "03" A (ra-iota 3))
+(test-from-from? "04" A (make-ra-root (make-dim #f) (vector (make-dim 3 1 1))))
+(test-from-from? "05" A (make-ra-root (make-dim 3 1 1) (vector (make-dim 3 1 1))))
+(test-from-from? "06" A (make-ra-root (make-dim 3 1 2) (vector (make-dim 3 1 1))))
+(test-from-from? "07" A (make-ra-root (make-dim 6 1 1) (vector (make-dim 3 1 2))))
+(test-from-from? "08" A (make-ra-root (make-dim #f 3 2) (vector (make-dim 2 1 3))))
+
+; rank 2
+(test-from-from? "09" A (ra-i 2 2))
+(test-from-from? "10" A (make-ra-root (make-dim #f 3) (vector (make-dim 2 1 2) (make-dim 2 1 3))))
+
+
+; ------------------------
+; two args
+
+; rank 0 0
+(test-from-from? "11" A (make-ra-root (make-dim #f 3) (vector))
+                 (make-ra-root (make-dim #f 2) (vector)))
+(test-from-from? "12" A 3 (make-ra-root (make-dim #f 2) (vector)))
+(test-from-from? "13" A (make-ra-root (make-dim #f 3) (vector)) 2)
+(test-from-from? "14" A 3 2)
+
+; rank 1 1
+(test-from-from? "15" A (ra-iota 3) (ra-iota 2 4))
+(test-from-from? "16" A (make-ra-root (make-dim #f) (vector (make-dim 3 1 1)))
+                 (make-ra-root (make-dim #f) (vector (make-dim 3 1 2))))
+(test-from-from? "17" A (make-ra-root (make-dim 3 1 1) (vector (make-dim 3 1 1)))
+                 (make-ra-root (make-dim 3 1 2) (vector (make-dim 3 1 1))))
+(test-from-from? "18" A (make-ra-root (make-dim 3 1 2) (vector (make-dim 3 1 1)))
+                 (make-ra-root (make-dim 6 1 1) (vector (make-dim 3 1 2))))
+(test-from-from? "19" A (make-ra-root (make-dim 6 1 1) (vector (make-dim 3 1 2)))
+                 (make-ra-root (make-dim 6 1 1) (vector (make-dim 3 1 2))))
+(test-from-from? "20" A (make-ra-root (make-dim #f 3 2) (vector (make-dim 2 1 3)))
+                 (make-ra-root (make-dim 6 1 1) (vector (make-dim 3 1 2))))
+
+; rank 2 2
+(test-from-from? "21" A (ra-i 3 3) (ra-i 2 2))
+(test-from-from? "22" A (make-ra-root (make-dim #f 3) (vector (make-dim 2 1 2) (make-dim 2 1 3)))
+                 (make-ra-root (make-dim #f 3) (vector (make-dim 2 1 2) (make-dim 2 1 3))))
+
 
 ; -----------------------
 ; the end.

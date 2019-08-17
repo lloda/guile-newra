@@ -18,7 +18,9 @@
             ra-i ra-iota
             ra-copy
             ra-reverse ra-transpose
-            ra-fold ra-fold*))
+            ra-fold ra-fold*
+
+            vector-append))
 
 (import (newra base) (newra map) (only (srfi :1) fold every any iota) (srfi :8) (srfi :26)
         (ice-9 control) (ice-9 match) (only (rnrs base) vector-map vector-for-each))
@@ -412,7 +414,7 @@ See also: make-ra-root make-ra-new
            (if (not (vector-ref ndims k))
              (vector-set! ndims k (make-dim #f #f 0))))
          (make-ra-raw (%%ra-root ra) (%%ra-zero ra)
-;
+; append rest axes
                       (vector-append ndims (vector-drop odims i))))
       (unless (< i orank)
         (throw 'bad-number-of-axes axes 'should-be i))

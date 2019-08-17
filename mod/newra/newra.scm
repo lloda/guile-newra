@@ -12,7 +12,8 @@
 
 (define-module (newra newra))
 
-(import (newra base) (newra map) (newra print) (newra read) (newra lib))
+(import (newra base) (newra map) (newra print) (newra read)
+        (newra lib) (newra from))
 
 (re-export ra?
            make-ra-raw ra-root ra-zero ra-dims ra-vlen ra-vref ra-vset!
@@ -35,5 +36,7 @@
            ra-copy
            ra-transpose ra-reverse
            ra-fold ra-fold*
+
+           ra-from
 
            list->ra list->typed-ra)
