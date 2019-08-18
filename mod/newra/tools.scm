@@ -1,6 +1,6 @@
 ; -*- mode: scheme; coding: utf-8 -*-
 
-; (c) Daniel Llorens - 2017
+; (c) Daniel Llorens - 2017, 2019
 ; This library is free software; you can redistribute it and/or modify it under
 ; the terms of the GNU General Public License as published by the Free
 ; Software Foundation; either version 3 of the License, or (at your option) any
@@ -11,7 +11,8 @@
 ;;; Code:
 
 (define-module (newra tools)
-  #:export (time walltime repeat define-constant syntax->list))
+  #:export (define-constant
+            time walltime repeat syntax->list throws-exception?))
 
 (define-syntax time
   (syntax-rules ()
@@ -46,3 +47,8 @@
     (syntax-case ls ()
       [() '()]
       [(x . r) (cons #'x (syntax->list #'r))])))
+
+(define (throws-exception? k thunk)
+  (catch #t
+    (lambda () (thunk) #f)
+    (lambda args (if (eq? k (car args)) args #f))))

@@ -13,11 +13,6 @@
         (srfi :64) (srfi :26) (srfi :8) (only (srfi :1) fold iota)
         (ice-9 match) (only (rnrs base) vector-map))
 
-(define (throws-exception? k thunk)
-  (catch #t
-    (lambda () (thunk) #f)
-    (lambda args (if (eq? k (car args)) args #f))))
-
 (define (ra->string ra) (call-with-output-string (cut display ra <>)))
 (define (string->ra s) (call-with-input-string s read))
 
@@ -806,9 +801,32 @@
                  (make-ra-root (make-dim #f 3) (vector (make-dim 2 1 2) (make-dim 2 1 3))))
 
 
-; -----------------------
-; the end.
-; -----------------------
+; ------------------------
+; other A
 
-(test-end "newra")
-(exit (test-runner-fail-count (test-runner-current)))
+(throws-exception? 'dim-check-out-of-range (lambda () (ra-from (ra-i 4) (ra-iota 6))))
+(throws-exception? 'dim-check-out-of-range (lambda () (ra-from (ra-i 4) 4)))
+
+(let ((A (make-ra-root (make-dim #f #f 1) (vector (make-dim 4 -3 1)))))
+  (test-equal 0 (ra-ref (fromu (ra-copy #t A) -3)))
+  (test-equal 0 (ra-ref (fromb A -3)))
+  (test-equal 0 (ra-ref (ra-from A -3)))
+  (test-equal 0 (ra-ref (fromu (ra-copy #t A) (make-ra -3))))
+  (test-equal 0 (ra-ref (fromb A (make-ra -3))))
+  (test-equal 0 (ra-ref (ra-from A (make-ra -3)))))
+
+(let ((A (make-ra-root #(0 1 2 3 4 5 6 7) (vector (make-dim 4 -3 1)))))
+  (test-equal 0 (ra-ref (fromu A -3)))
+  (test-equal 0 (ra-ref (fromb A -3)))
+  (test-equal 0 (ra-ref (ra-from A -3)))
+  (test-equal 0 (ra-ref (fromu A (make-ra -3))))
+  (test-equal 0 (ra-ref (fromb A (make-ra -3))))
+  (test-equal 0 (ra-ref (ra-from A (make-ra -3)))))
+
+;; 
+;; ; -----------------------
+;; ; the end.
+;; ; -----------------------
+
+;; (test-end "newra")
+;; (exit (test-runner-fail-count (test-runner-current)))

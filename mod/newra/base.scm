@@ -17,10 +17,10 @@
             check-ra
             ra-rank ra-type make-ra-new make-ra-root
             make-dim dim? dim-len dim-lo dim-hi dim-step dim-ref c-dims
-            ra-pos ra-offset ra-pos-hi ra-pos-lo
+            ra-pos ra-offset
             ra-slice ra-cell ra-ref ra-set!
 ; for internal (newra) use, don't re-export
-            make-dim* <dim>
+            make-dim* <dim> dim-check
             vector-drop vector-fold vector-clip
             <ra-vtable> pick-root-functions pick-make-root
             %ra-root %ra-zero %ra-zero-set! %ra-dims %ra-type %ra-vlen %ra-vref %ra-vset! %ra-rank
@@ -313,28 +313,6 @@ See also: ra-data ra-zero ra-dims
           (throw 'too-many-indices i_)
           (let ((dim (vector-ref dims j)))
             (loop (+ j 1) (+ pos (* (dim-check dim (car i)) (dim-step dim))) (cdr i)))))))))
-
-; lowest position on data. FIXME remove?
-(define (ra-pos-lo ra)
-  (check-ra ra)
-  (let ((dims (%%ra-dims ra)))
-    (let loop ((j (- (vector-length dims) 1)) (pos (%%ra-zero ra)))
-      (if (< j 0)
-        pos
-        (let* ((dim (vector-ref dims j))
-               (step (dim-step dim)))
-          (loop (- j 1) (+ pos (if (zero? step) 0 (* step (if (positive? step) (dim-lo dim) (dim-hi dim)))))))))))
-
-; highest position on data. FIXME remove?
-(define (ra-pos-hi ra)
-  (check-ra ra)
-  (let ((dims (%%ra-dims ra)))
-    (let loop ((j (- (vector-length dims) 1)) (pos (%%ra-zero ra)))
-      (if (< j 0)
-        pos
-        (let* ((dim (vector-ref dims j))
-               (step (dim-step dim)))
-          (loop (- j 1) (+ pos (if (zero? step) 0 (* step (if (positive? step) (dim-hi dim) (dim-lo dim)))))))))))
 
 (define ra-offset
   (case-lambda

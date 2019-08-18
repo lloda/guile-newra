@@ -13,7 +13,7 @@
 ; FIXME Simplify...
 
 (define-module (newra from)
-  #:export (ra-from))
+  #:export (ra-from fromu fromb)) ; testing
 
 (import (newra base) (newra map) (newra lib) (srfi :8) (srfi :26) (srfi :1)
         (ice-9 control) (ice-9 match) (only (rnrs base) vector-map vector-for-each))
@@ -23,40 +23,65 @@
 ; FIXME preallocate the dim vector then run j k ... j ...
 ; -----------------------
 
-(define fromb
-  (case-lambda
-   ((A) A)
-   ((A . ai)
-    (let loopj ((j 0) (ii ai) (bzero (ra-zero A)) (bdims '()))
-      (if (null? ii)
-        (make-ra-raw (ra-root A) bzero
-                     (vector-append (apply vector-append (reverse! bdims))
-                                    (vector-drop (ra-dims A) (length ai))))
-        (let ((dimA (vector-ref (ra-dims A) j)))
-          (match (car ii)
-            ((? ra? i)
-             (match (ra-root i)
-               (($ <dim> rlen rlo rstep)
-                (let ((bdimsj (make-vector (ra-rank i))))
-                  (let loopk ((k 0))
-                    (if (= k (ra-rank i))
-                      (loopj (+ j 1) (cdr ii)
-                             (+ bzero (* (dim-step dimA) (- (+ rlo (* rstep (ra-zero i))) (dim-lo dimA))))
-                             (cons bdimsj bdims))
-                      (match (vector-ref (ra-dims i) k)
-                        (($ <dim> ilen ilo istep)
-                         (vector-set! bdimsj k (make-dim ilen ilo (* (dim-step dimA) istep rstep)))
-                         (loopk (+ k 1))))))))
-               (x
-                (if (zero? (ra-rank i))
-                  (loopj (+ j 1) (cdr ii)
-                         (+ bzero (* (dim-step dimA) (- (i) (dim-lo dimA))))
-                         bdims)
-                  (throw 'not-yet x)))))
-            ((? integer? z)
-             (loopj (+ j 1) (cdr ii)
-                    (+ bzero (* (dim-step dimA) (- z (dim-lo dimA))))
-                    bdims)))))))))
+; lowest and highest positions on data.
+(define (%ra-pos-bounds zero dims)
+  (let loop ((j (- (vector-length dims) 1)) (lo zero) (hi zero))
+    (if (< j 0)
+      (values lo hi)
+      (let* ((dim (vector-ref dims j))
+             (step (dim-step dim)))
+        (cond
+         ((zero? step)
+          (loop (- j 1) lo hi))
+         ((positive? step)
+          (loop (- j 1) (+ lo (* step (dim-lo dim))) (+ hi (* step (dim-hi dim)))))
+         (else
+          (loop (- j 1) (+ lo (* step (dim-hi dim))) (+ hi (* step (dim-lo dim))))))))))
+
+(define (fromb A . ai)
+  (let loopj ((j 0) (ii ai) (zero (ra-zero A)) (bdims '()))
+    (match ii
+      ((i0 . irest)
+       (let ((dimA (vector-ref (ra-dims A) j)))
+         (match i0
+           ((? integer? z)
+            (loopj (+ j 1) irest (+ zero (* (dim-step dimA) (dim-check dimA z))) bdims))
+           ((? ra? i)
+            (let ((ri (%%ra-rank i)))
+              (if (zero? ri)
+                (loopj (+ j 1) irest (+ zero (* (dim-step dimA) (dim-check dimA (i)))) bdims)
+                (let ((root (%%ra-root i)))
+                  (match root
+                    (($ <dim> rlen rlo rstep)
+                     (let ((bdimsj (make-vector ri))
+                           (izero (%%ra-zero i)))
+                       (let loopk ((k 0) (lo izero) (hi izero))
+                         (if (< k ri)
+                           (match (vector-ref (%%ra-dims i) k)
+                             (($ <dim> ilen ilo istep)
+                              (vector-set! bdimsj k (make-dim ilen ilo (* (dim-step dimA) istep rstep)))
+                              (cond
+                               ((zero? istep)
+                                (loopk (+ k 1) lo hi))
+                               ((positive? istep)
+                                (loopk (+ k 1)
+                                       (and lo ilo (+ lo (* istep ilo)))
+                                       (and hi ilo ilen (+ hi (* istep (+ ilo ilen -1))))))
+                               (else
+                                (loopk (+ k 1)
+                                       (and lo ilo ilen (+ lo (* istep (+ ilo ilen -1))))
+                                       (and hi ilo (+ hi (* istep ilo))))))))
+
+                           (begin
+                             (and=> (and lo (dim-ref root lo)) (cut dim-check dimA <>))
+                             (and=> (and hi (dim-ref root hi)) (cut dim-check dimA <>))
+                             (loopj (+ j 1) irest
+                                    (+ zero (* (dim-step dimA) (+ rlo (* rstep izero))))
+                                    (cons bdimsj bdims)))))))))))))))
+      (()
+       (make-ra-raw (ra-root A) zero
+                    (vector-append (apply vector-append (reverse! bdims))
+                                   (vector-drop (ra-dims A) (length ai))))))))
 
 
 ; ------------------------
@@ -108,9 +133,9 @@ B(i00 i01 ... i10 i11 ...) = A(i0(i00 i01 ...) i1(i10 i11 ...) ...)
 
 where I : i0 i1 ...
 
-Additionally, if every one of the I is either 1) a ra of type 'd, 2) a ra of
-rank 0, or 3) any integer, the result B is a view of the original array A over
-the same root. In all other cases a new root is allocated.
+Additionally, if every I is either 1) a ra of type 'd, 2) a ra of rank 0, or 3)
+an integer, the result B shares the root of A. In all other cases a new root is
+allocated.
 "
   (let loop ((n 0) (m 0) (ii i)
              (ib '()) (ibi '()) (tb '())

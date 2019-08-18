@@ -74,6 +74,11 @@
 ; ok
 (ra-from (ra-i 4) (ra-iota 2))
 
+; but...
+(ra-from (ra-i 4) (ra-iota #f))
+(ra-from (ra-i #f) (ra-iota 4))
+(ra-from (ra-i #f) (ra-iota 4 -3))
+
 ; oops
 (ra-ref (ra-from (ra-i 4) (ra-iota #f)) 10)
 
@@ -81,4 +86,3 @@
 (ra-ref (ra-from (ra-copy #t (ra-i 4)) (ra-iota #f)) 10)
 
 ; actually I just need bounds checking...
-(ra-from (ra-i 4) (ra-iota 6))
