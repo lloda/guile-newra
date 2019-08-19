@@ -95,6 +95,7 @@
 
 ; ----------------
 ; dimension record, used both as that, and as root as delayed iota.
+; FIXME this was probably a bad idea - make a type root-iota(len lo step) separate from dim(lo end step)
 ; ----------------
 
 (define-immutable-record-type <dim>

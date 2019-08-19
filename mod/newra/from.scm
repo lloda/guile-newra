@@ -147,6 +147,8 @@ The special value #t is understood as the full range of A on that axis.
 Additionally, if every I is either 1) #t 2) a ra of type 'd, 3) a ra of rank 0,
 or 4) an integer, the result B shares the root of A. In all other cases a new
 root is allocated.
+
+See also: ra-cell ra-ref ra-slice ra-amend! ra-set!
 "
   (let loop ((n 0) (m 0) (ii i)
              (ib '()) (ibi '()) (tb '())

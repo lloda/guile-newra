@@ -17,7 +17,7 @@
             array->ra ra->array as-ra
             ra-i ra-iota
             ra-copy
-            ra-reverse ra-transpose
+            ra-reverse ra-transpose ra-reshape ra-ravel
             ra-fold ra-fold*
 
             vector-append))
@@ -431,3 +431,39 @@ See also: make-ra-root make-ra-new
                        (+ (dim-step odim) (dim-step ndim)))
              (throw 'bad-lo))
            odim))))))
+
+; cf https://www.jsoftware.com/papers/APLDictionary1.htm#rho
+; ... ⍺⍴⍵ produces a result of shape ⍺ from the elements of ⍵ ...
+
+; cf https://code.jsoftware.com/wiki/Vocabulary/dollar#dyadic
+; x $ y
+; ... the shape of the result is (x,}.$y); i.e. the result is an array of items of y whose frame is x.
+
+; cf http://www2.phys.canterbury.ac.nz/dept/docs/manuals/Fortran-90/HTMLNotesnode102.html#ReshapeIntrinsic1
+; RESHAPE(SOURCE,SHAPE[,PAD][,ORDER])
+
+(define (ra-reshape ra . s)
+  "
+ra-reshape ra s ... -> rb
+
+Reshape the first axis of ra RA into shape S ... Each S is either list of two
+integers (LO HI) or an integer LEN.
+
+See also: ra-ravel ra-transpose ra-from
+"
+  99
+  )
+; cf https://code.jsoftware.com/wiki/Vocabulary/comma
+
+(define (ra-ravel ra)
+  "
+ra-ravel ra -> rb
+
+Return the row-major ravel of ra RA. The result RB may or may not share the root
+of RA.
+
+See also: ra-reshape ra-transpose ra-from
+"
+  99
+; write the shared check separately so we may check-share-fail or check-share-copy.
+  )

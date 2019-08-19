@@ -13,12 +13,14 @@ Help: [C-uc .] insert timestamp [C-cc] flip checkbox [C-uucc] partial flip check
   * [X] ra-equal?
   * [ ] root vectors are equivalent to rank-1 newra objects
 
-* TODO guile-ploy functionality [5/8]
+* TODO guile-ploy functionality [5/10]
   * [X] ra-fold ra-fold*
   * [X] ra-any ra-every
   * [X] raw prefix matching
   * [X] generalized prefix matching
   * [X] high level slicing
+  * [ ] ra-amend!
+  * [ ] ra-reshape ra-ravel
   * [ ] verbs, w/rank
   * [ ] as-ra
   * [ ] output types
