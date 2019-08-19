@@ -823,10 +823,22 @@
   (test-equal 0 (ra-ref (fromb A (make-ra -3))))
   (test-equal 0 (ra-ref (ra-from A (make-ra -3)))))
 
-;; 
-;; ; -----------------------
-;; ; the end.
-;; ; -----------------------
+(test-equal "#%1d:2(0 1)" (ra->string (ra-from (ra-i 4) (ra-iota 2))))
+(test-equal "#%1d:4(0 1 2 3)" (ra->string (ra-from (ra-i #f) (ra-iota 4))))
+(test-equal "#%1d:4(0 -1 -2 -3)" (ra->string (ra-from (make-ra-root (make-dim #f #f) (vector (make-dim 4 -3 -1))) (ra-iota 4 -3))))
 
-;; (test-end "newra")
-;; (exit (test-runner-fail-count (test-runner-current)))
+; note that arrays are always indexed upwards, so you cannot have (lo hi) be (#f number).
+(throws-exception? 'dim-check-out-of-range (lambda () (ra-from (ra-i #f) (ra-iota 4 -3)))) ; error: -3 < 0
+(throws-exception? 'dim-check-out-of-range
+                   (lambda () (ra-from (make-ra-root (make-dim #f #f) (vector (make-dim 4 -3 -1)))
+                                       (ra-iota 5 -3)))) ; -3+5 > -3+4
+(throws-exception? 'dim-check-out-of-range (lambda () (ra-from (ra-i 4) (ra-iota #f))))
+(throws-exception? 'dim-check-out-of-range (lambda () (ra-from (ra-copy #t (ra-i 4)) (ra-iota #f))))
+
+
+; -----------------------
+; the end.
+; -----------------------
+
+(test-end "newra")
+(exit (test-runner-fail-count (test-runner-current)))

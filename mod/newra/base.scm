@@ -109,6 +109,7 @@
    ((len lo) (make-dim* len lo 1))
    ((len lo step)
     (when (and len (< len 0)) (throw 'bad-dim-len len))
+    (when (and (not lo) len) (throw 'bad-dim-lo-len lo len))
     (make-dim* len lo step))))
 
 (define-inlinable (dim-end dim)
@@ -125,11 +126,14 @@
   (+ (or (dim-lo dim) 0) (* (dim-step dim) i)))
 
 (define-inlinable (dim-check dim i)
-  (let ((len (dim-len dim))
-        (lo (dim-lo dim)))
-    (if (and (or (not lo) (>= i lo)) (or (not len) (< i (+ len lo))))
-      i
-      (throw 'dim-check-out-of-range dim i))))
+  (if (and i
+           (let ((len (dim-len dim))
+                 (lo (dim-lo dim)))
+             (and
+              (or (not lo) (>= i lo))
+              (or (not len) (< i (+ len lo)))))) ; len implies lo
+    i
+    (throw 'dim-check-out-of-range dim i)))
 
 
 ; ----------------

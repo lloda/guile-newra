@@ -72,12 +72,19 @@
                                        (and lo ilo ilen (+ lo (* istep (+ ilo ilen -1))))
                                        (and hi ilo (+ hi (* istep ilo))))))))
 
-                           (begin
-                             (and=> (and lo (dim-ref root lo)) (cut dim-check dimA <>))
-                             (and=> (and hi (dim-ref root hi)) (cut dim-check dimA <>))
-                             (loopj (+ j 1) irest
-                                    (+ zero (* (dim-step dimA) (+ rlo (* rstep izero))))
-                                    (cons bdimsj bdims)))))))))))))))
+                           (let ((lo (and lo (dim-ref root lo)))
+                                 (hi (and hi (dim-ref root hi))))
+                             (receive (lo hi) (if (negative? rstep) (values hi lo) (values lo hi))
+; we don't use dim-check as that requires integer i.
+                               (when (dim-lo dimA)
+                                 (unless (and lo (>= lo (dim-lo dimA)))
+                                   (throw 'dim-check-out-of-range dimA lo)))
+                               (when (dim-hi dimA)
+                                 (unless (and hi (<= hi (dim-hi dimA)))
+                                   (throw 'dim-check-out-of-range dimA lo)))
+                               (loopj (+ j 1) irest
+                                      (+ zero (* (dim-step dimA) (+ rlo (* rstep izero))))
+                                      (cons bdimsj bdims))))))))))))))))
       (()
        (make-ra-raw (ra-root A) zero
                     (vector-append (apply vector-append (reverse! bdims))

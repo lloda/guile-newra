@@ -62,7 +62,7 @@
 ; define-inlinable-case-lambda
 ; -----------------------
 
-(import (newra newra) (newra tools) (rnrs io ports)
+(import (newra newra) (newra tools) (rnrs io ports) (newra from)
         (srfi :8) (srfi :26) (ice-9 match) (only (srfi :1) fold)
         (only (rnrs base) vector-map))
 
@@ -72,17 +72,15 @@
 ; -----------------------
 
 ; ok
-(ra-from (ra-i 4) (ra-iota 2))
+
 
 ; but...
-(ra-from (ra-i 4) (ra-iota #f))
-(ra-from (ra-i #f) (ra-iota 4))
-(ra-from (ra-i #f) (ra-iota 4 -3))
+
 
 ; oops
 (ra-ref (ra-from (ra-i 4) (ra-iota #f)) 10)
 
 ; ew
-(ra-ref (ra-from (ra-copy #t (ra-i 4)) (ra-iota #f)) 10)
+(ra-ref  10)
 
 ; actually I just need bounds checking...
