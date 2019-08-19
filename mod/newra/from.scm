@@ -44,6 +44,8 @@
       ((i0 . irest)
        (let ((dimA (vector-ref (ra-dims A) j)))
          (match i0
+           (#t
+            (loopj (+ j 1) irest zero (cons (vector dimA) bdims)))
            ((? integer? z)
             (loopj (+ j 1) irest (+ zero (* (dim-step dimA) (dim-check dimA z))) bdims))
            ((? ra? i)
@@ -123,9 +125,9 @@
         B)))))
 
 (define (beatable? x)
-  (or (and (ra? x) (or (zero? (ra-rank x)) (dim? (ra-root x)))) (integer? x)))
+  (or (and (ra? x) (or (zero? (ra-rank x)) (dim? (ra-root x)))) (integer? x) (eq? x #t)))
 (define (index-rank x)
-  (match x ((? integer? z) 0) ((? ra? ra) (ra-rank ra))))
+  (match x ((? integer? z) 0) ((? ra? ra) (ra-rank ra)) (#t 1)))
 
 (define (ra-from A . i)
   "
@@ -140,9 +142,11 @@ B(i00 i01 ... i10 i11 ...) = A(i0(i00 i01 ...) i1(i10 i11 ...) ...)
 
 where I : i0 i1 ...
 
-Additionally, if every I is either 1) a ra of type 'd, 2) a ra of rank 0, or 3)
-an integer, the result B shares the root of A. In all other cases a new root is
-allocated.
+The special value #t is understood as the full range of A on that axis.
+
+Additionally, if every I is either 1) #t 2) a ra of type 'd, 3) a ra of rank 0,
+or 4) an integer, the result B shares the root of A. In all other cases a new
+root is allocated.
 "
   (let loop ((n 0) (m 0) (ii i)
              (ib '()) (ibi '()) (tb '())

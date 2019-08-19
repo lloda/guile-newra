@@ -835,6 +835,10 @@
 (throws-exception? 'dim-check-out-of-range (lambda () (ra-from (ra-i 4) (ra-iota #f))))
 (throws-exception? 'dim-check-out-of-range (lambda () (ra-from (ra-copy #t (ra-i 4)) (ra-iota #f))))
 
+(let ((A (make-ra-root (make-dim #f #f) (vector (make-dim 4 1 3) (make-dim 3 1)))))
+  (test-equal "#%1d@1:4(1 4 7 10)" (ra->string (ra-from A #t 2)))
+  (test-equal "#%1d@1:3(3 4 5)" (ra->string (ra-from A 2 #t))))
+
 
 ; -----------------------
 ; the end.
