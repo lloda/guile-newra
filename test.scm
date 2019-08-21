@@ -812,10 +812,10 @@
 (throws-exception? 'dim-check-out-of-range (lambda () (ra-from (ra-i 4) 4)))
 
 (let ((A (make-ra-root (make-dim #f #f 1) (vector (make-dim 4 -3 1)))))
-  (test-equal 0 (ra-ref (fromu (ra-copy #t A) (make-ra -3))))
+  (test-equal 0 (ra-ref (fromu A (make-ra -3))))
   (test-equal 0 (ra-ref (fromb A -3)))
   (test-equal 0 (ra-ref (ra-from A -3)))
-  (test-equal 0 (ra-ref (fromu (ra-copy #t A) (make-ra -3))))
+  (test-equal 0 (ra-ref (fromu A (make-ra -3))))
   (test-equal 0 (ra-ref (fromb A (make-ra -3))))
   (test-equal 0 (ra-ref (ra-from A (make-ra -3)))))
 

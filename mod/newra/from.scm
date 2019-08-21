@@ -108,8 +108,8 @@
              (append-map ra-shape ai)
              (map (lambda (dim) (list (dim-lo dim) (dim-hi dim))) (drop (vector->list (ra-dims A)) (length ai)))))
            (bdims (apply c-dims bshape))
-; FIXME type 'd needs to be converted
-           (B (make-ra-new (ra-type A) *unspecified* bdims))
+; type 'd needs to be converted
+           (B (make-ra-new (match (ra-type A) ('d #t) (x x)) *unspecified* bdims))
            (bstairs (reverse (cdr (fold (lambda (a c) (cons (+ (ra-rank a) (car c)) c)) '(0) ai))))
            (i (map (lambda (ai stairs)
                      (apply ra-transpose ai (iota (ra-rank ai) stairs)))
@@ -146,6 +146,8 @@
 (define (index-rank x)
   (match x ((? integer? z) 0) ((? ra? ra) (ra-rank ra)) (#t 1)))
 
+; FIXME add a version that copies the to an arg. That avoids allocation of the result, although it would be better if the compiler could tell where the result goes.
+
 (define (ra-from A . i)
   "
 ra-from a . i -> b
@@ -164,6 +166,10 @@ The special value #t is understood as the full range of A on that axis.
 Additionally, if every I is either 1) #t 2) a ra of type 'd, 3) a ra of rank 0,
 or 4) an integer, the result B shares the root of A. In all other cases a new
 root is allocated.
+
+The type of B is the same as that of A, with the only exception that if the type
+of A is 'd and the root of B isn't shared with the root of A, then the type of B
+is #t.
 
 See also: ra-cell ra-ref ra-slice ra-amend! ra-set!
 "
