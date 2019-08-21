@@ -726,30 +726,34 @@
 ; ------------------------
 
 (define (test-from-from? id A . i)
-  (test-begin id)
+; to be able to test integers on fromu
+  (let ((ii (map (match-lambda ((? ra? x) x) ((? integer? x) (make-ra x))) i)))
+    (test-begin id)
 ; beatable vs unbeatable
-  (test-assert (ra-equal? (apply fromb A i) (apply fromu A i)))
+    (test-assert (ra-equal? (apply fromb A i) (apply fromu A ii)))
 ; general as unbeatable (except integers), vs unbeatable
-  (test-assert (ra-equal? (apply ra-from A (map (lambda (x) (if (ra? x) (ra-copy #t x) x)) i))
-                          (apply fromu A i)))
+    (test-assert (ra-equal? (apply ra-from A (map (lambda (x) (if (ra? x) (ra-copy #t x) x)) i))
+                            (apply fromu A ii)))
 ; general as beatable, vs beatable
-  (let ((X (apply ra-from A i))
-        (Y (apply fromb A i)))
-    (test-assert (ra-equal? X Y))
+    (let ((X (apply ra-from A i))
+          (Y (apply fromb A i)))
+      (test-assert (ra-equal? X Y))
 ; purely beatable indices preserve the root.
-    (test-eq (ra-root A) (ra-root Y))
-    (test-eq (ra-root A) (ra-root X)))
+      (test-eq (ra-root A) (ra-root Y))
+      (test-eq (ra-root A) (ra-root X)))
 ; general as beatable, vs unbeatable
-  (test-assert (ra-equal? (apply ra-from A i) (apply fromu A i)))
+    (test-assert (ra-equal? (apply ra-from A i) (apply fromu A ii)))
 ; general as unbeatable/beatable (2 args), vs unbeatable
-  (match i
-    ((i j)
-     (test-assert (ra-equal? (ra-from A (if (ra? i) (ra-copy #t i) i) j)
-                             (fromu A i j)))
-     (test-assert (ra-equal? (ra-from A i (if (ra? j) (ra-copy #t j) j))
-                             (fromu A i j))))
-    (else #f))
-  (test-end id))
+    (match i
+      ((i j)
+       (match ii
+         ((ii jj)
+          (test-assert (ra-equal? (ra-from A (if (ra? i) (ra-copy #t i) i) j)
+                                  (fromu A ii jj)))
+          (test-assert (ra-equal? (ra-from A i (if (ra? j) (ra-copy #t j) j))
+                                  (fromu A ii jj))))))
+      (else #f))
+    (test-end id)))
 
 ; ------------------------
 ; one arg
@@ -808,7 +812,7 @@
 (throws-exception? 'dim-check-out-of-range (lambda () (ra-from (ra-i 4) 4)))
 
 (let ((A (make-ra-root (make-dim #f #f 1) (vector (make-dim 4 -3 1)))))
-  (test-equal 0 (ra-ref (fromu (ra-copy #t A) -3)))
+  (test-equal 0 (ra-ref (fromu (ra-copy #t A) (make-ra -3))))
   (test-equal 0 (ra-ref (fromb A -3)))
   (test-equal 0 (ra-ref (ra-from A -3)))
   (test-equal 0 (ra-ref (fromu (ra-copy #t A) (make-ra -3))))
@@ -816,7 +820,7 @@
   (test-equal 0 (ra-ref (ra-from A (make-ra -3)))))
 
 (let ((A (make-ra-root #(0 1 2 3 4 5 6 7) (vector (make-dim 4 -3 1)))))
-  (test-equal 0 (ra-ref (fromu A -3)))
+  (test-equal 0 (ra-ref (fromu A (make-ra -3))))
   (test-equal 0 (ra-ref (fromb A -3)))
   (test-equal 0 (ra-ref (ra-from A -3)))
   (test-equal 0 (ra-ref (fromu A (make-ra -3))))

@@ -103,26 +103,43 @@
   (case-lambda
    ((A) A)
    ((A . ai)
-    (let* ((ai (map (match-lambda ((? ra? x) x) ((? integer? x) (make-ra x))) ai))
-           (bshape
+    (let* ((bshape
             (append
              (append-map ra-shape ai)
              (map (lambda (dim) (list (dim-lo dim) (dim-hi dim))) (drop (vector->list (ra-dims A)) (length ai)))))
            (bdims (apply c-dims bshape))
-           (bstairs (reverse (cdr (fold (lambda (a c) (cons (+ (ra-rank a) (car c)) c)) '(0) ai))))
 ; FIXME type 'd needs to be converted
-           (B (make-ra-new (ra-type A) *unspecified* bdims)))
-      (let ((frame (fold (lambda (a c) (+ c (ra-rank a))) 0 ai))
-            (i (map (lambda (ai stairs)
-                      (apply ra-transpose ai (iota (ra-rank ai) stairs)))
-                 ai bstairs)))
+           (B (make-ra-new (ra-type A) *unspecified* bdims))
+           (bstairs (reverse (cdr (fold (lambda (a c) (cons (+ (ra-rank a) (car c)) c)) '(0) ai))))
+           (i (map (lambda (ai stairs)
+                     (apply ra-transpose ai (iota (ra-rank ai) stairs)))
+                ai bstairs))
+           (frame (fold (lambda (a c) (+ c (ra-rank a))) 0 ai)))
         (if (= frame (ra-rank A) (ra-rank B))
 ; optimization
           (apply ra-map! B A i)
           (apply ra-slice-for-each frame
                  (lambda (B . i) (ra-copy! B (apply (lambda i (apply ra-slice A i)) (map ra-ref i))))
                  B i))
-        B)))))
+        B))))
+
+(define amendu!
+  (case-lambda
+   ((A C)
+    (ra-copy! A C))
+   ((A C . ai)
+    (let* ((bstairs (reverse (cdr (fold (lambda (a c) (cons (+ (ra-rank a) (car c)) c)) '(0) ai))))
+           (i (map (lambda (ai stairs)
+                     (apply ra-transpose ai (iota (ra-rank ai) stairs)))
+                ai bstairs))
+           (frame (fold (lambda (a c) (+ c (ra-rank a))) 0 ai)))
+        (if (= frame (ra-rank A) (ra-rank C))
+; optimization
+          (apply ra-map! A C i)
+          (apply ra-slice-for-each frame
+                 (lambda (C . i) (ra-copy! (apply (lambda i (apply ra-slice A i)) (map ra-ref i)) C))
+                 C i))
+        A))))
 
 (define (beatable? x)
   (or (and (ra? x) (or (zero? (ra-rank x)) (dim? (ra-root x)))) (integer? x) (eq? x #t)))
@@ -194,25 +211,6 @@ See also: ra-cell ra-ref ra-slice ra-amend! ra-set!
 ; -----------------------
 
 ; x m} y - https://code.jsoftware.com/wiki/Vocabulary/curlyrt#dyadic
-
-(define amendu!
-  (case-lambda
-   ((A C)
-    (ra-copy! A C))
-   ((A C . ai)
-    (let* ((ai (map (match-lambda ((? ra? x) x) ((? integer? x) (make-ra x))) ai))
-           (bstairs (reverse (cdr (fold (lambda (a c) (cons (+ (ra-rank a) (car c)) c)) '(0) ai)))))
-      (let ((frame (fold (lambda (a c) (+ c (ra-rank a))) 0 ai))
-            (i (map (lambda (ai stairs)
-                      (apply ra-transpose ai (iota (ra-rank ai) stairs)))
-                 ai bstairs)))
-        (if (= frame (ra-rank A) (ra-rank C))
-; optimization
-          (apply ra-map! A C i)
-          (apply ra-slice-for-each frame
-                 (lambda (C . i) (ra-copy! (apply (lambda i (apply ra-slice A i)) (map ra-ref i)) C))
-                 C i))
-        A)))))
 
 (define (ra-amend! A C . i)
   "
