@@ -13,7 +13,7 @@
 ; FIXME Simplify...
 
 (define-module (newra from)
-  #:export (ra-from fromu fromb)) ; testing
+  #:export (ra-from ra-amend! fromb fromu amendu!)) ; testing
 
 (import (newra base) (newra map) (newra lib) (srfi :8) (srfi :26) (srfi :1)
         (ice-9 control) (ice-9 match) (only (rnrs base) vector-map vector-for-each))
@@ -187,3 +187,90 @@ See also: ra-cell ra-ref ra-slice ra-amend! ra-set!
                 (B (apply fromu B iu)))
 ; undo the transposition. ra-transpose handles any trailing axes
            (apply ra-transpose B (append tu tb))))))))
+
+
+; -----------------------
+; ra-amend!
+; -----------------------
+
+; x m} y - https://code.jsoftware.com/wiki/Vocabulary/curlyrt#dyadic
+
+(define amendu!
+  (case-lambda
+   ((A C)
+    (ra-copy! A C))
+   ((A C . ai)
+    (let* ((ai (map (match-lambda ((? ra? x) x) ((? integer? x) (make-ra x))) ai))
+           (bstairs (reverse (cdr (fold (lambda (a c) (cons (+ (ra-rank a) (car c)) c)) '(0) ai)))))
+      (let ((frame (fold (lambda (a c) (+ c (ra-rank a))) 0 ai))
+            (i (map (lambda (ai stairs)
+                      (apply ra-transpose ai (iota (ra-rank ai) stairs)))
+                 ai bstairs)))
+        (if (= frame (ra-rank A) (ra-rank C))
+; optimization
+          (apply ra-map! A C i)
+          (apply ra-slice-for-each frame
+                 (lambda (C . i) (ra-copy! (apply (lambda i (apply ra-slice A i)) (map ra-ref i)) C))
+                 C i))
+        A)))))
+
+(define (ra-amend! A C . i)
+  "
+ra-amend! A C . i -> A
+
+Copy C to the outer product slice of A by indices I ...
+
+A(i0(i00 i01 ...) i1(i10 i11 ...) ...) <- C(i00 i01 ... i10 i11 ...)
+
+where I : i0 i1 ...
+
+This is equivalent to (ra-copy! (ra-from A I ...) C) whenever (ra-from A I ...)
+would return a shared ra of A. I may take any of the special values accepted by
+RA-FROM.
+
+If I contains repeated indices so that the same elements of A are referenced
+more than once, the value that ends up in A could correspond to any of the
+indices.
+
+This function returns the modified ra A.
+
+See also: ra-set! ra-from ra-copy! ra-cell ra-ref ra-slice
+"
+  (let ((C (if (ra? C) C (make-ra C))))
+    (let loop ((n 0) (m 0) (ii i)
+               (ib '()) (ibi '()) (tb '())
+               (iu '()) (iui '()) (tu '()))
+      (match ii
+        ((i0 . irest)
+         (let* ((k (index-rank i0))
+                (idest (iota k m)))
+           (if (beatable? i0)
+             (loop (+ n 1) (+ m k) irest
+                   (cons i0 ib) (cons n ibi) (fold cons tb idest)
+                   iu iui tu)
+             (loop (+ n 1) (+ m k) irest
+                   ib ibi tb
+                   (cons i0 iu) (cons n iui) (fold cons tu idest)))))
+        (()
+         (let ((ib (reverse ib))
+               (ibi (reverse ibi))
+               (tb (reverse tb))
+               (iu (reverse iu))
+               (iui (reverse iui))
+               (tu (reverse tu)))
+; pick the beatable axes
+           (let* ((B (make-ra-raw
+                      (ra-root A) (ra-zero A)
+                      (vector-map (cute vector-ref (ra-dims A) <>) (list->vector ibi))))
+; beat them. This might change zero, but not root.
+                  (B (apply fromb B ib))
+; put the unbeatable axes in front
+                  (B (make-ra-raw
+                      (ra-root B) (ra-zero B)
+                      (vector-append (vector-map (cute vector-ref (ra-dims A) <>) (list->vector iui))
+                                     (ra-dims B)
+                                     (vector-drop (ra-dims A) (length i))))))
+; up to now this is the same as ra-from.
+; but we aren't making a new array so there's no need to transpose back.
+             (apply amendu! B C iu)
+             A)))))))

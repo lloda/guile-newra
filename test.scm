@@ -841,6 +841,31 @@
 
 
 ; -----------------------
+; ra-amend! FIXME needs more tests
+; -----------------------
+
+(define (ra-I . i) (ra-copy #t (apply ra-i i)))
+(define (amend-case A . i) (ra->string (apply ra-amend! A i)))
+
+(test-equal "#%2:2:3((a b c) (3 4 5))" (amend-case (ra-I 2 3) (array->ra #(a b c)) 0))
+(test-equal "#%2:2:3((0 1 2) (x y z))" (amend-case (ra-I 2 3) (array->ra #(x y z)) 1))
+(test-equal "#%2:2:3((a 1 2) (b 4 5))" (amend-case (ra-I 2 3) (array->ra #(a b)) #t 0))
+(test-equal "#%2:2:3((0 x 2) (3 y 5))" (amend-case (ra-I 2 3) (array->ra #(x y)) #t 1))
+(test-equal "#%2:2:3((x x x) (x x x))" (amend-case (ra-I 2 3) 'x))
+(test-equal "#%2:2:3((x x x) (x x x))" (amend-case (ra-I 2 3) (make-ra 'x)))
+(test-equal "#%2:2:3((a a a) (b b b))" (amend-case (ra-I 2 3) (array->ra #(a b))))
+(test-equal "#%2:2:3((x y z) (x y z))" (amend-case (ra-I 2 3) (ra-transpose (array->ra #(x y z)) 1)))
+(test-equal "#%2:2:3((0 x 2) (3 x 5))" (amend-case (ra-I 2 3) 'x (array->ra #(0 1)) 1))
+(test-equal "#%2:2:3((0 x 2) (3 x 5))" (amend-case (ra-I 2 3) 'x (ra-i 2) 1))
+(test-equal "#%2:2:3((a b c) (3 4 5))" (amend-case (ra-I 2 3) (array->ra #2((a b c))) (array->ra #(0))))
+(test-equal "#%2:2:3((0 1 2) (x y z))" (amend-case (ra-I 2 3) (array->ra #2((x y z))) (array->ra #(1))))
+(test-equal "#%2:2:3((a 1 2) (b 4 5))" (amend-case (ra-I 2 3) (array->ra #(a b)) #t 0))
+(test-equal "#%2:2:3((0 x 2) (3 y 5))" (amend-case (ra-I 2 3) (array->ra #(x y)) #t 1))
+(test-equal "#%2:2:3((a 1 2) (b 4 5))" (amend-case (ra-I 2 3) (array->ra #2((a b))) #t (array->ra #(0))))
+(test-equal "#%2:2:3((0 x 2) (3 y 5))" (amend-case (ra-I 2 3) (array->ra #2((x y))) #t (array->ra #(1))))
+
+
+; -----------------------
 ; the end.
 ; -----------------------
 

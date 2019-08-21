@@ -37,6 +37,6 @@
            ra-transpose ra-reverse
            ra-fold ra-fold*
 
-           ra-from
+           ra-from ra-amend!
 
            list->ra list->typed-ra)
