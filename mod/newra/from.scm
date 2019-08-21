@@ -98,6 +98,7 @@
 ; ------------------------
 
 ; the empty case is needed so that (fromu A) shares the root of A, which is something (ra-from) relies on.
+; fixme factor make-B out of fromu and the shared part of fromu amendu! and TBD fromu-copy!
 
 (define fromu
   (case-lambda
@@ -146,33 +147,7 @@
 (define (index-rank x)
   (match x ((? integer? z) 0) ((? ra? ra) (ra-rank ra)) (#t 1)))
 
-; FIXME add a version that copies the to an arg. That avoids allocation of the result, although it would be better if the compiler could tell where the result goes.
-
-(define (ra-from A . i)
-  "
-ra-from a . i -> b
-
-Outer product slice of A by indices I ...
-
-The shape of B is the concatenation of the shapes of I, and the contents are
-obtained by looking up in each dimension of A by the indices I, that is
-
-B(i00 i01 ... i10 i11 ...) = A(i0(i00 i01 ...) i1(i10 i11 ...) ...)
-
-where I : i0 i1 ...
-
-The special value #t is understood as the full range of A on that axis.
-
-Additionally, if every I is either 1) #t 2) a ra of type 'd, 3) a ra of rank 0,
-or 4) an integer, the result B shares the root of A. In all other cases a new
-root is allocated.
-
-The type of B is the same as that of A, with the only exception that if the type
-of A is 'd and the root of B isn't shared with the root of A, then the type of B
-is #t.
-
-See also: ra-cell ra-ref ra-slice ra-amend! ra-set!
-"
+(define (parse-args A . i)
   (let loop ((n 0) (m 0) (ii i)
              (ib '()) (ibi '()) (tb '())
              (iu '()) (iui '()) (tu '()))
@@ -205,11 +180,39 @@ See also: ra-cell ra-ref ra-slice ra-amend! ra-set!
                     (ra-root B) (ra-zero B)
                     (vector-append (vector-map (cute vector-ref (ra-dims A) <>) (list->vector iui))
                                    (ra-dims B)
-                                   (vector-drop (ra-dims A) (length i)))))
-; apply them.
-                (B (apply fromu B iu)))
-; undo the transposition. ra-transpose handles any trailing axes
-           (apply ra-transpose B (append tu tb))))))))
+                                   (vector-drop (ra-dims A) (length i))))))
+           (values B iu tu tb)))))))
+
+; FIXME add a version that copies the to an arg. That avoids allocation of the result, although it would be better if the compiler could tell where the result goes.
+
+(define (ra-from A . i)
+  "
+ra-from a . i -> b
+
+Outer product slice of A by indices I ...
+
+The shape of B is the concatenation of the shapes of I, and the contents are
+obtained by looking up in each dimension of A by the indices I, that is
+
+B(i00 i01 ... i10 i11 ...) = A(i0(i00 i01 ...) i1(i10 i11 ...) ...)
+
+where I : i0 i1 ...
+
+The special value #t is understood as the full range of A on that axis.
+
+Additionally, if every I is either 1) #t 2) a ra of type 'd, 3) a ra of rank 0,
+or 4) an integer, the result B shares the root of A. In all other cases a new
+root is allocated.
+
+The type of B is the same as that of A, with the only exception that if the type
+of A is 'd and the root of B isn't shared with the root of A, then the type of B
+is #t.
+
+See also: ra-cell ra-ref ra-slice ra-amend! ra-set!
+"
+  (receive (B iu tu tb) (apply parse-args A i)
+; apply the unbeatable axes and undo the transposition. ra-transpose handles any trailing axes
+    (apply ra-transpose (apply fromu B iu) (append tu tb))))
 
 
 ; -----------------------
@@ -240,41 +243,8 @@ This function returns the modified ra A.
 
 See also: ra-set! ra-from ra-copy! ra-cell ra-ref ra-slice
 "
-  (let ((C (if (ra? C) C (make-ra C))))
-    (let loop ((n 0) (m 0) (ii i)
-               (ib '()) (ibi '()) (tb '())
-               (iu '()) (iui '()) (tu '()))
-      (match ii
-        ((i0 . irest)
-         (let* ((k (index-rank i0))
-                (idest (iota k m)))
-           (if (beatable? i0)
-             (loop (+ n 1) (+ m k) irest
-                   (cons i0 ib) (cons n ibi) (fold cons tb idest)
-                   iu iui tu)
-             (loop (+ n 1) (+ m k) irest
-                   ib ibi tb
-                   (cons i0 iu) (cons n iui) (fold cons tu idest)))))
-        (()
-         (let ((ib (reverse ib))
-               (ibi (reverse ibi))
-               (tb (reverse tb))
-               (iu (reverse iu))
-               (iui (reverse iui))
-               (tu (reverse tu)))
-; pick the beatable axes
-           (let* ((B (make-ra-raw
-                      (ra-root A) (ra-zero A)
-                      (vector-map (cute vector-ref (ra-dims A) <>) (list->vector ibi))))
-; beat them. This might change zero, but not root.
-                  (B (apply fromb B ib))
-; put the unbeatable axes in front
-                  (B (make-ra-raw
-                      (ra-root B) (ra-zero B)
-                      (vector-append (vector-map (cute vector-ref (ra-dims A) <>) (list->vector iui))
-                                     (ra-dims B)
-                                     (vector-drop (ra-dims A) (length i))))))
-; up to now this is the same as ra-from.
-; but we aren't making a new array so there's no need to transpose back.
-             (apply amendu! B C iu)
-             A)))))))
+  (receive (B iu tu tb) (apply parse-args A i)
+; apply the unbeatable axes.
+    (apply amendu! B (if (ra? C) C (make-ra C)) iu)
+; we aren't making a new array so there's no need to transpose back.
+    A))
