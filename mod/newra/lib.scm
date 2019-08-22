@@ -12,12 +12,12 @@
 
 (define-module (newra lib)
   #:export (ra-index-map!
-            ra-length make-ra make-typed-ra make-ra-shared ra->list
+            ra-length ra-size make-ra make-typed-ra make-ra-shared ra->list
             ra-dimensions ra-shape
             array->ra ra->array as-ra
             ra-i ra-iota
             ra-copy
-            ra-reverse ra-transpose ra-reshape ra-ravel
+            ra-reverse ra-transpose ra-ravel ra-reshape
             ra-fold ra-fold*
 
             vector-append))
@@ -157,11 +157,20 @@ ra-length ra [dim 0]
 Return the length of the dimension DIM of ra RA. It is an error if RA has zero
 rank.
 
-See also: ra-shape ra-dimensions
+See also: ra-shape ra-dimensions ra-size
 "
-  (unless (positive? (ra-rank ra))
-    (throw 'zero-rank-ra-has-no-length ra))
   (dim-len (vector-ref (%%ra-dims ra) k)))
+
+(define* (ra-size ra)
+  "
+ra-size ra
+
+Return the number of elements of ra RA, that is, the product of all its dimensions. Ras of rank 0
+have size 1.
+
+See also: ra-shape ra-dimensions ra-length
+"
+  (vector-fold (lambda (d s) (* s (dim-len d))) 1 (ra-dims ra)))
 
 (define (make-typed-ra type value . d)
   "
@@ -186,7 +195,7 @@ See also: make-typed-ra
   (make-ra-new #t value (apply c-dims d)))
 
 (define (make-ra-shared oldra mapfunc . d)
-  (check-ra oldra)
+  (ra-check oldra)
 ; get lo & len, won't use step except if the result is empty.
   (let* ((dims (apply c-dims d))
          (newrank (vector-length dims)))
@@ -228,7 +237,7 @@ contains a list for each of the rows of RA; and so on.
 
 See also: as-ra
 "
-  (let ((ra (check-ra ra))
+  (let ((ra (ra-check ra))
         (rank (%%ra-rank ra)))
     (cond
      ((zero? rank) (ra-ref ra))
@@ -370,7 +379,7 @@ Example:
 
 See also: ra-transpose make-ra-shared
 "
-  (let* ((ra (check-ra ra))
+  (let* ((ra (ra-check ra))
          (ndims (vector-copy (%%ra-dims ra))))
     (let loop ((k k) (zero (%%ra-zero ra)))
       (if (null? k)
@@ -400,7 +409,7 @@ Axes of RA that aren't listed in AXES are transposed to the end of RB's axes.
 
 See also: make-ra-root make-ra-new
 "
-  (let* ((ra (check-ra ra))
+  (let* ((ra (ra-check ra))
          (odims (%%ra-dims ra))
          (orank (vector-length odims))
          (maxaxes (fold max -1 axes))
@@ -432,6 +441,42 @@ See also: make-ra-root make-ra-new
              (throw 'bad-lo))
            odim))))))
 
+(define (ra-order-c? ra)
+  "
+ra-order-c? ra
+
+Return #f unless the elements of ra RA are in packed C order (aka row-major order).
+
+See also: ra-ravel, ra-reshape, c-dims
+"
+  (let* ((ra (ra-check ra))
+         (dims (%%ra-dims ra))
+         (i (vector-length dims)))
+    (or (zero? i)
+        (let loop ((i (- i 1)) (d 1))
+          (and (= d (dim-step (vector-ref dims i)))
+               (or (zero? i)
+                   (loop (- i 1) (* d (dim-len (vector-ref dims i))))))))))
+
+; cf https://code.jsoftware.com/wiki/Vocabulary/comma
+
+(define (ra-ravel ra)
+  "
+ra-ravel ra -> rb
+
+Return the row-major ravel of ra RA. The result RB may or may not share the root
+of RA.
+
+See also: ra-reshape ra-transpose ra-from
+"
+  (let ((s (ra-size ra)))
+    (define (pure-ravel ra)
+      (make-ra-raw (%%ra-root ra) (ra-offset ra) (vector (make-dim s))))
+    (if (ra-order-c? ra)
+      (pure-ravel ra)
+      (let ((rb (make-ra-new (match (%%ra-type ra) ('d #t) (x x)) *unspecified* (apply c-dims (ra-dimensions ra)))))
+        (pure-ravel (ra-copy! rb ra))))))
+
 ; cf https://www.jsoftware.com/papers/APLDictionary1.htm#rho
 ; ... ⍺⍴⍵ produces a result of shape ⍺ from the elements of ⍵ ...
 
@@ -452,18 +497,4 @@ integers (LO HI) or an integer LEN.
 See also: ra-ravel ra-transpose ra-from
 "
   99
-  )
-; cf https://code.jsoftware.com/wiki/Vocabulary/comma
-
-(define (ra-ravel ra)
-  "
-ra-ravel ra -> rb
-
-Return the row-major ravel of ra RA. The result RB may or may not share the root
-of RA.
-
-See also: ra-reshape ra-transpose ra-from
-"
-  99
-; write the shared check separately so we may check-share-fail or check-share-copy.
   )

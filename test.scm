@@ -875,8 +875,25 @@
 
 
 ; -----------------------
+; ra-ravel
+; -----------------------
+
+(test-equal "#%1:18(1 7 13 2 8 14 3 9 15 4 10 16 5 11 17 6 12 18)"
+            (ra->string
+             (ra-ravel
+              (ra-transpose
+               (make-ra-root (list->vector (iota 18 1)) (c-dims '(1 3) '(4 9)))
+               1 0))))
+(let ((ra (make-ra-root (list->vector (iota 18 1)) (c-dims '(1 3) '(4 9)))))
+  (test-eq (ra-root ra) (ra-root (ra-ravel ra)))
+  (test-equal "#%1:18(1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18)"
+              (ra->string (ra-ravel ra))))
+(test-equal "#%1:1(3)" (ra->string (ra-ravel (make-ra 3))))
+
+
+; -----------------------
 ; the end.
 ; -----------------------
 
-(test-end "newra")
-(exit (test-runner-fail-count (test-runner-current)))
+;; (test-end "newra")
+;; (exit (test-runner-fail-count (test-runner-current)))

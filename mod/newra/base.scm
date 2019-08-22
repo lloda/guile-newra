@@ -14,7 +14,7 @@
   #:export (ra?
             make-ra-raw
             ra-root ra-zero ra-zero-set! ra-dims ra-type ra-vlen ra-vref ra-vset!
-            check-ra
+            ra-check
             ra-rank ra-type make-ra-new make-ra-root
             make-dim dim? dim-len dim-lo dim-hi dim-step dim-ref c-dims
             ra-pos ra-offset
@@ -150,7 +150,7 @@
 (define-inlinable (ra? o)
   (and (struct? o) (eq? <ra-vtable> (struct-vtable o))))
 
-(define-inlinable (check-ra o)
+(define-inlinable (ra-check o)
   (if (ra? o) o (throw 'not-ra? o)))
 
 (define (make-ra* data zero dims type vlen vref vset!)
@@ -193,8 +193,8 @@
 (define-inlinable (%%ra-vref a) (%%struct-ref a 7))
 (define-inlinable (%%ra-vset! a) (%%struct-ref a 8))
 
-(define-syntax %rastruct-ref (syntax-rules () ((_ a n) (begin (check-ra a) (struct-ref a n)))))
-(define-syntax %rastruct-set! (syntax-rules () ((_ a n o) (begin (check-ra a) (struct-set! a n o)))))
+(define-syntax %rastruct-ref (syntax-rules () ((_ a n) (begin (ra-check a) (struct-ref a n)))))
+(define-syntax %rastruct-set! (syntax-rules () ((_ a n o) (begin (ra-check a) (struct-set! a n o)))))
 
 (define-inlinable (%ra-root a) (%rastruct-ref a 2))
 (define-inlinable (%ra-zero a) (%rastruct-ref a 3))
@@ -330,7 +330,7 @@ to the lower bound of RA in each dimension.
 See also: ra-zero
 "
    ((ra)
-    (let ((ra (check-ra ra)))
+    (let ((ra (ra-check ra)))
       (ra-offset (%%ra-zero ra) (%%ra-dims ra))))
 ; internally - useful for some types of loops, or to transition from Guile C arrays.
    ((zero dims)
@@ -401,7 +401,7 @@ See also: ra-zero
        ra))))
 
 (define (ra-slice ra . i)
-  (check-ra ra)
+  (ra-check ra)
   (make-ra-raw (%%ra-root ra)
                (apply ra-pos (%%ra-zero ra) (%%ra-dims ra) i)
                (vector-drop (%%ra-dims ra) (length i))))
@@ -417,7 +417,7 @@ See also: ra-zero
           ((_ ra i ...)
            (let ((pos (%args ra i ...))
                  (leni (%length i ...)))
-             (check-ra ra)
+             (ra-check ra)
              (if (= (%%ra-rank ra) leni)
                ((%%ra-vref ra) (%%ra-root ra) pos)
                (make-ra-raw (%%ra-root ra) pos (vector-drop (%%ra-dims ra) leni))))))))
@@ -428,7 +428,7 @@ See also: ra-zero
      ((ra i0 i1 i2) (%cell ra i0 i1 i2))
      ((ra i0 i1 i2 i3) (%cell ra i0 i1 i2 i3))
      ((ra . i)
-      (check-ra ra)
+      (ra-check ra)
       (let ((pos (apply ra-pos (%%ra-zero ra) (%%ra-dims ra) i))
             (leni (length i)))
         (if (= (%%ra-rank ra) leni)

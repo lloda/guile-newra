@@ -17,7 +17,7 @@
 
 (re-export ra?
            make-ra-raw ra-root ra-zero ra-dims ra-vlen ra-vref ra-vset!
-           check-ra %%ra-rank %%ra-root %%ra-zero %%ra-dims
+           ra-check %%ra-rank %%ra-root %%ra-zero %%ra-dims
            ra-rank ra-type make-ra-new make-ra-root
            make-dim dim? dim-len dim-lo dim-hi dim-step dim-ref c-dims
            ra-pos ra-offset
@@ -34,7 +34,7 @@
            array->ra ra->array as-ra
            ra-i ra-iota
            ra-copy
-           ra-transpose ra-reverse
+           ra-reverse ra-transpose ra-ravel ra-reshape
            ra-fold ra-fold*
 
            ra-from ra-amend!

@@ -77,7 +77,7 @@
   (let ((len (make-vector k #f))
         (lo (make-vector k #f)))
     (for-each (lambda (ra)
-                (check-ra ra)
+                (ra-check ra)
                 (let ((framek (min k (%%ra-rank ra))))
                   (do ((j 0 (+ j 1))) ((= j framek))
                     (let* ((lenj0 (vector-ref len j))
