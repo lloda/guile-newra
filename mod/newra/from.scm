@@ -236,7 +236,7 @@ would return a shared ra of A. I may take any of the special values accepted by
 RA-FROM.
 
 If I contains repeated indices so that the same elements of A are referenced
-more than once, the value that ends up in A could correspond to any of the
+more than once, the value that ends up in A may correspond to any of the
 indices.
 
 This function returns the modified ra A.

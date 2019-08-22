@@ -588,17 +588,20 @@ This function returns the updated ra RA.
 
 See also: ra-fill! ra-map!
 "
-  (let-syntax
-      ((%typed-copy!
-        (syntax-rules ()
-          ((_ (vref-ra vset!-ra ra da za) (vref-rb vset!-rb rb db zb))
-           (vset!-ra da za (vref-rb db zb)))))
-       (%copy!
-        (syntax-rules ()
-          ((_ (ra da za) (rb db zb))
-           ((%%ra-vset! ra) da za ((%%ra-vref rb) db zb))))))
-    (%dispatch %typed-copy! %copy! ra rb)
-    ra))
+  (if (zero? (ra-rank rb))
+; an optimization.
+    (ra-fill! ra (ra-ref rb))
+    (let-syntax
+        ((%typed-copy!
+          (syntax-rules ()
+            ((_ (vref-ra vset!-ra ra da za) (vref-rb vset!-rb rb db zb))
+             (vset!-ra da za (vref-rb db zb)))))
+         (%copy!
+          (syntax-rules ()
+            ((_ (ra da za) (rb db zb))
+             ((%%ra-vset! ra) da za ((%%ra-vref rb) db zb))))))
+      (%dispatch %typed-copy! %copy! ra rb)
+      ra)))
 
 ; FIXME refactor ra-any ra-every
 
