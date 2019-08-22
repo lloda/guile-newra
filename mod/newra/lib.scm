@@ -17,7 +17,7 @@
             array->ra ra->array as-ra
             ra-i ra-iota
             ra-copy
-            ra-reverse ra-transpose ra-ravel ra-reshape
+            ra-reverse ra-transpose ra-order-c? ra-ravel ra-reshape
             ra-fold ra-fold*
 
             vector-append))
@@ -466,6 +466,9 @@ ra-ravel ra -> rb
 
 Return the row-major ravel of ra RA. The result RB may or may not share the root
 of RA.
+
+If RB does not share the root of RA, then it has the same type as RA unless that
+type is 'd, in which case it has type #t.
 
 See also: ra-reshape ra-transpose ra-from
 "
