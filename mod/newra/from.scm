@@ -23,21 +23,6 @@
 ; FIXME preallocate the dim vector then run j k ... j ...
 ; -----------------------
 
-; lowest and highest positions on data.
-(define (%ra-pos-bounds zero dims)
-  (let loop ((j (- (vector-length dims) 1)) (lo zero) (hi zero))
-    (if (< j 0)
-      (values lo hi)
-      (let* ((dim (vector-ref dims j))
-             (step (dim-step dim)))
-        (cond
-         ((zero? step)
-          (loop (- j 1) lo hi))
-         ((positive? step)
-          (loop (- j 1) (+ lo (* step (dim-lo dim))) (+ hi (* step (dim-hi dim)))))
-         (else
-          (loop (- j 1) (+ lo (* step (dim-hi dim))) (+ hi (* step (dim-lo dim))))))))))
-
 (define (fromb A . ai)
   (let loopj ((j 0) (ii ai) (zero (ra-zero A)) (bdims '()))
     (match ii
@@ -100,50 +85,51 @@
 ; the empty case is needed so that (fromu A) shares the root of A, which is something (ra-from) relies on.
 ; fixme factor make-B out of fromu and the shared part of fromu amendu! and TBD fromu-copy!
 
+(define (broadcast-indices . i)
+  (let* ((frame (fold (lambda (i c) (+ c (ra-rank i))) 0 i))
+         (i (map (lambda (i stairs)
+                   (apply ra-transpose i (iota (ra-rank i) stairs)))
+              i (reverse (cdr (fold (lambda (i c) (cons (+ (ra-rank i) (car c)) c)) '(0) i))))))
+    (values frame i)))
+
 (define fromu
   (case-lambda
    ((A) A)
-   ((A . ai)
-    (let* ((bshape
-            (append
-             (append-map ra-shape ai)
-             (map (lambda (dim) (list (dim-lo dim) (dim-hi dim))) (drop (vector->list (ra-dims A)) (length ai)))))
-           (bdims (apply c-dims bshape))
+   ((A . i)
+    (let* ((bdims
+            (apply c-dims
+              (append
+               (append-map ra-shape i)
+               (map (lambda (dim) (list (dim-lo dim) (dim-hi dim)))
+                 (drop (vector->list (ra-dims A)) (length i))))))
 ; type 'd needs to be converted
-           (B (make-ra-new (match (ra-type A) ('d #t) (x x)) *unspecified* bdims))
-           (bstairs (reverse (cdr (fold (lambda (a c) (cons (+ (ra-rank a) (car c)) c)) '(0) ai))))
-           (i (map (lambda (ai stairs)
-                     (apply ra-transpose ai (iota (ra-rank ai) stairs)))
-                ai bstairs))
-           (frame (fold (lambda (a c) (+ c (ra-rank a))) 0 ai)))
+           (B (make-ra-new (match (ra-type A) ('d #t) (x x)) *unspecified* bdims)))
+      (receive (frame i) (apply broadcast-indices i)
         (if (= frame (ra-rank A) (ra-rank B))
 ; optimization
           (apply ra-map! B A i)
           (apply ra-slice-for-each frame
                  (lambda (B . i) (ra-copy! B (apply (lambda i (apply ra-slice A i)) (map ra-ref i))))
                  B i))
-        B))))
+        B)))))
 
 (define amendu!
   (case-lambda
    ((A C)
     (ra-copy! A C))
-   ((A C . ai)
-    (let* ((bstairs (reverse (cdr (fold (lambda (a c) (cons (+ (ra-rank a) (car c)) c)) '(0) ai))))
-           (i (map (lambda (ai stairs)
-                     (apply ra-transpose ai (iota (ra-rank ai) stairs)))
-                ai bstairs))
-           (frame (fold (lambda (a c) (+ c (ra-rank a))) 0 ai)))
-        (if (= frame (ra-rank A) (ra-rank C))
+   ((A C . i)
+    (receive (frame i) (apply broadcast-indices i)
+      (if (= frame (ra-rank A) (ra-rank C))
 ; optimization
-          (apply ra-map! A C i)
-          (apply ra-slice-for-each frame
-                 (lambda (C . i) (ra-copy! (apply (lambda i (apply ra-slice A i)) (map ra-ref i)) C))
-                 C i))
-        A))))
+        (apply ra-map! A C i)
+        (apply ra-slice-for-each frame
+               (lambda (C . i) (ra-copy! (apply (lambda i (apply ra-slice A i)) (map ra-ref i)) C))
+               C i))
+      A))))
 
 (define (beatable? x)
   (or (and (ra? x) (or (zero? (ra-rank x)) (dim? (ra-root x)))) (integer? x) (eq? x #t)))
+
 (define (index-rank x)
   (match x ((? integer? z) 0) ((? ra? ra) (ra-rank ra)) (#t 1)))
 
