@@ -92,26 +92,28 @@
               i (reverse (cdr (fold (lambda (i c) (cons (+ (ra-rank i) (car c)) c)) '(0) i))))))
     (values frame i)))
 
+; FIXME don't create the output here; show the symmetry with amendu!.
+
 (define fromu
   (case-lambda
    ((A) A)
    ((A . i)
-    (let* ((bdims
-            (apply c-dims
-              (append
-               (append-map ra-shape i)
-               (map (lambda (dim) (list (dim-lo dim) (dim-hi dim)))
-                 (drop (vector->list (ra-dims A)) (length i))))))
+    (let ((C (make-ra-new
 ; type 'd needs to be converted
-           (B (make-ra-new (match (ra-type A) ('d #t) (x x)) *unspecified* bdims)))
+              (match (ra-type A) ('d #t) (x x))
+              *unspecified*
+              (apply c-dims
+                (append (append-map ra-shape i)
+                        (map (lambda (dim) (list (dim-lo dim) (dim-hi dim)))
+                          (drop (vector->list (ra-dims A)) (length i))))))))
       (receive (frame i) (apply broadcast-indices i)
-        (if (= frame (ra-rank A) (ra-rank B))
+        (if (= frame (ra-rank A) (ra-rank C))
 ; optimization
-          (apply ra-map! B A i)
+          (apply ra-map! C A i)
           (apply ra-slice-for-each frame
-                 (lambda (B . i) (ra-copy! B (apply (lambda i (apply ra-slice A i)) (map ra-ref i))))
-                 B i))
-        B)))))
+                 (lambda (C . i) (ra-copy! C (apply (lambda i (apply ra-slice A i)) (map ra-ref i))))
+                 C i))
+        C)))))
 
 (define amendu!
   (case-lambda
