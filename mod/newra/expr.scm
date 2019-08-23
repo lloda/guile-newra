@@ -91,48 +91,8 @@
 ; 1.b application (rank extension) of verbs w/o return values.
 ; ----------------
 
-; 0 ra-slice-for-each. No need of array-map/frame! as opₐ doesn't return values.
-; 1 nested-op-frames.
-;   unlike in (ploy ploy), here we need to look out for alternates.
-;   still need to support the rank conjunction mechanism.
-;   we always start at k=0.
-
-; Rank-extend A with cell rank r to frame f.
-; [(a skipped k prefix) ( (-r)-frame of a/k... ) ### (a/k r-cell ...)]
-; [(a skipped k prefix) ( f ...................... ) (a/k r-cell ...)]
-; where ### are the extended axes.
-; TODO the scalar cases should be handled specially so that this isn't needed.
-(define (match-frame a f r k)
-  "Rank-extend a with cell rank r to frame f."
-  (cond ((length=? (- (rank a) k r) f)
-         a)
-        ((not (array? a))
-         (match-frame (make-array a) f r k))
-        (else
-         (apply make-shared-array a
-                (lambda i (append (take i k) (take (drop i k) (- (rank a) k r)) (take-right i r)))
-                (append (take ($ a) k) f (take-right ($ a) r))))))
-
-(define (prefix-frame a r k)
-  "Frame common to all arrays a with cell ranks r, ignoring first k axes."
-  (fold (lambda (a r f)
-          (let ((fa (drop-right! (drop ($ a) k) r)))
-            (let loop ((s f) (sa fa))
-              (cond ((null? sa) f)
-                    ((null? s) fa)
-                    ((= (car s) (car sa)) (loop (cdr s) (cdr sa)))
-                    (else (error "shape clash" ($ a) r f k))))))
-        '() a r))
-
-(define (nested-op-frames op k . a)
-  (let loop ((op op) (ff '()) (a a) (k 0))
-    (let* ((r (apply verb-actual-ri op (map (lambda (a) (- (rank a) k)) a)))
-           (f (prefix-frame a r k))
-           (a (map! (cut match-frame <> f <> k) a r))
-           (op (%verb-op op)))
-      (if (procedure? op)
-        (values (concatenate! (reverse! (cons f ff))) op a)
-        (loop op (cons f ff) a (+ k (length f)))))))
+; we'll do this using ra-transpose and dead axes - it's more obvious than the adhoc mechanism in guile-ploy.
+; (verb-with-ranks A ...) -> (ra-slice-for-each naked-op (transpose-appropriately A) ...)
 
 
 ; ----------------

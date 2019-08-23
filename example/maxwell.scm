@@ -13,13 +13,15 @@
 ;;; Code:
 
 (define π (acos -1))
+(define : #t)
+(define ι ra-iota)
+(define ⍉ transpose-array)
 
 (define (roll A dim n)
   ...)
 
-
 (define (maxwell)
-  (let ((delta 1)
+  (let ((δ 1)
         (o 20)
         (n 20)
         (m 1)
@@ -32,12 +34,10 @@
         (Y (make-ra 0 n m l 4))
         (dn (* 2 π (/ n))))
 
-    (ra-map! (ra-from A 0 #t #t #t 2)
-             (lambda (x) (* (cos x) -1 (/ dn)))
-             (ra-iota n 0 dn))
-    (ra-map! (ra-from A 1 #t #t #t 2)
-             (lambda (x) (* (cos x) -1 (/ dn)))
-             (ra-iota n (- delta) (* dn (- delta))))
+    (ra-map! (ra-from A : : : 2) (lambda (x) (* (cos x) -1 (/ dn))) (ι n 0 dn))
+    (ra-map! (ra-from A 1 : : : 2) (lambda (x) (* (cos x) -1 (/ dn))) (ι n (- δ) (* dn (- δ))))
+
+
 
     ...
 ))
