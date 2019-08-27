@@ -70,3 +70,53 @@
 ; -----------------------------
 ; some cases ...
 ; -----------------------------
+
+; GEMM
+
+; guile-newra - pure scheme, Guile 2.9
+
+(define B (ra-copy #t(ra-i 100 100)))
+(define C (ra-copy #t (ra-i 100 100)))
+
+; Guile newra doesn't define gemm so we make it up on the spot.
+
+,time (define A (let* ((A (make-typed-ra #t 0 100 100))
+                       (X (ra-transpose A 0 2)))
+                  (ra-map! X (lambda (a b c) (+ a (* b c))) X B (ra-transpose C 1))
+                  A))
+,time (define A (let* ((A (make-typed-ra #t 0 100 100))
+                       (X (ra-transpose A 0 2)))
+                  (ra-slice-for-each 3 (lambda (a b c) (set! (a) (+ (a) (* (b) (c))))) X B (ra-transpose C 1))
+                  A))
+
+; check result
+(ra-fold + 0 A)
+250032502500000
+
+(define B (i/t. 'f64 100 100))
+(define C (i/t. 'f64 100 100))
+
+,time (define A (blas-dgemm B C 1 'no 'no))
+;; 0.015948s real time, 0.029959s run time.  0.020600s spent in GC.
+
+; check result
+(over max (ravel A))
+2.500325025e14
+
+(define x (ra-copy 'f64 (ra-iota #e1e7)))
+,time (ra-fold + 0 x)
+,time (let ((a 0.)) (ra-for-each (lambda (x) (set! a (+ a x))) x) a)
+,time (let ((a 0.)) (ra-slice-for-each 1 (lambda (x) (set! a (+ a (x)))) x) a)
+
+,time (ra-fold + 0 x)      ~ 4.7 s
+
+(define y (ra-root (ra-copy 'f64 (ra-iota  #e1e7))))
+
+(define y (let ((y (make-typed-array 'f64 0 #e1e7)))
+            (array-index-map! y (lambda (i) i))
+            y))
+
+; if you look at the disassembly of these, it looks a lot better than (ra-fold + 0 x). Why is that?
+
+,time (let loop ((a 0) (i 0)) (if (= i #e1e7) a (loop (+ a (f64vector-ref y i)) (+ 1 i))))
+,time (let ((a 0)) (let loop ((i 0)) (if (= i #e1e7) a (begin (set! a (+ a (f64vector-ref y i))) (loop (+ 1 i))))))
