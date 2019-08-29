@@ -23,7 +23,6 @@
             make-dim* <dim> dim-check
             vector-drop vector-fold vector-clip
             <ra-vtable> pick-root-functions pick-make-root
-            %ra-root %ra-zero %ra-zero-set! %ra-dims %ra-type %ra-vlen %ra-vref %ra-vset! %ra-rank
             %%ra-root %%ra-zero %%ra-zero-set! %%ra-dims %%ra-type %%ra-vlen %%ra-vref %%ra-vset! %%ra-rank
             %%ra-step))
 
@@ -196,16 +195,14 @@
 (define-syntax %rastruct-ref (syntax-rules () ((_ a n) (begin (ra-check a) (struct-ref a n)))))
 (define-syntax %rastruct-set! (syntax-rules () ((_ a n o) (begin (ra-check a) (struct-set! a n o)))))
 
-(define-inlinable (%ra-root a) (%rastruct-ref a 2))
-(define-inlinable (%ra-zero a) (%rastruct-ref a 3))
-(define-inlinable (%ra-zero-set! a z) (%rastruct-set! a 3 z))
-(define-inlinable (%ra-dims a) (%rastruct-ref a 4))
-(define-inlinable (%ra-type a) (%rastruct-ref a 5))
-(define-inlinable (%ra-vlen a) (%rastruct-ref a 6))
-(define-inlinable (%ra-vref a) (%rastruct-ref a 7))
-(define-inlinable (%ra-vset! a) (%rastruct-ref a 8))
+(define-inlinable (ra-root a)
+  "
+ra-root ra -> v
 
-(define (ra-zero a)
+Return the root vector (or data vector) V of RA.
+"
+  (%rastruct-ref a 2))
+(define-inlinable (ra-zero a)
   "
 ra-zero ra -> i
 
@@ -215,22 +212,13 @@ for example if RA is empty or its lower bounds are not 0.
 
 See also: ra-offset
 "
-  (%ra-zero a))
-
-(define (ra-root a)
-  "
-ra-root ra -> v
-
-Return the root vector (or data vector) V of RA.
-"
-  (%ra-root a))
-
-(define (ra-zero-set! a z) (%ra-zero-set! a z))
-(define (ra-dims a) (%ra-dims a))
-(define (ra-type a) (%ra-type a))
-(define (ra-vlen a) (%ra-vlen a))
-(define (ra-vref a) (%ra-vref a))
-(define (ra-vset! a) (%ra-vset! a))
+  (%rastruct-ref a 3))
+(define-inlinable (ra-zero-set! a z) (%rastruct-set! a 3 z))
+(define-inlinable (ra-dims a) (%rastruct-ref a 4))
+(define-inlinable (ra-type a) (%rastruct-ref a 5))
+(define-inlinable (ra-vlen a) (%rastruct-ref a 6))
+(define-inlinable (ra-vref a) (%rastruct-ref a 7))
+(define-inlinable (ra-vset! a) (%rastruct-ref a 8))
 
 (define-inlinable (%%ra-step a k) (dim-step (vector-ref (%%ra-dims a) k)))
 
@@ -350,8 +338,7 @@ See also: ra-zero
 ; ----------------
 
 (define-inlinable (%%ra-rank a) (vector-length (%%ra-dims a)))
-(define-inlinable (%ra-rank a) (vector-length (%ra-dims a)))
-(define (ra-rank a) (%ra-rank a))
+(define-inlinable (ra-rank a) (vector-length (ra-dims a)))
 
 (define-syntax %length
   (syntax-rules ()
@@ -364,8 +351,8 @@ See also: ra-zero
         (syntax-rules  ()
           ((_ ra i ...)
            (begin
-             (unless (= (%ra-rank ra) (%length i ...))
-               (throw 'bad-number-of-indices (%ra-rank ra) (%length i ...)))
+             (unless (= (ra-rank ra) (%length i ...))
+               (throw 'bad-number-of-indices (ra-rank ra) (%length i ...)))
              ((%%ra-vref ra) (%%ra-root ra) (%ra-pos 0 (%%ra-zero ra) (%%ra-dims ra) i ...)))))))
     (case-lambda
       ((ra) (%args ra))
@@ -374,8 +361,8 @@ See also: ra-zero
       ((ra i0 i1 i2) (%args ra i0 i1 i2))
       ((ra i0 i1 i2 i3) (%args ra i0 i1 i2 i3))
       ((ra . i)
-       (unless (= (%ra-rank ra) (length i))
-         (throw 'bad-number-of-indices (%ra-rank ra) (length i)))
+       (unless (= (ra-rank ra) (length i))
+         (throw 'bad-number-of-indices (ra-rank ra) (length i)))
        ((%%ra-vref ra) (%%ra-root ra) (apply ra-pos (%%ra-zero ra) (%%ra-dims ra) i))))))
 
 (define ra-set!
@@ -384,8 +371,8 @@ See also: ra-zero
         (syntax-rules ()
           ((_ ra o i ...)
            (begin
-             (unless (= (%ra-rank ra) (%length i ...))
-               (throw 'bad-number-of-indices (%ra-rank ra) (%length i ...)))
+             (unless (= (ra-rank ra) (%length i ...))
+               (throw 'bad-number-of-indices (ra-rank ra) (%length i ...)))
              ((%%ra-vset! ra) (%%ra-root ra) (%ra-pos 0 (%%ra-zero ra) (%%ra-dims ra) i ...) o)
              ra)))))
     (case-lambda
@@ -395,8 +382,8 @@ See also: ra-zero
       ((ra o i0 i1 i2) (%args ra o i0 i1 i2))
       ((ra o i0 i1 i2 i3) (%args ra o i0 i1 i2 i3))
       ((ra o . i)
-       (unless (= (%ra-rank ra) (length i))
-         (throw 'bad-number-of-indices (%ra-rank ra) (length i)))
+       (unless (= (ra-rank ra) (length i))
+         (throw 'bad-number-of-indices (ra-rank ra) (length i)))
        ((%%ra-vset! ra) (%%ra-root ra) (apply ra-pos (%%ra-zero ra) (%%ra-dims ra) i) o)
        ra))))
 
