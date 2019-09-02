@@ -391,7 +391,7 @@
              (%op (ra (%%ra-root ra) (%%ra-zero ra)) ...)))))))
 
 ; If op-loop takes 2 args as a rest list, here we must do that as well.
-(define slice-loop-fun
+(define-inlinable-case slice-loop-fun
   (case-lambda
    ((op-once op-loop r0)
     (%slice-loop (ra-rank r0)

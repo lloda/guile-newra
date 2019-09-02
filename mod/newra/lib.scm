@@ -41,7 +41,7 @@
 ; fold - probably better ways to do this by fixing or extending (newra map)
 ; ----------------
 
-(define ra-fold
+(define-inlinable-case ra-fold
   (case-lambda
    "
 ra-fold kons knil ra ...
@@ -67,7 +67,7 @@ See also: ra-fold* ra-map! ra-for-each ra-slice-for-each
     init)))
 
 ; really prefer this order, possibly get rid of (ra-fold).
-(define ra-fold*
+(define-inlinable-case ra-fold*
   (case-lambda
    "
 ra-fold* kons knil ra ...

@@ -67,6 +67,53 @@
         (system vm disassembler)
         (only (rnrs base) vector-map))
 
+; cf https://www.scheme.com/tspl4/syntax.html - define-integrable
+; cf guile/module/ice-9/boot.scm - define-inlinable
+; cf (define-syntax x (let-syntax ... (inlinable-case-lambda ...))) ??
+
+(define-syntax define-inlinable-case
+  (lambda (x)
+    (define prefix (string->symbol "% "))
+    (define (make-procedure-name name)
+      (datum->syntax name (symbol-append prefix (syntax->datum name) '-procedure)))
+    (syntax-case x (case-lambda)
+      ((_ name (case-lambda DOC (formals form1 form2 ...) ...))
+       (and (identifier? #'name)
+            (string? (syntax->datum #'DOC))
+            )
+       (with-syntax ((xname (make-procedure-name #'name)))
+         #`(begin
+             (define xname
+               (let-syntax ((name (identifier-syntax xname)))
+                 (case-lambda DOC (formals form1 form2 ...) ...)))
+             (define-syntax name
+               (lambda (x)
+                 (syntax-case x ()
+                   (_ (identifier? x) #'xname)
+                   ((_ arg (... ...))
+                    #'((let-syntax ((name (identifier-syntax xname)))
+                         (case-lambda (formals form1 form2 ...) ...))
+                       arg (... ...)))))))))
+      ((_ name (case-lambda (formals form1 form2 ...) ...))
+       #'(define-inlinable-case name (case-lambda "" (formals form1 form2 ...) ...))))))
+
+(import (srfi :1))
+
+(define-inlinable-case demo1
+  (case-lambda
+   "DOC"
+   (() 0)
+   ((a) a)
+   ((a b) (+ a b))
+   (x (fold + 0 x))))
+
+(define-inlinable-case demo2
+  (case-lambda
+   (() 0)
+   ((a) a)
+   ((a b) (+ a b))
+   (x (fold + 0 x))))
+
 
 ; -----------------------------
 ; some cases ...
@@ -111,7 +158,7 @@
 
 ,time (ra-fold + 0 x)      ~ 4.7 s
 
-(define y (ra-root (ra-copy 'f64 (ra-iota  #e1e7))))
+(define y (ra-root (ra-copy 'f64 (ra-iota  #e1e8))))
 
 (define y (let ((y (make-typed-array 'f64 0 #e1e7)))
             (array-index-map! y (lambda (i) i))

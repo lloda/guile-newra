@@ -20,6 +20,7 @@
             ra-pos ra-offset
             ra-slice ra-cell ra-ref ra-set!
 ; for internal (newra) use, don't re-export
+            define-inlinable-case
             make-dim* <dim> dim-check
             vector-drop vector-fold vector-clip
             <ra-vtable> pick-root-functions pick-make-root
@@ -91,6 +92,35 @@
 (define (vector-take v n)
   (vector-clip v 0 n))
 
+; cf https://www.scheme.com/tspl4/syntax.html - define-integrable
+; cf guile/module/ice-9/boot.scm - define-inlinable
+
+(define-syntax define-inlinable-case
+  (lambda (x)
+    (define prefix (string->symbol "% "))
+    (define (make-procedure-name name)
+      (datum->syntax name (symbol-append prefix (syntax->datum name) '-procedure)))
+    (syntax-case x (case-lambda)
+      ((_ name (case-lambda DOC (formals form1 form2 ...) ...))
+       (and (identifier? #'name)
+            (string? (syntax->datum #'DOC))
+            )
+       (with-syntax ((xname (make-procedure-name #'name)))
+         #`(begin
+             (define xname
+               (let-syntax ((name (identifier-syntax xname)))
+                 (case-lambda DOC (formals form1 form2 ...) ...)))
+             (define-syntax name
+               (lambda (x)
+                 (syntax-case x ()
+                   (_ (identifier? x) #'xname)
+                   ((_ arg (... ...))
+                    #'((let-syntax ((name (identifier-syntax xname)))
+                         (case-lambda (formals form1 form2 ...) ...))
+                       arg (... ...)))))))))
+      ((_ name (case-lambda (formals form1 form2 ...) ...))
+       #'(define-inlinable-case name (case-lambda "" (formals form1 form2 ...) ...))))))
+
 
 ; ----------------
 ; dimension record, used both as that, and as root as delayed iota.
@@ -103,7 +133,7 @@
   (lo dim-lo)
   (step dim-step))
 
-(define make-dim
+(define-inlinable-case make-dim
   (case-lambda
    ((len) (make-dim* len 0 1))
    ((len lo) (make-dim* len lo 1))
@@ -291,7 +321,7 @@ See also: ra-data ra-zero ra-dims
      (let ((dim (vector-ref dims j)))
        (%ra-pos (+ j 1) (+ pos (* (dim-check dim i0) (dim-step dim))) dims i ...)))))
 
-(define ra-pos
+(define-inlinable-case ra-pos
   (case-lambda
    ((zero dims) (%ra-pos 0 zero dims))
    ((zero dims i0) (%ra-pos 0 zero dims i0))
@@ -307,7 +337,7 @@ See also: ra-data ra-zero ra-dims
           (let ((dim (vector-ref dims j)))
             (loop (+ j 1) (+ pos (* (dim-check dim (car i)) (dim-step dim))) (cdr i)))))))))
 
-(define ra-offset
+(define-inlinable-case ra-offset
   (case-lambda
    "
 ra-offset ra -> i
@@ -345,25 +375,28 @@ See also: ra-zero
     ((_) 0)
     ((_ i0 i ...) (+ 1 (%length i ...)))))
 
-(define ra-ref
-  (let-syntax
-      ((%args
-        (syntax-rules  ()
-          ((_ ra i ...)
-           (begin
-             (unless (= (ra-rank ra) (%length i ...))
-               (throw 'bad-number-of-indices (ra-rank ra) (%length i ...)))
-             ((%%ra-vref ra) (%%ra-root ra) (%ra-pos 0 (%%ra-zero ra) (%%ra-dims ra) i ...)))))))
-    (case-lambda
-      ((ra) (%args ra))
-      ((ra i0) (%args ra i0))
-      ((ra i0 i1) (%args ra i0 i1))
-      ((ra i0 i1 i2) (%args ra i0 i1 i2))
-      ((ra i0 i1 i2 i3) (%args ra i0 i1 i2 i3))
-      ((ra . i)
-       (unless (= (ra-rank ra) (length i))
-         (throw 'bad-number-of-indices (ra-rank ra) (length i)))
-       ((%%ra-vref ra) (%%ra-root ra) (apply ra-pos (%%ra-zero ra) (%%ra-dims ra) i))))))
+(define-syntax
+  %ra-ref
+  (syntax-rules  ()
+    ((_ ra i ...)
+     (begin
+       (unless (= (ra-rank ra) (%length i ...))
+         (throw 'bad-number-of-indices (ra-rank ra) (%length i ...)))
+       ((%%ra-vref ra) (%%ra-root ra) (%ra-pos 0 (%%ra-zero ra) (%%ra-dims ra) i ...))))))
+
+; as it happens this isn't any faster than plain case-lambda, so...
+
+(define-inlinable-case ra-ref
+  (case-lambda
+   ((ra) (%ra-ref ra))
+   ((ra i0) (%ra-ref ra i0))
+   ((ra i0 i1) (%ra-ref ra i0 i1))
+   ((ra i0 i1 i2) (%ra-ref ra i0 i1 i2))
+   ((ra i0 i1 i2 i3) (%ra-ref ra i0 i1 i2 i3))
+   ((ra . i)
+    (unless (= (ra-rank ra) (length i))
+      (throw 'bad-number-of-indices (ra-rank ra) (length i)))
+    ((%%ra-vref ra) (%%ra-root ra) (apply ra-pos (%%ra-zero ra) (%%ra-dims ra) i)))))
 
 (define ra-set!
   (let-syntax
