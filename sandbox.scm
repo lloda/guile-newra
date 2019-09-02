@@ -156,16 +156,19 @@
 ,time (let ((a 0.)) (ra-for-each (lambda (x) (set! a (+ a x))) x) a)
 ,time (let ((a 0.)) (ra-slice-for-each 1 (lambda (x) (set! a (+ a (x)))) x) a)
 
-,time (ra-fold + 0 x)      ~ 4.7 s
+(define N #e1e7
+(define y (ra-copy 'f64 (ra-iota N)))
+,time (ra-fold + 0 y)    ;  ~ 4.7s for #e1e8, 1.7s for #1e7
 
-(define y (ra-root (ra-copy 'f64 (ra-iota  #e1e8))))
 
-(define y (let ((y (make-typed-array 'f64 0 #e1e7)))
+(define y (let ((y (make-typed-array 'f64 0 N)))
             (array-index-map! y (lambda (i) i))
             y))
 
 ; if you look at the disassembly of these, it looks a lot better than (ra-fold + 0 x). Why is that?
 
-,time (let loop ((a 0) (i 0)) (if (= i #e1e7) a (loop (+ a (f64vector-ref y i)) (+ 1 i))))
-,time ((lambda (op) (let loop ((a 0) (i 0)) (if (= i #e1e7) a (loop (op a (f64vector-ref y i)) (+ 1 i))))) +)
-,time (let ((a 0)) (let loop ((i 0)) (if (= i #e1e7) a (begin (set! a (+ a (f64vector-ref y i))) (loop (+ 1 i))))))
+,time (let loop ((a 0) (i 0)) (if (= i N) a (loop (+ a (f64vector-ref y i)) (+ 1 i))))
+,time ((lambda (op) (let loop ((a 0) (i 0)) (if (= i N) a (loop (op a (f64vector-ref y i)) (+ 1 i))))) +)
+,time (let ((a 0)) (let loop ((i 0)) (if (= i N) a (begin (set! a (+ a (f64vector-ref y i))) (loop (+ 1 i))))))
+
+(let-syntax ((%macro (syntax-rules () ((_  a) a)))) (define (fun a) (%macro a)))

@@ -3,7 +3,7 @@ dist: bionic
 sudo: required
 
 script:
- - (guile -L mod test.scm)
+ - travis_wait 30 guile -L mod test.scm
 
 matrix:
   include:
