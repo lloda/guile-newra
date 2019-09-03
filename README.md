@@ -70,3 +70,20 @@ With that in mind, here is what you'd have to change. Note that the `ra-` names 
 * `truncated-print` doesn't support `newra` types, you'll get a lone `#` if truncation is necessary at all.
 
 * `equal?` doesn't support `newra` types, so it does just `eqv?`. Instead, you can use `ra-equal?`.
+
+## Links
+
+* [Arrays in Guile](https://www.gnu.org/software/guile/manual/html_node/Arrays.html)
+* [Arrays in Racket](https://docs.racket-lang.org/math/array.html)
+* [A dictionary of APL](https://www.jsoftware.com/papers/APLDictionary.htm)
+* [J language vocabulary](https://code.jsoftware.com/wiki/NuVoc)
+* [Remora - Dependently-typed language with Iverson-style implicit lifting](https://github.com/jrslepak/Remora)
+* [GNU APL](https://www.gnu.org/software/apl/)
+* [Numpy](https://numpy.org/)
+* [Octave](https://www.gnu.org/software/octave/)
+* [Fortran wiki](http://fortranwiki.org/fortran/show/diff/HomePage)
+* [guile-ploy, an older array library of mine](https://notabug.org/lloda/guile-ploy)
+* [Macros in Guile](https://www.gnu.org/software/guile/manual/html_node/Macros.html)
+* [Syntactic extension from TSPL4](https://www.scheme.com/tspl4/syntax.html)
+* [JRM's syntax-rules primer for the merely eccentric](http://www.phyast.pitt.edu/~micheles/syntax-rules.pdf)
+* [Fear of macros](https://www.greghendershott.com/fear-of-macros/all.html)
