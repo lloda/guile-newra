@@ -1,14 +1,23 @@
 # ![(travis build status)](https://travis-ci.org/lloda/guile-newra.svg?branch=master) #
 
-## Newra
+## newra
 
-guile-newra (`newra`) wants to replace the old (2.2/3.0) Guile array system, which is mostly implemented in C.
+guile-newra (`newra`) wants to replace the old (2.2/3.0) Guile array system, which is almost entirely implemented in C.
 
 The new implementation should be at least as fast. I think this is feasible once the Scheme compiler goes native, because for the most part the array functions are used to call back to Scheme, and a Scheme implementation could get rid of the back and forth, optimize the type dispatches, etc.
 
-The C API shouldn't be affected. Once you get an array handle it makes no sense to use the Scheme array functions anyway, since the element layout is totally transparent.
+The C API shouldn't be affected. Once you get an array handle it makes no sense to use the Scheme array functions anyway, since the memory layout is transparent.
 
 Except for the tests and for the pair of functions `ra->array` / `array->ra`, `newra` is independent of the old array system.
+
+Run the test or the benchmark with
+
+```
+> $GUILE -L mod test.scm
+> $GUILE -L mod bench.scm
+```
+
+To install the library just copy `mod/newra` somewhere in your Guile load path, and use it with `(import (newra newra))`. Examples of use are coming, but for the time being you have to read the source. Many functions have documentation.
 
 ## Status
 
@@ -60,4 +69,4 @@ With that in mind, here is what you'd have to change. Note that the `ra-` names 
 
 * `truncated-print` doesn't support `newra` types, you'll get a lone `#` if truncation is necessary at all.
 
-* `equal?` doesn't support `newra` types, so it does just `eqv?`.
+* `equal?` doesn't support `newra` types, so it does just `eqv?`. Instead, you can use `ra-equal?`.

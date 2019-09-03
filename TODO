@@ -36,7 +36,7 @@ Help: [C-uc .] insert timestamp [C-cc] flip checkbox [C-uucc] partial flip check
 * TODO replace Guile arrays [0/5]
   * [ ] truncated-print support
   * [ ] equal? support
-  * [ ] hooks into C
+  * [ ] hooks into C / libguile
   * [ ] compilation of literals
   * [ ] replace all names
 

@@ -47,15 +47,15 @@
     (list (list #'#t  #'vector-ref     #'vector-set!                   )
           (list #'f64 #'f64vector-ref  #'f64vector-set!                )
           (list #'f32 #'f32vector-ref  #'f32vector-set!                )
-          (list #'c64 #'c64vector-ref  #'c64vector-set!                )
-          (list #'c32 #'c32vector-ref  #'c32vector-set!                )
           (list #'s64 #'s64vector-ref  #'s64vector-set!                )
+          ;; (list #'c64 #'c64vector-ref  #'c64vector-set!                )
+          ;; (list #'c32 #'c32vector-ref  #'c32vector-set!                )
           ))
   (define syntax-accessors-3
     (list (list #'#t  #'vector-ref     #'vector-set!                   )
           (list #'f64 #'f64vector-ref  #'f64vector-set!                )
-          (list #'c64 #'c64vector-ref  #'c64vector-set!                )
           (list #'s64 #'s64vector-ref  #'s64vector-set!                )
+          ;; (list #'c64 #'c64vector-ref  #'c64vector-set!                )
           )))
 
 

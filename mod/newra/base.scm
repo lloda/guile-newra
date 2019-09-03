@@ -103,19 +103,18 @@
     (syntax-case x (case-lambda)
       ((_ name (case-lambda DOC (formals form1 form2 ...) ...))
        (and (identifier? #'name)
-            (string? (syntax->datum #'DOC))
-            )
+            (string? (syntax->datum #'DOC)))
        (with-syntax ((xname (make-procedure-name #'name)))
          #`(begin
              (define xname
-               (let-syntax ((name (identifier-syntax xname)))
+               (syntax-parameterize ((name (identifier-syntax xname)))
                  (case-lambda DOC (formals form1 form2 ...) ...)))
-             (define-syntax name
+             (define-syntax-parameter name
                (lambda (x)
                  (syntax-case x ()
                    (_ (identifier? x) #'xname)
                    ((_ arg (... ...))
-                    #'((let-syntax ((name (identifier-syntax xname)))
+                    #'((syntax-parameterize ((name (identifier-syntax xname)))
                          (case-lambda (formals form1 form2 ...) ...))
                        arg (... ...)))))))))
       ((_ name (case-lambda (formals form1 form2 ...) ...))
@@ -181,28 +180,6 @@
 
 (define-inlinable (ra-check o)
   (if (ra? o) o (throw 'not-ra? o)))
-
-(define (make-ra* data zero dims type vlen vref vset!)
-  (letrec ((ra
-            (make-struct/no-tail ; FIXME use /simple on Guile 3.
-             <ra-vtable>
-             (case-lambda
-               (() (ra-cell ra))
-               ((i0) (ra-cell ra i0))
-               ((i0 i1) (ra-cell ra i0 i1))
-               ((i0 i1 i2) (ra-cell ra i0 i1 i2))
-               ((i0 i1 i2 i3) (ra-cell ra i0 i1 i2 i3))
-               (i (apply ra-cell ra i)))
-; it should be easier :-/
-             (match-lambda*
-               ((o) (ra-set! ra o))
-               ((i0 o) (ra-set! ra o i0))
-               ((i0 i1 o) (ra-set! ra o i0 i1))
-               ((i0 i1 i2 o) (ra-set! ra o i0 i1 i2))
-               ((i0 i1 i2 i3 o) (ra-set! ra o i0 i1 i2 i3))
-               ((i ... o) (apply ra-set! ra o i)))
-             data zero dims type vlen vref vset!)))
-    ra))
 
 ;; data:    a container (function) addressable by a single integer
 ;; address: into data.
@@ -293,21 +270,6 @@ See also: ra-offset
         ((dim? v)       (values  'd    dim-len           dim-ref        (cut throw 'no-dim-set! <...>)))
         (else (throw 'bad-ra-root-type v))))
 
-; low level, for conversions
-(define (make-ra-raw data zero dims)
-  "
-make-ra-raw data zero dims -> ra
-
-Make new ra RA from root vector DATA, zero index ZERO and dim-vector DIMS.
-
-See also: ra-data ra-zero ra-dims
-"
-  (unless (vector? dims) (throw 'bad-dims dims))
-  (vector-for-each (lambda (dim) (unless (dim? dim) (throw 'bad-dim dim))) dims)
-; after check
-  (receive (type vlen vref vset!) (pick-root-functions data)
-    (make-ra* data zero dims type vlen vref vset!)))
-
 
 ; ----------------
 ; compute addresses
@@ -375,16 +337,15 @@ See also: ra-zero
     ((_) 0)
     ((_ i0 i ...) (+ 1 (%length i ...)))))
 
-(define-syntax
-  %ra-ref
+; FIXME would like to use let-syntax for these macros that are only used in one place.
+
+(define-syntax %ra-ref
   (syntax-rules  ()
     ((_ ra i ...)
      (begin
        (unless (= (ra-rank ra) (%length i ...))
          (throw 'bad-number-of-indices (ra-rank ra) (%length i ...)))
        ((%%ra-vref ra) (%%ra-root ra) (%ra-pos 0 (%%ra-zero ra) (%%ra-dims ra) i ...))))))
-
-; as it happens this isn't any faster than plain case-lambda, so...
 
 (define-inlinable-case ra-ref
   (case-lambda
@@ -398,27 +359,27 @@ See also: ra-zero
       (throw 'bad-number-of-indices (ra-rank ra) (length i)))
     ((%%ra-vref ra) (%%ra-root ra) (apply ra-pos (%%ra-zero ra) (%%ra-dims ra) i)))))
 
-(define ra-set!
-  (let-syntax
-      ((%args
-        (syntax-rules ()
-          ((_ ra o i ...)
-           (begin
-             (unless (= (ra-rank ra) (%length i ...))
-               (throw 'bad-number-of-indices (ra-rank ra) (%length i ...)))
-             ((%%ra-vset! ra) (%%ra-root ra) (%ra-pos 0 (%%ra-zero ra) (%%ra-dims ra) i ...) o)
-             ra)))))
-    (case-lambda
-      ((ra o) (%args ra o))
-      ((ra o i0) (%args ra o i0))
-      ((ra o i0 i1) (%args ra o i0 i1))
-      ((ra o i0 i1 i2) (%args ra o i0 i1 i2))
-      ((ra o i0 i1 i2 i3) (%args ra o i0 i1 i2 i3))
-      ((ra o . i)
-       (unless (= (ra-rank ra) (length i))
-         (throw 'bad-number-of-indices (ra-rank ra) (length i)))
-       ((%%ra-vset! ra) (%%ra-root ra) (apply ra-pos (%%ra-zero ra) (%%ra-dims ra) i) o)
+(define-syntax %ra-set!
+  (syntax-rules ()
+    ((_ ra o i ...)
+     (begin
+       (unless (= (ra-rank ra) (%length i ...))
+         (throw 'bad-number-of-indices (ra-rank ra) (%length i ...)))
+       ((%%ra-vset! ra) (%%ra-root ra) (%ra-pos 0 (%%ra-zero ra) (%%ra-dims ra) i ...) o)
        ra))))
+
+(define-inlinable-case ra-set!
+  (case-lambda
+   ((ra o) (%ra-set! ra o))
+   ((ra o i0) (%ra-set! ra o i0))
+   ((ra o i0 i1) (%ra-set! ra o i0 i1))
+   ((ra o i0 i1 i2) (%ra-set! ra o i0 i1 i2))
+   ((ra o i0 i1 i2 i3) (%ra-set! ra o i0 i1 i2 i3))
+   ((ra o . i)
+    (unless (= (ra-rank ra) (length i))
+      (throw 'bad-number-of-indices (ra-rank ra) (length i)))
+    ((%%ra-vset! ra) (%%ra-root ra) (apply ra-pos (%%ra-zero ra) (%%ra-dims ra) i) o)
+    ra)))
 
 (define (ra-slice ra . i)
   (ra-check ra)
@@ -427,33 +388,69 @@ See also: ra-zero
                (vector-drop (%%ra-dims ra) (length i))))
 
 ; Unhappy about writing these things twice.
-(define ra-cell
-  (letrec-syntax
-      ((%args
-        (syntax-rules ()
-          ((_ ra i ...) (%ra-pos 0 (%%ra-zero ra) (%%ra-dims ra) i ...))))
-       (%cell
-        (syntax-rules ()
-          ((_ ra i ...)
-           (let ((pos (%args ra i ...))
-                 (leni (%length i ...)))
-             (ra-check ra)
-             (if (= (%%ra-rank ra) leni)
-               ((%%ra-vref ra) (%%ra-root ra) pos)
-               (make-ra-raw (%%ra-root ra) pos (vector-drop (%%ra-dims ra) leni))))))))
-    (case-lambda
-     ((ra) (%cell ra))
-     ((ra i0) (%cell ra i0))
-     ((ra i0 i1) (%cell ra i0 i1))
-     ((ra i0 i1 i2) (%cell ra i0 i1 i2))
-     ((ra i0 i1 i2 i3) (%cell ra i0 i1 i2 i3))
-     ((ra . i)
-      (ra-check ra)
-      (let ((pos (apply ra-pos (%%ra-zero ra) (%%ra-dims ra) i))
-            (leni (length i)))
-        (if (= (%%ra-rank ra) leni)
-          ((%%ra-vref ra) (%%ra-root ra) pos)
-          (make-ra-raw (%%ra-root ra) pos (vector-drop (%%ra-dims ra) leni))))))))
+(define-syntax %ra-cell
+  (syntax-rules ()
+    ((_ ra i ...)
+     (let ((pos (%ra-pos 0 (%%ra-zero ra) (%%ra-dims ra) i ...))
+           (leni (%length i ...)))
+       (ra-check ra)
+       (if (= (%%ra-rank ra) leni)
+         ((%%ra-vref ra) (%%ra-root ra) pos)
+         (make-ra-raw (%%ra-root ra) pos (vector-drop (%%ra-dims ra) leni)))))))
+
+(define-inlinable-case ra-cell
+  (case-lambda
+   ((ra) (%ra-cell ra))
+   ((ra i0) (%ra-cell ra i0))
+   ((ra i0 i1) (%ra-cell ra i0 i1))
+   ((ra i0 i1 i2) (%ra-cell ra i0 i1 i2))
+   ((ra i0 i1 i2 i3) (%ra-cell ra i0 i1 i2 i3))
+   ((ra . i)
+    (ra-check ra)
+    (let ((pos (apply ra-pos (%%ra-zero ra) (%%ra-dims ra) i))
+          (leni (length i)))
+      (if (= (%%ra-rank ra) leni)
+        ((%%ra-vref ra) (%%ra-root ra) pos)
+        (make-ra-raw (%%ra-root ra) pos (vector-drop (%%ra-dims ra) leni)))))))
+
+; these depend on accessor/setter.
+
+(define (make-ra* data zero dims type vlen vref vset!)
+  (letrec ((ra
+            (make-struct/no-tail ; FIXME use /simple on Guile 3.
+             <ra-vtable>
+             (case-lambda
+               (() (ra-cell ra))
+               ((i0) (ra-cell ra i0))
+               ((i0 i1) (ra-cell ra i0 i1))
+               ((i0 i1 i2) (ra-cell ra i0 i1 i2))
+               ((i0 i1 i2 i3) (ra-cell ra i0 i1 i2 i3))
+               (i (apply ra-cell ra i)))
+; it should be easier :-/
+             (match-lambda*
+               ((o) (ra-set! ra o))
+               ((i0 o) (ra-set! ra o i0))
+               ((i0 i1 o) (ra-set! ra o i0 i1))
+               ((i0 i1 i2 o) (ra-set! ra o i0 i1 i2))
+               ((i0 i1 i2 i3 o) (ra-set! ra o i0 i1 i2 i3))
+               ((i ... o) (apply ra-set! ra o i)))
+             data zero dims type vlen vref vset!)))
+    ra))
+
+; low level, for conversions
+(define (make-ra-raw data zero dims)
+  "
+make-ra-raw data zero dims -> ra
+
+Make new ra RA from root vector DATA, zero index ZERO and dim-vector DIMS.
+
+See also: ra-data ra-zero ra-dims
+"
+  (unless (vector? dims) (throw 'bad-dims dims))
+  (vector-for-each (lambda (dim) (unless (dim? dim) (throw 'bad-dim dim))) dims)
+; after check
+  (receive (type vlen vref vset!) (pick-root-functions data)
+    (make-ra* data zero dims type vlen vref vset!)))
 
 
 ; ----------------
