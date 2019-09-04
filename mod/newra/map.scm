@@ -29,6 +29,7 @@
     (list (list #'#t  #'vector-ref     #'vector-set!                   )
           (list #'f64 #'f64vector-ref  #'f64vector-set!                )
           (list #'f32 #'f32vector-ref  #'f32vector-set!                )
+          (list #'d   #'dim-ref        #'(cut throw 'no-dim-set! <...>))
           (list #'c64 #'c64vector-ref  #'c64vector-set!                )
           (list #'c32 #'c32vector-ref  #'c32vector-set!                )
           (list #'s64 #'s64vector-ref  #'s64vector-set!                )
@@ -39,9 +40,8 @@
           (list #'u32 #'u32vector-ref  #'u32vector-set!                )
           (list #'u16 #'u16vector-ref  #'u16vector-set!                )
           (list #'u8  #'u8vector-ref   #'u8vector-set!                 )
-          (list #'a   #'string-ref     #'string-set!                   )
-          (list #'b   #'bitvector-ref  #'bitvector-set!                )
-          (list #'d   #'dim-ref        #'(cut throw 'no-dim-set! <...>))
+          ;; (list #'a   #'string-ref     #'string-set!                   )
+          ;; (list #'b   #'bitvector-ref  #'bitvector-set!                )
           ))
   (define syntax-accessors-2
     (list (list #'#t  #'vector-ref     #'vector-set!                   )
@@ -217,37 +217,23 @@
       (dim-step (vector-ref dims k))
       0)))
 
-(define-syntax %list
-  (syntax-rules ()
-    ((_ a ...) (list a ...))))
-(define-syntax %let
-  (syntax-rules ()
-    ((_ ((a ...) (b ...) f) e ...)
-     (let ((a (f b)) ...) e ...))))
-(define-syntax %stepu
-  (syntax-rules ()
-    ((_ n (ra step) ...)
-     (begin (%%ra-zero-set! ra (+ (%%ra-zero ra) (* n step))) ...))))
-(define-syntax %stepk
-  (syntax-rules ()
-    ((_ k n (ra frame) ...)
-     (begin (%%ra-zero-set! ra (+ (%%ra-zero ra) (* n (%%ra-step-prefix frame k)))) ...))))
+(define-syntax-rule (%list a ...)
+  (list a ...))
+(define-syntax-rule (%let ((a ...) (b ...) f) e ...)
+  (let ((a (f b)) ...) e ...))
+(define-syntax-rule (%stepu n (ra step) ...)
+  (begin (%%ra-zero-set! ra (+ (%%ra-zero ra) (* n step))) ...))
+(define-syntax-rule (%stepk k n (ra frame) ...)
+  (begin (%%ra-zero-set! ra (+ (%%ra-zero ra) (* n (%%ra-step-prefix frame k)))) ...))
 
-(define-syntax %apply-list
-  (syntax-rules ()
-    ((_ a) a)))
-(define-syntax %apply-let
-  (syntax-rules ()
-    ((_ ((a) (b) f) e ...)
-     (let ((a (map f b))) e ...))))
-(define-syntax %apply-stepu
-  (syntax-rules ()
-    ((_ n (ra step))
-     (for-each (lambda (ra step) (%stepu n (ra step))) ra step))))
-(define-syntax %apply-stepk
-  (syntax-rules ()
-    ((_ k n (ra frame))
-     (for-each (lambda (ra frame) (%stepk k n (ra frame))) ra frame))))
+(define-syntax-rule (%apply-list a)
+  a)
+(define-syntax-rule (%apply-let ((a) (b) f) e ...)
+  (let ((a (map f b))) e ...))
+(define-syntax-rule (%apply-stepu n (ra step))
+  (for-each (lambda (ra step) (%stepu n (ra step))) ra step))
+(define-syntax-rule (%apply-stepk k n (ra frame))
+  (for-each (lambda (ra frame) (%stepk k n (ra frame))) ra frame))
 
 ; Extracted from %slice-loop to be specialized for each combination of argument types.
 (define-syntax %op-loop
@@ -304,8 +290,7 @@
                         (cut make-ra-raw-prefix <> k))
 ; since we'll unroll, special case for rank 0
                    (if (zero? k)
-; no fresh slice descriptor like in array-slice-for-each. That should be all right in newra, b/c the descriptors can be copied.
-; see also below.
+; no need of fresh slice descriptor unlike in array-slice-for-each, since newra b/c descriptors can be copied. See also below.
                      (op-once ra ...)
                      (let/ec exit
 ; check early so we can save a step in the loop later.
@@ -406,20 +391,16 @@
     (%slice-loop (fold (lambda (a b) (max b (ra-rank a))) 0 r)
                  op-once op-loop %apply-list %apply-let r))))
 
-(define-syntax %default
-  (syntax-rules ()
-    ((_ %op ra ...)
-     (slice-loop-fun (%op-once-z %op ra ...)
-                     (%op-loop-z %op ra ...)
-                     ra ...))))
+(define-syntax-rule (%default %op ra ...)
+  (slice-loop-fun (%op-once-z %op ra ...)
+                  (%op-loop-z %op ra ...)
+                  ra ...))
 
-(define-syntax %apply-default
-  (syntax-rules ()
-    ((_ %apply-op ra)
-     (apply slice-loop-fun
-       (%op-once %apply-op ra)
-       (%op-loop %apply-op %apply-stepu %apply-stepk ra)
-       ra))))
+(define-syntax-rule (%apply-default %apply-op ra)
+  (apply slice-loop-fun
+    (%op-once %apply-op ra)
+    (%op-loop %apply-op %apply-stepu %apply-stepk ra)
+    ra))
 
 (define-syntax %%subop
   (lambda (stx)

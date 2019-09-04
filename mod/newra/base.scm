@@ -187,8 +187,8 @@
 ;; %:       regular macro.
 ;; %%:      skip ra? check.
 
-(define-syntax %%struct-ref (syntax-rules () ((_ a n) (struct-ref a n))))
-(define-syntax %%struct-set! (syntax-rules () ((_ a n o) (struct-set! a n o))))
+(define-syntax-rule (%%struct-ref a n) (struct-ref a n))
+(define-syntax-rule (%%struct-set! a n o) (struct-set! a n o))
 
 (define-inlinable (%%ra-root a) (%%struct-ref a 2))
 (define-inlinable (%%ra-zero a) (%%struct-ref a 3))
@@ -199,8 +199,8 @@
 (define-inlinable (%%ra-vref a) (%%struct-ref a 7))
 (define-inlinable (%%ra-vset! a) (%%struct-ref a 8))
 
-(define-syntax %rastruct-ref (syntax-rules () ((_ a n) (begin (ra-check a) (struct-ref a n)))))
-(define-syntax %rastruct-set! (syntax-rules () ((_ a n o) (begin (ra-check a) (struct-set! a n o)))))
+(define-syntax-rule (%rastruct-ref a n) (begin (ra-check a) (struct-ref a n)))
+(define-syntax-rule (%rastruct-set! a n o) (begin (ra-check a) (struct-set! a n o)))
 
 (define-inlinable (ra-root a)
   "
