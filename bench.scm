@@ -278,8 +278,7 @@
                      (scale (* 1e3 (/ m len)))
                      (ra (ra-map! (make-ra-new type 0 (apply c-dims nn)) (lambda () (random n))))
                      (array (ra->array ra))
-                     (la (ra->list ra))
-                     (shape (map (lambda (len) (list 0 (- len 1))) nn)))
+                     (la (ra->list ra)))
                 (format #t "rank ~a ~a:" rank nn)
                 (let ((lb #f) (b #f))
                   (format-line (* scale (time (set! lb (ra->list ra))))
@@ -288,6 +287,37 @@
                   (unless (equal? lb b) (throw 'bad-ra->list-benchmark)))))
           (iota 6 1)))
     (list #t 'f64)))
+
+(let ((m #e1e6))
+  (format #t "\nra-fold\n==================\n")
+  (format #t "handloop is flat let loop with inlined type-ref\n")
+  (let-syntax
+      ((%inline-type
+        (syntax-rules ()
+          ((_ type ref)
+           (begin
+             (format #t "\ntype dst ~a\n----------" type)
+             (format-header "ra" "handloop")
+             (for-each
+                 (lambda (rank)
+                   (let* ((n (inexact->exact (ceiling (expt m (/ rank)))))
+                          (nn (make-list rank n))
+                          (len (fold * 1 nn))
+                          (scale (* 1e3 (/ m len)))
+                          (ra (ra-copy type (apply ra-i nn)))
+                          (array (ra->array ra))
+                          (root (array-contents array))
+                          (expected (* m (- m 1) 1/2)))
+                     (format #t "rank ~a ~a:" rank nn)
+                     (let ((lb #f) (b #f))
+                       (format-line
+                        (* scale (time (set! lb (ra-fold + 0 ra))))
+                        (* scale (time (set! b (let loop ((a 0) (i 0)) (if (= i len) a (loop (+ a (ref root i)) (+ 1 i))))))))
+                       (unless (= lb expected) (throw 'bad-ra->list-benchmark))
+                       (unless (= b expected) (throw 'bad-ra->list-benchmark)))))
+               '(1 2 3 6)))))))
+    (%inline-type #t vector-ref)
+    (%inline-type 'f64 f64vector-ref)))
 
 
 ; -----------------------

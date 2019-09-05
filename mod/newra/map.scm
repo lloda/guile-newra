@@ -40,21 +40,21 @@
           (list #'u32 #'u32vector-ref  #'u32vector-set!                )
           (list #'u16 #'u16vector-ref  #'u16vector-set!                )
           (list #'u8  #'u8vector-ref   #'u8vector-set!                 )
-          ;; (list #'a   #'string-ref     #'string-set!                   )
-          ;; (list #'b   #'bitvector-ref  #'bitvector-set!                )
+          (list #'a   #'string-ref     #'string-set!                   )
+          (list #'b   #'bitvector-ref  #'bitvector-set!                )
           ))
   (define syntax-accessors-2
     (list (list #'#t  #'vector-ref     #'vector-set!                   )
           (list #'f64 #'f64vector-ref  #'f64vector-set!                )
-          (list #'f32 #'f32vector-ref  #'f32vector-set!                )
-          (list #'s64 #'s64vector-ref  #'s64vector-set!                )
+          ;; (list #'f32 #'f32vector-ref  #'f32vector-set!                )
+          ;; (list #'s64 #'s64vector-ref  #'s64vector-set!                )
           ;; (list #'c64 #'c64vector-ref  #'c64vector-set!                )
           ;; (list #'c32 #'c32vector-ref  #'c32vector-set!                )
           ))
   (define syntax-accessors-3
     (list (list #'#t  #'vector-ref     #'vector-set!                   )
           (list #'f64 #'f64vector-ref  #'f64vector-set!                )
-          (list #'s64 #'s64vector-ref  #'s64vector-set!                )
+          ;; (list #'s64 #'s64vector-ref  #'s64vector-set!                )
           ;; (list #'c64 #'c64vector-ref  #'c64vector-set!                )
           )))
 
@@ -473,7 +473,7 @@
                 syntax-accessors-3)
            (else (%default %op ra rb rc)))))))
 
-(define (ra-for-each op ra . rx)
+(define (ra-for-each op . rx)
   "
 ra-for-each op rx ...
 
@@ -495,10 +495,10 @@ See also: ra-map! ra-slice-for-each
           ((_ rx)
            (apply op (map (lambda (ra) ((%%ra-vref ra) (%%ra-root ra) (%%ra-zero ra))) rx))))))
     (apply (case-lambda
-            (() (%dispatch %typed-fe %fe ra))
-            ((rb) (%dispatch %typed-fe %fe ra rb))
-            ((rb rc) (%dispatch %typed-fe %fe ra rb rc))
-            (rx (%apply-default %apply-fe (cons ra rx))))
+            ((ra) (%dispatch %typed-fe %fe ra))
+            ((ra rb) (%dispatch %typed-fe %fe ra rb))
+            ((ra rb rc) (%dispatch %typed-fe %fe ra rb rc))
+            (rx (%apply-default %apply-fe rx)))
       rx)))
 
 (define (ra-map! ra op . rx)
@@ -654,10 +654,10 @@ See also: ra-every ra-equal? ra-fold
               rx)
             #f)))))
 
-(define (equal-shapes? . rx)
+(define (equal-shapes? ra . rx)
   (let/ec exit
-    (let ((da (ra-dims (car rx)))
-          (ta (ra-type (car rx))))
+    (let ((da (ra-dims ra))
+          (ta (ra-type ra)))
       (for-each (lambda (rb)
                   (unless (eq? ta (ra-type rb))
                     (exit #f))
@@ -666,7 +666,7 @@ See also: ra-every ra-equal? ra-fold
                      (unless (and (eqv? (dim-lo da) (dim-lo db)) (eqv? (dim-len da) (dim-len db)))
                        (exit #f)))
                    da (ra-dims rb)))
-        (cdr rx))
+        rx)
       #t)))
 
 ; FIXME it's a bit silly that (ra-transpose (ra-i 9) 1) isn't ra-equal? to
