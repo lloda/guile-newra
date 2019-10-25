@@ -32,10 +32,10 @@
 
 ; loop-fun from (newra test) FIXME may become ra-index-map!
 
-(define ra0 (make-ra-root (make-dim 1) (c-dims)))
-(define ra1 (make-ra-root (make-dim (* 2)) (c-dims 2)))
-(define ra2 (make-ra-root (make-dim (* 2 3)) (c-dims 2 3)))
-(define ra3 (make-ra-root (make-dim (* 2 3 4)) (c-dims 2 3 4)))
+(define ra0 (make-ra-root (make-aseq) (c-dims)))
+(define ra1 (make-ra-root (make-aseq) (c-dims 2)))
+(define ra2 (make-ra-root (make-aseq) (c-dims 2 3)))
+(define ra3 (make-ra-root (make-aseq) (c-dims 2 3 4)))
 
 (test-equal "0"
   (with-output-to-string (lambda () (%ra-loop (vector-map dim-len (ra-dims ra0)) 0 () (display (ra0))))))
@@ -163,7 +163,7 @@
 
 (define ra6 (make-ra-root #(1 2 3 4 5 6) (c-dims '(1 2) '(1 3))))
 (test-equal (ra->string ra6) "#%2@1:2@1:3((1 2 3) (4 5 6))")
-(define ra7a (make-ra-root (make-dim 6 1) (c-dims '(1 2) '(1 3))))
+(define ra7a (make-ra-root (make-aseq 1) (c-dims '(1 2) '(1 3))))
 (test-equal (ra->string ra7a) "#%2d@1:2@1:3((1 2 3) (4 5 6))")
 (define ra7b (make-ra-raw #(1 4 2 5 3 6) -3 `#(,(make-dim 2 1 1) ,(make-dim 3 1 2))))
 (test-equal (ra->string ra7b) "#%2@1:2@1:3((1 2 3) (4 5 6))")
@@ -177,7 +177,7 @@
 ; ra-slice, ra-ref, ra-cell
 ; -----------------------
 
-(define ra8 (make-ra-root (make-dim 6 1) (c-dims '(1 2) '(1 3))))
+(define ra8 (make-ra-root (make-aseq 1) (c-dims '(1 2) '(1 3))))
 (test-equal 2 (ra-length ra8))
 
 (test-equal (ra->string (ra-cell ra8)) "#%2d@1:2@1:3((1 2 3) (4 5 6))")
@@ -258,16 +258,14 @@
 (let ((ra (make-ra-root #(1 2 3 4) (vector (make-dim 4 -1)))))
   (test-equal "#%1@-1:4(4 3 2 1)" (ra->string (ra-reverse ra 0))))
 
-
-
 
 ; -----------------------
 ; ra-slice-for-each
 ; -----------------------
 
-(define ra-empty0 (make-ra-root (make-dim 6 1) (c-dims '(1 0) '(2 1))))
-(define ra-empty1 (make-ra-root (make-dim 6 1) (c-dims '(1 1) '(2 1))))
-(define ra-empty2 (make-ra-root (make-dim 6 1) (c-dims '(1 0) '(2 2))))
+(define ra-empty0 (make-ra-root (make-aseq 1) (c-dims '(1 0) '(2 1))))
+(define ra-empty1 (make-ra-root (make-aseq 1) (c-dims '(1 1) '(2 1))))
+(define ra-empty2 (make-ra-root (make-aseq 1) (c-dims '(1 0) '(2 2))))
 (test-equal 0 (ra-length ra-empty0))
 (test-equal 1 (ra-length ra-empty1))
 (test-equal 0 (ra-length ra-empty2))
@@ -420,8 +418,8 @@
 ; -----------------------
 
 (define ra11 (make-ra-new #t 0 (c-dims 10)))
-(define ra12 (make-ra-root (make-dim 10) (c-dims 10)))
-(define ra13 (make-ra-root (make-dim 10 10 -1) (c-dims 10)))
+(define ra12 (make-ra-root (make-aseq) (c-dims 10)))
+(define ra13 (make-ra-root (make-aseq 10 -1) (c-dims 10)))
 
 (test-equal 10 (ra-length ra11))
 (test-equal 10 (ra-length ra12))
@@ -652,16 +650,16 @@
 ; inf dims I - (make-dim #f) = (make-dim #f 0 1)
 ; -----------------------
 
-(test-assert (ra-equal? (ra-i 3) (make-ra-root (make-dim #f) (c-dims 3))))
+(test-assert (ra-equal? (ra-i 3) (make-ra-root (make-aseq) (c-dims 3))))
 
 ; inf index vector
 (test-assert (not (dim-len (make-dim #f))))
 
 ; make an array out of inf index vector
-(test-assert (ra-equal? (ra-i 3) (make-ra-root (make-dim #f) (c-dims 3))))
+(test-assert (ra-equal? (ra-i 3) (make-ra-root (make-aseq) (c-dims 3))))
 
 ; make an inf array
-(let ((rainf (make-ra-root (make-dim #f) (c-dims #f))))
+(let ((rainf (make-ra-root (make-aseq) (c-dims #f))))
   (throws-exception? 'unset-len-for-dim (lambda () (ra-for-each pk rainf)))
   (test-equal #(10 8 6) (ra->array (ra-map! (make-ra #f 3) - (ra-iota 3 10 -1) rainf)))
   (test-equal #(-10 -8 -6) (ra->array (ra-map! (make-ra #f 3) - rainf (ra-iota 3 10 -1)))))
@@ -702,7 +700,7 @@
 ; inf dims III - dimensions can be unbounded in both directions. For these the origin is 0.
 ; -----------------------
 
-(let ((ii (make-ra-root (make-dim #f #f 1) (vector (make-dim #f #f 1)))))
+(let ((ii (make-ra-root (make-aseq) (vector (make-dim #f #f 1)))))
   (test-equal 99 (ra-ref ii 99))
   (test-equal -99 (ra-ref ii -99)))
 
@@ -716,7 +714,7 @@
 
 (define A (ra-map! (make-ra 0 10 10) + (ra-transpose (ra-iota 10) 1) (ra-iota 10 0 10)))
 (define b (ra-i 2))
-(define c (make-ra-root (make-dim #f 10 2) (vector (make-dim 3 1))))
+(define c (make-ra-root (make-aseq 10 2) (vector (make-dim 3 1))))
 (define d (ra-i 2 2))
 
 (define iz (ra-i 3))
@@ -764,50 +762,50 @@
 ; one arg
 
 ; rank 0
-(test-from-from? "00" A (make-ra-root (make-dim #f 3) (vector)))
+(test-from-from? "00" A (make-ra-root (make-aseq 3) (vector)))
 (test-from-from? "01" A 2)
 (test-from-from? "02" A (make-ra 2))
 
 ; rank 1
 (test-from-from? "03" A (ra-iota 3))
-(test-from-from? "04" A (make-ra-root (make-dim #f) (vector (make-dim 3 1 1))))
-(test-from-from? "05" A (make-ra-root (make-dim 3 1 1) (vector (make-dim 3 1 1))))
-(test-from-from? "06" A (make-ra-root (make-dim 3 1 2) (vector (make-dim 3 1 1))))
-(test-from-from? "07" A (make-ra-root (make-dim 6 1 1) (vector (make-dim 3 1 2))))
-(test-from-from? "08" A (make-ra-root (make-dim #f 3 2) (vector (make-dim 2 1 3))))
+(test-from-from? "04" A (make-ra-root (make-aseq) (vector (make-dim 3 1 1))))
+(test-from-from? "05" A (make-ra-root (make-aseq 1 1) (vector (make-dim 3 1 1))))
+(test-from-from? "06" A (make-ra-root (make-aseq 1 2) (vector (make-dim 3 1 1))))
+(test-from-from? "07" A (make-ra-root (make-aseq 1 1) (vector (make-dim 3 1 2))))
+(test-from-from? "08" A (make-ra-root (make-aseq 3 2) (vector (make-dim 2 1 3))))
 
 ; rank 2
 (test-from-from? "09" A (ra-i 2 2))
-(test-from-from? "10" A (make-ra-root (make-dim #f 3) (vector (make-dim 2 1 2) (make-dim 2 1 3))))
+(test-from-from? "10" A (make-ra-root (make-aseq 3) (vector (make-dim 2 1 2) (make-dim 2 1 3))))
 
 
 ; ------------------------
 ; two args
 
 ; rank 0 0
-(test-from-from? "11" A (make-ra-root (make-dim #f 3) (vector))
-                 (make-ra-root (make-dim #f 2) (vector)))
-(test-from-from? "12" A 3 (make-ra-root (make-dim #f 2) (vector)))
-(test-from-from? "13" A (make-ra-root (make-dim #f 3) (vector)) 2)
+(test-from-from? "11" A (make-ra-root (make-aseq 3) (vector))
+                 (make-ra-root (make-aseq 2) (vector)))
+(test-from-from? "12" A 3 (make-ra-root (make-aseq 2) (vector)))
+(test-from-from? "13" A (make-ra-root (make-aseq 3) (vector)) 2)
 (test-from-from? "14" A 3 2)
 
 ; rank 1 1
 (test-from-from? "15" A (ra-iota 3) (ra-iota 2 4))
-(test-from-from? "16" A (make-ra-root (make-dim #f) (vector (make-dim 3 1 1)))
-                 (make-ra-root (make-dim #f) (vector (make-dim 3 1 2))))
-(test-from-from? "17" A (make-ra-root (make-dim 3 1 1) (vector (make-dim 3 1 1)))
-                 (make-ra-root (make-dim 3 1 2) (vector (make-dim 3 1 1))))
-(test-from-from? "18" A (make-ra-root (make-dim 3 1 2) (vector (make-dim 3 1 1)))
-                 (make-ra-root (make-dim 6 1 1) (vector (make-dim 3 1 2))))
-(test-from-from? "19" A (make-ra-root (make-dim 6 1 1) (vector (make-dim 3 1 2)))
-                 (make-ra-root (make-dim 6 1 1) (vector (make-dim 3 1 2))))
-(test-from-from? "20" A (make-ra-root (make-dim #f 3 2) (vector (make-dim 2 1 3)))
-                 (make-ra-root (make-dim 6 1 1) (vector (make-dim 3 1 2))))
+(test-from-from? "16" A (make-ra-root (make-aseq) (vector (make-dim 3 1 1)))
+                 (make-ra-root (make-aseq) (vector (make-dim 3 1 2))))
+(test-from-from? "17" A (make-ra-root (make-aseq 1 1) (vector (make-dim 3 1 1)))
+                 (make-ra-root (make-aseq 1 2) (vector (make-dim 3 1 1))))
+(test-from-from? "18" A (make-ra-root (make-aseq 1 2) (vector (make-dim 3 1 1)))
+                 (make-ra-root (make-aseq 1 1) (vector (make-dim 3 1 2))))
+(test-from-from? "19" A (make-ra-root (make-aseq 1 1) (vector (make-dim 3 1 2)))
+                 (make-ra-root (make-aseq 1 1) (vector (make-dim 3 1 2))))
+(test-from-from? "20" A (make-ra-root (make-aseq 3 2) (vector (make-dim 2 1 3)))
+                 (make-ra-root (make-aseq 1 1) (vector (make-dim 3 1 2))))
 
 ; rank 2 2
 (test-from-from? "21" A (ra-i 3 3) (ra-i 2 2))
-(test-from-from? "22" A (make-ra-root (make-dim #f 3) (vector (make-dim 2 1 2) (make-dim 2 1 3)))
-                 (make-ra-root (make-dim #f 3) (vector (make-dim 2 1 2) (make-dim 2 1 3))))
+(test-from-from? "22" A (make-ra-root (make-aseq 3) (vector (make-dim 2 1 2) (make-dim 2 1 3)))
+                 (make-ra-root (make-aseq 3) (vector (make-dim 2 1 2) (make-dim 2 1 3))))
 
 
 ; ------------------------
@@ -816,7 +814,7 @@
 (throws-exception? 'dim-check-out-of-range (lambda () (ra-from (ra-i 4) (ra-iota 6))))
 (throws-exception? 'dim-check-out-of-range (lambda () (ra-from (ra-i 4) 4)))
 
-(let ((A (make-ra-root (make-dim #f #f 1) (vector (make-dim 4 -3 1)))))
+(let ((A (make-ra-root (make-aseq) (vector (make-dim 4 -3 1)))))
   (test-equal 0 (ra-ref (fromu A (make-ra -3))))
   (test-equal 0 (ra-ref (fromb A -3)))
   (test-equal 0 (ra-ref (ra-from A -3)))
@@ -834,17 +832,17 @@
 
 (test-equal "#%1d:2(0 1)" (ra->string (ra-from (ra-i 4) (ra-iota 2))))
 (test-equal "#%1d:4(0 1 2 3)" (ra->string (ra-from (ra-i #f) (ra-iota 4))))
-(test-equal "#%1d:4(0 -1 -2 -3)" (ra->string (ra-from (make-ra-root (make-dim #f #f) (vector (make-dim 4 -3 -1))) (ra-iota 4 -3))))
+(test-equal "#%1d:4(0 -1 -2 -3)" (ra->string (ra-from (make-ra-root (make-aseq) (vector (make-dim 4 -3 -1))) (ra-iota 4 -3))))
 
 ; note that arrays are always indexed upwards, so you cannot have (lo hi) be (#f number).
 (throws-exception? 'dim-check-out-of-range (lambda () (ra-from (ra-i #f) (ra-iota 4 -3)))) ; error: -3 < 0
 (throws-exception? 'dim-check-out-of-range
-                   (lambda () (ra-from (make-ra-root (make-dim #f #f) (vector (make-dim 4 -3 -1)))
+                   (lambda () (ra-from (make-ra-root (make-aseq) (vector (make-dim 4 -3 -1)))
                                        (ra-iota 5 -3)))) ; -3+5 > -3+4
 (throws-exception? 'dim-check-out-of-range (lambda () (ra-from (ra-i 4) (ra-iota #f))))
 (throws-exception? 'dim-check-out-of-range (lambda () (ra-from (ra-copy #t (ra-i 4)) (ra-iota #f))))
 
-(let ((A (make-ra-root (make-dim #f #f) (vector (make-dim 4 1 3) (make-dim 3 1)))))
+(let ((A (make-ra-root (make-aseq) (vector (make-dim 4 1 3) (make-dim 3 1)))))
   (test-equal "#%1d@1:4(1 4 7 10)" (ra->string (ra-from A #t 2)))
   (test-equal "#%1d@1:3(3 4 5)" (ra->string (ra-from A 2 #t))))
 

@@ -51,7 +51,7 @@
                      (nn (make-list rank n))
                      (len (fold * 1 nn))
                      (scale (* 1e3 (/ m len)))
-                     (ra (as-ra (make-ra-root (make-dim len) (apply c-dims nn)) #:type type))
+                     (ra (as-ra (make-ra-root (make-aseq) (apply c-dims nn)) #:type type))
                      (a (ra->array ra))
                      (ras 0)
                      (as 0)

@@ -16,12 +16,13 @@
             ra-root ra-zero ra-zero-set! ra-dims ra-type ra-vlen ra-vref ra-vset!
             ra-check
             ra-rank ra-type make-ra-new make-ra-root
+            make-aseq aseq? aseq-org aseq-inc aseq-ref
             make-dim dim? dim-len dim-lo dim-hi dim-step dim-ref c-dims
             ra-pos ra-offset
             ra-slice ra-cell ra-ref ra-set!
 ; for internal (newra) use, don't re-export
             define-inlinable-case
-            make-dim* <dim> dim-check
+            <aseq> <dim> make-dim* dim-check
             vector-drop vector-fold vector-clip
             <ra-vtable> pick-root-functions pick-make-root
             %%ra-root %%ra-zero %%ra-zero-set! %%ra-dims %%ra-type %%ra-vlen %%ra-vref %%ra-vset! %%ra-rank
@@ -122,8 +123,31 @@
 
 
 ; ----------------
-; dimension record, used both as that, and as root as delayed iota.
-; FIXME this was probably a bad idea - make a type root-iota(len lo step) separate from dim(lo end step)
+; root as delayed iota - an infinite arithmetic sequence.
+; ----------------
+
+(define-immutable-record-type <aseq>
+  (make-aseq* org inc) aseq?
+  (org aseq-org)
+  (inc aseq-inc))
+
+(define-inlinable-case make-aseq
+  (case-lambda
+   (() (make-aseq* 0 1))
+   ((org)
+    (unless (real? org) (throw 'bad-aseq-org org))
+    (make-aseq* org 1))
+   ((org inc)
+    (unless (real? org) (throw 'bad-aseq-org org))
+    (unless (real? inc) (throw 'bad-aseq-inc inc))
+    (make-aseq* org inc))))
+
+(define-inlinable (aseq-ref aseq i)
+  (+ (aseq-org aseq) (* i (aseq-inc aseq))))
+
+
+; ----------------
+; dimension of array axes
 ; ----------------
 
 (define-immutable-record-type <dim>
@@ -209,17 +233,19 @@ ra-root ra -> v
 Return the root vector (or data vector) V of RA.
 "
   (%rastruct-ref a 2))
+
 (define-inlinable (ra-zero a)
   "
 ra-zero ra -> i
 
 Return the index I into the root vector of RA that corresponds to all array
 indices being 0. Note that I may be outside the range of the root vector,
-for example if RA is empty or its lower bounds are not 0.
+for example if RA is empty or its lower bounds are positive.
 
 See also: ra-offset
 "
   (%rastruct-ref a 3))
+
 (define-inlinable (ra-zero-set! a z) (%rastruct-set! a 3 z))
 (define-inlinable (ra-dims a) (%rastruct-ref a 4))
 (define-inlinable (ra-type a) (%rastruct-ref a 5))
@@ -266,8 +292,8 @@ See also: ra-offset
         ((u8vector? v)  (values  'u8   u8vector-length   u8vector-ref   u8vector-set! ))
         ((string? v)    (values  'a    string-length     string-ref     string-set!   ))
         ((bitvector? v) (values  'b    bitvector-length  bitvector-ref  bitvector-set!))
-; TODO extend this idea to drag-along
-        ((dim? v)       (values  'd    dim-len           dim-ref        (cut throw 'no-dim-set! <...>)))
+; TODO extend this idea to drag-along.
+        ((aseq? v)      (values  'd    (const #f)        aseq-ref       (cut throw 'no-aseq-set! <...>)))
         (else (throw 'bad-ra-root-type v))))
 
 

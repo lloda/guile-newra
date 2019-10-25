@@ -39,14 +39,14 @@
                 (loopj (+ j 1) irest (+ zero (* (dim-step dimA) (dim-check dimA (i)))) bdims)
                 (let ((root (%%ra-root i)))
                   (match root
-                    (($ <dim> rlen rlo rstep)
+                    (($ <aseq> rorg rinc)
                      (let ((bdimsj (make-vector ri))
                            (izero (%%ra-zero i)))
                        (let loopk ((k 0) (lo izero) (hi izero))
                          (if (< k ri)
                            (match (vector-ref (%%ra-dims i) k)
                              (($ <dim> ilen ilo istep)
-                              (vector-set! bdimsj k (make-dim ilen ilo (* (dim-step dimA) istep rstep)))
+                              (vector-set! bdimsj k (make-dim ilen ilo (* (dim-step dimA) istep rinc)))
                               (cond
                                ((zero? istep)
                                 (loopk (+ k 1) lo hi))
@@ -59,9 +59,9 @@
                                        (and lo ilo ilen (+ lo (* istep (+ ilo ilen -1))))
                                        (and hi ilo (+ hi (* istep ilo))))))))
 
-                           (let ((lo (and lo (dim-ref root lo)))
-                                 (hi (and hi (dim-ref root hi))))
-                             (receive (lo hi) (if (negative? rstep) (values hi lo) (values lo hi))
+                           (let ((lo (and lo (aseq-ref root lo)))
+                                 (hi (and hi (aseq-ref root hi))))
+                             (receive (lo hi) (if (negative? rinc) (values hi lo) (values lo hi))
 ; we don't use dim-check as that requires integer i.
                                (when (dim-lo dimA)
                                  (unless (and lo (>= lo (dim-lo dimA)))
@@ -70,7 +70,7 @@
                                  (unless (and hi (<= hi (dim-hi dimA)))
                                    (throw 'dim-check-out-of-range dimA lo)))
                                (loopj (+ j 1) irest
-                                      (+ zero (* (dim-step dimA) (+ rlo (* rstep izero))))
+                                      (+ zero (* (dim-step dimA) (+ rorg (* rinc izero))))
                                       (cons bdimsj bdims))))))))))))))))
       (()
        (make-ra-raw (ra-root A) zero
@@ -130,7 +130,7 @@
       A))))
 
 (define (beatable? x)
-  (or (and (ra? x) (or (zero? (ra-rank x)) (dim? (ra-root x)))) (integer? x) (eq? x #t)))
+  (or (and (ra? x) (or (zero? (ra-rank x)) (aseq? (ra-root x)))) (integer? x) (eq? x #t)))
 
 (define (index-rank x)
   (match x ((? integer? z) 0) ((? ra? ra) (ra-rank ra)) (#t 1)))

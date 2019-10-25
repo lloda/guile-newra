@@ -323,10 +323,10 @@ See also: ra-iota ra-i
                         ra))))
 
 (define (ra-i . i)
-  (make-ra-root (make-dim #f) (apply c-dims i)))
+  (make-ra-root (make-aseq) (apply c-dims i)))
 
 (define* (ra-iota len #:optional (lo 0) (step 1))
-  (make-ra-root (make-dim #f lo step) (c-dims len)))
+  (make-ra-root (make-aseq lo step) (c-dims len)))
 
 ; oldra has array-copy in (ice-9 arrays). Something of the sort.
 ; FIXME handling of dead axes could be faster - maybe c-dims should be written differently.
