@@ -36,7 +36,7 @@
            array->ra ra->array as-ra
            ra-i ra-iota
            ra-copy
-           ra-reverse ra-transpose ra-order-c? ra-ravel ra-reshape
+           ra-reverse ra-transpose ra-order-c? ra-ravel ra-reshape ra-tile
            ra-fold ra-fold*
 
            ra-from ra-amend!

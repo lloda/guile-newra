@@ -158,6 +158,15 @@
 
 (define-inlinable-case make-dim
   (case-lambda
+   "
+make-dim len
+make-dim len lo
+make-dim len lo step
+
+Create an ra axis descriptor with the given parameters.
+
+See also: dim-len dim-lo dim-step c-dims dim-ref
+"
    ((len) (make-dim* len 0 1))
    ((len lo) (make-dim* len lo 1))
    ((len lo step)

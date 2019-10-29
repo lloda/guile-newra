@@ -890,6 +890,48 @@
 
 
 ; -----------------------
+; ra-reshape
+; -----------------------
+
+(define (test-reshape a shape check-shape)
+  (let* ((b (apply ra-reshape a shape)))
+    (test-assert (ra-equal? (ra-ravel a) (ra-ravel b)))
+    (test-assert (eq? (ra-root a) (ra-root b)))
+    (test-equal check-shape (ra-shape b))))
+
+(test-reshape (ra-i 6)
+              '(2 3) '((0 1) (0 2)))
+(test-reshape (ra-i 6)
+              '((2 4) (3 4)) '((2 4) (3 4)))
+(test-reshape (ra-transpose (ra-i 3 2 4) 1 2 0)
+              '(2 2) '((0 1) (0 1) (0 2) (0 1)))
+(test-reshape (ra-from (make-ra-root (make-aseq) (c-dims '(4 9) '(1 4))) (ra-iota 4 5) (ra-iota 2 1))
+              '((1 2) 2) '((1 2) (0 1) (0 1)))
+(test-reshape (ra-transpose (make-ra-root (list->vector (iota 18 1)) (c-dims '(1 3) '(4 9))) 1 0)
+              '(2 3) '((0 1) (0 2) (1 3)))
+(test-reshape (ra-transpose (make-ra-root (make-aseq) (c-dims '(4 9) '(1 4))) 1 0)
+              '((1 2) 2) '((1 2) (0 1) (4 9)))
+
+
+; -----------------------
+; ra-tile
+; -----------------------
+
+(define (test-tile a shape check-shape)
+  (let* ((b (apply ra-tile a shape)))
+    (ra-slice-for-each 2 (lambda (b) (test-assert (ra-equal? a b))) b)
+    (test-assert (eq? (ra-root a) (ra-root b)))
+    (test-equal check-shape (ra-shape b))))
+
+(test-tile (ra-i 5)
+           '(2 3) '((0 1) (0 2) (0 4)))
+(test-tile (ra-transpose (make-ra-root (make-aseq) (c-dims '(4 9) '(1 4))) 1 0)
+           '(2 3) '((0 1) (0 2) (1 4) (4 9)))
+(test-tile (ra-transpose (make-ra-root (make-aseq) (c-dims '(4 9) '(1 4))) 1 0)
+           '((2 4) (-1 3)) '((2 4) (-1 3) (1 4) (4 9)))
+
+
+; -----------------------
 ; the end.
 ; -----------------------
 

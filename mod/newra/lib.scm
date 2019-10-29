@@ -17,7 +17,7 @@
             array->ra ra->array as-ra
             ra-i ra-iota
             ra-copy
-            ra-reverse ra-transpose ra-order-c? ra-ravel ra-reshape
+            ra-reverse ra-transpose ra-order-c? ra-ravel ra-reshape ra-tile
             ra-fold ra-fold*
 
             vector-append))
@@ -474,6 +474,7 @@ See also: ra-reshape ra-transpose ra-from
 "
   (let ((s (ra-size ra)))
     (define (pure-ravel ra)
+; the ravel is based at 0, so we don't want (ra-zero ra).
       (make-ra-raw (%%ra-root ra) (ra-offset ra) (vector (make-dim s))))
     (if (ra-order-c? ra)
       (pure-ravel ra)
@@ -494,10 +495,45 @@ See also: ra-reshape ra-transpose ra-from
   "
 ra-reshape ra s ... -> rb
 
-Reshape the first axis of ra RA into shape S ... Each S is either list of two
-integers (LO HI) or an integer LEN.
+Reshape the first axis of ra RA into shape S ... The shape of RB will be S
+concatenated with the rest of the shape of RA. The total size of the new axes
+must fit in the first axis of RA.
 
-See also: ra-ravel ra-transpose ra-from
+Each element of S is either a list of two integers (LO HI) or an integer LEN.
+
+The result always shares the root of RA.
+
+See also: ra-ravel ra-tile ra-transpose ra-from c-dims
 "
-  99
-  )
+  (unless (positive? (ra-rank ra))
+    (throw 'bad-rank-for-reshape (ra-rank ra)))
+  (let ((sdims (apply c-dims s)))
+    (let ((ssize (vector-fold (lambda (d c) (* c (dim-len d))) 1 sdims)))
+      (when (> ssize (ra-length ra))
+        (throw 'bad-size-for-reshape ssize (ra-length ra))))
+    (match (vector-ref (%%ra-dims ra) 0)
+      (($ <dim> ilen ilo istep)
+       (let* ((sdims (vector-map (lambda (d) (make-dim (dim-len d) (dim-lo d) (* (dim-step d) istep))) sdims))
+              (bdims (vector-append sdims (vector-drop (%%ra-dims ra) 1))))
+         (make-ra-raw (%%ra-root ra)
+                      (+ (ra-zero ra) (- (ra-offset 0 sdims)) (* ilo istep))
+                      bdims))))))
+
+(define (ra-tile ra . s)
+  "
+ra-tile ra s ... -> rb
+
+Replicate ra RA by the shape S ... The shape of RB will be S concatenated with
+the shape of RA.
+
+Each element of S is either a list of two integers (LO HI) or an integer LEN.
+
+The result always shares the root of RA.
+
+See also: ra-ravel ra-reshape ra-transpose ra-from c-dims
+"
+  (let ((ra (ra-check ra)))
+    (make-ra-raw (%%ra-root ra) (%%ra-zero ra)
+                 (vector-append
+                  (vector-map (lambda (d) (make-dim (dim-len d) (dim-lo d) 0)) (apply c-dims s))
+                  (%%ra-dims ra)))))

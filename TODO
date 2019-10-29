@@ -13,7 +13,7 @@ Help: [C-uc .] insert timestamp [C-cc] flip checkbox [C-uucc] partial flip check
   * [X] ra-equal?
   * [ ] root vectors are equivalent to rank-1 newra objects
 
-* TODO guile-ploy functionality [6/10]
+* TODO guile-ploy functionality [7/10]
   * [X] ra-fold ra-fold*
   * [X] ra-any ra-every
   * [X] raw prefix matching
@@ -22,7 +22,7 @@ Help: [C-uc .] insert timestamp [C-cc] flip checkbox [C-uucc] partial flip check
     - [X] ra-from
     - [X] ra-amend!
   * [X] ra-ravel
-  * [ ] ra-reshape
+  * [X] ra-reshape, ra-tile
   * [ ] verbs, w/rank
   * [ ] as-ra
   * [ ] output types
