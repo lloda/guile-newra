@@ -876,6 +876,17 @@
 ; ra-ravel
 ; -----------------------
 
+(test-assert (ra-order-c? (ra-i)))
+(test-assert (ra-order-c? (ra-i 2)))
+(test-assert (ra-order-c? (ra-i 2 3)))
+(test-assert (ra-order-c? (ra-i 2 3 4)))
+(test-assert (not (ra-order-c? (ra-transpose (ra-i 2 3 4 5) 0 1 3 2))))
+(test-assert (not (ra-order-c? (ra-transpose (ra-i 2 3 4 5) 0 1 3 2) 3)))
+(test-assert (ra-order-c? (ra-transpose (ra-i 1 2 3 4) 0 1 3 2) 2))
+(test-assert (ra-order-c? (ra-transpose (ra-i 1 2 3 4) 0 1 3 2) 1))
+(test-assert (not (ra-order-c? (ra-from (ra-i 1 2 3 4) #t #t #t (ra-iota 2 0 2)))))
+(test-assert (ra-order-c? (ra-from (ra-i 1 2 3 4) #t #t #t (ra-iota 2 0 2)) 4))
+
 (test-equal "#%1:18(1 7 13 2 8 14 3 9 15 4 10 16 5 11 17 6 12 18)"
             (ra->string
              (ra-ravel
@@ -935,5 +946,5 @@
 ; the end.
 ; -----------------------
 
-(test-end "newra")
-(exit (test-runner-fail-count (test-runner-current)))
+;; (test-end "newra")
+;; (exit (test-runner-fail-count (test-runner-current)))

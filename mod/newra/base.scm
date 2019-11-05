@@ -170,7 +170,7 @@ See also: dim-len dim-lo dim-step c-dims dim-ref
    ((len) (make-dim* len 0 1))
    ((len lo) (make-dim* len lo 1))
    ((len lo step)
-    (when (and len (< len 0)) (throw 'bad-dim-len len))
+    (when (and len (or (not (integer? len)) (< len 0))) (throw 'bad-dim-len len))
     (when (and (not lo) len) (throw 'bad-dim-lo-len lo len))
     (make-dim* len lo step))))
 

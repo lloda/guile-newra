@@ -441,24 +441,29 @@ See also: make-ra-root make-ra-new
              (throw 'bad-lo))
            odim))))))
 
-(define (ra-order-c? ra)
+(define* (ra-order-c? ra #:optional n)
   "
 ra-order-c? ra
+ra-order-c? ra n
 
-Return #f unless the elements of ra RA are in packed C order (aka row-major order).
+Return #f unless the elements of ra RA are in packed C order (aka row-major
+order). If N is given, check only the first N axes, and don't check whether the
+step on the last axis is 1 in any case.
 
 See also: ra-ravel, ra-reshape, c-dims
 "
   (let* ((ra (ra-check ra))
          (dims (%%ra-dims ra))
-         (i (vector-length dims)))
-    (or (zero? i)
-        (let loop ((i (- i 1)) (d 1))
+         (i (vector-length dims))
+         (i (if n (if (<= 0 n i) n (throw 'bad-number-of-axes n i)) i)))
+    (or (<= i 0)
+        (let loop ((i (- i 1)) (d (if n (dim-step (vector-ref dims (- i 1))) 1)))
           (and (= d (dim-step (vector-ref dims i)))
                (or (zero? i)
                    (loop (- i 1) (* d (dim-len (vector-ref dims i))))))))))
 
 ; cf https://code.jsoftware.com/wiki/Vocabulary/comma
+; FIXME optional arg ravel the first n axes; all by default.
 
 (define (ra-ravel ra)
   "
