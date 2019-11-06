@@ -10,7 +10,7 @@
 ; Run with $GUILE -L mod -s test.scm
 
 (import (newra newra) (newra test) (newra tools) (newra read)
-        (srfi :64) (srfi :26) (srfi :8) (only (srfi :1) fold iota)
+        (srfi :64) (srfi :26) (srfi :8) (only (srfi :1) fold iota drop)
         (ice-9 match) (only (rnrs base) vector-map))
 
 (define (ra->string ra) (call-with-output-string (cut display ra <>)))
@@ -898,6 +898,26 @@
   (test-equal "#%1:18(1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18)"
               (ra->string (ra-ravel ra))))
 (test-equal "#%1:1(3)" (ra->string (ra-ravel (make-ra 3))))
+
+; partial ravel
+
+(define (test-ravel-n ra keep-root?)
+  (let loop ((i (ra-rank ra)))
+    (when (>= i 0)
+      (let ((ri (ra-ravel ra i)))
+        (when keep-root?
+          (test-assert (ra-equal? (ra-ravel ri) (ra-ravel ra)))
+          (test-eq (ra-root ra) (ra-root ri)))
+        (test-equal (ra->list (ra-ravel ri)) (ra->list (ra-ravel ra)))
+        (test-equal (+ (ra-rank ra) 1 (- i)) (ra-rank ri)))
+      (loop (- i 1)))))
+
+(let* ((ra (ra-i 2 3 4 5 6))
+       (rb (ra-from (ra-i 2 3 4 5 6) #t #t #t #t (ra-iota 3 0 2))))
+  (test-ravel-n ra #t)
+  (test-ravel-n rb #t)
+  (test-ravel-n (ra-transpose ra 1 0) #f)
+  (test-ravel-n (ra-transpose rb 1 0) #f))
 
 
 ; -----------------------

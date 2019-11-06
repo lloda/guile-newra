@@ -23,7 +23,7 @@
 ; for internal (newra) use, don't re-export
             define-inlinable-case
             <aseq> <dim> make-dim* dim-check
-            vector-drop vector-fold vector-clip
+            vector-drop vector-fold* vector-fold vector-clip
             <ra-vtable> pick-root-functions pick-make-root
             %%ra-root %%ra-zero %%ra-zero-set! %%ra-dims %%ra-type %%ra-vlen %%ra-vref %%ra-vset! %%ra-rank
             %%ra-step))
@@ -58,22 +58,31 @@
 ; misc - FIXME remove if unused
 ; ----------------
 
+(define vector-fold*
+  (case-lambda
+   ((n kons knil)
+    (throw 'missing-arguments))
+   ((n kons knil v)
+    (let ((end n))
+      (let loop ((i 0) (k knil))
+        (if (= i end)
+          k
+          (loop (+ i 1) (kons (vector-ref v i) k))))))
+   ((n kons knil . vs)
+    (let ((end n))
+      (let loop ((i 0) (k knil))
+        (if (= i end)
+          k
+          (loop (+ i 1) (apply kons (append (map (cut vector-ref <> i) vs) (list k))))))))))
+
 (define vector-fold
   (case-lambda
    ((kons knil)
     (throw 'missing-arguments))
    ((kons knil v)
-    (let ((end (vector-length v)))
-      (let loop ((i 0) (k knil))
-        (if (= i end)
-          k
-          (loop (+ i 1) (kons (vector-ref v i) k))))))
+    (vector-fold* (vector-length v) kons knil v))
    ((kons knil . vs)
-    (let ((end (vector-length (car vs))))
-      (let loop ((i 0) (k knil))
-        (if (= i end)
-          k
-          (loop (+ i 1) (apply kons (append (map (cut vector-ref <> i) vs) (list k))))))))))
+    (apply vector-fold* (vector-length (car vs)) kons knil vs))))
 
 ; FIXME ev. used newra shared, will be simpler.
 (define (vector-clip v lo end)

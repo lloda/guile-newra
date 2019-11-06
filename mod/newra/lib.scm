@@ -22,7 +22,7 @@
 
             vector-append))
 
-(import (newra base) (newra map) (only (srfi :1) fold every any iota) (srfi :8) (srfi :26)
+(import (newra base) (newra map) (only (srfi :1) fold every any iota drop) (srfi :8) (srfi :26)
         (ice-9 control) (ice-9 match) (only (rnrs base) vector-map vector-for-each))
 
 (define (vector-append . a)
@@ -159,18 +159,20 @@ rank.
 
 See also: ra-shape ra-dimensions ra-size
 "
-  (dim-len (vector-ref (%%ra-dims ra) k)))
+  (dim-len (vector-ref (ra-dims ra) k)))
 
-(define* (ra-size ra)
+(define* (ra-size ra #:optional (n (ra-rank ra)))
   "
 ra-size ra
+ra-size ra n
 
-Return the number of elements of ra RA, that is, the product of all its dimensions. Ras of rank 0
-have size 1.
+Return the number of elements of ra RA, that is, the product of all its
+lengths. Ras of rank 0 have size 1. If N is given, return the product of the
+first N lengths.
 
 See also: ra-shape ra-dimensions ra-length
 "
-  (vector-fold (lambda (d s) (* s (dim-len d))) 1 (ra-dims ra)))
+  (vector-fold* n (lambda (d s) (* s (dim-len d))) 1 (ra-dims ra)))
 
 (define (make-typed-ra type value . d)
   "
@@ -465,26 +467,43 @@ See also: ra-ravel, ra-reshape, c-dims
 ; cf https://code.jsoftware.com/wiki/Vocabulary/comma
 ; FIXME optional arg ravel the first n axes; all by default.
 
-(define (ra-ravel ra)
+(define* (ra-ravel ra #:optional (n (ra-rank ra)))
   "
 ra-ravel ra -> rb
+ra-ravel ra n -> rb
 
-Return the row-major ravel of ra RA. The result RB may or may not share the root
-of RA.
+Return the row-major ravel of the elements of RA. The result RB is a rank-1 ra
+that may or may not share the root of RA.
 
-If RB does not share the root of RA, then it has the same type as RA unless that
-type is 'd, in which case it has type #t.
+When RB does not share the root of RA, then it has the same type as RA unless
+that type is 'd, in which case it has type #t.
+
+If N is given, ravel only the first N axes of RA. The rank of the result is
+rank(RA) + 1 - N.
 
 See also: ra-reshape ra-transpose ra-from
 "
-  (let ((s (ra-size ra)))
-    (define (pure-ravel ra)
+  (define (pure-ravel ra n)
+    (let ((od (%%ra-dims ra))
+          (rank (vector-length (%%ra-dims ra))))
+      (make-ra-raw (%%ra-root ra)
 ; the ravel is based at 0, so we don't want (ra-zero ra).
-      (make-ra-raw (%%ra-root ra) (ra-offset ra) (vector (make-dim s))))
-    (if (ra-order-c? ra)
-      (pure-ravel ra)
-      (let ((rb (make-ra-new (match (%%ra-type ra) ('d #t) (x x)) *unspecified* (apply c-dims (ra-dimensions ra)))))
-        (pure-ravel (ra-copy! rb ra))))))
+                   (ra-offset (%%ra-zero ra) od n)
+                   (vector-append
+                    (vector (make-dim (ra-size ra n) 0
+                                      (cond ((zero? rank) 1)
+                                            ((> n 0) (dim-step (vector-ref od (- n 1))))
+; FIXME hack so the result doesn't stop being c-order after an axis is added.
+; ra-order-c? should just ignore singleton dimensions.
+                                            (else (let ((d0 (vector-ref od 0)))
+                                                    (* (dim-step d0) (dim-len d0)))))))
+                    (vector-drop od n)))))
+  (pure-ravel
+   (if (ra-order-c? ra n)
+     ra (ra-copy! (make-ra-new (match (%%ra-type ra) ('d #t) (x x))
+                               *unspecified* (apply c-dims (ra-dimensions ra)))
+                  ra))
+   n))
 
 ; cf https://www.jsoftware.com/papers/APLDictionary1.htm#rho
 ; ... ⍺⍴⍵ produces a result of shape ⍺ from the elements of ⍵ ...

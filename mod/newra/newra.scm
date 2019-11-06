@@ -31,7 +31,7 @@
            ra-equal? ra-any ra-every
 
            ra-index-map!
-           ra-length make-ra make-typed-ra make-ra-shared ra->list
+           ra-length ra-size make-ra make-typed-ra make-ra-shared ra->list
            ra-dimensions ra-shape ra-offset
            array->ra ra->array as-ra
            ra-i ra-iota
