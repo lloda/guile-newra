@@ -448,40 +448,55 @@ See also: make-ra-root make-ra-new
 ra-order-c? ra
 ra-order-c? ra n
 
-Return #f unless the elements of ra RA are in packed C order (aka row-major
-order). If N is given, check only the first N axes, and don't check whether the
-step on the last axis is 1 in any case.
+Check whether the N-frame of RA is in C-order (aka row-major order).
 
-See also: ra-ravel, ra-reshape, c-dims
+An ra frame is in C-order if the step of each axis is equal to the product of the
+length and the step of the following axis. Axes with size 1 are ignored. If any axis
+has size 0, the frame is in C-order.
+
+If N is not given, check whether the elements of RA are in packed C-order. This
+means that 1) the full frame of RA is in C-order, and 2) the step on the last
+axis (whose size is neither 1 or 0) is 1.
+
+See also: ra-ravel ra-reshape ra-tile c-dims
 "
   (let* ((ra (ra-check ra))
          (dims (%%ra-dims ra))
-         (i (vector-length dims))
-         (i (if n (if (<= 0 n i) n (throw 'bad-number-of-axes n i)) i)))
-    (or (<= i 0)
-        (let loop ((i (- i 1)) (d (if n (dim-step (vector-ref dims (- i 1))) 1)))
-          (and (= d (dim-step (vector-ref dims i)))
-               (or (zero? i)
-                   (loop (- i 1) (* d (dim-len (vector-ref dims i))))))))))
+         (rank (vector-length dims))
+         (nn (or n rank)))
+    (unless (<= 0 nn rank)
+      (throw 'bad-number-of-axes n rank))
+; look for an axis with len > 1
+    (let loop ((i 0) (step #f))
+      (if (>= i nn)
+; no more axes; check the last step if n was #f
+        (or (not step) n (= step 1))
+        (match (vector-ref dims i)
+          (($ <dim> ilen ilo istep)
+           (case ilen
+             ((0) 0) ; empty array
+             ((1) (loop (+ i 1) step)) ; skip singleton axis
+             (else
+              (and (or (not step) ; first non-singleton axis
+                       (= step (* ilen istep)))
+                   (loop (+ i 1) istep))))))))))
 
 ; cf https://code.jsoftware.com/wiki/Vocabulary/comma
-; FIXME optional arg ravel the first n axes; all by default.
 
 (define* (ra-ravel ra #:optional (n (ra-rank ra)))
   "
 ra-ravel ra -> rb
 ra-ravel ra n -> rb
 
-Return the row-major ravel of the elements of RA. The result RB is a rank-1 ra
-that may or may not share the root of RA.
+Return the row-major ravel of the N-frame of RA. N defaults to the rank of RA.
+
+The result RB is a ra with rank (rank(RA) - N + 1) that may or may not share the
+root of RA.
 
 When RB does not share the root of RA, then it has the same type as RA unless
 that type is 'd, in which case it has type #t.
 
-If N is given, ravel only the first N axes of RA. The rank of the result is
-rank(RA) + 1 - N.
-
-See also: ra-reshape ra-transpose ra-from
+See also: ra-reshape ra-transpose ra-from ra-order-c?
 "
   (define (pure-ravel ra n)
     (let ((od (%%ra-dims ra))
@@ -492,17 +507,15 @@ See also: ra-reshape ra-transpose ra-from
                    (vector-append
                     (vector (make-dim (ra-size ra n) 0
                                       (cond ((zero? rank) 1)
-                                            ((> n 0) (dim-step (vector-ref od (- n 1))))
-; FIXME hack so the result doesn't stop being c-order after an axis is added.
-; ra-order-c? should just ignore singleton dimensions.
-                                            (else (let ((d0 (vector-ref od 0)))
-                                                    (* (dim-step d0) (dim-len d0)))))))
+                                            ((positive? n) (dim-step (vector-ref od (- n 1))))
+                                            (else 1))))
                     (vector-drop od n)))))
   (pure-ravel
    (if (ra-order-c? ra n)
-     ra (ra-copy! (make-ra-new (match (%%ra-type ra) ('d #t) (x x))
+     ra
+     (ra-copy! (make-ra-new (match (%%ra-type ra) ('d #t) (x x))
                                *unspecified* (apply c-dims (ra-dimensions ra)))
-                  ra))
+               ra))
    n))
 
 ; cf https://www.jsoftware.com/papers/APLDictionary1.htm#rho
@@ -527,7 +540,7 @@ Each element of S is either a list of two integers (LO HI) or an integer LEN.
 
 The result always shares the root of RA.
 
-See also: ra-ravel ra-tile ra-transpose ra-from c-dims
+See also: ra-ravel ra-tile ra-transpose ra-from ra-order-c? c-dims
 "
   (unless (positive? (ra-rank ra))
     (throw 'bad-rank-for-reshape (ra-rank ra)))
@@ -554,7 +567,7 @@ Each element of S is either a list of two integers (LO HI) or an integer LEN.
 
 The result always shares the root of RA.
 
-See also: ra-ravel ra-reshape ra-transpose ra-from c-dims
+See also: ra-ravel ra-reshape ra-transpose ra-from ra-order-c? c-dims
 "
   (let ((ra (ra-check ra)))
     (make-ra-raw (%%ra-root ra) (%%ra-zero ra)
