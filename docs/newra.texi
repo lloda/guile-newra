@@ -1,0 +1,214 @@
+@c -*-texinfo-*-
+@c %**start of header
+@setfilename newra.info
+@documentencoding UTF-8
+@settitle newra —An array library for Guile 3
+@c %**end of header
+@c last [ma112]
+
+@set VERSION 1
+@set UPDATED 2019 November 11
+
+@copying
+@code{newra} (version @value{VERSION}, updated @value{UPDATED})
+
+(c) lloda 2017--2019
+
+@smalldisplay
+Permission is granted to copy, distribute and/or modify this document
+under the terms of the GNU Free Documentation License, Version 1.3 or
+any later version published by the Free Software Foundation; with no
+Invariant Sections, no Front-Cover Texts, and no Back-Cover Texts.
+@end smalldisplay
+@end copying
+
+@dircategory Guile libraries
+@direntry
+* newra: (newra.info).  Array library for Guile meant to replace the built-in array facility.
+@end direntry
+
+@include my-bib-macros.texi
+@mybibuselist{Sources}
+
+@titlepage
+@title newra
+@subtitle version @value{VERSION}, updated @value{UPDATED}
+@author lloda
+@page
+@vskip 0pt plus 1filll
+@insertcopying
+@end titlepage
+
+@ifnottex
+@node Top
+@top @code{newra}
+
+@insertcopying
+
+@code{newra} is a Scheme-only replacement for the array facility in Guile 2.2, which is implemented in C. @code{newra} replaces the builtin array type and adds many more facilities than are present in vanilla Guile.
+
+@menu
+* Overview::          Why Guile arrays need replacing
+* Basics::            Using arrays as containers
+* Advanced usage::    Guile as an array language.
+* Hazards::           User beware.
+* Reference::         Systematic list of types and functions.
+* @mybibnode{}::      It's been done before.
+* Indices::           Or try the search function.
+@end menu
+
+@end ifnottex
+
+@iftex
+@shortcontents
+@end iftex
+
+@c ------------------------------------------------
+@node Overview
+@chapter Overview
+@c ------------------------------------------------
+
+An array is...
+
+@emph{expressions} @dfn{matrices}
+
+@verbatim
+A = B+C;
+@end verbatim
+
+@cindex Guile
+Text to be written
+
+@menu
+* Section A::         A
+* Section B::         B
+@end menu
+
+@c ------------------------------------------------
+@node Section A
+@section Section A
+@c ------------------------------------------------
+
+@quotation
+A: [A(0), A(1), ...]
+@end quotation
+
+@anchor{x-star}
+As a reference (see @ref{x-star,@code{star}})
+
+@c ------------------------------------------------
+@node Section B
+@section Section B
+@c ------------------------------------------------
+
+@c ------------------------------------------------
+@node Basics
+@chapter Basics
+@c ------------------------------------------------
+
+@menu
+* Creating arrays::
+* Special arrays::
+* Operations on arrays::
+* Slicing::
+* Reshaping and resizing::
+* Compatibility with old Guile arrays::
+@end menu
+
+@c ------------------------------------------------
+@node Creating arrays
+@section Creating arrays
+@c ------------------------------------------------
+
+@c ------------------------------------------------
+@node Special arrays
+@section Special arrays
+@c ------------------------------------------------
+
+@c ------------------------------------------------
+@node Operations on arrays
+@section Operations on arrays
+@c ------------------------------------------------
+
+@c ------------------------------------------------
+@node Slicing
+@section Slicing
+@c ------------------------------------------------
+
+@c ------------------------------------------------
+@node Reshaping and resizing
+@section Reshaping and resizing
+@c ------------------------------------------------
+
+@cindex @code{none}
+@anchor{x-none}
+@deffn @w{Special objects} {none}
+For example...
+
+@example
+@verbatim
+For example
+@end verbatim
+@end example
+
+@end deffn
+
+@c ------------------------------------------------
+@node Compatibility with old Guile arrays
+@section Compatibility with old Guile arrays
+@c ------------------------------------------------
+
+@c ------------------------------------------------
+@node Advanced usage
+@chapter Advanced usage
+@c ------------------------------------------------
+
+@c ------------------------------------------------
+@node Hazards
+@chapter Hazards
+@c ------------------------------------------------
+
+@c ------------------------------------------------
+@node Reference
+@chapter Reference
+@c ------------------------------------------------
+
+@c ------------------------------------------------
+@node @mybibnode{}
+@chapter Sources
+@c ------------------------------------------------
+
+@multitable @columnfractions .1 .9
+
+@item @mybibitem{Abr70} @tab Philip S. Abrams. An APL machine. Technical report SLAC-114 UC-32 (MISC), Stanford Linear Accelerator Center, Stanford University, Stanford, CA, USA, February 1970.
+@item @mybibitem{Ber87} @tab Robert Bernecky. An introduction to function rank. ACM SIGAPL APL Quote Quad, 18(2):39–43, December 1987.
+@item @mybibitem{bli17} @tab The Blitz++ meta-template library. @url{http://blitz.sourceforge.net}, November 2017.
+@item @mybibitem{Cha86} @tab Gregory J. Chaitin. Physics in APL2, June 1986.
+@item @mybibitem{FI68}  @tab Adin D. Falkoff and Kenneth Eugene Iverson. APL\360 User’s manual. IBM Thomas J. Watson Research Center, August 1968.
+@item @mybibitem{FI73}  @tab Adin D. Falkoff and Kenneth Eugene Iverson. The design of APL. IBM Journal of Research and Development, 17(4):5–14, July 1973.
+@item @mybibitem{FI78}  @tab Adin D. Falkoff and Kenneth Eugene Iverson. The evolution of APL. ACM SIGAPL APL, 9(1):30– 44, 1978.
+@item @mybibitem{J S}   @tab J Primer. J Software, @url{https://www.jsoftware.com/help/primer/contents.htm}, November 2017.
+@item @mybibitem{Mat}   @tab MathWorks. MATLAB documentation, @url{https://www.mathworks.com/help/matlab/}, November 2017.
+@item @mybibitem{num17} @tab NumPy. @url{http://www.numpy.org}, November 2017.
+@item @mybibitem{Ric08} @tab Henry Rich. J for C programmers, February 2008.
+@item @mybibitem{SSM14} @tab Justin Slepak, Olin Shivers, and Panagiotis Manolios. An array-oriented language with static rank polymorphism. In Z. Shao, editor, ESOP 2014, LNCS 8410, pages 27–46, 2014.
+@item @mybibitem{Vel01} @tab Todd Veldhuizen. Blitz++ user’s guide, February 2001.
+@item @mybibitem{Wad90} @tab Philip Wadler. Deforestation: transforming programs to eliminate trees. Theoretical Computer Science, 73(2): 231--248, June 1990. @url{https://doi.org/10.1016/0304-3975%2890%2990147-A}
+
+@end multitable
+
+@c ------------------------------------------------
+@node Indices
+@unnumbered Indices
+@c ------------------------------------------------
+
+@c @node Concept Index
+@c @unnumbered Concept Index
+@printindex cp
+@c @node Function Index
+@c @unnumbered Function Index
+@c @printindex fn
+
+@c \nocite{JLangReference,FalkoffIverson1968,Abrams1970,FalkoffIverson1973,FalkoffIverson1978,APLexamples1,ArraysCowan,KonaTheLanguage,blitz++2001}
+
+@bye
