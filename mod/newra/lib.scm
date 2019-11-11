@@ -102,9 +102,8 @@ See also: ra-fold ra-map! ra-for-each ra-slice-for-each
                (map (lambda (b i) (make-dim (- (cadr b) (car b) -1) (car b) i))
                  (array-shape a)
                  (shared-array-increments a)))))
-    (make-ra-raw (shared-array-root a)
-                 (- (shared-array-offset a) (ra-offset 0 dims))
-                 dims)))
+    (make-ra-root (shared-array-root a) dims
+                  (- (shared-array-offset a) (ra-offset 0 dims)))))
 
 (define (ra->array ra)
   (when (eq? 'd (ra-type ra))
@@ -206,7 +205,7 @@ See also: make-typed-ra
       (if (< k newrank)
         (if (positive? (dim-len (vector-ref dims k)))
           (emptycheck (+ 1 k))
-          (make-ra-raw (%%ra-root oldra) (%%ra-zero oldra) dims))
+          (make-ra-root (%%ra-root oldra) dims (%%ra-zero oldra)))
         (let* ((los (vector->list (vector-map dim-lo dims)))
                (ref (apply ra-pos (%%ra-zero oldra) (%%ra-dims oldra) (apply mapfunc los)))
                (dims (vector-map
@@ -225,7 +224,7 @@ See also: make-typed-ra
                                  (- (apply ra-pos (%%ra-zero oldra) (%%ra-dims oldra) (apply mapfunc ii)) ref))
                                0))
                             (loop (+ k 1)))))))))
-          (make-ra-raw (%%ra-root oldra) (- ref (ra-offset 0 dims)) dims))))))
+          (make-ra-root (%%ra-root oldra) dims (- ref (ra-offset 0 dims))))))))
 
 ; FIXME Depends on traversal order of ra-for-each.
 
@@ -363,8 +362,9 @@ See also: ra-copy! as-ra
            (rb (ra-copy! (make-ra-new type *unspecified* (apply c-dims shape)) ra)))
 ; preserve dead axes in the result.
       (if (any not (ra-dimensions ra))
-        (make-ra-raw (ra-root rb) (ra-zero rb)
-                     (vector-map (lambda (a b) (if (dim-len a) b a)) (ra-dims ra) (ra-dims rb)))
+        (make-ra-root (ra-root rb)
+                      (vector-map (lambda (a b) (if (dim-len a) b a)) (ra-dims ra) (ra-dims rb))
+                      (ra-zero rb))
         rb)))))
 
 (define (ra-reverse ra . k)
@@ -385,7 +385,7 @@ See also: ra-transpose make-ra-shared
          (ndims (vector-copy (%%ra-dims ra))))
     (let loop ((k k) (zero (%%ra-zero ra)))
       (if (null? k)
-        (make-ra-raw (%%ra-root ra) zero ndims)
+        (make-ra-root (%%ra-root ra) ndims zero)
         (match (vector-ref ndims (car k))
           (($ <dim> len lo step)
            (vector-set! ndims (car k) (make-dim len lo (- step)))
@@ -424,9 +424,10 @@ See also: make-ra-root make-ra-new
              ((= k (vector-length ndims)))
            (if (not (vector-ref ndims k))
              (vector-set! ndims k (make-dim #f #f 0))))
-         (make-ra-raw (%%ra-root ra) (%%ra-zero ra)
+         (make-ra-root (%%ra-root ra)
 ; append rest axes
-                      (vector-append ndims (vector-drop odims i))))
+                       (vector-append ndims (vector-drop odims i))
+                       (%%ra-zero ra)))
       (unless (< i orank)
         (throw 'bad-number-of-axes axes 'should-be i))
       (let* ((k (car axesr))
@@ -501,15 +502,15 @@ See also: ra-reshape ra-transpose ra-from ra-order-c?
   (define (pure-ravel ra n)
     (let ((od (%%ra-dims ra))
           (rank (vector-length (%%ra-dims ra))))
-      (make-ra-raw (%%ra-root ra)
+      (make-ra-root (%%ra-root ra)
 ; the ravel is based at 0, so we don't want (ra-zero ra).
-                   (ra-offset (%%ra-zero ra) od n)
-                   (vector-append
-                    (vector (make-dim (ra-size ra n) 0
-                                      (cond ((zero? rank) 1)
-                                            ((positive? n) (dim-step (vector-ref od (- n 1))))
-                                            (else 1))))
-                    (vector-drop od n)))))
+                    (vector-append
+                     (vector (make-dim (ra-size ra n) 0
+                                       (cond ((zero? rank) 1)
+                                             ((positive? n) (dim-step (vector-ref od (- n 1))))
+                                             (else 1))))
+                     (vector-drop od n))
+                    (ra-offset (%%ra-zero ra) od n))))
   (pure-ravel
    (if (ra-order-c? ra n)
      ra
@@ -552,9 +553,9 @@ See also: ra-ravel ra-tile ra-transpose ra-from ra-order-c? c-dims
       (($ <dim> ilen ilo istep)
        (let* ((sdims (vector-map (lambda (d) (make-dim (dim-len d) (dim-lo d) (* (dim-step d) istep))) sdims))
               (bdims (vector-append sdims (vector-drop (%%ra-dims ra) 1))))
-         (make-ra-raw (%%ra-root ra)
-                      (+ (ra-zero ra) (- (ra-offset 0 sdims)) (* ilo istep))
-                      bdims))))))
+         (make-ra-root (%%ra-root ra)
+                       bdims
+                       (+ (ra-zero ra) (- (ra-offset 0 sdims)) (* ilo istep))))))))
 
 (define (ra-tile ra . s)
   "
@@ -570,7 +571,8 @@ The result always shares the root of RA.
 See also: ra-ravel ra-reshape ra-transpose ra-from ra-order-c? c-dims
 "
   (let ((ra (ra-check ra)))
-    (make-ra-raw (%%ra-root ra) (%%ra-zero ra)
-                 (vector-append
-                  (vector-map (lambda (d) (make-dim (dim-len d) (dim-lo d) 0)) (apply c-dims s))
-                  (%%ra-dims ra)))))
+    (make-ra-root (%%ra-root ra)
+                  (vector-append
+                   (vector-map (lambda (d) (make-dim (dim-len d) (dim-lo d) 0)) (apply c-dims s))
+                   (%%ra-dims ra))
+                  (%%ra-zero ra))))

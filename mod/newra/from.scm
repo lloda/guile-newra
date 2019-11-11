@@ -73,9 +73,10 @@
                                       (+ zero (* (dim-step dimA) (+ rorg (* rinc izero))))
                                       (cons bdimsj bdims))))))))))))))))
       (()
-       (make-ra-raw (ra-root A) zero
-                    (vector-append (apply vector-append (reverse! bdims))
-                                   (vector-drop (ra-dims A) (length ai))))))))
+       (make-ra-root (ra-root A)
+                     (vector-append (apply vector-append (reverse! bdims))
+                                    (vector-drop (ra-dims A) (length ai)))
+                     zero)))))
 
 
 ; ------------------------
@@ -158,17 +159,19 @@
              (iui (reverse iui))
              (tu (reverse tu)))
 ; pick the beatable axes
-         (let* ((B (make-ra-raw
-                    (ra-root A) (ra-zero A)
-                    (vector-map (cute vector-ref (ra-dims A) <>) (list->vector ibi))))
+         (let* ((B (make-ra-root
+                    (ra-root A)
+                    (vector-map (cute vector-ref (ra-dims A) <>) (list->vector ibi))
+                    (ra-zero A)))
 ; beat them. This might change zero, but not root.
                 (B (apply fromb B ib))
 ; put the unbeatable axes in front
-                (B (make-ra-raw
-                    (ra-root B) (ra-zero B)
+                (B (make-ra-root
+                    (ra-root B)
                     (vector-append (vector-map (cute vector-ref (ra-dims A) <>) (list->vector iui))
                                    (ra-dims B)
-                                   (vector-drop (ra-dims A) (length i))))))
+                                   (vector-drop (ra-dims A) (length i)))
+                    (ra-zero B))))
            (values B iu tu tb)))))))
 
 ; FIXME add a version that copies the to an arg. That avoids allocation of the result, although it would be better if the compiler could tell where the result goes.

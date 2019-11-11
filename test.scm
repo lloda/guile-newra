@@ -165,7 +165,7 @@
 (test-equal (ra->string ra6) "#%2@1:2@1:3((1 2 3) (4 5 6))")
 (define ra7a (make-ra-root (make-aseq 1) (c-dims '(1 2) '(1 3))))
 (test-equal (ra->string ra7a) "#%2d@1:2@1:3((1 2 3) (4 5 6))")
-(define ra7b (make-ra-raw #(1 4 2 5 3 6) -3 `#(,(make-dim 2 1 1) ,(make-dim 3 1 2))))
+(define ra7b (make-ra-root #(1 4 2 5 3 6) `#(,(make-dim 2 1 1) ,(make-dim 3 1 2)) -3))
 (test-equal (ra->string ra7b) "#%2@1:2@1:3((1 2 3) (4 5 6))")
 
 (test-equal 2 (ra-length ra6))

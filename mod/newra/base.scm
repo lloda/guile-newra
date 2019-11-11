@@ -12,7 +12,6 @@
 
 (define-module (newra base)
   #:export (ra?
-            make-ra-raw
             ra-root ra-zero ra-zero-set! ra-dims ra-type ra-vlen ra-vref ra-vset!
             ra-check
             ra-rank ra-type make-ra-new make-ra-root
@@ -427,9 +426,9 @@ See also: ra-zero
 
 (define (ra-slice ra . i)
   (ra-check ra)
-  (make-ra-raw (%%ra-root ra)
-               (apply ra-pos (%%ra-zero ra) (%%ra-dims ra) i)
-               (vector-drop (%%ra-dims ra) (length i))))
+  (make-ra-root (%%ra-root ra)
+                (vector-drop (%%ra-dims ra) (length i))
+                (apply ra-pos (%%ra-zero ra) (%%ra-dims ra) i)))
 
 ; Unhappy about writing these things twice.
 (define-syntax %ra-cell
@@ -440,7 +439,7 @@ See also: ra-zero
        (ra-check ra)
        (if (= (%%ra-rank ra) leni)
          ((%%ra-vref ra) (%%ra-root ra) pos)
-         (make-ra-raw (%%ra-root ra) pos (vector-drop (%%ra-dims ra) leni)))))))
+         (make-ra-root (%%ra-root ra) (vector-drop (%%ra-dims ra) leni) pos))))))
 
 (define-inlinable-case ra-cell
   (case-lambda
@@ -455,7 +454,7 @@ See also: ra-zero
           (leni (length i)))
       (if (= (%%ra-rank ra) leni)
         ((%%ra-vref ra) (%%ra-root ra) pos)
-        (make-ra-raw (%%ra-root ra) pos (vector-drop (%%ra-dims ra) leni)))))))
+        (make-ra-root (%%ra-root ra) (vector-drop (%%ra-dims ra) leni) pos))))))
 
 ; these depend on accessor/setter.
 
@@ -482,19 +481,29 @@ See also: ra-zero
     ra))
 
 ; low level, for conversions
-(define (make-ra-raw data zero dims)
-  "
-make-ra-raw data zero dims -> ra
+(define make-ra-root
+  (case-lambda
+   "
+make-ra-root root dims -> ra
+make-ra-root root dims zero -> ra
 
-Make new ra RA from root vector DATA, zero index ZERO and dim-vector DIMS.
+Make new ra RA from root vector ROOT, zero index ZERO and dim-vector
+DIMS. If ZERO is absent, compute it so that the first element of RA is the first
+element of the root, that is, (ra-offset RA) is 0.
 
-See also: ra-data ra-zero ra-dims
+See also: ra-root ra-zero ra-dims
 "
-  (unless (vector? dims) (throw 'bad-dims dims))
-  (vector-for-each (lambda (dim) (unless (dim? dim) (throw 'bad-dim dim))) dims)
+   ((data dims zero)
+    (unless (vector? dims) (throw 'bad-dims dims))
+    (vector-for-each (lambda (dim) (unless (dim? dim) (throw 'bad-dim dim))) dims)
 ; after check
-  (receive (type vlen vref vset!) (pick-root-functions data)
-    (make-ra* data zero dims type vlen vref vset!)))
+    (receive (type vlen vref vset!) (pick-root-functions data)
+      (make-ra* data zero dims type vlen vref vset!)))
+   ((data dims)
+    (make-ra-root data dims (- (ra-offset 0 dims))))))
+
+
+
 
 
 ; ----------------
@@ -530,9 +539,6 @@ See also: make-ra-root make-ra-new
         (let ((next (loop rest)))
           (cons (make-dim len 0 (* (dim-len (car next)) (dim-step (car next)))) next)))))))
 
-(define (make-ra-root data dims)
-  (make-ra-raw data (- (ra-offset 0 dims)) dims))
-
 (define (make-ra-new type value dims)
   "
 make-ra-new type value dims -> RA
@@ -548,6 +554,6 @@ See also: make-dim ra-dims make-ra-root c-dims
                         (or len (if (zero? (dim-step a)) 1 (throw 'cannot-make-new-ra-with-dims dims))))))
                1 dims))
         (make (pick-make-root type)))
-    (make-ra-raw (if (unspecified? value) (make size) (make size value))
-                 (- (ra-offset 0 dims))
-                 dims)))
+    (make-ra-root (if (unspecified? value) (make size) (make size value))
+                  dims
+                  (- (ra-offset 0 dims)))))

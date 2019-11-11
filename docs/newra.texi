@@ -95,7 +95,7 @@ In @code{newra} code,
 
 @example @c [ma106]
 @verbatim
-(make-ra-raw (vector 1 2 3 4 5 6 7) 1 (vector (make-dim 2 0 2) (make-dim 2 0 1)))
+(make-ra-root (vector 1 2 3 4 5 6 7) 1 (vector (make-dim 2 0 2) (make-dim 2 0 1)))
 @end verbatim
 @result{} @code{#%2:2:2((2 3) (4 5))}
 @end example
@@ -127,7 +127,7 @@ Still, since the array is just a view of the root, any changes on the array are 
 and the other way around,
 
 @verbatim
-> (define b (make-ra-raw (vector 'x) 0 (vector (make-dim 3 0 0) (make-dim 2 0 0))))
+> (define b (make-ra-root (vector 'x) 0 (vector (make-dim 3 0 0) (make-dim 2 0 0))))
 > b
 @end verbatim
 @result{} @code{#%2:3:2((x x) (x x) (x x))}
@@ -158,15 +158,16 @@ Text to be written
 
 Dense multidimensional arrays work similarly in every language that offers them, and built-in Guile arrays are no different —they also have a root (@code{shared-array-root}), a zero (computable from @code{shared-array-offset}), and a dim vector (@code{array-shape}, @code{shared-array-increments}). Functionally, they are entirely equivalent to the objects offered by @code{newra}. Why replace them, then?
 
-Built-in Guile arrays are implemented in C, in libguile. As a Guile type they have their own low-level type tag, and all the basic array operations are C stubs, even the most basic functions such as @code{array-ref} or @code{array-rank}. Obtaining any of the components of the array requires calling into C. There are several problems with this.
+@cindex libguile
+Built-in Guile arrays are implemented in C, as part of libguile. As a Guile type they have their own low-level type tag, and all the basic array operations are C stubs, even the most basic functions such as @code{array-ref} or @code{array-rank}. Obtaining any of the components of the array requires calling into C. There are several problems with this.
 
 First, the built-in library offers a single function to manipulate array dims, @code{make-shared-array}. Although this is a sufficient interface, it is excessively generic, and also very cumbersome and inefficient. The array dims cannot be manipulated directly from Scheme, so any alternative interface written in Scheme is forced to go through @code{make-shared-array}.
 
-Second, the C stubs create a barrier to optimization by the Scheme compiler. An operation such as @code{(array-map! c + a b)} has to be implemented in C (for the reasons given above) and then it has to call back to Scheme to perform the @code{+} on each iteration. Since the Scheme compiler doesn't have any special support for @code{array-map!}, it doesn't know what the types of the arguments are, etc. so those checks and dispatches have to be repeated over and over. @footnote{Guile used to offer dedicated operations to sum arrays, etc. but obviously that isn't any kind of solution.}
+Second, the C stubs create a barrier to optimization by the Scheme compiler. The main loop of an operation such as @code{(array-map! c + a b)} has to be implemented in C (for the reasons given above) and then it has to call back to Scheme to perform the @code{+} on each iteration. Since the Scheme compiler doesn't have any special support for @code{array-map!}, it doesn't know what the types of the arguments are, etc. so those checks and dispatches have to be repeated over and over. @footnote{Guile used to offer dedicated operations to sum arrays, etc. but obviously that isn't any kind of solution.}
 
 Third, the larger functions of the array interface, such as @code{array-map!}, etc. are not interruptible. This is especially inconvenient when operating on large arrays.
 
-All these problems are solved if the built-in type is replaced with a new type defined in Scheme.
+These problems are solved if the built-in type is replaced with a new type defined in Scheme.
 
 @anchor{x-star}
 FIXME (see @ref{x-star,@code{star}})
@@ -191,6 +192,49 @@ FIXME (see @ref{x-star,@code{star}})
 @section Creating arrays
 @c ------------------------------------------------
 
+An array can be created anew, or out of an existing root. @ref{x-c-dims, c-dims} can be used to compute the dim vector.
+
+@example
+@verbatim
+(make-ra-new #t 'x (vector (make-dim 3 0 2) (make-dim 2 0 1))) ; or
+(make-ra-new #t 'x (c-dims 3 2))
+@end verbatim
+@result{} #%2:3:2((x x) (x x) (x x))
+@end example
+
+@example
+@verbatim
+(make-ra-new 'f32 0.0 (c-dims 3 2))
+@end verbatim
+@result{} #%2:3:2((0.0 0.0) (0.0 0.0) (0.0 0.0))
+@end example
+
+An existing root implies the type, so it doesn't need to be given.
+
+@example
+@verbatim
+(make-ra-root (vector 1 2 3 4 5 6) (c-dims 3 2))
+@end verbatim
+@result{} #%2:3:2((1 2) (3 4) (5 6))
+@end example
+
+@ref{x-make-ra, make-ra} or @ref{x-make-typed-ra, make-typed-ra} use @code{c-dims} by default.
+
+@example
+@verbatim
+(make-ra 99 2 3)
+@end verbatim
+@result{} #%2:3:2((9 9) (9 9) (9 9))
+@end example
+
+@example
+@verbatim
+(make-typed-ra 'f64 99 2 3)
+@end verbatim
+@result{} #%2f64:3:2((9.0 9.0) (9.0 9.0) (9.0 9.0))
+@end example
+
+
 @c ------------------------------------------------
 @node Special arrays
 @section Special arrays
@@ -207,7 +251,7 @@ Any type that is usable as root of an old built-in Guile array is also usable as
 
 @code{newra} supports an additional root vector type, @code{<aseq>}, representing an infinite arithmetic sequence.
 
-@cindex @code{none}
+@cindex @code{make-aseq}
 @anchor{x-none}
 @deffn @w{function} make-aseq [org [inc]]
 
@@ -215,7 +259,7 @@ Create an arithmetic sequence [@code{org, org+inc, org+2·inc, ...}]. The defaul
 
 @example
 @verbatim
-(make-ra-raw (make-aseq 0 3) 0 (vector (make-dim 10)))
+(make-ra-root (make-aseq 0 3) 0 (vector (make-dim 10)))
 @end verbatim
 @result{} #%1d:10(0 3 6 9 12 15 18 21 24 27)
 @end example
@@ -277,6 +321,49 @@ Create an arithmetic sequence [@code{org, org+inc, org+2·inc, ...}]. The defaul
 @node Reference
 @chapter Reference
 @c ------------------------------------------------
+
+@cindex @code{make-ra-root}
+@anchor{x-make-ra-root}
+@deffn @w{function} make-ra-root dims [zero]
+
+@example
+@verbatim
+(make-ra-root (vector 1 2 3) (vector (make-dim 3)))
+@end verbatim
+@result{} #%1d:3(1 2 3)
+@end example
+
+@example
+@verbatim
+(make-ra-root (vector 1 2 3) (vector (make-dim 2)) 1)
+@end verbatim
+@result{} #%1d:3(2 3)
+@end example
+@end deffn
+
+@cindex @code{make-ra}
+@anchor{x-make-ra}
+@deffn @w{function} make-ra val bounds ...
+@end deffn
+
+@cindex @code{make-typed-ra}
+@anchor{x-make-typed-ra}
+@deffn @w{function} make-ra type val bounds ...
+@end deffn
+
+@cindex @code{c-dims}
+@anchor{x-c-dims}
+@deffn @w{function} c-dims bounds ...
+
+Create dims for array in C-order (packed elements, last dimension changing fastest).
+
+@example
+@verbatim
+(c-dims 2 3)
+@end verbatim
+@result{} #(#<<dim> len: 2 lo: 0 step: 3> #<<dim> len: 3 lo: 0 step: 1>)
+@end example
+@end deffn
 
 @cindex @code{ra-iota}
 @anchor{x-ra-iota}

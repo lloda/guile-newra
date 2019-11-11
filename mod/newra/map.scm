@@ -115,19 +115,19 @@
                 (loop-rank (+ k 1) rai)
                 (loop-dim (+ i 1))))))))))
 
-(define (make-ra-raw-prefix ra kk)
-  (make-ra-raw (%%ra-root ra)
-               (ra-offset (%%ra-zero ra) (%%ra-dims ra) kk)
-               (if (< kk (%%ra-rank ra))
-                 (vector-drop (%%ra-dims ra) kk)
-                 #())))
+(define (make-ra-root-prefix ra kk)
+  (make-ra-root (%%ra-root ra)
+                (if (< kk (%%ra-rank ra))
+                  (vector-drop (%%ra-dims ra) kk)
+                  #())
+                (ra-offset (%%ra-zero ra) (%%ra-dims ra) kk)))
 
 ; moving slice
 (define (ra-slice-for-each-2 kk op . ra)
   (receive (los lens) (apply ra-slice-for-each-check kk ra)
 ; create (rank(ra) - k) slices that we'll use to iterate by bumping their zeros.
     (let ((frame ra)
-          (ra (map (cut make-ra-raw-prefix <> kk) ra)))
+          (ra (map (cut make-ra-root-prefix <> kk) ra)))
       (let loop-rank ((k 0))
         (if (= k kk)
 ; no fresh slice descriptor like in array-slice-for-each. See below.
@@ -158,7 +158,7 @@
       (vector-for-each (lambda (len) (when (zero? len) (exit))) lens)
 ; create (rank(ra) - k) slices that we'll use to iterate by bumping their zeros.
       (let* ((frame ra)
-             (ra (map (cut make-ra-raw-prefix <> u) ra)))
+             (ra (map (cut make-ra-root-prefix <> u) ra)))
 ; since we'll unroll, special case for rank 0
         (if (zero? u)
           (apply op ra)
@@ -287,7 +287,7 @@
              (%let ((frame ...) (ra_ ...) identity)
                (receive (los lens) (apply ra-slice-for-each-check k (%list frame ...))
                  (%let ((ra ...) (frame ...)
-                        (cut make-ra-raw-prefix <> k))
+                        (cut make-ra-root-prefix <> k))
 ; since we'll unroll, special case for rank 0
                    (if (zero? k)
 ; no need of fresh slice descriptor unlike in array-slice-for-each, since newra b/c descriptors can be copied. See also below.

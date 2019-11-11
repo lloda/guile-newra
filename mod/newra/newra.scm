@@ -16,7 +16,7 @@
         (newra lib) (newra from))
 
 (re-export ra?
-           make-ra-raw ra-root ra-zero ra-dims ra-vlen ra-vref ra-vset!
+           make-ra-root ra-root ra-zero ra-dims ra-vlen ra-vref ra-vset!
            ra-check %%ra-rank %%ra-root %%ra-zero %%ra-dims
            ra-rank ra-type make-ra-new make-ra-root
            make-aseq aseq? aseq-org aseq-inc aseq-ref
