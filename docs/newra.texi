@@ -45,7 +45,7 @@ Invariant Sections, no Front-Cover Texts, and no Back-Cover Texts.
 
 @insertcopying
 
-@code{newra} is a Scheme-only replacement for the array facility in Guile 2.2, which is implemented in C. @code{newra} replaces the builtin array type and adds many more facilities than are present in vanilla Guile.
+@code{newra} is a Scheme-only replacement for the array facility in Guile 2.2, which is implemented in C.
 
 @menu
 * Overview::          Why Guile arrays need replacing
@@ -68,7 +68,75 @@ Invariant Sections, no Front-Cover Texts, and no Back-Cover Texts.
 @chapter Overview
 @c ------------------------------------------------
 
-An array is...
+An array is an aggregate of the following pieces:
+
+@itemize
+@item A @dfn{root vector}.
+This can be a Scheme vector, as well as one of several other vector-like types.
+@item A @dfn{zero}.
+An arbitary integer.
+@item A @dfn{dim vector}.
+Each dim consists of a length (@dfn{len}), a lower bound (@dfn{lo}), and a @dfn{step}. The length of the dim vector is the @dfn{rank} of the array.
+@end itemize
+
+Together, the dim vector and the zero define an affine function of array indices @code{i₀, i₁, ..} that produces an index into the root vector (or root for short). Thus, the array is simply a multidimensional view of the root.
+
+For example, the following pieces
+
+@itemize
+@item root: v = @code{#(1 2 3 4 5 6 7)}
+@item zero: 1
+@item dims: @code{#(#<<dim> len: 2 lo: 0 step: 2> #<<dim> len: 2 lo: 0 step: 1>)}
+@end itemize
+
+define an array A(i₀, i₁) = v(1 + 2·i₀ + 1·i₁), 0≤i₀<2, 0≤i₁<2, that is A = [[2 3] [4 5]].
+
+In @code{newra} code,
+
+@example @c [ma106]
+@verbatim
+(make-ra-raw (vector 1 2 3 4 5 6 7) 1 (vector (make-dim 2 0 2) (make-dim 2 0 1)))
+@end verbatim
+@result{} @code{#%2:2:2((2 3) (4 5))}
+@end example
+
+The default print style means @code{#%RANK:LEN₀:LEN₁(...)}.
+
+It's unusual to need to specify the dims directly. More commonly, one creates an array of whatever size
+
+@verbatim
+> (define a (make-ra #f 3 4))
+> a
+@end verbatim
+@result{} @code{#%2:3:4((#f #f #f #f) (#f #f #f #f) (#f #f #f #f))}
+
+which automatically creates a root of the required size, so that all the array elements are distinct. Then one operates on the array without making reference to the underlying root,
+
+@verbatim
+> (ra-set! a 99 2 2)
+@end verbatim
+@result{} @code{#%2:3:4((#f #f #f #f) (#f #f 99 #f) (#f #f #f #f))}
+
+Still, since the array is just a view of the root, any changes on the array are reflected there as well
+
+@verbatim
+> (ra-root a)
+@end verbatim
+@result{} @code{#(#f #f #f #f #f #f #f #f #f #f 99 #f)}
+
+and the other way around,
+
+@verbatim
+> (define b (make-ra-raw (vector 'x) 0 (vector (make-dim 3 0 0) (make-dim 2 0 0))))
+> b
+@end verbatim
+@result{} @code{#%2:3:2((x x) (x x) (x x))}
+
+@verbatim
+> (vector-set! (ra-root b) 0 'Z)
+> b
+@end verbatim
+@result{} @code{#%2:3:2((Z Z) (Z Z) (Z Z))}
 
 @emph{expressions} @dfn{matrices}
 
@@ -80,26 +148,28 @@ A = B+C;
 Text to be written
 
 @menu
-* Section A::         A
-* Section B::         B
+* Built-in Guile arrays::
 @end menu
 
 @c ------------------------------------------------
-@node Section A
-@section Section A
+@node Built-in Guile arrays
+@section Built-in Guile arrays
 @c ------------------------------------------------
 
-@quotation
-A: [A(0), A(1), ...]
-@end quotation
+Dense multidimensional arrays work similarly in every language that offers them, and built-in Guile arrays are no different —they also have a root (@code{shared-array-root}), a zero (computable from @code{shared-array-offset}), and a dim vector (@code{array-shape}, @code{shared-array-increments}). Functionally, they are entirely equivalent to the objects offered by @code{newra}. Why replace them, then?
+
+Built-in Guile arrays are implemented in C, in libguile. As a Guile type they have their own low-level type tag, and all the basic array operations are C stubs, even the most basic functions such as @code{array-ref} or @code{array-rank}. Obtaining any of the components of the array requires calling into C. There are several problems with this.
+
+First, the built-in library offers a single function to manipulate array dims, @code{make-shared-array}. Although this is a sufficient interface, it is excessively generic, and also very cumbersome and inefficient. The array dims cannot be manipulated directly from Scheme, so any alternative interface written in Scheme is forced to go through @code{make-shared-array}.
+
+Second, the C stubs create a barrier to optimization by the Scheme compiler. An operation such as @code{(array-map! c + a b)} has to be implemented in C (for the reasons given above) and then it has to call back to Scheme to perform the @code{+} on each iteration. Since the Scheme compiler doesn't have any special support for @code{array-map!}, it doesn't know what the types of the arguments are, etc. so those checks and dispatches have to be repeated over and over. @footnote{Guile used to offer dedicated operations to sum arrays, etc. but obviously that isn't any kind of solution.}
+
+Third, the larger functions of the array interface, such as @code{array-map!}, etc. are not interruptible. This is especially inconvenient when operating on large arrays.
+
+All these problems are solved if the built-in type is replaced with a new type defined in Scheme.
 
 @anchor{x-star}
-As a reference (see @ref{x-star,@code{star}})
-
-@c ------------------------------------------------
-@node Section B
-@section Section B
-@c ------------------------------------------------
+FIXME (see @ref{x-star,@code{star}})
 
 @c ------------------------------------------------
 @node Basics
@@ -109,9 +179,10 @@ As a reference (see @ref{x-star,@code{star}})
 @menu
 * Creating arrays::
 * Special arrays::
-* Operations on arrays::
+* Iteration::
 * Slicing::
 * Reshaping and resizing::
+* Other operations on arrays::
 * Compatibility with old Guile arrays::
 @end menu
 
@@ -125,9 +196,38 @@ As a reference (see @ref{x-star,@code{star}})
 @section Special arrays
 @c ------------------------------------------------
 
+Any type that is usable as root of an old built-in Guile array is also usable as root of a @code{newra} array. These include
+
+@itemize
+@item vectors (e.g. @code{(vector 3)})
+@item SRFI-4 typed vectors (e.g. @code{(c64vector 1 2+0i)})
+@item strings (e.g. @code{"hello"})
+@item bitvectors (e.g. @code{(bitvector #f #t #f #t)})
+@end itemize
+
+@code{newra} supports an additional root vector type, @code{<aseq>}, representing an infinite arithmetic sequence.
+
+@cindex @code{none}
+@anchor{x-none}
+@deffn @w{function} make-aseq [org [inc]]
+
+Create an arithmetic sequence [@code{org, org+inc, org+2·inc, ...}]. The default values of @code{org} and @code{inc} are respectively 0 and 1. For example:
+
+@example
+@verbatim
+(make-ra-raw (make-aseq 0 3) 0 (vector (make-dim 10)))
+@end verbatim
+@result{} #%1d:10(0 3 6 9 12 15 18 21 24 27)
+@end example
+
+(The example above can also be written @code{(@ref{x-ra-iota, ra-iota} 10 0 3)}).
+@end deffn
+
+@code{aseq} roots are immutable. The type tag of @code{aseq} roots is @code{d}. Arrays with integer-valued @code{aseq} roots have special uses; see @ref{Slicing}.
+
 @c ------------------------------------------------
-@node Operations on arrays
-@section Operations on arrays
+@node Iteration
+@section Iteration
 @c ------------------------------------------------
 
 @c ------------------------------------------------
@@ -140,18 +240,23 @@ As a reference (see @ref{x-star,@code{star}})
 @section Reshaping and resizing
 @c ------------------------------------------------
 
-@cindex @code{none}
-@anchor{x-none}
-@deffn @w{Special objects} {none}
-For example...
+@c ------------------------------------------------
+@node Other operations on arrays
+@section Other operations on arrays
+@c ------------------------------------------------
 
-@example
-@verbatim
-For example
-@end verbatim
-@end example
+@c @cindex @code{none}
+@c @anchor{x-none}
+@c @deffn @w{Special objects} {none}
+@c For example...
 
-@end deffn
+@c @example
+@c @verbatim
+@c For example
+@c @end verbatim
+@c @end example
+
+@c @end deffn
 
 @c ------------------------------------------------
 @node Compatibility with old Guile arrays
@@ -172,6 +277,34 @@ For example
 @node Reference
 @chapter Reference
 @c ------------------------------------------------
+
+@cindex @code{ra-iota}
+@anchor{x-ra-iota}
+@deffn @w{function} ra-iota [len [lo [step]]]
+
+Create rank-1 index array. The root is of type @code{<aseq>}.
+
+@example
+@verbatim
+(ra-iota 4 3 -1)
+@end verbatim
+@result{} #%1d:4(3 2 1 0)
+@end example
+@end deffn
+
+@cindex @code{ra-i}
+@anchor{x-ra-i}
+@deffn @w{function} ra-i len ...
+
+Create multidimensional index array with the given lengths. The root is of type @code{<aseq>}.
+
+@example
+@verbatim
+(ra-i 2 3 4)
+@end verbatim
+@result{} #%3d:2:3:4(((0 1 2 3) (4 5 6 7) (8 9 10 11)) ((12 13 14 15) (16 17 18 19) (20 21 22 23)))
+@end example
+@end deffn
 
 @c ------------------------------------------------
 @node @mybibnode{}
