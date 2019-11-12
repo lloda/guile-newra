@@ -484,23 +484,32 @@ See also: ra-zero
 (define make-ra-root
   (case-lambda
    "
+make-ra-root root -> ra
 make-ra-root root dims -> ra
 make-ra-root root dims zero -> ra
 
-Make new ra RA from root vector ROOT, zero index ZERO and dim-vector
-DIMS. If ZERO is absent, compute it so that the first element of RA is the first
+Make new ra RA from root vector ROOT, zero index ZERO and dim-vector DIMS.
+
+If ZERO is absent, compute it so that the first element of RA is the first
 element of the root, that is, (ra-offset RA) is 0.
+
+If DIMS is absent, make a rank-1 ra with the full length of ROOT.
 
 See also: ra-root ra-zero ra-dims
 "
    ((data dims zero)
-    (unless (vector? dims) (throw 'bad-dims dims))
-    (vector-for-each (lambda (dim) (unless (dim? dim) (throw 'bad-dim dim))) dims)
+    (when dims
+      (unless (vector? dims) (throw 'bad-dims dims))
+      (vector-for-each (lambda (dim) (unless (dim? dim) (throw 'bad-dim dim))) dims))
 ; after check
     (receive (type vlen vref vset!) (pick-root-functions data)
-      (make-ra* data zero dims type vlen vref vset!)))
+      (make-ra* data zero
+                (or dims (vector (make-dim (vlen data))))
+                type vlen vref vset!)))
    ((data dims)
-    (make-ra-root data dims (- (ra-offset 0 dims))))))
+    (make-ra-root data dims (- (ra-offset 0 dims))))
+   ((data)
+    (make-ra-root data #f 0))))
 
 
 

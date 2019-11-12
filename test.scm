@@ -37,6 +37,8 @@
 (define ra2 (make-ra-root (make-aseq) (c-dims 2 3)))
 (define ra3 (make-ra-root (make-aseq) (c-dims 2 3 4)))
 
+(test-assert (ra-equal? (make-ra-root #(1 2 3)) (list->ra 1 '(1 2 3))))
+
 (test-equal "0"
   (with-output-to-string (lambda () (%ra-loop (vector-map dim-len (ra-dims ra0)) 0 () (display (ra0))))))
 (test-equal "01"
