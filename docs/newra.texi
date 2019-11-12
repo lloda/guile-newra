@@ -45,11 +45,11 @@ Invariant Sections, no Front-Cover Texts, and no Back-Cover Texts.
 
 @insertcopying
 
-@code{newra} is a Scheme-only replacement for the array facility in Guile 2.2, which is implemented in C.
+@code{newra} is a Scheme-only replacement for the built-in C-based array facility in Guile 2.2.
 
 @menu
-* Overview::          Why Guile arrays need replacing
-* Basics::            Using arrays as containers
+* Overview::          Why Guile arrays need replacing.
+* Basics::            Using arrays as containers.
 * Advanced usage::    Guile as an array language.
 * Hazards::           User beware.
 * Reference::         Systematic list of types and functions.
@@ -163,7 +163,7 @@ Built-in Guile arrays are implemented in C, as part of libguile. As a Guile type
 
 First, the built-in library offers a single function to manipulate array dims, @code{make-shared-array}. Although this is a sufficient interface, it is excessively generic, and also very cumbersome and inefficient. The array dims cannot be manipulated directly from Scheme, so any alternative interface written in Scheme is forced to go through @code{make-shared-array}.
 
-Second, the C stubs create a barrier to optimization by the Scheme compiler. The main loop of an operation such as @code{(array-map! c + a b)} has to be implemented in C (for the reasons given above) and then it has to call back to Scheme to perform the @code{+} on each iteration. Since the Scheme compiler doesn't have any special support for @code{array-map!}, it doesn't know what the types of the arguments are, etc. so those checks and dispatches have to be repeated over and over. @footnote{Guile used to offer dedicated operations to sum arrays, etc. but obviously that isn't any kind of solution.}
+Second, the C stubs create a barrier to optimization by the Scheme compiler. The main loop of an operation such as @code{(array-map! c + a b)} has to be implemented in C (for the reasons given above) and then it has to call back to Scheme on each iteration in order to apply @code{+}. Since the Scheme compiler doesn't have any special support for @code{array-map!}, it doesn't know what the types of the arguments are, etc. and those checks and dispatches are repeated over and over. @footnote{Guile used to offer dedicated operations to sum arrays, etc. but obviously that isn't any kind of solution.}
 
 Third, the larger functions of the array interface, such as @code{array-map!}, etc. are not interruptible. This is especially inconvenient when operating on large arrays.
 
@@ -192,11 +192,11 @@ FIXME (see @ref{x-star,@code{star}})
 @section Creating arrays
 @c ------------------------------------------------
 
-An array can be created anew, or out of an existing root. @ref{x-c-dims, c-dims} can be used to compute the dim vector.
+An array can be created anew (@ref{x-make-ra-new, make-ra-new}), or over an existing root (@ref{x-make-ra-root, make-ra-root}). @ref{x-c-dims, c-dims} can be used to compute the dim vector.
 
 @example
 @verbatim
-(make-ra-new #t 'x (vector (make-dim 3 0 2) (make-dim 2 0 1))) ; or
+(make-ra-new #t 'x (vector (make-dim 3 0 2) (make-dim 2 0 1))) ; more simply
 (make-ra-new #t 'x (c-dims 3 2))
 @end verbatim
 @result{} #%2:3:2((x x) (x x) (x x))
@@ -206,7 +206,7 @@ An array can be created anew, or out of an existing root. @ref{x-c-dims, c-dims}
 @verbatim
 (make-ra-new 'f32 0.0 (c-dims 3 2))
 @end verbatim
-@result{} #%2:3:2((0.0 0.0) (0.0 0.0) (0.0 0.0))
+@result{} #%2f32:3:2((0.0 0.0) (0.0 0.0) (0.0 0.0))
 @end example
 
 An existing root implies the type, so it doesn't need to be given.
@@ -240,7 +240,7 @@ An existing root implies the type, so it doesn't need to be given.
 @section Special arrays
 @c ------------------------------------------------
 
-Any type that is usable as root of an old built-in Guile array is also usable as root of a @code{newra} array. These include
+Any type that is usable as the root of an old built-in Guile array is also usable as root of a @code{newra} array. These include
 
 @itemize
 @item vectors (e.g. @code{(vector 3)})
@@ -264,7 +264,7 @@ Create an arithmetic sequence [@code{org, org+inc, org+2·inc, ...}]. The defaul
 @result{} #%1d:10(0 3 6 9 12 15 18 21 24 27)
 @end example
 
-(The example above can also be written @code{(@ref{x-ra-iota, ra-iota} 10 0 3)}).
+(The example above can be written @code{(@ref{x-ra-iota, ra-iota} 10 0 3)}).
 @end deffn
 
 @code{aseq} roots are immutable. The type tag of @code{aseq} roots is @code{d}. Arrays with integer-valued @code{aseq} roots have special uses; see @ref{Slicing}.
@@ -273,6 +273,26 @@ Create an arithmetic sequence [@code{org, org+inc, org+2·inc, ...}]. The defaul
 @node Iteration
 @section Iteration
 @c ------------------------------------------------
+
+The basic array iteration operations in @code{newra} all operate by effect. This gives you control of how the result is allocated. If one of the arguments is designated as destination, then that is the result of the whole iteration. For example:
+
+@example
+@verbatim
+(ra-map! (make-ra #f 3) - (ra-i 3 1))
+@end verbatim
+@result{} #%1:3(-1 -2 -3)
+@end example
+
+One can iterate not only over the elements of the array, but over any @code{n}-frame (the first @code{n} axes of an array), using @ref{x-ra-slice-for-each, ra-slice-for-each}. In this case the operation takes array slices as arguments, even when they are rank 0; this allows writing to any of the arguments. When there are several arrays involved, all the frames must match.
+
+@example
+@verbatim
+(ra-slice-for-each 1
+  (lambda (xy angle)
+    (ra-set! angle (atan (ra-ref xy 1) (ra-ref xy 0))))
+  xys angles)
+@end verbatim
+@end example
 
 @c ------------------------------------------------
 @node Slicing
@@ -283,6 +303,16 @@ Create an arithmetic sequence [@code{org, org+inc, org+2·inc, ...}]. The defaul
 @node Reshaping and resizing
 @section Reshaping and resizing
 @c ------------------------------------------------
+
+@cindex APL
+@cindex ρ
+To match APL ρ, @code{newra} offers a set of three different functions.
+
+@ref{x-ra-reshape, @code{ra-reshape}} and @ref{x-ra-ravel, @code{ra-ravel}} are in a way the inverse of each other, and neither is able to increase the size of the array. For that purpose @ref{x-ra-tile, @code{ra-tile}} is provided.
+
+@code{ra-reshape} and @code{ra-tile} always reuse the root of the argument. On the other hand @code{ra-ravel} may not be able to — this is one of the reasons to have three different functions instead of only one.
+
+All three functions @code{ra-reshape}, @code{ra-ravel}, and @code{ra-tile} operate on prefix axes. To operate on other axes, use @ref{x-ra-transpose, @code{ra-transpose}}.
 
 @c ------------------------------------------------
 @node Other operations on arrays
@@ -322,6 +352,18 @@ Create an arithmetic sequence [@code{org, org+inc, org+2·inc, ...}]. The defaul
 @chapter Reference
 @c ------------------------------------------------
 
+@cindex @code{make-ra-new}
+@anchor{x-make-ra-new}
+@deffn @w{function} make-ra-new type value dims
+Create a new array of the given @var{type} and fill it with @var{value}.
+@example
+@verbatim
+(make-ra-new 'u8 0 (c-dims 3 2))
+@end verbatim
+@result{} #%2u8:3:2((0 0) (0 0) (0 0))
+@end example
+@end deffn
+
 @cindex @code{make-ra-root}
 @anchor{x-make-ra-root}
 @deffn @w{function} make-ra-root dims [zero]
@@ -348,15 +390,16 @@ Create an arithmetic sequence [@code{org, org+inc, org+2·inc, ...}]. The defaul
 
 @cindex @code{make-typed-ra}
 @anchor{x-make-typed-ra}
-@deffn @w{function} make-ra type val bounds ...
+@deffn @w{function} make-typed-ra type val bounds ...
 @end deffn
 
 @cindex @code{c-dims}
 @anchor{x-c-dims}
 @deffn @w{function} c-dims bounds ...
 
-Create dims for array in C-order (packed elements, last dimension changing fastest).
+Create dims for C-order array (packed elements, last dimension changing fastest).
 
+Each of the bounds may be an integer (a length) or a pair of integers (lower and upper bounds).
 @example
 @verbatim
 (c-dims 2 3)
@@ -391,6 +434,95 @@ Create multidimensional index array with the given lengths. The root is of type 
 @end verbatim
 @result{} #%3d:2:3:4(((0 1 2 3) (4 5 6 7) (8 9 10 11)) ((12 13 14 15) (16 17 18 19) (20 21 22 23)))
 @end example
+@end deffn
+
+@cindex @code{ra-ravel}
+@anchor{x-ra-ravel}
+@deffn @w{function} ra-ravel a [n]
+Ravel the first @var{n} axes of array @var{a} to C order, the whole array by default.
+@example
+@verbatim
+(ra-ravel (ra-i 2 3))
+@end verbatim
+@result{} #%1d:6(0 1 2 3 4 5)
+@end example
+@end deffn
+
+@cindex @code{ra-reshape}
+@anchor{x-ra-reshape}
+@deffn @w{function} ra-reshape a bounds ...
+Reshape the first axis of array @var{a} to @var{bounds}.
+
+Each of the bounds may be an integer (a length) or a pair of integers (lower and upper bounds).
+@example
+@verbatim
+(ra-reshape (ra-i 4 3) 2 2)
+@end verbatim
+@result{} #%1d:2:2:3(((0 1 2) (3 4 5)) ((6 7 8) (9 10 11)))
+@end example
+@end deffn
+
+@cindex @code{ra-tile}
+@anchor{x-ra-tile}
+@deffn @w{function} ra-tile a bounds ...
+Repeat array @var{a} by prepending axes with the given @var{bounds}.
+
+Each of the bounds may be an integer (a length) or a pair of integers (lower and upper bounds).
+@example
+@verbatim
+(ra-tile (ra-i 3) 2)
+@end verbatim
+@result{} #%1d:2:3((0 1 2) (0 1 2))
+@end example
+@end deffn
+
+@cindex @code{ra-transpose}
+@anchor{x-ra-transpose}
+@deffn @w{function} ra-transpose a axes ...
+Transpose each axis of @var{a} to matching destination @var{axes}.
+
+The transposed array has the same root as @var{a}.
+@example
+@verbatim
+(ra-transpose (ra-i 2 3) 1 0)
+@end verbatim
+@result{} #%1d:3:2((0 3) (1 4) (2 5))
+@end example
+@end deffn
+
+@cindex @code{ra-reverse}
+@anchor{x-ra-reverse}
+@deffn @w{function} ra-reverse a axes ...
+Reverse the given @var{axes} of @var{a}.
+
+The transposed array has the same root as @var{a}.
+@example
+@verbatim
+(ra-reverse (ra-i 2 3) 0 1)
+@end verbatim
+@result{} #%1d:2:3((5 4 3) (2 1 0))
+@end example
+@end deffn
+
+@cindex @code{ra-slice-for-each}
+@anchor{x-ra-slice-for-each}
+@deffn @w{function} ra-slice-for-each k op a ...
+Iterate over the @var{k}-frames of arrays @var{a} ..., applying @var{op} to the respective slices.
+@end deffn
+
+@cindex @code{ra-map!}
+@anchor{x-ra-map!}
+@deffn @w{function} ra-map! dst op a ...
+Iterate over arrays @var{dst} and @var{a}, applying @var{op} to the respective elements in @var{a}, and storing the result in @var{dst}. All the arrays involved must have the same bounds.
+
+This is equivalent to
+@verbatim
+(apply ra-slice-for-each
+       (rank dst)
+       (lambda (dst . a)
+         (ra-set! dst (apply op (map ra-ref a))))
+       dst a)
+@end verbatim
 @end deffn
 
 @c ------------------------------------------------
