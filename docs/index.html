@@ -1,0 +1,856 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<!-- newra (version 1, updated 2019 November 11)
+
+(c) lloda 2017-2019
+
+Permission is granted to copy, distribute and/or modify this document
+under the terms of the GNU Free Documentation License, Version 1.3 or
+any later version published by the Free Software Foundation; with no
+Invariant Sections, no Front-Cover Texts, and no Back-Cover Texts. -->
+<!-- Created by GNU Texinfo 6.5, http://www.gnu.org/software/texinfo/ -->
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<title>newra —An array library for Guile 3</title>
+
+<meta name="description" content="newra —An array library for Guile 3">
+<meta name="keywords" content="newra —An array library for Guile 3">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+<meta name="Generator" content="makeinfo">
+<link href="#Top" rel="start" title="Top">
+<link href="#Indices" rel="index" title="Indices">
+<link href="dir.html#Top" rel="up" title="(dir)">
+<style type="text/css">
+<!--
+a.summary-letter {text-decoration: none}
+blockquote.indentedblock {margin-right: 0em}
+blockquote.smallindentedblock {margin-right: 0em; font-size: smaller}
+blockquote.smallquotation {font-size: smaller}
+div.display {margin-left: 3.2em}
+div.example {margin-left: 3.2em}
+div.lisp {margin-left: 3.2em}
+div.smalldisplay {margin-left: 3.2em}
+div.smallexample {margin-left: 3.2em}
+div.smalllisp {margin-left: 3.2em}
+kbd {font-style: oblique}
+pre.display {font-family: inherit}
+pre.format {font-family: inherit}
+pre.menu-comment {font-family: serif}
+pre.menu-preformatted {font-family: serif}
+pre.smalldisplay {font-family: inherit; font-size: smaller}
+pre.smallexample {font-size: smaller}
+pre.smallformat {font-family: inherit; font-size: smaller}
+pre.smalllisp {font-size: smaller}
+span.nolinebreak {white-space: nowrap}
+span.roman {font-family: initial; font-weight: normal}
+span.sansserif {font-family: sans-serif; font-weight: normal}
+ul.no-bullet {list-style: none}
+-->
+</style>
+
+
+</head>
+
+<body lang="en">
+<h1 class="settitle" align="center">newra —An array library for Guile 3</h1>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<a name="Top"></a>
+<div class="header">
+<p>
+Next: <a href="#Overview" accesskey="n" rel="next">Overview</a>, Up: <a href="dir.html#Top" accesskey="u" rel="up">(dir)</a> &nbsp; [<a href="#Indices" title="Index" rel="index">Index</a>]</p>
+</div>
+<a name="newra"></a>
+<h1 class="top"><code>newra</code></h1>
+
+<p><code>newra</code> (version 1, updated 2019 November 11)
+</p>
+<p>(c) lloda 2017&ndash;2019
+</p>
+<div class="smalldisplay">
+<pre class="smalldisplay">Permission is granted to copy, distribute and/or modify this document
+under the terms of the GNU Free Documentation License, Version 1.3 or
+any later version published by the Free Software Foundation; with no
+Invariant Sections, no Front-Cover Texts, and no Back-Cover Texts.
+</pre></div>
+
+
+<p><code>newra</code> is a Scheme-only replacement for the built-in C-based array facility in Guile 2.2.
+</p>
+<table class="menu" border="0" cellspacing="0">
+<tr><td align="left" valign="top">&bull; <a href="#Overview" accesskey="1">Overview</a>:</td><td>&nbsp;&nbsp;</td><td align="left" valign="top">Why Guile arrays need replacing.
+</td></tr>
+<tr><td align="left" valign="top">&bull; <a href="#Basics" accesskey="2">Basics</a>:</td><td>&nbsp;&nbsp;</td><td align="left" valign="top">Using arrays as containers.
+</td></tr>
+<tr><td align="left" valign="top">&bull; <a href="#Advanced-usage" accesskey="3">Advanced usage</a>:</td><td>&nbsp;&nbsp;</td><td align="left" valign="top">Guile as an array language.
+</td></tr>
+<tr><td align="left" valign="top">&bull; <a href="#Hazards" accesskey="4">Hazards</a>:</td><td>&nbsp;&nbsp;</td><td align="left" valign="top">User beware.
+</td></tr>
+<tr><td align="left" valign="top">&bull; <a href="#Reference" accesskey="5">Reference</a>:</td><td>&nbsp;&nbsp;</td><td align="left" valign="top">Systematic list of types and functions.
+</td></tr>
+<tr><td align="left" valign="top">&bull; <a href="#Sources" accesskey="6">Sources</a>:</td><td>&nbsp;&nbsp;</td><td align="left" valign="top">It&rsquo;s been done before.
+</td></tr>
+<tr><td align="left" valign="top">&bull; <a href="#Indices" accesskey="7">Indices</a>:</td><td>&nbsp;&nbsp;</td><td align="left" valign="top">Or try the search function.
+</td></tr>
+</table>
+
+
+
+<hr>
+<a name="Overview"></a>
+<div class="header">
+<p>
+Next: <a href="#Basics" accesskey="n" rel="next">Basics</a>, Previous: <a href="#Top" accesskey="p" rel="prev">Top</a>, Up: <a href="#Top" accesskey="u" rel="up">Top</a> &nbsp; [<a href="#Indices" title="Index" rel="index">Index</a>]</p>
+</div>
+<a name="Overview-1"></a>
+<h2 class="chapter">1 Overview</h2>
+
+<p>An array is an aggregate of the following pieces:
+</p>
+<a name="index-rank"></a>
+<a name="index-dim-vector"></a>
+<a name="index-root-vector"></a>
+<ul>
+<li> A <em>root vector</em>.
+This can be a Scheme vector, as well as one of several other vector-like types.
+</li><li> A <em>zero</em>.
+An arbitary integer.
+</li><li> A <em>dim vector</em>.
+Each dim consists of a length (<em>len</em>), a lower bound (<em>lo</em>), and a <em>step</em>. The length of the dim vector is the <em>rank</em> of the array.
+</li></ul>
+
+<p>Together, the dim vector and the zero define an affine function of array indices <code>i₀, i₁, ..</code> that produces an index into the root vector (or root for short). Thus, the array is simply a multidimensional view of the root.
+</p>
+<p>For example, the following pieces
+</p>
+<ul>
+<li> root: v = <code>#(1 2 3 4 5 6 7)</code>
+</li><li> zero: 1
+</li><li> dims: <code>#(#&lt;&lt;dim&gt; len: 2 lo: 0 step: 2&gt; #&lt;&lt;dim&gt; len: 2 lo: 0 step: 1&gt;)</code>
+</li></ul>
+
+<p>define an array A(i₀, i₁) = v(1 + 2·i₀ + 1·i₁), 0≤i₀&lt;2, 0≤i₁&lt;2, that is A = [[2 3] [4 5]].
+</p>
+<p>In <code>newra</code> code,
+</p>
+<div class="example">
+<pre class="verbatim">(make-ra-root (vector 1 2 3 4 5 6 7) 1 (vector (make-dim 2 0 2) (make-dim 2 0 1)))
+</pre><pre class="example">&rArr; <code>#%2:2:2((2 3) (4 5))</code>
+</pre></div>
+
+<p>The default print style means <code>#%RANK:LEN₀:LEN₁(...)</code>.
+</p>
+<p>It&rsquo;s unusual to need to specify the dims directly. More commonly, one creates an array of whatever size
+</p>
+<pre class="verbatim">&gt; (define a (make-ra #f 3 4))
+&gt; a
+</pre><p>&rArr; <code>#%2:3:4((#f #f #f #f) (#f #f #f #f) (#f #f #f #f))</code>
+</p>
+<p>which automatically creates a root of the required size, so that all the array elements are distinct. Then one operates on the array without making reference to the underlying root,
+</p>
+<pre class="verbatim">&gt; (ra-set! a 99 2 2)
+</pre><p>&rArr; <code>#%2:3:4((#f #f #f #f) (#f #f 99 #f) (#f #f #f #f))</code>
+</p>
+<p>Still, since the array is just a view of the root, any changes on the array are reflected there as well
+</p>
+<pre class="verbatim">&gt; (ra-root a)
+</pre><p>&rArr; <code>#(#f #f #f #f #f #f #f #f #f #f 99 #f)</code>
+</p>
+<p>and the other way around,
+</p>
+<pre class="verbatim">&gt; (define b (make-ra-root (vector 'x) 0 (vector (make-dim 3 0 0) (make-dim 2 0 0))))
+&gt; b
+</pre><p>&rArr; <code>#%2:3:2((x x) (x x) (x x))</code>
+</p>
+<pre class="verbatim">&gt; (vector-set! (ra-root b) 0 'Z)
+&gt; b
+</pre><p>&rArr; <code>#%2:3:2((Z Z) (Z Z) (Z Z))</code>
+</p>
+<p><em>expressions</em> <em>matrices</em>
+</p>
+<pre class="verbatim">A = B+C;
+</pre>
+<a name="index-Guile"></a>
+<p>Text to be written
+</p>
+<table class="menu" border="0" cellspacing="0">
+<tr><td align="left" valign="top">&bull; <a href="#Built_002din-Guile-arrays" accesskey="1">Built-in Guile arrays</a>:</td><td>&nbsp;&nbsp;</td><td align="left" valign="top">
+</td></tr>
+</table>
+
+<hr>
+<a name="Built_002din-Guile-arrays"></a>
+<div class="header">
+<p>
+Up: <a href="#Overview" accesskey="u" rel="up">Overview</a> &nbsp; [<a href="#Indices" title="Index" rel="index">Index</a>]</p>
+</div>
+<a name="Built_002din-Guile-arrays-1"></a>
+<h3 class="section">1.1 Built-in Guile arrays</h3>
+
+<p>Dense multidimensional arrays work similarly in every language that offers them, and built-in Guile arrays are no different —they also have a root (<code>shared-array-root</code>), a zero (computable from <code>shared-array-offset</code>), and a dim vector (<code>array-shape</code>, <code>shared-array-increments</code>). Functionally, they are entirely equivalent to the objects offered by <code>newra</code>. Why replace them, then?
+</p>
+<a name="index-libguile"></a>
+<p>Built-in Guile arrays are implemented in C, as part of libguile. As a Guile type they have their own low-level type tag, and all the basic array operations are C stubs, even the most basic functions such as <code>array-ref</code> or <code>array-rank</code>. Obtaining any of the components of the array requires calling into C. There are several problems with this.
+</p>
+<p>First, the built-in library offers a single function to manipulate array dims, <code>make-shared-array</code>. Although this is a sufficient interface, it is excessively generic, and also very cumbersome and inefficient. The array dims cannot be manipulated directly from Scheme, so any alternative interface written in Scheme is forced to go through <code>make-shared-array</code>.
+</p>
+<p>Second, the C stubs create a barrier to optimization by the Scheme compiler. The main loop of an operation such as <code>(array-map! c + a b)</code> has to be implemented in C (for the reasons given above) and then it has to call back to Scheme on each iteration in order to apply <code>+</code>. Since the Scheme compiler doesn&rsquo;t have any special support for <code>array-map!</code>, it doesn&rsquo;t know what the types of the arguments are, etc. and those checks and dispatches are repeated over and over. <a name="DOCF1" href="#FOOT1"><sup>1</sup></a>
+</p>
+<p>Third, the larger functions of the array interface, such as <code>array-map!</code>, etc. are not interruptible. This is especially inconvenient when operating on large arrays.
+</p>
+<p>These problems are solved if the built-in type is replaced with a new type defined in Scheme.
+</p>
+<a name="x_002dstar"></a><p>FIXME (see <a href="#x_002dstar"><code>star</code></a>)
+</p>
+<hr>
+<a name="Basics"></a>
+<div class="header">
+<p>
+Next: <a href="#Advanced-usage" accesskey="n" rel="next">Advanced usage</a>, Previous: <a href="#Overview" accesskey="p" rel="prev">Overview</a>, Up: <a href="#Top" accesskey="u" rel="up">Top</a> &nbsp; [<a href="#Indices" title="Index" rel="index">Index</a>]</p>
+</div>
+<a name="Basics-1"></a>
+<h2 class="chapter">2 Basics</h2>
+
+<table class="menu" border="0" cellspacing="0">
+<tr><td align="left" valign="top">&bull; <a href="#Creating-arrays" accesskey="1">Creating arrays</a>:</td><td>&nbsp;&nbsp;</td><td align="left" valign="top">
+</td></tr>
+<tr><td align="left" valign="top">&bull; <a href="#Special-arrays" accesskey="2">Special arrays</a>:</td><td>&nbsp;&nbsp;</td><td align="left" valign="top">
+</td></tr>
+<tr><td align="left" valign="top">&bull; <a href="#Iteration" accesskey="3">Iteration</a>:</td><td>&nbsp;&nbsp;</td><td align="left" valign="top">
+</td></tr>
+<tr><td align="left" valign="top">&bull; <a href="#Slicing" accesskey="4">Slicing</a>:</td><td>&nbsp;&nbsp;</td><td align="left" valign="top">
+</td></tr>
+<tr><td align="left" valign="top">&bull; <a href="#Reshaping-and-resizing" accesskey="5">Reshaping and resizing</a>:</td><td>&nbsp;&nbsp;</td><td align="left" valign="top">
+</td></tr>
+<tr><td align="left" valign="top">&bull; <a href="#Other-operations-on-arrays" accesskey="6">Other operations on arrays</a>:</td><td>&nbsp;&nbsp;</td><td align="left" valign="top">
+</td></tr>
+<tr><td align="left" valign="top">&bull; <a href="#Compatibility-with-old-Guile-arrays" accesskey="7">Compatibility with old Guile arrays</a>:</td><td>&nbsp;&nbsp;</td><td align="left" valign="top">
+</td></tr>
+</table>
+
+<hr>
+<a name="Creating-arrays"></a>
+<div class="header">
+<p>
+Next: <a href="#Special-arrays" accesskey="n" rel="next">Special arrays</a>, Up: <a href="#Basics" accesskey="u" rel="up">Basics</a> &nbsp; [<a href="#Indices" title="Index" rel="index">Index</a>]</p>
+</div>
+<a name="Creating-arrays-1"></a>
+<h3 class="section">2.1 Creating arrays</h3>
+
+<p>An array can be created anew (<a href="#x_002dmake_002dra_002dnew">make-ra-new</a>), or over an existing root (<a href="#x_002dmake_002dra_002droot">make-ra-root</a>). <a href="#x_002dc_002ddims">c-dims</a> can be used to compute the dim vector.
+</p>
+<div class="example">
+<pre class="verbatim">(make-ra-new #t 'x (vector (make-dim 3 0 2) (make-dim 2 0 1))) ; more simply
+(make-ra-new #t 'x (c-dims 3 2))
+</pre><pre class="example">&rArr; #%2:3:2((x x) (x x) (x x))
+</pre></div>
+
+<div class="example">
+<pre class="verbatim">(make-ra-new 'f32 0.0 (c-dims 3 2))
+</pre><pre class="example">&rArr; #%2f32:3:2((0.0 0.0) (0.0 0.0) (0.0 0.0))
+</pre></div>
+
+<p>An existing root implies the type, so it doesn&rsquo;t need to be given.
+</p>
+<div class="example">
+<pre class="verbatim">(make-ra-root (vector 1 2 3 4 5 6) (c-dims 3 2))
+</pre><pre class="example">&rArr; #%2:3:2((1 2) (3 4) (5 6))
+</pre></div>
+
+<p><a href="#x_002dmake_002dra">make-ra</a> or <a href="#x_002dmake_002dtyped_002dra">make-typed-ra</a> use <code>c-dims</code> by default.
+</p>
+<div class="example">
+<pre class="verbatim">(make-ra 99 2 3)
+</pre><pre class="example">&rArr; #%2:3:2((9 9) (9 9) (9 9))
+</pre></div>
+
+<div class="example">
+<pre class="verbatim">(make-typed-ra 'f64 99 2 3)
+</pre><pre class="example">&rArr; #%2f64:3:2((9.0 9.0) (9.0 9.0) (9.0 9.0))
+</pre></div>
+
+<hr>
+<a name="Special-arrays"></a>
+<div class="header">
+<p>
+Next: <a href="#Iteration" accesskey="n" rel="next">Iteration</a>, Previous: <a href="#Creating-arrays" accesskey="p" rel="prev">Creating arrays</a>, Up: <a href="#Basics" accesskey="u" rel="up">Basics</a> &nbsp; [<a href="#Indices" title="Index" rel="index">Index</a>]</p>
+</div>
+<a name="Special-arrays-1"></a>
+<h3 class="section">2.2 Special arrays</h3>
+
+<p>Any type that is usable as the root of an old built-in Guile array is also usable as root of a <code>newra</code> array. These include
+</p>
+<ul>
+<li> vectors (e.g. <code>(vector 3)</code>)
+</li><li> SRFI-4 typed vectors (e.g. <code>(c64vector 1 2+0i)</code>)
+</li><li> strings (e.g. <code>&quot;hello&quot;</code>)
+</li><li> bitvectors (e.g. <code>(bitvector #f #t #f #t)</code>)
+</li></ul>
+
+<p><code>newra</code> supports an additional root vector type, <code>&lt;aseq&gt;</code>, representing an infinite arithmetic sequence.
+</p>
+<a name="index-make_002daseq"></a>
+<a name="x_002dnone"></a><dl>
+<dt><a name="index-make_002daseq-1"></a>function<!-- /@w -->: <strong>make-aseq</strong> <em>[org [inc]]</em></dt>
+<dd>
+<p>Create an arithmetic sequence [<code>org, org+inc, org+2·inc, ...</code>]. The default values of <code>org</code> and <code>inc</code> are respectively 0 and 1. For example:
+</p>
+<div class="example">
+<pre class="verbatim">(make-ra-root (make-aseq 0 3) (vector (make-dim 10)) 0)
+</pre><pre class="example">&rArr; #%1d:10(0 3 6 9 12 15 18 21 24 27)
+</pre></div>
+
+<p>(The example above can be written <code>(<a href="#x_002dra_002diota">ra-iota</a> 10 0 3)</code>).
+</p></dd></dl>
+
+<p><code>aseq</code> roots are immutable. The type tag of <code>aseq</code> roots is <code>d</code>. Arrays with integer-valued <code>aseq</code> roots have special uses; see <a href="#Slicing">Slicing</a>.
+</p>
+<a name="index-infinite-axes"></a>
+<p>To make <code>&lt;aseq&gt;</code> more useful, <code>newra</code> supports axes with infinite length.
+</p>
+<div class="example">
+<pre class="verbatim">(ra-ref (make-ra-root (make-aseq) (vector (make-dim #f)) 0) #e1e12) ; or more simply
+(ra-ref (ra-iota #f) #e1e12)
+</pre><pre class="example">&rArr; 1000000000000
+</pre></div>
+
+<p>These are treated especially when used in iteration, in that they match axes of any finite length (<a href="#x_002dra_002dmap_0021">ra-map!</a>). Effectively this lets one use <code>(<a href="#x_002dra_002dtranspose">ra-transpose</a> (ra-iota #f) k)</code> as a placeholder for the index over axis <code>k</code>.
+</p>
+<div class="example">
+<pre class="verbatim">(ra-map! (make-ra 0 3) + (ra-iota 3) (ra-iota #f))
+</pre><pre class="example">&rArr; #1%3(0 2 4)
+</pre></div>
+
+<a name="index-dead-axes"></a>
+<p><code>newra</code> also supports &lsquo;dead axes&rsquo;, which are simply axes whose step is 0. These axes can have any length although effectively only one position (the lower bound, by default 0) is ever accessed. Some functions work purely by creating dead axes.
+</p>
+<div class="example">
+<pre class="verbatim">(define A (make-ra-root #(1 2 3) (c-dims 3)))
+(ra-tile A 2 2)
+</pre><pre class="example">&rArr; #%3d:2:2:3(((0 1 2) (0 1 2)) ((0 1 2) (0 1 2)))
+</pre><pre class="verbatim">(ra-dims (ra-tile A 2 2))
+</pre><pre class="example">&rArr; #(#&lt;&lt;dim&gt; len: 2 lo: 0 step: 0&gt; #&lt;&lt;dim&gt; len: 2 lo: 0 step: 0&gt; #&lt;&lt;dim&gt; len: 3 lo: 0 step: 1&gt;)
+</pre></div>
+
+<a name="index-singleton-axis"></a>
+<p>When an axis has 0 step and infinite length, it operates essentially as ‘singleton axes’ operate in other array languages. The main diference is that the ability to match any finite length is explicit; an axis with length 1 will still fail to match an axis with length 2.
+</p>
+<hr>
+<a name="Iteration"></a>
+<div class="header">
+<p>
+Next: <a href="#Slicing" accesskey="n" rel="next">Slicing</a>, Previous: <a href="#Special-arrays" accesskey="p" rel="prev">Special arrays</a>, Up: <a href="#Basics" accesskey="u" rel="up">Basics</a> &nbsp; [<a href="#Indices" title="Index" rel="index">Index</a>]</p>
+</div>
+<a name="Iteration-1"></a>
+<h3 class="section">2.3 Iteration</h3>
+
+<p>The basic array iteration operations in <code>newra</code> all operate by effect. This gives you control of how the result is allocated. If one of the arguments is designated as destination, then that is the result of the whole iteration. For example:
+</p>
+<div class="example">
+<pre class="verbatim">(ra-map! (make-ra #f 3) - (ra-iota 3 1))
+</pre><pre class="example">&rArr; #%1:3(-1 -2 -3)
+</pre></div>
+
+<p>It is common to need the indices of the elements during array iteration. <code>newra</code> iteration operations do not keep track of those indices<a name="DOCF2" href="#FOOT2"><sup>2</sup></a> because it isn&rsquo;t free to do so. You need to pass the indices you need as arguments, but it&rsquo;s easy to do so by using an infinite index vector together with <a href="#x_002dra_002dtranspose">ra-transpose</a>.
+</p>
+<div class="example">
+<pre class="verbatim">(define i0 (ra-iota #f))
+(define i1 (ra-transpose (ra-iota #f) 1))
+(ra-map! (make-ra #f 2 2) list (list-&gt;ra 2 '((A B) (C D))) i0 i1)
+</pre><pre class="example">&rArr; #%2:2:2(((A 0 0) (B 0 1)) ((C 1 0) (D 1 1)))
+</pre></div>
+
+<p>One can iterate not only over the elements of the array, but over any <code>n</code>-frame (the first <code>n</code> axes of an array), using <a href="#x_002dra_002dslice_002dfor_002deach">ra-slice-for-each</a>. In this case the operation takes array slices as arguments, even when they are rank 0; this allows writing to any of the arguments. When there are several arrays involved, all the frames must match.
+</p>
+<div class="example">
+<pre class="verbatim">(ra-slice-for-each 1
+  (lambda (xy angle)
+    (ra-set! angle (atan (ra-ref xy 1) (ra-ref xy 0))))
+  xys angles)
+</pre></div>
+
+<hr>
+<a name="Slicing"></a>
+<div class="header">
+<p>
+Next: <a href="#Reshaping-and-resizing" accesskey="n" rel="next">Reshaping and resizing</a>, Previous: <a href="#Iteration" accesskey="p" rel="prev">Iteration</a>, Up: <a href="#Basics" accesskey="u" rel="up">Basics</a> &nbsp; [<a href="#Indices" title="Index" rel="index">Index</a>]</p>
+</div>
+<a name="Slicing-1"></a>
+<h3 class="section">2.4 Slicing</h3>
+
+<hr>
+<a name="Reshaping-and-resizing"></a>
+<div class="header">
+<p>
+Next: <a href="#Other-operations-on-arrays" accesskey="n" rel="next">Other operations on arrays</a>, Previous: <a href="#Slicing" accesskey="p" rel="prev">Slicing</a>, Up: <a href="#Basics" accesskey="u" rel="up">Basics</a> &nbsp; [<a href="#Indices" title="Index" rel="index">Index</a>]</p>
+</div>
+<a name="Reshaping-and-resizing-1"></a>
+<h3 class="section">2.5 Reshaping and resizing</h3>
+
+<a name="index-APL"></a>
+<a name="index-r"></a>
+<p>To match APL ρ, <code>newra</code> offers a set of three different functions.
+</p>
+<p><a href="#x_002dra_002dreshape"><code>ra-reshape</code></a> and <a href="#x_002dra_002dravel"><code>ra-ravel</code></a> are in a way the inverse of each other, and neither is able to increase the size of the array. For that purpose <a href="#x_002dra_002dtile"><code>ra-tile</code></a> is provided.
+</p>
+<p><code>ra-reshape</code> and <code>ra-tile</code> always reuse the root of the argument. On the other hand <code>ra-ravel</code> may not be able to — this is one of the reasons to have three different functions instead of only one.
+</p>
+<p>All three functions <code>ra-reshape</code>, <code>ra-ravel</code>, and <code>ra-tile</code> operate on prefix axes. To operate on other axes, use <a href="#x_002dra_002dtranspose"><code>ra-transpose</code></a>.
+</p>
+<hr>
+<a name="Other-operations-on-arrays"></a>
+<div class="header">
+<p>
+Next: <a href="#Compatibility-with-old-Guile-arrays" accesskey="n" rel="next">Compatibility with old Guile arrays</a>, Previous: <a href="#Reshaping-and-resizing" accesskey="p" rel="prev">Reshaping and resizing</a>, Up: <a href="#Basics" accesskey="u" rel="up">Basics</a> &nbsp; [<a href="#Indices" title="Index" rel="index">Index</a>]</p>
+</div>
+<a name="Other-operations-on-arrays-1"></a>
+<h3 class="section">2.6 Other operations on arrays</h3>
+
+
+
+
+<hr>
+<a name="Compatibility-with-old-Guile-arrays"></a>
+<div class="header">
+<p>
+Previous: <a href="#Other-operations-on-arrays" accesskey="p" rel="prev">Other operations on arrays</a>, Up: <a href="#Basics" accesskey="u" rel="up">Basics</a> &nbsp; [<a href="#Indices" title="Index" rel="index">Index</a>]</p>
+</div>
+<a name="Compatibility-with-old-Guile-arrays-1"></a>
+<h3 class="section">2.7 Compatibility with old Guile arrays</h3>
+
+<hr>
+<a name="Advanced-usage"></a>
+<div class="header">
+<p>
+Next: <a href="#Hazards" accesskey="n" rel="next">Hazards</a>, Previous: <a href="#Basics" accesskey="p" rel="prev">Basics</a>, Up: <a href="#Top" accesskey="u" rel="up">Top</a> &nbsp; [<a href="#Indices" title="Index" rel="index">Index</a>]</p>
+</div>
+<a name="Advanced-usage-1"></a>
+<h2 class="chapter">3 Advanced usage</h2>
+
+<table class="menu" border="0" cellspacing="0">
+<tr><td align="left" valign="top">&bull; <a href="#Rank-polymorphism-and-rank-extension" accesskey="1">Rank polymorphism and rank extension</a>:</td><td>&nbsp;&nbsp;</td><td align="left" valign="top">
+</td></tr>
+<tr><td align="left" valign="top">&bull; <a href="#Verbs" accesskey="2">Verbs</a>:</td><td>&nbsp;&nbsp;</td><td align="left" valign="top">
+</td></tr>
+<tr><td align="left" valign="top">&bull; <a href="#Reductions" accesskey="3">Reductions</a>:</td><td>&nbsp;&nbsp;</td><td align="left" valign="top">
+</td></tr>
+<tr><td align="left" valign="top">&bull; <a href="#Foreign-interface" accesskey="4">Foreign interface</a>:</td><td>&nbsp;&nbsp;</td><td align="left" valign="top">
+</td></tr>
+</table>
+
+<hr>
+<a name="Rank-polymorphism-and-rank-extension"></a>
+<div class="header">
+<p>
+Next: <a href="#Verbs" accesskey="n" rel="next">Verbs</a>, Up: <a href="#Advanced-usage" accesskey="u" rel="up">Advanced usage</a> &nbsp; [<a href="#Indices" title="Index" rel="index">Index</a>]</p>
+</div>
+<a name="Rank-polymorphism-and-rank-extension-1"></a>
+<h3 class="section">3.1 Rank polymorphism and rank extension</h3>
+
+<hr>
+<a name="Verbs"></a>
+<div class="header">
+<p>
+Next: <a href="#Reductions" accesskey="n" rel="next">Reductions</a>, Previous: <a href="#Rank-polymorphism-and-rank-extension" accesskey="p" rel="prev">Rank polymorphism and rank extension</a>, Up: <a href="#Advanced-usage" accesskey="u" rel="up">Advanced usage</a> &nbsp; [<a href="#Indices" title="Index" rel="index">Index</a>]</p>
+</div>
+<a name="Verbs-1"></a>
+<h3 class="section">3.2 Verbs</h3>
+
+<hr>
+<a name="Reductions"></a>
+<div class="header">
+<p>
+Next: <a href="#Foreign-interface" accesskey="n" rel="next">Foreign interface</a>, Previous: <a href="#Verbs" accesskey="p" rel="prev">Verbs</a>, Up: <a href="#Advanced-usage" accesskey="u" rel="up">Advanced usage</a> &nbsp; [<a href="#Indices" title="Index" rel="index">Index</a>]</p>
+</div>
+<a name="Reductions-1"></a>
+<h3 class="section">3.3 Reductions</h3>
+
+<hr>
+<a name="Foreign-interface"></a>
+<div class="header">
+<p>
+Previous: <a href="#Reductions" accesskey="p" rel="prev">Reductions</a>, Up: <a href="#Advanced-usage" accesskey="u" rel="up">Advanced usage</a> &nbsp; [<a href="#Indices" title="Index" rel="index">Index</a>]</p>
+</div>
+<a name="Foreign-interface-1"></a>
+<h3 class="section">3.4 Foreign interface</h3>
+
+<hr>
+<a name="Hazards"></a>
+<div class="header">
+<p>
+Next: <a href="#Reference" accesskey="n" rel="next">Reference</a>, Previous: <a href="#Advanced-usage" accesskey="p" rel="prev">Advanced usage</a>, Up: <a href="#Top" accesskey="u" rel="up">Top</a> &nbsp; [<a href="#Indices" title="Index" rel="index">Index</a>]</p>
+</div>
+<a name="Hazards-1"></a>
+<h2 class="chapter">4 Hazards</h2>
+
+<hr>
+<a name="Reference"></a>
+<div class="header">
+<p>
+Next: <a href="#Sources" accesskey="n" rel="next">Sources</a>, Previous: <a href="#Hazards" accesskey="p" rel="prev">Hazards</a>, Up: <a href="#Top" accesskey="u" rel="up">Top</a> &nbsp; [<a href="#Indices" title="Index" rel="index">Index</a>]</p>
+</div>
+<a name="Reference-1"></a>
+<h2 class="chapter">5 Reference</h2>
+
+<a name="index-make_002dra_002dnew"></a>
+<a name="x_002dmake_002dra_002dnew"></a><dl>
+<dt><a name="index-make_002dra_002dnew-1"></a>function<!-- /@w -->: <strong>make-ra-new</strong> <em>type value dims</em></dt>
+<dd><p>Create a new array of the given <var>type</var> and fill it with <var>value</var>.
+</p><div class="example">
+<pre class="verbatim">(make-ra-new 'u8 0 (c-dims 3 2))
+</pre><pre class="example">&rArr; #%2u8:3:2((0 0) (0 0) (0 0))
+</pre></div>
+</dd></dl>
+
+<a name="index-make_002dra_002droot"></a>
+<a name="x_002dmake_002dra_002droot"></a><dl>
+<dt><a name="index-make_002dra_002droot-1"></a>function<!-- /@w -->: <strong>make-ra-root</strong> <em>dims [zero]</em></dt>
+<dd>
+<div class="example">
+<pre class="verbatim">(make-ra-root (vector 1 2 3) (vector (make-dim 3)))
+</pre><pre class="example">&rArr; #%1d:3(1 2 3)
+</pre></div>
+
+<div class="example">
+<pre class="verbatim">(make-ra-root (vector 1 2 3) (vector (make-dim 2)) 1)
+</pre><pre class="example">&rArr; #%1d:3(2 3)
+</pre></div>
+</dd></dl>
+
+<a name="index-make_002dra"></a>
+<a name="x_002dmake_002dra"></a><dl>
+<dt><a name="index-make_002dra-1"></a>function<!-- /@w -->: <strong>make-ra</strong> <em>val bounds ...</em></dt>
+</dl>
+
+<a name="index-make_002dtyped_002dra"></a>
+<a name="x_002dmake_002dtyped_002dra"></a><dl>
+<dt><a name="index-make_002dtyped_002dra-1"></a>function<!-- /@w -->: <strong>make-typed-ra</strong> <em>type val bounds ...</em></dt>
+</dl>
+
+<a name="index-c_002ddims"></a>
+<a name="x_002dc_002ddims"></a><dl>
+<dt><a name="index-c_002ddims-1"></a>function<!-- /@w -->: <strong>c-dims</strong> <em>bounds ...</em></dt>
+<dd>
+<p>Create dims for C-order array (packed elements, last dimension changing fastest).
+</p>
+<p>Each of the bounds may be an integer (a length) or a pair of integers (lower and upper bounds).
+</p><div class="example">
+<pre class="verbatim">(c-dims 2 3)
+</pre><pre class="example">&rArr; #(#&lt;&lt;dim&gt; len: 2 lo: 0 step: 3&gt; #&lt;&lt;dim&gt; len: 3 lo: 0 step: 1&gt;)
+</pre></div>
+</dd></dl>
+
+<a name="index-ra_002diota"></a>
+<a name="x_002dra_002diota"></a><dl>
+<dt><a name="index-ra_002diota-1"></a>function<!-- /@w -->: <strong>ra-iota</strong> <em>[len [lo [step]]]</em></dt>
+<dd>
+<p>Create rank-1 index array. The root is of type <code>&lt;aseq&gt;</code>.
+</p>
+<div class="example">
+<pre class="verbatim">(ra-iota 4 3 -1)
+</pre><pre class="example">&rArr; #%1d:4(3 2 1 0)
+</pre></div>
+</dd></dl>
+
+<a name="index-ra_002di"></a>
+<a name="x_002dra_002di"></a><dl>
+<dt><a name="index-ra_002di-1"></a>function<!-- /@w -->: <strong>ra-i</strong> <em>len ...</em></dt>
+<dd>
+<p>Create multidimensional index array with the given lengths. The root is of type <code>&lt;aseq&gt;</code>.
+</p>
+<div class="example">
+<pre class="verbatim">(ra-i 2 3 4)
+</pre><pre class="example">&rArr; #%3d:2:3:4(((0 1 2 3) (4 5 6 7) (8 9 10 11)) ((12 13 14 15) (16 17 18 19) (20 21 22 23)))
+</pre></div>
+</dd></dl>
+
+<a name="index-ra_002dravel"></a>
+<a name="x_002dra_002dravel"></a><dl>
+<dt><a name="index-ra_002dravel-1"></a>function<!-- /@w -->: <strong>ra-ravel</strong> <em>a [n]</em></dt>
+<dd><p>Ravel the first <var>n</var> axes of array <var>a</var> to C order, the whole array by default.
+</p><div class="example">
+<pre class="verbatim">(ra-ravel (ra-i 2 3))
+</pre><pre class="example">&rArr; #%1d:6(0 1 2 3 4 5)
+</pre></div>
+</dd></dl>
+
+<a name="index-ra_002dreshape"></a>
+<a name="x_002dra_002dreshape"></a><dl>
+<dt><a name="index-ra_002dreshape-1"></a>function<!-- /@w -->: <strong>ra-reshape</strong> <em>a bounds ...</em></dt>
+<dd><p>Reshape the first axis of array <var>a</var> to <var>bounds</var>.
+</p>
+<p>Each of the bounds may be an integer (a length) or a pair of integers (lower and upper bounds).
+</p><div class="example">
+<pre class="verbatim">(ra-reshape (ra-i 4 3) 2 2)
+</pre><pre class="example">&rArr; #%1d:2:2:3(((0 1 2) (3 4 5)) ((6 7 8) (9 10 11)))
+</pre></div>
+</dd></dl>
+
+<a name="index-ra_002dtile"></a>
+<a name="x_002dra_002dtile"></a><dl>
+<dt><a name="index-ra_002dtile-1"></a>function<!-- /@w -->: <strong>ra-tile</strong> <em>a bounds ...</em></dt>
+<dd><p>Repeat array <var>a</var> by prepending axes with the given <var>bounds</var>.
+</p>
+<p>Each of the bounds may be an integer (a length) or a pair of integers (lower and upper bounds).
+</p><div class="example">
+<pre class="verbatim">(ra-tile (ra-i 3) 2)
+</pre><pre class="example">&rArr; #%1d:2:3((0 1 2) (0 1 2))
+</pre></div>
+</dd></dl>
+
+<a name="index-ra_002dtranspose"></a>
+<a name="x_002dra_002dtranspose"></a><dl>
+<dt><a name="index-ra_002dtranspose-1"></a>function<!-- /@w -->: <strong>ra-transpose</strong> <em>a axes ...</em></dt>
+<dd><p>Transpose each axis of <var>a</var> to matching destination <var>axes</var>.
+</p>
+<p>The transposed array has the same root as <var>a</var>.
+</p><div class="example">
+<pre class="verbatim">(ra-transpose (ra-i 2 3) 1 0)
+</pre><pre class="example">&rArr; #%1d:3:2((0 3) (1 4) (2 5))
+</pre></div>
+</dd></dl>
+
+<a name="index-ra_002dreverse"></a>
+<a name="x_002dra_002dreverse"></a><dl>
+<dt><a name="index-ra_002dreverse-1"></a>function<!-- /@w -->: <strong>ra-reverse</strong> <em>a axes ...</em></dt>
+<dd><p>Reverse the given <var>axes</var> of <var>a</var>.
+</p>
+<p>The transposed array has the same root as <var>a</var>.
+</p><div class="example">
+<pre class="verbatim">(ra-reverse (ra-i 2 3) 0 1)
+</pre><pre class="example">&rArr; #%1d:2:3((5 4 3) (2 1 0))
+</pre></div>
+</dd></dl>
+
+<a name="index-ra_002dindex_002dmap_0021"></a>
+<a name="x_002dra_002dindex_002dmap_0021"></a><dl>
+<dt><a name="index-ra_002dindex_002dmap_0021-1"></a>function<!-- /@w -->: <strong>ra-index-map!</strong> <em>a op</em></dt>
+<dd><p>Iterate over array <var>a</var>, and for each element store the result of <code>(op i₀ ...)</code>, where <code>i₀ ...</code> are the indices of that element.
+</p></dd></dl>
+
+<a name="index-ra_002dslice_002dfor_002deach"></a>
+<a name="x_002dra_002dslice_002dfor_002deach"></a><dl>
+<dt><a name="index-ra_002dslice_002dfor_002deach-1"></a>function<!-- /@w -->: <strong>ra-slice-for-each</strong> <em>k op a ...</em></dt>
+<dd><p>Iterate over the <var>k</var>-frames of arrays <var>a</var> ..., applying <var>op</var> to the respective slices.
+</p></dd></dl>
+
+<a name="index-ra_002dmap_0021"></a>
+<a name="x_002dra_002dmap_0021"></a><dl>
+<dt><a name="index-ra_002dmap_0021-1"></a>function<!-- /@w -->: <strong>ra-map!</strong> <em>dst op a ...</em></dt>
+<dd><p>Iterate over arrays <var>dst</var> and <var>a</var>, applying <var>op</var> to the respective elements in <var>a</var>, and storing the result in <var>dst</var>. All the arrays involved must have the same bounds.
+</p>
+<p>This is equivalent to
+</p><pre class="verbatim">(apply ra-slice-for-each
+       (rank dst)
+       (lambda (dst . a)
+         (ra-set! dst (apply op (map ra-ref a))))
+       dst a)
+</pre></dd></dl>
+
+<hr>
+<a name="Sources"></a>
+<div class="header">
+<p>
+Next: <a href="#Indices" accesskey="n" rel="next">Indices</a>, Previous: <a href="#Reference" accesskey="p" rel="prev">Reference</a>, Up: <a href="#Top" accesskey="u" rel="up">Top</a> &nbsp; [<a href="#Indices" title="Index" rel="index">Index</a>]</p>
+</div>
+<a name="Sources-1"></a>
+<h2 class="chapter">6 Sources</h2>
+
+<table>
+<tr><td width="10%"></td></tr>
+<tr><td width="10%"><a name="Abr70"></a>[Abr70]</td><td width="90%">Philip S. Abrams. An APL machine. Technical report SLAC-114 UC-32 (MISC), Stanford Linear Accelerator Center, Stanford University, Stanford, CA, USA, February 1970.</td></tr>
+<tr><td width="10%"></td></tr>
+<tr><td width="10%"><a name="Ber87"></a>[Ber87]</td><td width="90%">Robert Bernecky. An introduction to function rank. ACM SIGAPL APL Quote Quad, 18(2):39–43, December 1987.</td></tr>
+<tr><td width="10%"></td></tr>
+<tr><td width="10%"><a name="bli17"></a>[bli17]</td><td width="90%">The Blitz++ meta-template library. <a href="http://blitz.sourceforge.net">http://blitz.sourceforge.net</a>, November 2017.</td></tr>
+<tr><td width="10%"></td></tr>
+<tr><td width="10%"><a name="Cha86"></a>[Cha86]</td><td width="90%">Gregory J. Chaitin. Physics in APL2, June 1986.</td></tr>
+<tr><td width="10%"></td></tr>
+<tr><td width="10%"><a name="FI68"></a>[FI68]</td><td width="90%">Adin D. Falkoff and Kenneth Eugene Iverson. APL\360 User’s manual. IBM Thomas J. Watson Research Center, August 1968.</td></tr>
+<tr><td width="10%"></td></tr>
+<tr><td width="10%"><a name="FI73"></a>[FI73]</td><td width="90%">Adin D. Falkoff and Kenneth Eugene Iverson. The design of APL. IBM Journal of Research and Development, 17(4):5–14, July 1973.</td></tr>
+<tr><td width="10%"></td></tr>
+<tr><td width="10%"><a name="FI78"></a>[FI78]</td><td width="90%">Adin D. Falkoff and Kenneth Eugene Iverson. The evolution of APL. ACM SIGAPL APL, 9(1):30– 44, 1978.</td></tr>
+<tr><td width="10%"></td></tr>
+<tr><td width="10%"><a name="J-S"></a>[J S]</td><td width="90%">J Primer. J Software, <a href="https://www.jsoftware.com/help/primer/contents.htm">https://www.jsoftware.com/help/primer/contents.htm</a>, November 2017.</td></tr>
+<tr><td width="10%"></td></tr>
+<tr><td width="10%"><a name="Mat"></a>[Mat]</td><td width="90%">MathWorks. MATLAB documentation, <a href="https://www.mathworks.com/help/matlab/">https://www.mathworks.com/help/matlab/</a>, November 2017.</td></tr>
+<tr><td width="10%"></td></tr>
+<tr><td width="10%"><a name="num17"></a>[num17]</td><td width="90%">NumPy. <a href="http://www.numpy.org">http://www.numpy.org</a>, November 2017.</td></tr>
+<tr><td width="10%"></td></tr>
+<tr><td width="10%"><a name="Ric08"></a>[Ric08]</td><td width="90%">Henry Rich. J for C programmers, February 2008.</td></tr>
+<tr><td width="10%"></td></tr>
+<tr><td width="10%"><a name="SSM14"></a>[SSM14]</td><td width="90%">Justin Slepak, Olin Shivers, and Panagiotis Manolios. An array-oriented language with static rank polymorphism. In Z. Shao, editor, ESOP 2014, LNCS 8410, pages 27–46, 2014.</td></tr>
+<tr><td width="10%"></td></tr>
+<tr><td width="10%"><a name="Vel01"></a>[Vel01]</td><td width="90%">Todd Veldhuizen. Blitz++ user’s guide, February 2001.</td></tr>
+<tr><td width="10%"></td></tr>
+<tr><td width="10%"><a name="Wad90"></a>[Wad90]</td><td width="90%">Philip Wadler. Deforestation: transforming programs to eliminate trees. Theoretical Computer Science, 73(2): 231&ndash;248, June 1990. <a href="https://doi.org/10.1016/0304-3975%2890%2990147-A">https://doi.org/10.1016/0304-3975%2890%2990147-A</a></td></tr>
+</table>
+
+<hr>
+<a name="Indices"></a>
+<div class="header">
+<p>
+Previous: <a href="#Sources" accesskey="p" rel="prev">Sources</a>, Up: <a href="#Top" accesskey="u" rel="up">Top</a> &nbsp; [<a href="#Indices" title="Index" rel="index">Index</a>]</p>
+</div>
+<a name="Indices-1"></a>
+<h2 class="unnumbered">Indices</h2>
+
+<table><tr><th valign="top">Jump to: &nbsp; </th><td><a class="summary-letter" href="#Indices_cp_letter-A"><b>A</b></a>
+ &nbsp; 
+<a class="summary-letter" href="#Indices_cp_letter-C"><b>C</b></a>
+ &nbsp; 
+<a class="summary-letter" href="#Indices_cp_letter-D"><b>D</b></a>
+ &nbsp; 
+<a class="summary-letter" href="#Indices_cp_letter-G"><b>G</b></a>
+ &nbsp; 
+<a class="summary-letter" href="#Indices_cp_letter-I"><b>I</b></a>
+ &nbsp; 
+<a class="summary-letter" href="#Indices_cp_letter-L"><b>L</b></a>
+ &nbsp; 
+<a class="summary-letter" href="#Indices_cp_letter-M"><b>M</b></a>
+ &nbsp; 
+<a class="summary-letter" href="#Indices_cp_letter-R"><b>R</b></a>
+ &nbsp; 
+<a class="summary-letter" href="#Indices_cp_letter-S"><b>S</b></a>
+ &nbsp; 
+<a class="summary-letter" href="#Indices_cp_letter-Ρ"><b>Ρ</b></a>
+ &nbsp; 
+</td></tr></table>
+<table class="index-cp" border="0">
+<tr><td></td><th align="left">Index Entry</th><td>&nbsp;</td><th align="left"> Section</th></tr>
+<tr><td colspan="4"> <hr></td></tr>
+<tr><th><a name="Indices_cp_letter-A">A</a></th><td></td><td></td></tr>
+<tr><td></td><td valign="top"><a href="#index-APL">APL</a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reshaping-and-resizing">Reshaping and resizing</a></td></tr>
+<tr><td colspan="4"> <hr></td></tr>
+<tr><th><a name="Indices_cp_letter-C">C</a></th><td></td><td></td></tr>
+<tr><td></td><td valign="top"><a href="#index-c_002ddims"><code>c-dims</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
+<tr><td colspan="4"> <hr></td></tr>
+<tr><th><a name="Indices_cp_letter-D">D</a></th><td></td><td></td></tr>
+<tr><td></td><td valign="top"><a href="#index-dead-axes">dead axes</a>:</td><td>&nbsp;</td><td valign="top"><a href="#Special-arrays">Special arrays</a></td></tr>
+<tr><td></td><td valign="top"><a href="#index-dim-vector">dim vector</a>:</td><td>&nbsp;</td><td valign="top"><a href="#Overview">Overview</a></td></tr>
+<tr><td colspan="4"> <hr></td></tr>
+<tr><th><a name="Indices_cp_letter-G">G</a></th><td></td><td></td></tr>
+<tr><td></td><td valign="top"><a href="#index-Guile">Guile</a>:</td><td>&nbsp;</td><td valign="top"><a href="#Overview">Overview</a></td></tr>
+<tr><td colspan="4"> <hr></td></tr>
+<tr><th><a name="Indices_cp_letter-I">I</a></th><td></td><td></td></tr>
+<tr><td></td><td valign="top"><a href="#index-infinite-axes">infinite axes</a>:</td><td>&nbsp;</td><td valign="top"><a href="#Special-arrays">Special arrays</a></td></tr>
+<tr><td colspan="4"> <hr></td></tr>
+<tr><th><a name="Indices_cp_letter-L">L</a></th><td></td><td></td></tr>
+<tr><td></td><td valign="top"><a href="#index-libguile">libguile</a>:</td><td>&nbsp;</td><td valign="top"><a href="#Built_002din-Guile-arrays">Built-in Guile arrays</a></td></tr>
+<tr><td colspan="4"> <hr></td></tr>
+<tr><th><a name="Indices_cp_letter-M">M</a></th><td></td><td></td></tr>
+<tr><td></td><td valign="top"><a href="#index-make_002daseq"><code>make-aseq</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Special-arrays">Special arrays</a></td></tr>
+<tr><td></td><td valign="top"><a href="#index-make_002dra"><code>make-ra</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
+<tr><td></td><td valign="top"><a href="#index-make_002dra_002dnew"><code>make-ra-new</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
+<tr><td></td><td valign="top"><a href="#index-make_002dra_002droot"><code>make-ra-root</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
+<tr><td></td><td valign="top"><a href="#index-make_002dtyped_002dra"><code>make-typed-ra</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
+<tr><td colspan="4"> <hr></td></tr>
+<tr><th><a name="Indices_cp_letter-R">R</a></th><td></td><td></td></tr>
+<tr><td></td><td valign="top"><a href="#index-ra_002di"><code>ra-i</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
+<tr><td></td><td valign="top"><a href="#index-ra_002dindex_002dmap_0021"><code>ra-index-map!</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
+<tr><td></td><td valign="top"><a href="#index-ra_002diota"><code>ra-iota</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
+<tr><td></td><td valign="top"><a href="#index-ra_002dmap_0021"><code>ra-map!</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
+<tr><td></td><td valign="top"><a href="#index-ra_002dravel"><code>ra-ravel</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
+<tr><td></td><td valign="top"><a href="#index-ra_002dreshape"><code>ra-reshape</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
+<tr><td></td><td valign="top"><a href="#index-ra_002dreverse"><code>ra-reverse</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
+<tr><td></td><td valign="top"><a href="#index-ra_002dslice_002dfor_002deach"><code>ra-slice-for-each</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
+<tr><td></td><td valign="top"><a href="#index-ra_002dtile"><code>ra-tile</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
+<tr><td></td><td valign="top"><a href="#index-ra_002dtranspose"><code>ra-transpose</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
+<tr><td></td><td valign="top"><a href="#index-rank">rank</a>:</td><td>&nbsp;</td><td valign="top"><a href="#Overview">Overview</a></td></tr>
+<tr><td></td><td valign="top"><a href="#index-root-vector">root vector</a>:</td><td>&nbsp;</td><td valign="top"><a href="#Overview">Overview</a></td></tr>
+<tr><td colspan="4"> <hr></td></tr>
+<tr><th><a name="Indices_cp_letter-S">S</a></th><td></td><td></td></tr>
+<tr><td></td><td valign="top"><a href="#index-singleton-axis">singleton axis</a>:</td><td>&nbsp;</td><td valign="top"><a href="#Special-arrays">Special arrays</a></td></tr>
+<tr><td colspan="4"> <hr></td></tr>
+<tr><th><a name="Indices_cp_letter-Ρ">Ρ</a></th><td></td><td></td></tr>
+<tr><td></td><td valign="top"><a href="#index-r">ρ</a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reshaping-and-resizing">Reshaping and resizing</a></td></tr>
+<tr><td colspan="4"> <hr></td></tr>
+</table>
+<table><tr><th valign="top">Jump to: &nbsp; </th><td><a class="summary-letter" href="#Indices_cp_letter-A"><b>A</b></a>
+ &nbsp; 
+<a class="summary-letter" href="#Indices_cp_letter-C"><b>C</b></a>
+ &nbsp; 
+<a class="summary-letter" href="#Indices_cp_letter-D"><b>D</b></a>
+ &nbsp; 
+<a class="summary-letter" href="#Indices_cp_letter-G"><b>G</b></a>
+ &nbsp; 
+<a class="summary-letter" href="#Indices_cp_letter-I"><b>I</b></a>
+ &nbsp; 
+<a class="summary-letter" href="#Indices_cp_letter-L"><b>L</b></a>
+ &nbsp; 
+<a class="summary-letter" href="#Indices_cp_letter-M"><b>M</b></a>
+ &nbsp; 
+<a class="summary-letter" href="#Indices_cp_letter-R"><b>R</b></a>
+ &nbsp; 
+<a class="summary-letter" href="#Indices_cp_letter-S"><b>S</b></a>
+ &nbsp; 
+<a class="summary-letter" href="#Indices_cp_letter-Ρ"><b>Ρ</b></a>
+ &nbsp; 
+</td></tr></table>
+
+
+<div class="footnote">
+<hr>
+<h4 class="footnotes-heading">Footnotes</h4>
+
+<h3><a name="FOOT1" href="#DOCF1">(1)</a></h3>
+<p>Guile used to offer dedicated operations to sum arrays, etc. but obviously that isn&rsquo;t any kind of solution.</p>
+<h3><a name="FOOT2" href="#DOCF2">(2)</a></h3>
+<p>Except for <a href="#x_002dra_002dindex_002dmap_0021">ra-index-map!</a>, which is provided out of compatibility with the older array system.</p>
+</div>
+<hr>
+
+
+
+</body>
+</html>
