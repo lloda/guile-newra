@@ -126,6 +126,8 @@ Invariant Sections, no Front-Cover Texts, and no Back-Cover Texts.
 
 <p><code>newra</code> is a Scheme-only replacement for the built-in C-based array facility in Guile 2.2.
 </p>
+<p>This document uses ‘array’ to refer both to the old built-in array type and to the new type introduced in <code>newra</code>. The distinction is made as necessary.
+</p>
 <table class="menu" border="0" cellspacing="0">
 <tr><td align="left" valign="top">&bull; <a href="#Overview" accesskey="1">Overview</a>:</td><td>&nbsp;&nbsp;</td><td align="left" valign="top">Why Guile arrays need replacing.
 </td></tr>
@@ -236,7 +238,7 @@ Up: <a href="#Overview" accesskey="u" rel="up">Overview</a> &nbsp; [<a href="#In
 <a name="Built_002din-Guile-arrays-1"></a>
 <h3 class="section">1.1 Built-in Guile arrays</h3>
 
-<p>Dense multidimensional arrays work similarly in every language that offers them, and built-in Guile arrays are no different —they also have a root (<code>shared-array-root</code>), a zero (computable from <code>shared-array-offset</code>), and a dim vector (<code>array-shape</code>, <code>shared-array-increments</code>). Functionally, they are entirely equivalent to the objects offered by <code>newra</code>. Why replace them, then?
+<p>Dense multidimensional arrays work similarly in every language that offers them, and built-in Guile arrays are no different —they also have a root (<code>shared-array-root</code>), a zero (computable from <code>shared-array-offset</code> and <code>array-shape</code>), and a dim vector (<code>array-shape</code>, <code>shared-array-increments</code>). Functionally, they are entirely equivalent to the objects offered by <code>newra</code>. Why replace them, then?
 </p>
 <a name="index-libguile"></a>
 <p>Built-in Guile arrays are implemented in C, as part of libguile. As a Guile type they have their own low-level type tag, and all the basic array operations are C stubs, even the most basic functions such as <code>array-ref</code> or <code>array-rank</code>. Obtaining any of the components of the array requires calling into C. There are several problems with this.
@@ -248,8 +250,6 @@ Up: <a href="#Overview" accesskey="u" rel="up">Overview</a> &nbsp; [<a href="#In
 <p>Third, the larger functions of the array interface, such as <code>array-map!</code>, etc. are not interruptible. This is especially inconvenient when operating on large arrays.
 </p>
 <p>These problems are solved if the built-in type is replaced with a new type defined in Scheme.
-</p>
-<a name="x_002dstar"></a><p>FIXME (see <a href="#x_002dstar"><code>star</code></a>)
 </p>
 <hr>
 <a name="Basics"></a>
@@ -286,7 +286,7 @@ Next: <a href="#Special-arrays" accesskey="n" rel="next">Special arrays</a>, Up:
 <a name="Creating-arrays-1"></a>
 <h3 class="section">2.1 Creating arrays</h3>
 
-<p>An array can be created anew (<a href="#x_002dmake_002dra_002dnew">make-ra-new</a>), or over an existing root (<a href="#x_002dmake_002dra_002droot">make-ra-root</a>). <a href="#x_002dc_002ddims">c-dims</a> can be used to compute the dim vector.
+<p>An array can be created anew (<a href="#x_002dmake_002dra_002dnew"><code>make-ra-new</code></a>), or over an existing root (<a href="#x_002dmake_002dra_002droot"><code>make-ra-root</code></a>). <a href="#x_002dc_002ddims"><code>c-dims</code></a> can be used to compute the dim vector.
 </p>
 <div class="example">
 <pre class="verbatim">(make-ra-new #t 'x (vector (make-dim 3 0 2) (make-dim 2 0 1))) ; more simply
@@ -306,7 +306,7 @@ Next: <a href="#Special-arrays" accesskey="n" rel="next">Special arrays</a>, Up:
 </pre><pre class="example">&rArr; #%2:3:2((1 2) (3 4) (5 6))
 </pre></div>
 
-<p><a href="#x_002dmake_002dra">make-ra</a> or <a href="#x_002dmake_002dtyped_002dra">make-typed-ra</a> use <code>c-dims</code> by default.
+<p><a href="#x_002dmake_002dra"><code>make-ra</code></a> or <a href="#x_002dmake_002dtyped_002dra"><code>make-typed-ra</code></a> use <code>c-dims</code> by default.
 </p>
 <div class="example">
 <pre class="verbatim">(make-ra 99 2 3)
@@ -352,10 +352,10 @@ Next: <a href="#Iteration" accesskey="n" rel="next">Iteration</a>, Previous: <a 
 <p>(The example above can be written <code>(<a href="#x_002dra_002diota">ra-iota</a> 10 0 3)</code>).
 </p></dd></dl>
 
-<p><code>aseq</code> roots are immutable. The type tag of <code>aseq</code> roots is <code>d</code>. Arrays with integer-valued <code>aseq</code> roots have special uses; see <a href="#Slicing">Slicing</a>.
+<p><code>aseq</code> roots are immutable. The type tag of <code>aseq</code> roots is <code>d</code>. Arrays with integer-valued <code>aseq</code> roots have a few special uses; one of them is as arguments in <a href="#Slicing">slicing</a>.
 </p>
 <a name="index-infinite-axes"></a>
-<p>To make <code>&lt;aseq&gt;</code> more useful, <code>newra</code> supports axes with infinite length.
+<p>To make <code>&lt;aseq&gt;</code> even more useful, <code>newra</code> supports axes with infinite length.
 </p>
 <div class="example">
 <pre class="verbatim">(ra-ref (make-ra-root (make-aseq) (vector (make-dim #f)) 0) #e1e12) ; or more simply
@@ -363,7 +363,7 @@ Next: <a href="#Iteration" accesskey="n" rel="next">Iteration</a>, Previous: <a 
 </pre><pre class="example">&rArr; 1000000000000
 </pre></div>
 
-<p>These are treated especially when used in iteration, in that they match axes of any finite length (<a href="#x_002dra_002dmap_0021">ra-map!</a>). Effectively this lets one use <code>(<a href="#x_002dra_002dtranspose">ra-transpose</a> (ra-iota #f) k)</code> as a placeholder for the index over axis <code>k</code>.
+<p>These are treated especially when used in iteration, in that they match axes of any finite length (<a href="#x_002dra_002dmap_0021"><code>ra-map!</code></a>). Effectively this lets one use <code>(<a href="#x_002dra_002dtranspose"><code>ra-transpose</code></a> (ra-iota #f) k)</code> as a placeholder for the index over axis <code>k</code>.
 </p>
 <div class="example">
 <pre class="verbatim">(ra-map! (make-ra 0 3) + (ra-iota 3) (ra-iota #f))
@@ -393,14 +393,14 @@ Next: <a href="#Slicing" accesskey="n" rel="next">Slicing</a>, Previous: <a href
 <a name="Iteration-1"></a>
 <h3 class="section">2.3 Iteration</h3>
 
-<p>The basic array iteration operations in <code>newra</code> all operate by effect. This gives you control of how the result is allocated. If one of the arguments is designated as destination, then that is the result of the whole iteration. For example:
+<p>The basic array iteration operations in <code>newra</code> all operate by effect. This gives you control of how the result is allocated. If one of the arguments is designated as destination, as is the case with <a href="#x_002dra_002dmap_0021"><code>ra-map!</code></a>, then that is the result of the whole iteration. For example:
 </p>
 <div class="example">
 <pre class="verbatim">(ra-map! (make-ra #f 3) - (ra-iota 3 1))
 </pre><pre class="example">&rArr; #%1:3(-1 -2 -3)
 </pre></div>
 
-<p>It is common to need the indices of the elements during array iteration. <code>newra</code> iteration operations do not keep track of those indices<a name="DOCF2" href="#FOOT2"><sup>2</sup></a> because it isn&rsquo;t free to do so. You need to pass the indices you need as arguments, but it&rsquo;s easy to do so by using an infinite index vector together with <a href="#x_002dra_002dtranspose">ra-transpose</a>.
+<p>It is common to need the indices of the elements during array iteration. <code>newra</code> iteration operations do not keep track of those indices<a name="DOCF2" href="#FOOT2"><sup>2</sup></a> because it isn&rsquo;t free to do so. You need to pass the indices you need as arguments, but it&rsquo;s easy to do so by using an infinite index vector together with <a href="#x_002dra_002dtranspose"><code>ra-transpose</code></a>.
 </p>
 <div class="example">
 <pre class="verbatim">(define i0 (ra-iota #f))
@@ -409,11 +409,14 @@ Next: <a href="#Slicing" accesskey="n" rel="next">Slicing</a>, Previous: <a href
 </pre><pre class="example">&rArr; #%2:2:2(((A 0 0) (B 0 1)) ((C 1 0) (D 1 1)))
 </pre></div>
 
-<p>One can iterate not only over the elements of the array, but over any <code>n</code>-frame (the first <code>n</code> axes of an array), using <a href="#x_002dra_002dslice_002dfor_002deach">ra-slice-for-each</a>. In this case the operation takes array slices as arguments, even when they are rank 0; this allows writing to any of the arguments. When there are several arrays involved, all the frames must match.
+<p>One can iterate not only over the elements of the array, but over any <code>n</code>-frame (the first <code>n</code> axes of an array), using <a href="#x_002dra_002dslice_002dfor_002deach"><code>ra-slice-for-each</code></a>. In this case the operation takes array slices as arguments, even when they are of 0 rank; this allows writing to any of the arguments. When there are several arrays involved, all the frames must match.
+</p>
+<p>In the following example, <code>xys</code> is of rank 2, <code>angle</code> is of rank 1, and their first axes have the same length.
 </p>
 <div class="example">
 <pre class="verbatim">(ra-slice-for-each 1
   (lambda (xy angle)
+; xy is rank 1, angle is rank 0
     (ra-set! angle (atan (ra-ref xy 1) (ra-ref xy 0))))
   xys angles)
 </pre></div>
@@ -427,6 +430,69 @@ Next: <a href="#Reshaping-and-resizing" accesskey="n" rel="next">Reshaping and r
 <a name="Slicing-1"></a>
 <h3 class="section">2.4 Slicing</h3>
 
+<p>Slicing refers to the operation of taking a partial view of an array (e.g. a row or a column out of a matrix) through modification of the dim vector. Although this can be done with creative uses of <a href="#x_002dra_002dravel"><code>ra-ravel</code></a>, <a href="#x_002dra_002dreshape"><code>ra-reshape</code></a> and <a href="#x_002dra_002dtranspose"><code>ra-transpose</code></a>, the mechanism described in this section is a lot clearer.
+</p>
+<p>The function <a href="#x_002dra_002dfrom"><code>ra-from</code></a> takes an array argument <code>a</code>, plus another argument for each of the axes of <code>a</code>.
+</p>
+<blockquote>
+<pre class="verbatim">(ra-from a i₀ ...) ⇒ b
+</pre></blockquote>
+
+<p>Each of these arguments <code>i₀...</code> is either 1) an integer; 2) an array of integers; 3) the special value #t. Integer arguments contain indices into the respective axis of <code>a</code>. <code>#t</code> for <code>iₖ</code> is a shortcut for <code>(let ((d (vector-ref (ra-dims a) k))) (ra-iota (dim-len d) (dim-lo-d)))</code>, or in human speech ‘the whole of axis <code>k</code>’. The result <code>b</code> has rank equal to the sum of all the ranks of the <code>i₀...</code>, and is defined as
+</p>
+<blockquote>
+<pre class="verbatim">(ra-ref b j₀ ...) = (ra-ref a (ra-ref i₀ j₀ ...) ...)
+</pre></blockquote>
+
+<p>In other words, this is an outer product of the indices <code>i₀...</code> with operator <code>a</code> (if one thinks of <code>(a i₀ ...)</code> as <code>(ra-ref a i₀ ...)</code>).
+</p>
+<p>If all of the <code>i₀...</code> are integers or arrays of type <code>d</code> (such as those produced by <code>ra-iota</code> or <code>ra-i</code>) then the result of <code>ra-from</code> shares the root of <code>a</code>. Otherwise <code>newra</code> cannot tell whether the indices are an arithmetic sequence so the result has to be copied to a new root. For example:
+</p>
+<div class="example">
+<pre class="verbatim">(define a (list-&gt;ra 2 '((a b c) (d e f))))
+</pre><pre class="example">&rArr; <code>#%2:2:3((a b c) (d e f))</code>
+</pre><pre class="verbatim">(ra-from a 0 #t) ; row 0, will share root
+</pre><pre class="example">&rArr; <code>#%1:3(a b c))</code>
+</pre><pre class="verbatim">(ra-from a #t 1) ; column 1, will share root
+</pre><pre class="example">&rArr; <code>#%1:2(b e))</code>
+</pre><pre class="verbatim">(ra-from a #t (make-ra-root #(2 0))) ; cols 2 &amp; 0, won't share root
+</pre><pre class="example">&rArr; <code>#%2:2:2((c a) (f d)))</code>
+</pre><pre class="verbatim">(ra-from a #t (ra-iota 2 2 -2)) ; cols 2 &amp; 0, will share root
+</pre><pre class="example">&rArr; <code>#%2:2:2((c a) (f d)))</code>
+</pre></div>
+
+<p>One may give fewer <code>i₀</code> than the rank of <code>a</code>. The missing arguments are taken as <code>#t</code> (see <a href="#Rank-polymorphism-and-rank-extension">Rank polymorphism and rank extension</a>).
+</p>
+<div class="example">
+<pre class="verbatim">(ra-from a 0) ; row 0, same as (ra-from a 0 #t)
+</pre><pre class="example">&rArr; <code>#%1d:3(0 1 2))</code>
+</pre></div>
+
+<p>When it is known that the result of <code>ra-from</code> will share the root with its argument, that can be used to modify the original array. For example:
+</p>
+<div class="example">
+<pre class="verbatim">(ra-fill! (ra-from a 1) x)
+</pre><pre class="example">&rArr; <code>#%2:3((a b c) (x x x))</code>
+</pre><pre class="verbatim">a
+</pre><pre class="example">&rArr; <code>#%2:3((a b c) (x x x))</code>
+</pre></div>
+
+<p>The general case is handled with <a href="#x_002dra_002damend_0021"><code>ra-amend!</code></a>:
+</p>
+<div class="example">
+<pre class="verbatim">(define a (list-&gt;ra 2 '((a b c) (d e f))))
+(ra-amend! a 'Y #t (make-ra-root #(2 0)))
+</pre><pre class="example">&rArr; <code>#%2:3((Y b Y) (Y e Y))</code>
+</pre></div>
+<p>while on the other hand
+</p><div class="example">
+<pre class="verbatim">(define a (list-&gt;ra 2 '((a b c) (d e f))))
+(ra-fill! (ra-from a #t (make-ra-root #(2 0))) 'Y)
+</pre><pre class="example">&rArr; <code>#%2:3((Y Y) (Y Y))</code>
+</pre><pre class="verbatim">a
+</pre><pre class="example">&rArr; <code>#%2:3((a b c) (d e f))</code>
+</pre></div>
+
 <hr>
 <a name="Reshaping-and-resizing"></a>
 <div class="header">
@@ -438,11 +504,22 @@ Next: <a href="#Other-operations-on-arrays" accesskey="n" rel="next">Other opera
 
 <a name="index-APL"></a>
 <a name="index-r"></a>
-<p>To match APL ρ, <code>newra</code> offers a set of three different functions.
+<p>To match APL dyadic ρ, <code>newra</code> offers a set of three different functions.
 </p>
 <p><a href="#x_002dra_002dreshape"><code>ra-reshape</code></a> and <a href="#x_002dra_002dravel"><code>ra-ravel</code></a> are in a way the inverse of each other, and neither is able to increase the size of the array. For that purpose <a href="#x_002dra_002dtile"><code>ra-tile</code></a> is provided.
 </p>
-<p><code>ra-reshape</code> and <code>ra-tile</code> always reuse the root of the argument. On the other hand <code>ra-ravel</code> may not be able to — this is one of the reasons to have three different functions instead of only one.
+<div class="example">
+<pre class="verbatim">(ra-dimensions (ra-i 2 3 4))
+</pre><pre class="example">&rArr; (2 3 4)
+</pre><pre class="verbatim">(ra-dimensions (ra-tile (ra-i 2 3 4) 5))
+</pre><pre class="example">&rArr; (5 2 3 4)
+</pre><pre class="verbatim">(ra-dimensions (ra-ravel (ra-tile (ra-i 2 3 4) 5) 2))
+</pre><pre class="example">&rArr; (10 3 4)
+</pre><pre class="verbatim">(ra-dimensions (ra-reshape (ra-ravel (ra-tile (ra-i 2 3 4) 5) 2) 2 5))
+</pre><pre class="example">&rArr; (2 5 3 4)
+</pre></div>
+
+<p><code>ra-reshape</code> and <code>ra-tile</code> always reuse the root of the argument. On the other hand <code>ra-ravel</code> may not be able to — this is one of the reasons to have three different functions instead of only one. You can check in advance whether <code>ra-ravel</code> will reuse the root with the function <a href="#x_002dra_002dorder_002dc_003f"><code>ra-order-c?</code></a>.
 </p>
 <p>All three functions <code>ra-reshape</code>, <code>ra-ravel</code>, and <code>ra-tile</code> operate on prefix axes. To operate on other axes, use <a href="#x_002dra_002dtranspose"><code>ra-transpose</code></a>.
 </p>
@@ -544,7 +621,7 @@ Next: <a href="#Sources" accesskey="n" rel="next">Sources</a>, Previous: <a href
 <a name="index-make_002dra_002dnew"></a>
 <a name="x_002dmake_002dra_002dnew"></a><dl>
 <dt><a name="index-make_002dra_002dnew-1"></a>function<!-- /@w -->: <strong>make-ra-new</strong> <em>type value dims</em></dt>
-<dd><p>Create a new array of the given <var>type</var> and fill it with <var>value</var>.
+<dd><p>Create an array over a new root of the given <var>type</var> and the necessary size (according to <var>dims</var>), and fill it with <var>value</var>.
 </p><div class="example">
 <pre class="verbatim">(make-ra-new 'u8 0 (c-dims 3 2))
 </pre><pre class="example">&rArr; #%2u8:3:2((0 0) (0 0) (0 0))
@@ -553,16 +630,21 @@ Next: <a href="#Sources" accesskey="n" rel="next">Sources</a>, Previous: <a href
 
 <a name="index-make_002dra_002droot"></a>
 <a name="x_002dmake_002dra_002droot"></a><dl>
-<dt><a name="index-make_002dra_002droot-1"></a>function<!-- /@w -->: <strong>make-ra-root</strong> <em>dims [zero]</em></dt>
-<dd>
-<div class="example">
-<pre class="verbatim">(make-ra-root (vector 1 2 3) (vector (make-dim 3)))
+<dt><a name="index-make_002dra_002droot-1"></a>function<!-- /@w -->: <strong>make-ra-root</strong> <em>root [dims [zero]]</em></dt>
+<dd><p>Create an array over the given <var>root</var>.
+</p><div class="example">
+<pre class="verbatim">(make-ra-root (vector 1 2 3))
 </pre><pre class="example">&rArr; #%1d:3(1 2 3)
 </pre></div>
 
 <div class="example">
+<pre class="verbatim">(make-ra-root (vector 1 2 3) (vector (make-dim 2)))
+</pre><pre class="example">&rArr; #%1d:2(1 2)
+</pre></div>
+
+<div class="example">
 <pre class="verbatim">(make-ra-root (vector 1 2 3) (vector (make-dim 2)) 1)
-</pre><pre class="example">&rArr; #%1d:3(2 3)
+</pre><pre class="example">&rArr; #%1d:2(2 3)
 </pre></div>
 </dd></dl>
 
@@ -696,6 +778,24 @@ Next: <a href="#Sources" accesskey="n" rel="next">Sources</a>, Previous: <a href
        dst a)
 </pre></dd></dl>
 
+<a name="index-ra_002dorder_002dc_003f"></a>
+<a name="x_002dra_002dorder_002dc_003f"></a><dl>
+<dt><a name="index-ra_002dorder_002dc_003f-1"></a>function<!-- /@w -->: <strong>ra-order-c?</strong> <em>a [n]</em></dt>
+<dd><p>Check whether the first <var>n</var> axes of <var>ra</var> are in C-order. By default, check that the whole array is in C-order, and additionally that the step on the last axis is 1 (i.e. the array is ‘packed’).
+</p>
+<p><code>(ra-order-c? a n)</code> implies <code>(eq? (ra-root a) (ra-root (<a href="#x_002dra_002dravel"><code>ra-ravel</code></a> a n)))</code>. Note that the stronger condition <code>(ra-order-c? a)</code> is not necessary for <code>(eq? (ra-root a) (ra-root (ra-ravel a)))</code> to hold.
+</p></dd></dl>
+
+<a name="index-ra_002dfrom"></a>
+<a name="x_002dra_002dfrom"></a><dl>
+<dt><a name="index-ra_002dfrom-1"></a>function<!-- /@w -->: <strong>ra-from</strong> <em>a i ...</em></dt>
+</dl>
+
+<a name="index-ra_002damend_0021"></a>
+<a name="x_002dra_002damend_0021"></a><dl>
+<dt><a name="index-ra_002damend_0021-1"></a>function<!-- /@w -->: <strong>ra-amend!</strong> <em>a o i ...</em></dt>
+</dl>
+
 <hr>
 <a name="Sources"></a>
 <div class="header">
@@ -796,10 +896,13 @@ Previous: <a href="#Sources" accesskey="p" rel="prev">Sources</a>, Up: <a href="
 <tr><td></td><td valign="top"><a href="#index-make_002dtyped_002dra"><code>make-typed-ra</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
 <tr><td colspan="4"> <hr></td></tr>
 <tr><th><a name="Indices_cp_letter-R">R</a></th><td></td><td></td></tr>
+<tr><td></td><td valign="top"><a href="#index-ra_002damend_0021"><code>ra-amend!</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
+<tr><td></td><td valign="top"><a href="#index-ra_002dfrom"><code>ra-from</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-ra_002di"><code>ra-i</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-ra_002dindex_002dmap_0021"><code>ra-index-map!</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-ra_002diota"><code>ra-iota</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-ra_002dmap_0021"><code>ra-map!</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
+<tr><td></td><td valign="top"><a href="#index-ra_002dorder_002dc_003f"><code>ra-order-c?</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-ra_002dravel"><code>ra-ravel</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-ra_002dreshape"><code>ra-reshape</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-ra_002dreverse"><code>ra-reverse</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
@@ -846,7 +949,7 @@ Previous: <a href="#Sources" accesskey="p" rel="prev">Sources</a>, Up: <a href="
 <h3><a name="FOOT1" href="#DOCF1">(1)</a></h3>
 <p>Guile used to offer dedicated operations to sum arrays, etc. but obviously that isn&rsquo;t any kind of solution.</p>
 <h3><a name="FOOT2" href="#DOCF2">(2)</a></h3>
-<p>Except for <a href="#x_002dra_002dindex_002dmap_0021">ra-index-map!</a>, which is provided out of compatibility with the older array system.</p>
+<p>Except for <a href="#x_002dra_002dindex_002dmap_0021"><code>ra-index-map!</code></a>, which is provided out of compatibility with the older array system.</p>
 </div>
 <hr>
 

@@ -47,6 +47,8 @@ Invariant Sections, no Front-Cover Texts, and no Back-Cover Texts.
 
 @code{newra} is a Scheme-only replacement for the built-in C-based array facility in Guile 2.2.
 
+This document uses ‘array’ to refer both to the old built-in array type and to the new type introduced in @code{newra}. The distinction is made as necessary.
+
 @menu
 * Overview::          Why Guile arrays need replacing.
 * Basics::            Using arrays as containers.
@@ -159,7 +161,7 @@ Text to be written
 @section Built-in Guile arrays
 @c ------------------------------------------------
 
-Dense multidimensional arrays work similarly in every language that offers them, and built-in Guile arrays are no different —they also have a root (@code{shared-array-root}), a zero (computable from @code{shared-array-offset}), and a dim vector (@code{array-shape}, @code{shared-array-increments}). Functionally, they are entirely equivalent to the objects offered by @code{newra}. Why replace them, then?
+Dense multidimensional arrays work similarly in every language that offers them, and built-in Guile arrays are no different —they also have a root (@code{shared-array-root}), a zero (computable from @code{shared-array-offset} and @code{array-shape}), and a dim vector (@code{array-shape}, @code{shared-array-increments}). Functionally, they are entirely equivalent to the objects offered by @code{newra}. Why replace them, then?
 
 @cindex libguile
 Built-in Guile arrays are implemented in C, as part of libguile. As a Guile type they have their own low-level type tag, and all the basic array operations are C stubs, even the most basic functions such as @code{array-ref} or @code{array-rank}. Obtaining any of the components of the array requires calling into C. There are several problems with this.
@@ -171,9 +173,6 @@ Second, the C stubs create a barrier to optimization by the Scheme compiler. The
 Third, the larger functions of the array interface, such as @code{array-map!}, etc. are not interruptible. This is especially inconvenient when operating on large arrays.
 
 These problems are solved if the built-in type is replaced with a new type defined in Scheme.
-
-@anchor{x-star}
-FIXME (see @ref{x-star,@code{star}})
 
 @c ------------------------------------------------
 @node Basics
@@ -195,7 +194,7 @@ FIXME (see @ref{x-star,@code{star}})
 @section Creating arrays
 @c ------------------------------------------------
 
-An array can be created anew (@ref{x-make-ra-new, make-ra-new}), or over an existing root (@ref{x-make-ra-root, make-ra-root}). @ref{x-c-dims, c-dims} can be used to compute the dim vector.
+An array can be created anew (@ref{x-make-ra-new, @code{make-ra-new}}), or over an existing root (@ref{x-make-ra-root, @code{make-ra-root}}). @ref{x-c-dims, @code{c-dims}} can be used to compute the dim vector.
 
 @example
 @verbatim
@@ -221,7 +220,7 @@ An existing root implies the type, so it doesn't need to be given.
 @result{} #%2:3:2((1 2) (3 4) (5 6))
 @end example
 
-@ref{x-make-ra, make-ra} or @ref{x-make-typed-ra, make-typed-ra} use @code{c-dims} by default.
+@ref{x-make-ra, @code{make-ra}} or @ref{x-make-typed-ra, @code{make-typed-ra}} use @code{c-dims} by default.
 
 @example
 @verbatim
@@ -269,10 +268,10 @@ Create an arithmetic sequence [@code{org, org+inc, org+2·inc, ...}]. The defaul
 (The example above can be written @code{(@ref{x-ra-iota, ra-iota} 10 0 3)}).
 @end deffn
 
-@code{aseq} roots are immutable. The type tag of @code{aseq} roots is @code{d}. Arrays with integer-valued @code{aseq} roots have special uses; see @ref{Slicing}.
+@code{aseq} roots are immutable. The type tag of @code{aseq} roots is @code{d}. Arrays with integer-valued @code{aseq} roots have a few special uses; one of them is as arguments in @ref{Slicing, slicing}.
 
 @cindex infinite axes
-To make @code{<aseq>} more useful, @code{newra} supports axes with infinite length.
+To make @code{<aseq>} even more useful, @code{newra} supports axes with infinite length.
 
 @example
 @verbatim
@@ -282,7 +281,7 @@ To make @code{<aseq>} more useful, @code{newra} supports axes with infinite leng
 @result{} 1000000000000
 @end example
 
-These are treated especially when used in iteration, in that they match axes of any finite length (@ref{x-ra-map!, ra-map!}). Effectively this lets one use @code{(@ref{x-ra-transpose, ra-transpose} (ra-iota #f) k)} as a placeholder for the index over axis @code{k}.
+These are treated especially when used in iteration, in that they match axes of any finite length (@ref{x-ra-map!, @code{ra-map!}}). Effectively this lets one use @code{(@ref{x-ra-transpose, @code{ra-transpose}} (ra-iota #f) k)} as a placeholder for the index over axis @code{k}.
 
 @example
 @verbatim
@@ -314,7 +313,7 @@ When an axis has 0 step and infinite length, it operates essentially as ‘singl
 @section Iteration
 @c ------------------------------------------------
 
-The basic array iteration operations in @code{newra} all operate by effect. This gives you control of how the result is allocated. If one of the arguments is designated as destination, then that is the result of the whole iteration. For example:
+The basic array iteration operations in @code{newra} all operate by effect. This gives you control of how the result is allocated. If one of the arguments is designated as destination, as is the case with @ref{x-ra-map!, @code{ra-map!}}, then that is the result of the whole iteration. For example:
 
 @example
 @verbatim
@@ -323,7 +322,7 @@ The basic array iteration operations in @code{newra} all operate by effect. This
 @result{} #%1:3(-1 -2 -3)
 @end example
 
-It is common to need the indices of the elements during array iteration. @code{newra} iteration operations do not keep track of those indices@footnote{Except for @ref{x-ra-index-map!, ra-index-map!}, which is provided out of compatibility with the older array system.} because it isn't free to do so. You need to pass the indices you need as arguments, but it's easy to do so by using an infinite index vector together with @ref{x-ra-transpose, ra-transpose}.
+It is common to need the indices of the elements during array iteration. @code{newra} iteration operations do not keep track of those indices@footnote{Except for @ref{x-ra-index-map!, @code{ra-index-map!}}, which is provided out of compatibility with the older array system.} because it isn't free to do so. You need to pass the indices you need as arguments, but it's easy to do so by using an infinite index vector together with @ref{x-ra-transpose, @code{ra-transpose}}.
 
 @example
 @verbatim
@@ -334,12 +333,15 @@ It is common to need the indices of the elements during array iteration. @code{n
 @result{} #%2:2:2(((A 0 0) (B 0 1)) ((C 1 0) (D 1 1)))
 @end example
 
-One can iterate not only over the elements of the array, but over any @code{n}-frame (the first @code{n} axes of an array), using @ref{x-ra-slice-for-each, ra-slice-for-each}. In this case the operation takes array slices as arguments, even when they are rank 0; this allows writing to any of the arguments. When there are several arrays involved, all the frames must match.
+One can iterate not only over the elements of the array, but over any @code{n}-frame (the first @code{n} axes of an array), using @ref{x-ra-slice-for-each, @code{ra-slice-for-each}}. In this case the operation takes array slices as arguments, even when they are of 0 rank; this allows writing to any of the arguments. When there are several arrays involved, all the frames must match.
+
+In the following example, @code{xys} is of rank 2, @code{angle} is of rank 1, and their first axes have the same length.
 
 @example
 @verbatim
 (ra-slice-for-each 1
   (lambda (xy angle)
+; xy is rank 1, angle is rank 0
     (ra-set! angle (atan (ra-ref xy 1) (ra-ref xy 0))))
   xys angles)
 @end verbatim
@@ -350,6 +352,95 @@ One can iterate not only over the elements of the array, but over any @code{n}-f
 @section Slicing
 @c ------------------------------------------------
 
+Slicing refers to the operation of taking a partial view of an array (e.g. a row or a column out of a matrix) through modification of the dim vector. Although this can be done with creative uses of @ref{x-ra-ravel, @code{ra-ravel}}, @ref{x-ra-reshape, @code{ra-reshape}} and @ref{x-ra-transpose, @code{ra-transpose}}, the mechanism described in this section is a lot clearer.
+
+The function @ref{x-ra-from, @code{ra-from}} takes an array argument @code{a}, plus another argument for each of the axes of @code{a}.
+
+@quotation
+@verbatim
+(ra-from a i₀ ...) ⇒ b
+@end verbatim
+@end quotation
+
+Each of these arguments @code{i₀...} is either 1) an integer; 2) an array of integers; 3) the special value #t. Integer arguments contain indices into the respective axis of @code{a}. @code{#t} for @code{iₖ} is a shortcut for @code{(let ((d (vector-ref (ra-dims a) k))) (ra-iota (dim-len d) (dim-lo-d)))}, or in human speech ‘the whole of axis @code{k}’. The result @code{b} has rank equal to the sum of all the ranks of the @code{i₀...}, and is defined as
+
+@quotation
+@verbatim
+(ra-ref b j₀ ...) = (ra-ref a (ra-ref i₀ j₀ ...) ...)
+@end verbatim
+@end quotation
+
+In other words, this is an outer product of the indices @code{i₀...} with operator @code{a} (if one thinks of @code{(a i₀ ...)} as @code{(ra-ref a i₀ ...)}).
+
+If all of the @code{i₀...} are integers or arrays of type @code{d} (such as those produced by @code{ra-iota} or @code{ra-i}) then the result of @code{ra-from} shares the root of @code{a}. Otherwise @code{newra} cannot tell whether the indices are an arithmetic sequence so the result has to be copied to a new root. For example:
+
+@example
+@verbatim
+(define a (list->ra 2 '((a b c) (d e f))))
+@end verbatim
+@result{} @code{#%2:2:3((a b c) (d e f))}
+@verbatim
+(ra-from a 0 #t) ; row 0, will share root
+@end verbatim
+@result{} @code{#%1:3(a b c))}
+@verbatim
+(ra-from a #t 1) ; column 1, will share root
+@end verbatim
+@result{} @code{#%1:2(b e))}
+@verbatim
+(ra-from a #t (make-ra-root #(2 0))) ; cols 2 & 0, won't share root
+@end verbatim
+@result{} @code{#%2:2:2((c a) (f d)))}
+@verbatim
+(ra-from a #t (ra-iota 2 2 -2)) ; cols 2 & 0, will share root
+@end verbatim
+@result{} @code{#%2:2:2((c a) (f d)))}
+@end example
+
+One may give fewer @code{i₀} than the rank of @code{a}. The missing arguments are taken as @code{#t} (see @ref{Rank polymorphism and rank extension}).
+
+@example
+@verbatim
+(ra-from a 0) ; row 0, same as (ra-from a 0 #t)
+@end verbatim
+@result{} @code{#%1d:3(0 1 2))}
+@end example
+
+When it is known that the result of @code{ra-from} will share the root with its argument, that can be used to modify the original array. For example:
+
+@example
+@verbatim
+(ra-fill! (ra-from a 1) x)
+@end verbatim
+@result{} @code{#%2:3((a b c) (x x x))}
+@verbatim
+a
+@end verbatim
+@result{} @code{#%2:3((a b c) (x x x))}
+@end example
+
+The general case is handled with @ref{x-ra-amend!, @code{ra-amend!}}:
+
+@example
+@verbatim
+(define a (list->ra 2 '((a b c) (d e f))))
+(ra-amend! a 'Y #t (make-ra-root #(2 0)))
+@end verbatim
+@result{} @code{#%2:3((Y b Y) (Y e Y))}
+@end example
+while on the other hand
+@example
+@verbatim
+(define a (list->ra 2 '((a b c) (d e f))))
+(ra-fill! (ra-from a #t (make-ra-root #(2 0))) 'Y)
+@end verbatim
+@result{} @code{#%2:3((Y Y) (Y Y))}
+@verbatim
+a
+@end verbatim
+@result{} @code{#%2:3((a b c) (d e f))}
+@end example
+
 @c ------------------------------------------------
 @node Reshaping and resizing
 @section Reshaping and resizing
@@ -357,11 +448,30 @@ One can iterate not only over the elements of the array, but over any @code{n}-f
 
 @cindex APL
 @cindex ρ
-To match APL ρ, @code{newra} offers a set of three different functions.
+To match APL dyadic ρ, @code{newra} offers a set of three different functions.
 
 @ref{x-ra-reshape, @code{ra-reshape}} and @ref{x-ra-ravel, @code{ra-ravel}} are in a way the inverse of each other, and neither is able to increase the size of the array. For that purpose @ref{x-ra-tile, @code{ra-tile}} is provided.
 
-@code{ra-reshape} and @code{ra-tile} always reuse the root of the argument. On the other hand @code{ra-ravel} may not be able to — this is one of the reasons to have three different functions instead of only one.
+@example
+@verbatim
+(ra-dimensions (ra-i 2 3 4))
+@end verbatim
+@result{} (2 3 4)
+@verbatim
+(ra-dimensions (ra-tile (ra-i 2 3 4) 5))
+@end verbatim
+@result{} (5 2 3 4)
+@verbatim
+(ra-dimensions (ra-ravel (ra-tile (ra-i 2 3 4) 5) 2))
+@end verbatim
+@result{} (10 3 4)
+@verbatim
+(ra-dimensions (ra-reshape (ra-ravel (ra-tile (ra-i 2 3 4) 5) 2) 2 5))
+@end verbatim
+@result{} (2 5 3 4)
+@end example
+
+@code{ra-reshape} and @code{ra-tile} always reuse the root of the argument. On the other hand @code{ra-ravel} may not be able to — this is one of the reasons to have three different functions instead of only one. You can check in advance whether @code{ra-ravel} will reuse the root with the function @ref{x-ra-order-c?, @code{ra-order-c?}}.
 
 All three functions @code{ra-reshape}, @code{ra-ravel}, and @code{ra-tile} operate on prefix axes. To operate on other axes, use @ref{x-ra-transpose, @code{ra-transpose}}.
 
@@ -433,7 +543,7 @@ All three functions @code{ra-reshape}, @code{ra-ravel}, and @code{ra-tile} opera
 @cindex @code{make-ra-new}
 @anchor{x-make-ra-new}
 @deffn @w{function} make-ra-new type value dims
-Create a new array of the given @var{type} and fill it with @var{value}.
+Create an array over a new root of the given @var{type} and the necessary size (according to @var{dims}), and fill it with @var{value}.
 @example
 @verbatim
 (make-ra-new 'u8 0 (c-dims 3 2))
@@ -444,20 +554,27 @@ Create a new array of the given @var{type} and fill it with @var{value}.
 
 @cindex @code{make-ra-root}
 @anchor{x-make-ra-root}
-@deffn @w{function} make-ra-root dims [zero]
-
+@deffn @w{function} make-ra-root root [dims [zero]]
+Create an array over the given @var{root}.
 @example
 @verbatim
-(make-ra-root (vector 1 2 3) (vector (make-dim 3)))
+(make-ra-root (vector 1 2 3))
 @end verbatim
 @result{} #%1d:3(1 2 3)
 @end example
 
 @example
 @verbatim
+(make-ra-root (vector 1 2 3) (vector (make-dim 2)))
+@end verbatim
+@result{} #%1d:2(1 2)
+@end example
+
+@example
+@verbatim
 (make-ra-root (vector 1 2 3) (vector (make-dim 2)) 1)
 @end verbatim
-@result{} #%1d:3(2 3)
+@result{} #%1d:2(2 3)
 @end example
 @end deffn
 
@@ -607,6 +724,24 @@ This is equivalent to
          (ra-set! dst (apply op (map ra-ref a))))
        dst a)
 @end verbatim
+@end deffn
+
+@cindex @code{ra-order-c?}
+@anchor{x-ra-order-c?}
+@deffn @w{function} ra-order-c? a [n]
+Check whether the first @var{n} axes of @var{ra} are in C-order. By default, check that the whole array is in C-order, and additionally that the step on the last axis is 1 (i.e. the array is ‘packed’).
+
+@code{(ra-order-c? a n)} implies @code{(eq? (ra-root a) (ra-root (@ref{x-ra-ravel, @code{ra-ravel}} a n)))}. Note that the stronger condition @code{(ra-order-c? a)} is not necessary for @code{(eq? (ra-root a) (ra-root (ra-ravel a)))} to hold.
+@end deffn
+
+@cindex @code{ra-from}
+@anchor{x-ra-from}
+@deffn @w{function} ra-from a i ...
+@end deffn
+
+@cindex @code{ra-amend!}
+@anchor{x-ra-amend!}
+@deffn @w{function} ra-amend! a o i ...
 @end deffn
 
 @c ------------------------------------------------

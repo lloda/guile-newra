@@ -12,6 +12,22 @@
         (srfi :8) (srfi :26) (ice-9 match) (srfi :1) (ice-9 format)
         (only (rnrs base) vector-map))
 
+; BUG
+
+(define o (list->ra 2 '((A B) (X Y))))
+(define i1 (make-ra-root #(1 0)))
+(define i0 (make-ra-root #(1 0)))
+
+(define a (list->ra 2 '((1 2) (8 9))))
+(ra-from a i0 #t)
+(ra-amend! a o i0 #t)
+(ra-from a i0 #t) ; o
+
+(define a (list->ra 2 '((1 2) (8 9))))
+(ra-from a #t i1)
+(ra-amend! a o #t i1)
+(ra-from a #t i1) ; NOT o
+
 
 ; -----------------------
 ; can't remember

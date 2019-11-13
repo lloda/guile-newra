@@ -25,6 +25,7 @@ Help: [C-uc .] insert timestamp [C-cc] flip checkbox [C-uucc] partial flip check
   * [X] ra-reshape, ra-tile
   * [ ] verbs, w/rank
   * [ ] as-ra
+  * [ ] cat
   * [ ] output types
 
 * TODO ra-ra functionality [3/4]
