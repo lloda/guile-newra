@@ -347,6 +347,26 @@ In the following example, @code{xys} is of rank 2, @code{angle} is of rank 1, an
 @end verbatim
 @end example
 
+@cindex prefix matching
+The iteration procedures in @code{newra} all perform rank extension of their arguments through prefix matching (see @ref{Rank polymorphism and rank extension}). In the following example, the shapes of the arguments are (5 5), (5) and (@code{#f} 5), so the common prefixes (5), (5) and (@code{#f}) all match.
+
+@example
+@verbatim
+(ra-map! (make-ra 5 5) * (ra-iota 5 1) (ra-transpose (ra-iota 5 1) 1))
+@end verbatim
+@result{} @code{#%2:5:5((1 2 3 4 5) (2 4 6 8 10) (3 6 9 12 15) (4 8 12 16 20) (5 10 15 20 25))}
+@end example
+
+Another example using @ref{x-ra-copy!, ra-copy!},
+
+@example
+@verbatim
+(ra-copy! (list->ra 2 '((a b) (p q) (x y)))
+          (list->ra 1 '(1 2 3)))
+@end verbatim
+@result{} @code{#%2:3:2((1 1) (2 2) (3 3))}
+@end example
+
 @c ------------------------------------------------
 @node Slicing
 @section Slicing
@@ -714,7 +734,7 @@ Iterate over the @var{k}-frames of arrays @var{a} ..., applying @var{op} to the 
 @cindex @code{ra-map!}
 @anchor{x-ra-map!}
 @deffn @w{function} ra-map! dst op a ...
-Iterate over arrays @var{dst} and @var{a}, applying @var{op} to the respective elements in @var{a}, and storing the result in @var{dst}. All the arrays involved must have the same bounds.
+Iterate over arrays @var{dst} and @var{a}, applying @var{op} to the respective elements in @var{a}, and storing the result in @var{dst}. The bounds of the arguments must match.
 
 This is equivalent to
 @verbatim
@@ -723,6 +743,17 @@ This is equivalent to
        (lambda (dst . a)
          (ra-set! dst (apply op (map ra-ref a))))
        dst a)
+@end verbatim
+@end deffn
+
+@cindex @code{ra-copy!}
+@anchor{x-ra-copy!}
+@deffn @w{function} ra-copy! dst src
+Copy @var{src} to @var{dst}.
+
+This is equivalent to
+@verbatim
+(ra-map! dst identity src)
 @end verbatim
 @end deffn
 

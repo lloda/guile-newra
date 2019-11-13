@@ -421,6 +421,22 @@ Next: <a href="#Slicing" accesskey="n" rel="next">Slicing</a>, Previous: <a href
   xys angles)
 </pre></div>
 
+<a name="index-prefix-matching"></a>
+<p>The iteration procedures in <code>newra</code> all perform rank extension of their arguments through prefix matching (see <a href="#Rank-polymorphism-and-rank-extension">Rank polymorphism and rank extension</a>). In the following example, the shapes of the arguments are (5 5), (5) and (<code>#f</code> 5), so the common prefixes (5), (5) and (<code>#f</code>) match.
+</p>
+<div class="example">
+<pre class="verbatim">(ra-map! (make-ra 5 5) * (ra-i 5 1) (ra-transpose (ra-i 5 1) 1))
+</pre><pre class="example">&rArr; <code>#%2:5:5((1 2 3 4 5) (2 4 6 8 10) (3 6 9 12 15) (4 8 12 16 20) (5 10 15 20 25))</code>
+</pre></div>
+
+<p>Another example using <a href="#x_002dra_002dcopy_0021">ra-copy!</a>,
+</p>
+<div class="example">
+<pre class="verbatim">(ra-copy! (list-&gt;ra 2 '((a b) (p q) (x y)))
+          (list-&gt;ra 1 '(1 2 3)))
+</pre><pre class="example">&rArr; <code>#%2:3:2((1 1) (2 2) (3 3))</code>
+</pre></div>
+
 <hr>
 <a name="Slicing"></a>
 <div class="header">
@@ -768,7 +784,7 @@ Next: <a href="#Sources" accesskey="n" rel="next">Sources</a>, Previous: <a href
 <a name="index-ra_002dmap_0021"></a>
 <a name="x_002dra_002dmap_0021"></a><dl>
 <dt><a name="index-ra_002dmap_0021-1"></a>function<!-- /@w -->: <strong>ra-map!</strong> <em>dst op a ...</em></dt>
-<dd><p>Iterate over arrays <var>dst</var> and <var>a</var>, applying <var>op</var> to the respective elements in <var>a</var>, and storing the result in <var>dst</var>. All the arrays involved must have the same bounds.
+<dd><p>Iterate over arrays <var>dst</var> and <var>a</var>, applying <var>op</var> to the respective elements in <var>a</var>, and storing the result in <var>dst</var>. The bounds of the arguments must match.
 </p>
 <p>This is equivalent to
 </p><pre class="verbatim">(apply ra-slice-for-each
@@ -776,6 +792,15 @@ Next: <a href="#Sources" accesskey="n" rel="next">Sources</a>, Previous: <a href
        (lambda (dst . a)
          (ra-set! dst (apply op (map ra-ref a))))
        dst a)
+</pre></dd></dl>
+
+<a name="index-ra_002dcopy_0021"></a>
+<a name="x_002dra_002dcopy_0021"></a><dl>
+<dt><a name="index-ra_002dcopy_0021-1"></a>function<!-- /@w -->: <strong>ra-copy!</strong> <em>dst src</em></dt>
+<dd><p>Copy <var>src</var> to <var>dst</var>.
+</p>
+<p>This is equivalent to
+</p><pre class="verbatim">(ra-map! dst identity src)
 </pre></dd></dl>
 
 <a name="index-ra_002dorder_002dc_003f"></a>
@@ -859,6 +884,8 @@ Previous: <a href="#Sources" accesskey="p" rel="prev">Sources</a>, Up: <a href="
  &nbsp; 
 <a class="summary-letter" href="#Indices_cp_letter-M"><b>M</b></a>
  &nbsp; 
+<a class="summary-letter" href="#Indices_cp_letter-P"><b>P</b></a>
+ &nbsp; 
 <a class="summary-letter" href="#Indices_cp_letter-R"><b>R</b></a>
  &nbsp; 
 <a class="summary-letter" href="#Indices_cp_letter-S"><b>S</b></a>
@@ -895,8 +922,12 @@ Previous: <a href="#Sources" accesskey="p" rel="prev">Sources</a>, Up: <a href="
 <tr><td></td><td valign="top"><a href="#index-make_002dra_002droot"><code>make-ra-root</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-make_002dtyped_002dra"><code>make-typed-ra</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
 <tr><td colspan="4"> <hr></td></tr>
+<tr><th><a name="Indices_cp_letter-P">P</a></th><td></td><td></td></tr>
+<tr><td></td><td valign="top"><a href="#index-prefix-matching">prefix matching</a>:</td><td>&nbsp;</td><td valign="top"><a href="#Iteration">Iteration</a></td></tr>
+<tr><td colspan="4"> <hr></td></tr>
 <tr><th><a name="Indices_cp_letter-R">R</a></th><td></td><td></td></tr>
 <tr><td></td><td valign="top"><a href="#index-ra_002damend_0021"><code>ra-amend!</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
+<tr><td></td><td valign="top"><a href="#index-ra_002dcopy_0021"><code>ra-copy!</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-ra_002dfrom"><code>ra-from</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-ra_002di"><code>ra-i</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-ra_002dindex_002dmap_0021"><code>ra-index-map!</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
@@ -932,6 +963,8 @@ Previous: <a href="#Sources" accesskey="p" rel="prev">Sources</a>, Up: <a href="
 <a class="summary-letter" href="#Indices_cp_letter-L"><b>L</b></a>
  &nbsp; 
 <a class="summary-letter" href="#Indices_cp_letter-M"><b>M</b></a>
+ &nbsp; 
+<a class="summary-letter" href="#Indices_cp_letter-P"><b>P</b></a>
  &nbsp; 
 <a class="summary-letter" href="#Indices_cp_letter-R"><b>R</b></a>
  &nbsp; 

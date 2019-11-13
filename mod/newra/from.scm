@@ -119,15 +119,19 @@
 (define amendu!
   (case-lambda
    ((A C)
+; optimization I
     (ra-copy! A C))
    ((A C . i)
     (receive (frame i) (apply broadcast-indices i)
-      (if (= frame (ra-rank A) (ra-rank C))
-; optimization
-        (apply ra-map! A C i)
-        (apply ra-slice-for-each frame
-               (lambda (C . i) (ra-copy! (apply (lambda i (apply ra-slice A i)) (map ra-ref i)) C))
-               C i))
+      (if (= (ra-rank A) (length i))
+; optimization II
+        (apply ra-for-each
+          (lambda (C . i) (apply ra-set! A C i))
+          C i)
+        (apply ra-slice-for-each
+          frame
+          (lambda (C . i) (ra-copy! (apply (lambda i (apply ra-slice A i)) (map ra-ref i)) C))
+          C i))
       A))))
 
 (define (beatable? x)
@@ -210,6 +214,10 @@ See also: ra-cell ra-ref ra-slice ra-amend! ra-set!
 ; ra-amend!
 ; -----------------------
 
+(define (gradeup l)
+  (map cadr (sort (zip l (iota (length l)))
+                  (lambda (a b) (< (car a) (car b))))))
+
 ; x m} y - https://code.jsoftware.com/wiki/Vocabulary/curlyrt#dyadic
 
 (define (ra-amend! A C . i)
@@ -235,7 +243,12 @@ This function returns the modified ra A.
 See also: ra-set! ra-from ra-copy! ra-cell ra-ref ra-slice
 "
   (receive (B iu tu tb) (apply parse-args A i)
+; C needs to be transposed to match the transposition of B relative to A.
+; FIXME shouldn't need gradeup.
+    (let ((C (if (ra? C)
+               (apply ra-transpose C (gradeup (append tu tb)))
+               (make-ra C))))
 ; apply the unbeatable axes.
-    (apply amendu! B (if (ra? C) C (make-ra C)) iu)
+      (apply amendu! B C iu)
 ; we aren't making a new array so there's no need to transpose back.
-    A))
+      A)))

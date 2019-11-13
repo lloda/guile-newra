@@ -870,8 +870,14 @@
 (test-equal "#%2:2:3((0 1 2) (x y z))" (amend-case (ra-I 2 3) (array->ra #2((x y z))) (array->ra #(1))))
 (test-equal "#%2:2:3((a 1 2) (b 4 5))" (amend-case (ra-I 2 3) (array->ra #(a b)) #t 0))
 (test-equal "#%2:2:3((0 x 2) (3 y 5))" (amend-case (ra-I 2 3) (array->ra #(x y)) #t 1))
-(test-equal "#%2:2:3((a 1 2) (b 4 5))" (amend-case (ra-I 2 3) (array->ra #2((a b))) #t (array->ra #(0))))
-(test-equal "#%2:2:3((0 x 2) (3 y 5))" (amend-case (ra-I 2 3) (array->ra #2((x y))) #t (array->ra #(1))))
+(test-equal "#%2:2:3((a 1 2) (b 4 5))" (amend-case (ra-I 2 3) (array->ra #2((a) (b))) #t (array->ra #(0))))
+(test-equal "#%2:2:3((0 x 2) (3 y 5))" (amend-case (ra-I 2 3) (array->ra #2((x) (y))) #t (array->ra #(1))))
+(test-equal "#%2:2:3((x y 2) (j k 5))" (amend-case (ra-I 2 3) (array->ra #2((x y) (j k))) #t (array->ra #(0 1))))
+(test-equal "#%2:2:3((a 1 b) (3 4 5))" (amend-case (ra-I 2 3) (array->ra #(a b)) 0 (array->ra #(0 2))))
+(test-equal "#%2:2:3((0 x 2) (3 y 5))" (amend-case (ra-I 2 3) (array->ra #(x y)) #t 1))
+(test-equal "#%1:3(b 2 a)" (amend-case (list->ra 1 '(1 2 3)) (array->ra #(a b)) (array->ra #(2 0))))
+(test-equal "#%2:2:3((k 1 j) (y 4 x))" (amend-case (ra-I 2 3) (array->ra #2((x y) (j k))) (array->ra #(1 0)) (array->ra #(2 0))))
+(test-equal "#%2:2:3((0 x 2) (3 4 5))" (amend-case (ra-I 2 3) 'x 0 1))
 
 
 ; -----------------------
@@ -970,5 +976,5 @@
 ; the end.
 ; -----------------------
 
-(test-end "newra")
-(exit (test-runner-fail-count (test-runner-current)))
+;; (test-end "newra")
+;; (exit (test-runner-fail-count (test-runner-current)))
