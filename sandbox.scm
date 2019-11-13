@@ -12,6 +12,8 @@
         (srfi :8) (srfi :26) (ice-9 match) (srfi :1) (ice-9 format)
         (only (rnrs base) vector-map))
 
+; amend! in guile-ploy didn't use prefix match, so the examples/tests there have to be amended :p
+
 
 ; -----------------------
 ; can't remember

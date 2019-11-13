@@ -246,7 +246,8 @@ See also: ra-set! ra-from ra-copy! ra-cell ra-ref ra-slice
 ; C needs to be transposed to match the transposition of B relative to A.
 ; FIXME shouldn't need gradeup.
     (let ((C (if (ra? C)
-               (apply ra-transpose C (gradeup (append tu tb)))
+               (let ((gup (gradeup (append tu tb))))
+                 (apply ra-transpose C (take gup (min (length gup) (ra-rank C)))))
                (make-ra C))))
 ; apply the unbeatable axes.
       (apply amendu! B C iu)

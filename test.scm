@@ -879,6 +879,10 @@
 (test-equal "#%2:2:3((k 1 j) (y 4 x))" (amend-case (ra-I 2 3) (array->ra #2((x y) (j k))) (array->ra #(1 0)) (array->ra #(2 0))))
 (test-equal "#%2:2:3((0 x 2) (3 4 5))" (amend-case (ra-I 2 3) 'x 0 1))
 
+; adapted from guile-ploy
+(test-equal "#%1:20(#f a a b b #f c c #f d #f d #f #f #f #f #f #f #f #f)"
+            (amend-case (make-ra #f 20) (array->ra #(a b c d)) (array->ra #2((1 2) (3 4) (6 7) (9 11)))))
+
 
 ; -----------------------
 ; ra-ravel
