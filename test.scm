@@ -722,8 +722,9 @@
 (define iz (ra-i 3))
 (ra-from A iz)
 (ra-from A 0)
-(ra-from A (ra-copy #t (ra-iota 3)))
-(ra-from A (ra-iota 3) (ra-iota 2)) ; BUG
+(test-equal "#%2:3:10((0 1 2 3 4 5 6 7 8 9) (10 11 12 13 14 15 16 17 18 19) (20 21 22 23 24 25 26 27 28 29))"
+            (ra->string (ra-from A (ra-copy #t (ra-iota 3)))))
+(test-equal "#%2:3:2((0 1) (10 11) (20 21))" (ra->string (ra-from A (ra-iota 3) (ra-iota 2))))
 
 
 ; ------------------------
@@ -809,6 +810,24 @@
 (test-from-from? "22" A (make-ra-root (make-aseq 3) (vector (make-dim 2 1 2) (make-dim 2 1 3)))
                  (make-ra-root (make-aseq 3) (vector (make-dim 2 1 2) (make-dim 2 1 3))))
 
+; placeholders
+(let* ((a (ra-i 2 3 4 5 6))
+       (ref0 (ra-from a 0 (ra-iota 3)))
+       (ref1 (ra-from a 0 (ra-iota 3) 1))
+       (ref2 (ra-from a 0 (ra-iota 3) (ra-iota 4) (ra-iota 5) 2)))
+  (test-assert (ra-equal? a (ra-from a #t)))
+  (test-assert (ra-equal? a (ra-from a (ldots 1))))
+  (test-assert (ra-equal? a (ra-from a #t #t #t #t #t)))
+  (test-assert (ra-equal? a (ra-from a (ldots))))
+  (test-assert (ra-equal? ref0 (ra-from a 0 #t)))
+  (test-assert (ra-equal? ref0 (ra-from a 0 (ldots 1))))
+  (test-assert (ra-equal? ref0 (ra-from a 0 (ldots 0))))
+  (test-assert (ra-equal? ref1 (ra-from a 0 #t 1)))
+  (test-assert (ra-equal? ref1 (ra-from a 0 (ldots 1) 1)))
+  (test-assert (ra-equal? ref2 (ra-from a 0 #t #t #t 2)))
+  (test-assert (ra-equal? ref2 (ra-from a 0 (ldots 3) 2)))
+  (test-assert (ra-equal? ref2 (ra-from a 0 (ldots) 2))))
+
 
 ; ------------------------
 ; other A
@@ -882,6 +901,10 @@
 ; adapted from guile-ploy
 (test-equal "#%1:20(#f a a b b #f c c #f d #f d #f #f #f #f #f #f #f #f)"
             (amend-case (make-ra #f 20) (array->ra #(a b c d)) (array->ra #2((1 2) (3 4) (6 7) (9 11)))))
+
+; with placeholders
+(test-equal "#%3:4:3:2(((0 x) (2 x) (4 x)) ((6 x) (8 x) (10 x)) ((12 x) (14 x) (16 x)) ((18 x) (20 x) (22 x)))"
+            (amend-case (ra-I 4 3 2) 'x (ldots) 1))
 
 
 ; -----------------------
@@ -980,5 +1003,5 @@
 ; the end.
 ; -----------------------
 
-;; (test-end "newra")
-;; (exit (test-runner-fail-count (test-runner-current)))
+(test-end "newra")
+(exit (test-runner-fail-count (test-runner-current)))

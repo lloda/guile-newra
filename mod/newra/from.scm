@@ -13,27 +13,58 @@
 ; FIXME Simplify...
 
 (define-module (newra from)
-  #:export (ra-from ra-amend! fromb fromu amendu!)) ; testing
+  #:export (ra-from ra-amend! ldots
+            fromb fromu amendu!))
 
 (import (newra base) (newra map) (newra lib) (srfi :8) (srfi :26) (srfi :1)
-        (ice-9 control) (ice-9 match) (only (rnrs base) vector-map vector-for-each))
+        (srfi :9) (srfi srfi-9 gnu) (ice-9 control) (ice-9 match)
+        (only (rnrs base) vector-map vector-for-each))
+
+(define-immutable-record-type <ldots>
+  (ldots* n) ldots?
+  (n ldots-n))
+
+(define* (ldots #:optional n)
+  (if (or (not n) (and (>= n 0) (exact-integer? n)))
+    (ldots* n)
+    (throw 'bad-argument-to-ldots)))
 
 ; -----------------------
 ; this is the pure beaten section.
 ; FIXME preallocate the dim vector then run j k ... j ...
 ; -----------------------
 
+(define (count-axes-left x)
+  (fold (lambda (x n)
+          (+ n
+             (match x
+               ((? ldots? x) (or (ldots-n x) (throw 'expanding-ldots-used-more-than-once)))
+               (else 1))))
+        0 x))
+
 (define (fromb A . ai)
   (let loopj ((j 0) (ii ai) (zero (ra-zero A)) (bdims '()))
     (match ii
+      (()
+       (make-ra-root (ra-root A)
+                     (vector-append (apply vector-append (reverse! bdims))
+                                    (vector-drop (%%ra-dims A) j))
+                     zero))
       ((i0 . irest)
-       (let ((dimA (vector-ref (ra-dims A) j)))
-         (match i0
-           (#t
-            (loopj (+ j 1) irest zero (cons (vector dimA) bdims)))
-           ((? integer? z)
-            (loopj (+ j 1) irest (+ zero (* (dim-step dimA) (dim-check dimA z))) bdims))
-           ((? ra? i)
+       (match i0
+         (#t
+          (let ((dimA (vector-ref (%%ra-dims A) j)))
+            (loopj (+ j 1) irest zero (cons (vector dimA) bdims))))
+         ((? integer? z)
+          (let ((dimA (vector-ref (%%ra-dims A) j)))
+            (loopj (+ j 1) irest (+ zero (* (dim-step dimA) (dim-check dimA z))) bdims)))
+         (($ <ldots> n)
+          (let ((jnext (+ j n)))
+            (unless (<= jnext (%%ra-rank A))
+              (throw 'ldots-n-at-j-too-large-for-rank n j (%%ra-rank A)))
+            (loopj jnext irest zero (cons (vector-clip (%%ra-dims A) j jnext) bdims))))
+         ((? ra? i)
+          (let ((dimA (vector-ref (%%ra-dims A) j)))
             (let ((ri (%%ra-rank i)))
               (if (zero? ri)
                 (loopj (+ j 1) irest (+ zero (* (dim-step dimA) (dim-check dimA (i)))) bdims)
@@ -71,12 +102,7 @@
                                    (throw 'dim-check-out-of-range dimA lo)))
                                (loopj (+ j 1) irest
                                       (+ zero (* (dim-step dimA) (+ rorg (* rinc izero))))
-                                      (cons bdimsj bdims))))))))))))))))
-      (()
-       (make-ra-root (ra-root A)
-                     (vector-append (apply vector-append (reverse! bdims))
-                                    (vector-drop (ra-dims A) (length ai)))
-                     zero)))))
+                                      (cons bdimsj bdims)))))))))))))))))))
 
 
 ; ------------------------
@@ -140,22 +166,35 @@
 (define (index-rank x)
   (match x ((? integer? z) 0) ((? ra? ra) (ra-rank ra)) (#t 1)))
 
+; split the beatable part of A and chew the indices for fromb.
+; FIXME redundancy in going over the args twice and in fromb...
+
 (define (parse-args A . i)
-  (let loop ((n 0) (m 0) (ii i)
+  (let loop ((j 0) (m 0) (ii i)
              (ib '()) (ibi '()) (tb '())
              (iu '()) (iui '()) (tu '()))
     (match ii
       ((i0 . irest)
-       (let* ((k (index-rank i0))
-              (idest (iota k m)))
-         (if (beatable? i0)
-           (loop (+ n 1) (+ m k) irest
-                 (cons i0 ib) (cons n ibi) (fold cons tb idest)
-                 iu iui tu)
-           (loop (+ n 1) (+ m k) irest
-                 ib ibi tb
-                 (cons i0 iu) (cons n iui) (fold cons tu idest)))))
+       (match i0
+         (($ <ldots> n)
+          (let* ((k (or n (- (ra-rank A) j (count-axes-left irest))))
+                 (idest (iota k m)))
+            (loop (+ j k) (+ m k) irest
+                  (cons (ldots k) ib) (fold cons ibi (iota k j)) (fold cons tb idest)
+                  iu iui tu)))
+         (i0
+          (let* ((k (index-rank i0))
+                 (idest (iota k m)))
+            (if (beatable? i0)
+              (loop (+ j 1) (+ m k) irest
+                    (cons i0 ib) (cons j ibi) (fold cons tb idest)
+                    iu iui tu)
+              (loop (+ j 1) (+ m k) irest
+                    ib ibi tb
+                    (cons i0 iu) (cons j iui) (fold cons tu idest)))))))
       (()
+       (when (> j (%%ra-rank A))
+         (throw 'too-many-indices-for-rank-of-A j (%%ra-rank A)))
        (let ((ib (reverse ib))
              (ibi (reverse ibi))
              (tb (reverse tb))
@@ -174,7 +213,7 @@
                     (ra-root B)
                     (vector-append (vector-map (cute vector-ref (ra-dims A) <>) (list->vector iui))
                                    (ra-dims B)
-                                   (vector-drop (ra-dims A) (length i)))
+                                   (vector-drop (ra-dims A) j))
                     (ra-zero B))))
            (values B iu tu tb)))))))
 
@@ -244,7 +283,7 @@ See also: ra-set! ra-from ra-copy! ra-cell ra-ref ra-slice
 "
   (receive (B iu tu tb) (apply parse-args A i)
 ; C needs to be transposed to match the transposition of B relative to A.
-; FIXME shouldn't need gradeup.
+; FIXME shouldn't need gradeup - a version of ra-transpose that takes axes in dest order?
     (let ((C (if (ra? C)
                (let ((gup (gradeup (append tu tb))))
                  (apply ra-transpose C (take gup (min (length gup) (ra-rank C)))))

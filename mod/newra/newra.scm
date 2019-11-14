@@ -39,6 +39,6 @@
            ra-reverse ra-transpose ra-order-c? ra-ravel ra-reshape ra-tile
            ra-fold ra-fold*
 
-           ra-from ra-amend!
+           ra-from ra-amend! ldots
 
            list->ra list->typed-ra)

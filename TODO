@@ -54,4 +54,5 @@ Help: [C-uc .] insert timestamp [C-cc] flip checkbox [C-uucc] partial flip check
   * [ ] special rank-1 (or higher!) cases for e.g. copy or fill in the unroll section (e.g. bytevector-copy).
   * [ ] loop attack heuristics (different orders...)
   * [ ] bench tracking
+  * [ ] move struct defs to (newra types)
   * [ ] parameters to control print format (eg print sizes/strides, truncate...)
