@@ -7,7 +7,7 @@
 @c last [ma112]
 
 @set VERSION 1
-@set UPDATED 2019 November 11
+@set UPDATED 2019 November 14
 
 @copying
 @code{newra} (version @value{VERSION}, updated @value{UPDATED})
@@ -70,7 +70,78 @@ This document uses ‘array’ to refer both to the old built-in array type and 
 @chapter Overview
 @c ------------------------------------------------
 
-An array is an aggregate of the following pieces:
+A multidimensional array is a container (or rather a container view) whose elements can be looked up using a multi-index (i₀, i₁, ...). Each of the indices i₀, i₁, ... has a constant range [l₀, h₀], [l₁, h₁], ... independent of the values of the other indices, so the array is ‘rectangular’. The number of indices in the multi-index is the @dfn{rank} of the array, and the list ((l₀ h₀) (l₁ h₁) ... (lᵣ₋₁ hᵣ₋₁)) is the @dfn{shape} of the array. We speak of a rank-@math{r} array or of an @math{r}-array.
+
+Sometimes we deal with multidimensional @emph{expressions} where the elements aren't stored anywhere, but are computed on demand when the expression is looked up. In this general sense, an ‘array’ is just a function of integers with a rectangular domain. Such an array would be immutable.
+
+Arrays (in the form of @dfn{matrices}, @dfn{vectors}, or @dfn{tensors}) are very common objects in math and programming, and it is very useful to be able to manipulate arrays as individual entities rather than as aggregates — that is one of the main purposes of @code{newra}.
+
+@menu
+* Rank polymorphism and rank extension::
+* The pieces of an array::
+* Built-in Guile arrays::
+@end menu
+
+@c ------------------------------------------------
+@node Rank polymorphism and rank extension
+@section Rank polymorphism and rank extension
+@c ------------------------------------------------
+
+@cindex rank polymorphism
+@dfn{Rank polymorphism} is the ability to treat an array of rank @math{r} as an array of lower rank where the elements are themselves arrays.
+
+@cindex cell
+@cindex frame
+Think of a matrix A, a 2-array with sizes (n₀, n₁) where the elements A(i₀, i₁) are numbers. If we consider the subarrays (rows) A(0, ...), A(1, ...), ..., A(n₀-1, ...) as individual elements, then we have a new view of A as a 1-array of size n₀ with those rows as elements. We say that the rows A(i₀)≡A(i₀, ...) are the 1-@dfn{cells} of A, and the numbers A(i₀, i₁) are 0-cells of A. For an array of arbitrary rank @math{r} the (@math{r}-1)-cells of A are called its @dfn{items}. The prefix of the shape (n₀, n₁, ... nₙ₋₁₋ₖ) that is not taken up by the k-cell is called the k-@dfn{frame}.
+
+An obvious way to store an array in linearly addressed memory is to place its items one after another. So we would store a 3-array as
+
+@quotation
+A: [A(0), A(1), ...]
+@end quotation
+
+and the items of A(i₀), etc. are in turn stored in the same way, so
+
+@quotation
+A: [A(0): [A(0, 0), A(0, 1) ...], ...]
+@end quotation
+
+and the same for the items of A(i₀, i₁), etc.
+
+@quotation
+A: [[A(0, 0): [A(0, 0, 0), A(0, 0, 1) ...], A(0, 1): [A(0, 1, 0), A(0, 1, 1) ...]], ...]
+@end quotation
+
+@cindex order, row-major
+This way to lay out an array in memory is called @dfn{row-major order} or @dfn{C-order}, since it's the default order for built-in arrays in C. A row-major array A with sizes (n₀, n₁, ... nᵣ₋₁) can be looked up like this:
+
+@anchor{x-strides}
+@quotation
+A(i₀, i₁, ...) = (storage-of-A) [(((i₀n₁ + i₁)n₂ + i₂)n₃ + ...)+iᵣ₋₁] = (storage-of-A) [o + s₀i₀ + s₁i₁ +  ...]
+@end quotation
+
+where the numbers (s₀, s₁, ...) are called the @dfn{strides}@footnote{Cf. @url{https://en.wikipedia.org/wiki/Dope_vector, @dfn{dope vector}}}. Note that the ‘linear’ or ‘raveled’ address [o + s₀i₀ + s₁i₁ +  ...] is an affine function of (i₀, i₁, ...). If we represent an array as a tuple
+
+@quotation
+A ≡ ((storage-of-A), o, (s₀, s₁, ...))
+@end quotation
+
+then any affine transformation of the indices can be achieved simply by modifying the numbers (o, (s₀, s₁, ...)), with no need to touch the storage. This includes very common operations such as: @ref{x-ra-transpose,transposing} axes, @ref{x-ra-reverse,reversing} the order along an axis, most cases of @ref{Slicing,slicing}, and sometimes even reshaping or tiling the array.
+
+A basic example is obtaining the i₀-th item of A:
+
+@quotation
+A(i₀) ≡ ((storage-of-A), o+s₀i₀, (s₁, ...))
+@end quotation
+
+Note that we can iterate over these items by simply bumping the pointer o+s₀i₀. This means that iterating over (k>0)-cells doesn't have to cost any more than iterating over 0-cells (@ref{x-ra-slice-for-each,@code{ra-slice-for-each}}).
+
+@c ------------------------------------------------
+@node The pieces of an array
+@section The pieces of an array
+@c ------------------------------------------------
+
+An @code{newra} array is in fact an aggregate of the following pieces:
 
 @cindex rank
 @cindex dim vector
@@ -151,10 +222,6 @@ A = B+C;
 
 @cindex Guile
 Text to be written
-
-@menu
-* Built-in Guile arrays::
-@end menu
 
 @c ------------------------------------------------
 @node Built-in Guile arrays
@@ -333,7 +400,7 @@ It is common to need the indices of the elements during array iteration. @code{n
 @result{} #%2:2:2(((A 0 0) (B 0 1)) ((C 1 0) (D 1 1)))
 @end example
 
-One can iterate not only over the elements of the array, but over any @code{n}-frame (the first @code{n} axes of an array), using @ref{x-ra-slice-for-each, @code{ra-slice-for-each}}. In this case the operation takes array slices as arguments, even when they are of 0 rank; this allows writing to any of the arguments. When there are several arrays involved, all the frames must match.
+One can iterate not only over the whole array, but also over any @code{n}-frame (the first @code{n} axes of an array), using @ref{x-ra-slice-for-each, @code{ra-slice-for-each}}. In this case the operation takes array slices as arguments, even when they are of rank 0; this allows writing to any of the arguments. When there are several arrays involved, all the frames must match.
 
 In the following example, @code{xys} is of rank 2, @code{angle} is of rank 1, and their first axes have the same length.
 
@@ -341,7 +408,7 @@ In the following example, @code{xys} is of rank 2, @code{angle} is of rank 1, an
 @verbatim
 (ra-slice-for-each 1
   (lambda (xy angle)
-; xy is rank 1, angle is rank 0
+; inside the op, xy is rank 1, angle is rank 0
     (ra-set! angle (atan (ra-ref xy 1) (ra-ref xy 0))))
   xys angles)
 @end verbatim
@@ -372,9 +439,70 @@ Another example using @ref{x-ra-copy!, ra-copy!},
 @section Slicing
 @c ------------------------------------------------
 
-Slicing refers to the operation of taking a partial view of an array (e.g. a row or a column out of a matrix) through modification of the dim vector. Although this can be done with creative uses of @ref{x-ra-ravel, @code{ra-ravel}}, @ref{x-ra-reshape, @code{ra-reshape}} and @ref{x-ra-transpose, @code{ra-transpose}}, the mechanism described in this section is a lot clearer.
+Slicing refers to the operation of taking a partial view of an array (e.g. a row or a column out of a matrix) through modification of the dim vector. This can be done with creative uses of @ref{x-ra-ravel, @code{ra-ravel}}, @ref{x-ra-reshape, @code{ra-reshape}} and @ref{x-ra-transpose, @code{ra-transpose}}, and of course by direct modification of the dim vector, but the facilities described in this section are usually a lot clearer.
 
-The function @ref{x-ra-from, @code{ra-from}} takes an array argument @code{a}, plus another argument for each of the axes of @code{a}.
+@cindex prefix slice
+The simplest form of slicing uses @ref{x-ra-slice, ra-slice} to produce ‘prefix slices’. It is an application of @ref{Rank polymorphism and rank extension, rank polymorphism}.
+
+@example
+@verbatim
+(define a (list->ra 3 '(((a b) (x y)) ((A B) (X Y)))))
+@end verbatim
+@result{} @code{#%3:2:2:2(((a b) (x y)) ((A B) (X Y)))}
+@verbatim
+(ra-slice a 0 1 0)
+@end verbatim
+@result{} @code{#%0(x)}
+@verbatim
+(ra-slice a 0 1)
+@end verbatim
+@result{} @code{#%1:2(x y)}
+@verbatim
+(ra-slice a 0)
+@end verbatim
+@result{} @code{#%2:2:2((a b) (x y))}
+@verbatim
+(ra-slice a 0)
+@end verbatim
+@result{} @code{#%3:2:2:2(((a b) (x y)) ((A B) (X Y)))}
+@end example
+
+The prefix slice always shares the root of the source array, so it can be used to modify the source array.
+
+@example
+@verbatim
+(ra-fill! (ra-slice a 1 0) '99)
+@end verbatim
+@result{} @code{#%1:2(99 99)}
+@verbatim
+a
+@end verbatim
+@result{} @code{#%3:2:2:2(((a b) (x y)) ((99 99) (X Y)))}
+@end example
+
+The variant @ref{x-ra-cell, @code{ra-cell}} is identical to @code{ra-slice} except that it returns an element (and not a rank 0 array) when the full set of indices is given.
+
+@example
+@verbatim
+(ra-slice a 0 1 0)
+@end verbatim
+@result{} @code{x}
+@end example
+
+@code{ra-cell} is a rank-polymorphic generalization of the basic element lookup function @ref{x-ra-ref, @code{ra-ref}}, which requires the full set of indices.
+
+@example
+@verbatim
+(ra-ref a 0 1 0) ; same as ra-slice
+@end verbatim
+@result{} @code{x}
+@verbatim
+(ra-ref a 0 1)
+@end verbatim
+@result{} @code{"<unnamed port>":...: Throw to key `bad-number-of-indices' with args `(3 2)'.}
+@end example
+
+Both @code{ra-cell} and @code{ra-slice} (and @code{ra-ref}) take scalar indices as arguments. The more powerful function @ref{x-ra-from, @code{ra-from}} is able to handle arrays of indices.
 
 @quotation
 @verbatim
@@ -382,7 +510,7 @@ The function @ref{x-ra-from, @code{ra-from}} takes an array argument @code{a}, p
 @end verbatim
 @end quotation
 
-Each of these arguments @code{i₀...} is either 1) an integer; 2) an array of integers; 3) the special value #t. Integer arguments contain indices into the respective axis of @code{a}. @code{#t} for @code{iₖ} is a shortcut for @code{(let ((d (vector-ref (ra-dims a) k))) (ra-iota (dim-len d) (dim-lo-d)))}, or in human speech ‘the whole of axis @code{k}’. The result @code{b} has rank equal to the sum of all the ranks of the @code{i₀...}, and is defined as
+Each of the @code{i₀...} is either 1. an integer; 2. an array of integers; 3. the special value #t. Integer arguments contain indices into the respective axis of @code{a}. @code{#t} for @code{iₖ} is a shortcut for @code{(let ((d (vector-ref (ra-dims a) k))) (ra-iota (dim-len d) (dim-lo d)))}, or in human speech ‘the whole of axis @code{k}’. The result @code{b} has rank equal to the sum of all the ranks of the @code{i₀...}, and is defined as
 
 @quotation
 @verbatim
@@ -390,7 +518,7 @@ Each of these arguments @code{i₀...} is either 1) an integer; 2) an array of i
 @end verbatim
 @end quotation
 
-In other words, this is an outer product of the indices @code{i₀...} with operator @code{a} (if one thinks of @code{(a i₀ ...)} as @code{(ra-ref a i₀ ...)}).
+In other words, @code{ra-from} produces the outer product of the indices @code{i₀...} with operator @code{a} (if one thinks of @code{(a i₀ ...)} as @code{(ra-ref a i₀ ...)}).
 
 If all of the @code{i₀...} are integers or arrays of type @code{d} (such as those produced by @code{ra-iota} or @code{ra-i}) then the result of @code{ra-from} shares the root of @code{a}. Otherwise @code{newra} cannot tell whether the indices are an arithmetic sequence so the result has to be copied to a new root. For example:
 
@@ -402,22 +530,22 @@ If all of the @code{i₀...} are integers or arrays of type @code{d} (such as th
 @verbatim
 (ra-from a 0 #t) ; row 0, will share root
 @end verbatim
-@result{} @code{#%1:3(a b c))}
+@result{} @code{#%1:3(a b c)}
 @verbatim
 (ra-from a #t 1) ; column 1, will share root
 @end verbatim
-@result{} @code{#%1:2(b e))}
+@result{} @code{#%1:2(b e)}
 @verbatim
 (ra-from a #t (make-ra-root #(2 0))) ; cols 2 & 0, won't share root
 @end verbatim
-@result{} @code{#%2:2:2((c a) (f d)))}
+@result{} @code{#%2:2:2((c a) (f d))}
 @verbatim
 (ra-from a #t (ra-iota 2 2 -2)) ; cols 2 & 0, will share root
 @end verbatim
-@result{} @code{#%2:2:2((c a) (f d)))}
+@result{} @code{#%2:2:2((c a) (f d))}
 @end example
 
-One may give fewer @code{i₀} than the rank of @code{a}. The missing arguments are taken as @code{#t} (see @ref{Rank polymorphism and rank extension}).
+One may give fewer @code{i} than the rank of @code{a}. The missing arguments are taken as @code{#t} (see @ref{Rank polymorphism and rank extension}).
 
 @example
 @verbatim
@@ -432,19 +560,23 @@ When it is known that the result of @code{ra-from} will share the root with its 
 @verbatim
 (ra-fill! (ra-from a 1) x)
 @end verbatim
-@result{} @code{#%2:3((a b c) (x x x))}
+@result{} @code{#%2:3((a b c) (x x x)}
 @verbatim
 a
 @end verbatim
 @result{} @code{#%2:3((a b c) (x x x))}
 @end example
 
-The general case is handled with @ref{x-ra-amend!, @code{ra-amend!}}:
+@ref{x-ra-amend!, @code{ra-amend!}} handles the general case:
 
 @example
 @verbatim
 (define a (list->ra 2 '((a b c) (d e f))))
 (ra-amend! a 'Y #t (make-ra-root #(2 0)))
+@end verbatim
+@result{} @code{#%2:3((Y b Y) (Y e Y))}
+@verbatim
+a
 @end verbatim
 @result{} @code{#%2:3((Y b Y) (Y e Y))}
 @end example
@@ -524,16 +656,10 @@ All three functions @code{ra-reshape}, @code{ra-ravel}, and @code{ra-tile} opera
 @c ------------------------------------------------
 
 @menu
-* Rank polymorphism and rank extension::
 * Verbs::
 * Reductions::
 * Foreign interface::
 @end menu
-
-@c ------------------------------------------------
-@node Rank polymorphism and rank extension
-@section Rank polymorphism and rank extension
-@c ------------------------------------------------
 
 @c ------------------------------------------------
 @node Verbs
@@ -763,6 +889,26 @@ This is equivalent to
 Check whether the first @var{n} axes of @var{ra} are in C-order. By default, check that the whole array is in C-order, and additionally that the step on the last axis is 1 (i.e. the array is ‘packed’).
 
 @code{(ra-order-c? a n)} implies @code{(eq? (ra-root a) (ra-root (@ref{x-ra-ravel, @code{ra-ravel}} a n)))}. Note that the stronger condition @code{(ra-order-c? a)} is not necessary for @code{(eq? (ra-root a) (ra-root (ra-ravel a)))} to hold.
+@end deffn
+
+@cindex @code{ra-ref}
+@anchor{x-ra-ref}
+@deffn @w{function} ra-ref a i ...
+@end deffn
+
+@cindex @code{ra-set!}
+@anchor{x-ra-set!}
+@deffn @w{function} ra-set! a o i ...
+@end deffn
+
+@cindex @code{ra-slice}
+@anchor{x-ra-slice}
+@deffn @w{function} ra-slice a i ...
+@end deffn
+
+@cindex @code{ra-cell}
+@anchor{x-ra-cell}
+@deffn @w{function} ra-cell a i ...
 @end deffn
 
 @cindex @code{ra-from}

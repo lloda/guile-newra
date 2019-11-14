@@ -12,7 +12,14 @@
         (srfi :8) (srfi :26) (ice-9 match) (srfi :1) (ice-9 format)
         (only (rnrs base) vector-map))
 
-; amend! in guile-ploy didn't use prefix match, so the examples/tests there have to be amended :p
+(ra-from (ra-copy #t (ra-i 6 4))
+         (array->ra #2((0 1) (2 3) (4 5))) (array->ra #1(3 2 1)))
+(ra-amend! (ra-copy #t (ra-i 6 4)) (array->ra #(A B C))
+           (array->ra #2((0 1) (2 3) (4 5))) (array->ra #1(3 2 1)))
+(ra-amend! (ra-copy #t (ra-i 6 4)) (array->ra #2((A a) (B b) (C c)))
+           (array->ra #2((0 1) (2 3) (4 5))) (array->ra #1(3 2 1)))
+(ra-amend! (ra-copy #t (ra-i 6 4)) (array->ra #3(((A B C) (a b c)) ((P Q R) (p q r)) ((X Y Z) (x y z))))
+           (array->ra #2((0 1) (2 3) (4 5))) (array->ra #1(3 2 1)))
 
 
 ; -----------------------
@@ -51,53 +58,6 @@
      (case tag ((opt) (macro param args ...)) ... (else (throw 'bad-tag tag))))))
 
 (%tag-dispatch 'TWO display (ONE TWO) ('one 'two))
-
-
-; -----------------------
-; generalized selector
-; -----------------------
-
-; ...
-
-
-; -----------------------
-; define-inlinable-case-lambda
-; -----------------------
-
-(import (newra newra) (newra tools) (rnrs io ports) (newra from)
-        (srfi :8) (srfi :26) (ice-9 match) (only (srfi :1) fold iota)
-        (system vm disassembler)
-        (only (rnrs base) vector-map))
-
-; cf https://www.scheme.com/tspl4/syntax.html - define-integrable
-; cf guile/module/ice-9/boot.scm - define-inlinable
-; cf (define-syntax x (let-syntax ... (inlinable-case-lambda ...))) ??
-
-(define-syntax define-inlinable-case
-  (lambda (x)
-    (define prefix (string->symbol "% "))
-    (define (make-procedure-name name)
-      (datum->syntax name (symbol-append prefix (syntax->datum name) '-procedure)))
-    (syntax-case x (case-lambda)
-      ((_ name (case-lambda DOC (formals form1 form2 ...) ...))
-       (and (identifier? #'name)
-            (string? (syntax->datum #'DOC))
-            )
-       (with-syntax ((xname (make-procedure-name #'name)))
-         #`(begin
-             (define xname
-               (let-syntax ((name (identifier-syntax xname)))
-                 (case-lambda DOC (formals form1 form2 ...) ...)))
-             (define-syntax name
-               (lambda (x)
-                 (syntax-case x ()
-                   (_ (identifier? x) #'xname)
-                   ((_ arg (... ...))
-                    #'((let-syntax ((name (identifier-syntax xname)))
-                         (case-lambda (formals form1 form2 ...) ...))
-                       arg (... ...)))))))))
-      ((_ name (case-lambda (formals form1 form2 ...) ...))
-       #'(define-inlinable-case name (case-lambda "" (formals form1 form2 ...) ...))))))
 
 (import (srfi :1))
 
