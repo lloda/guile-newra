@@ -76,6 +76,8 @@ Sometimes we deal with multidimensional @emph{expressions} where the elements ar
 
 Arrays (in the form of @dfn{matrices}, @dfn{vectors}, or @dfn{tensors}) are very common objects in math and programming, and it is very useful to be able to manipulate arrays as individual entities rather than as aggregates — that is one of the main purposes of @code{newra}.
 
+The rest of this section discusses the motivation for @code{newra} in more detail. To start using the library, please jump ahead to @ref{Basic use}.
+
 @menu
 * Rank polymorphism and rank extension::
 * The pieces of an array::
@@ -214,15 +216,6 @@ and the other way around,
 @end verbatim
 @result{} @code{#%2:3:2((Z Z) (Z Z) (Z Z))}
 
-@emph{expressions} @dfn{matrices}
-
-@verbatim
-A = B+C;
-@end verbatim
-
-@cindex Guile
-Text to be written
-
 @c ------------------------------------------------
 @node Built-in Guile arrays
 @section Built-in Guile arrays
@@ -359,6 +352,7 @@ These are treated especially when used in iteration, in that they match axes of 
 @end example
 
 @cindex dead axes
+@anchor{x-dead-axes}
 @code{newra} also supports `dead axes', which are simply axes whose step is 0. These axes can have any length although effectively only one position (the lower bound, by default 0) is ever accessed. Some functions work purely by creating dead axes.
 
 @example
@@ -655,6 +649,82 @@ All three functions @code{ra-reshape}, @code{ra-ravel}, and @code{ra-tile} opera
 @node Other operations on arrays
 @section Other operations on arrays
 @c ------------------------------------------------
+
+@cindex transpose
+The most important operation on arrays, other than selection and iteration, is transposition.
+
+@ref{x-ra-transpose, @code{ra-transpose}} takes a source array and a list of axis arguments. These axis arguments correspond to the axes of the source array; the values of the arguments are the corresponding axes of the result array.
+
+@example
+@verbatim
+(ra-dimensions (ra-transpose (ra-i 10 20 30) 2 0 1))
+@end verbatim
+@result{} @code{'(20 30 10)}
+@end example
+
+That is, axis 0 in the source array is mapped to axis 2 in the destination array, axis 1 to axis 0, and axis 2 to axis 1. The result array always shares the root of the source array.
+
+As you'd expect
+
+@example
+@verbatim
+(ra-transpose (ra-i 2 3) 1 0)
+@end verbatim
+@result{} @code{#%2d:3:2((0 3) (1 4) (2 5))}
+@end example
+
+One can map more than one axis of the source array to the same axis of the destination array. In that case the step of the destination axis becomes the sum of the steps of all the source axes. The classic example is
+
+@cindex diagonal
+@example
+@verbatim
+(define A (ra-copy #t (ra-i 3 3)))
+(ra-fill! (ra-transpose A 0 0) 'x)
+A
+@end verbatim
+@result{} @code{#%2:3:3((x 1 2) (3 x 5) (6 7 x))}
+@end example
+
+If one doesn't give values for all the source axes, the missing axes are sent beyond the highest one that was given. These are equivalent:
+
+@example
+@verbatim
+(ra-transpose (ra-i 2 3 4) 1 0 2)
+(ra-transpose (ra-i 2 3 4) 1 0)
+@end verbatim
+@end example
+
+as are these:
+
+@example
+@verbatim
+(ra-transpose (ra-i 2 3) 1)
+(ra-transpose (ra-i 2 3) 1 2)
+@end verbatim
+@end example
+
+Note that in the last example there is no source axis for destination axis 0. Destination axes not mentioned in the axis argument list become @ref{x-dead-axes, dead axes}. The rank of the result array is always just large enough to fit all the destination axes.
+
+@example
+@verbatim
+(ra-dimensions (ra-transpose (ra-i 2 3) 1))
+@end verbatim
+@result{} (#f 2 3)
+@end example
+
+In particular, @code{(ra-transpose A)} is equivalent to @code{(ra-transpose A 0 1 ... (- (ra-rank A) 1))} (which is of course the same array as @code{A}).
+
+This can be exploited to create ‘index placeholders’, e.g.
+@example
+@verbatim
+(define (tensor-index i) (ra-transpose (ra-iota #f) i))
+(ra-for-each (compose display list) (make-ra #f 3 4) (tensor-index 0) (tensor-index 1))
+@end verbatim
+@result{} @code{(#f 0 0)(#f 0 1)(#f 0 2)(#f 0 3)(#f 1 0)(#f 1 1)(#f 1 2)(#f 1 3)(#f 2 0)(#f 2 1)(#f 2 2)(#f 2 3)}
+@end example
+
+
+
 
 @c @cindex @code{none}
 @c @anchor{x-none}

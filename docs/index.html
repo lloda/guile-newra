@@ -162,6 +162,8 @@ Next: <a href="#Basic-use" accesskey="n" rel="next">Basic use</a>, Previous: <a 
 </p>
 <p>Arrays (in the form of <em>matrices</em>, <em>vectors</em>, or <em>tensors</em>) are very common objects in math and programming, and it is very useful to be able to manipulate arrays as individual entities rather than as aggregates — that is one of the main purposes of <code>newra</code>.
 </p>
+<p>The rest of this section discusses the motivation for <code>newra</code> in more detail. To start using the library, please jump ahead to <a href="#Basic-use">Basic use</a>.
+</p>
 <table class="menu" border="0" cellspacing="0">
 <tr><td align="left" valign="top">&bull; <a href="#Rank-polymorphism-and-rank-extension" accesskey="1">Rank polymorphism and rank extension</a>:</td><td>&nbsp;&nbsp;</td><td align="left" valign="top">
 </td></tr>
@@ -297,13 +299,6 @@ Each dim consists of a length (<em>len</em>), a lower bound (<em>lo</em>), and a
 <pre class="verbatim">&gt; (vector-set! (ra-root b) 0 'Z)
 &gt; b
 </pre><p>&rArr; <code>#%2:3:2((Z Z) (Z Z) (Z Z))</code>
-</p>
-<p><em>expressions</em> <em>matrices</em>
-</p>
-<pre class="verbatim">A = B+C;
-</pre>
-<a name="index-Guile"></a>
-<p>Text to be written
 </p>
 <hr>
 <a name="Built_002din-Guile-arrays"></a>
@@ -449,7 +444,7 @@ Next: <a href="#Iteration" accesskey="n" rel="next">Iteration</a>, Previous: <a 
 </pre></div>
 
 <a name="index-dead-axes"></a>
-<p><code>newra</code> also supports &lsquo;dead axes&rsquo;, which are simply axes whose step is 0. These axes can have any length although effectively only one position (the lower bound, by default 0) is ever accessed. Some functions work purely by creating dead axes.
+<a name="x_002ddead_002daxes"></a><p><code>newra</code> also supports &lsquo;dead axes&rsquo;, which are simply axes whose step is 0. These axes can have any length although effectively only one position (the lower bound, by default 0) is ever accessed. Some functions work purely by creating dead axes.
 </p>
 <div class="example">
 <pre class="verbatim">(define A (make-ra-root #(1 2 3) (c-dims 3)))
@@ -685,6 +680,68 @@ Next: <a href="#Foreign-interface" accesskey="n" rel="next">Foreign interface</a
 </div>
 <a name="Other-operations-on-arrays-1"></a>
 <h3 class="section">2.6 Other operations on arrays</h3>
+
+<a name="index-transpose"></a>
+<p>The most important operation on arrays, other than selection and iteration, is transposition.
+</p>
+<p><a href="#x_002dra_002dtranspose"><code>ra-transpose</code></a> takes a source array and a list of axis arguments. These axis arguments correspond to the axes of the source array; the values of the arguments are the corresponding axes of the result array.
+</p>
+<div class="example">
+<pre class="verbatim">(ra-dimensions (ra-transpose (ra-i 10 20 30) 2 0 1))
+</pre><pre class="example">&rArr; <code>'(20 30 10)</code>
+</pre></div>
+
+<p>That is, axis 0 in the source array is mapped to axis 2 in the destination array, axis 1 to axis 0, and axis 2 to axis 1. The result array always shares the root of the source array.
+</p>
+<p>As you&rsquo;d expect
+</p>
+<div class="example">
+<pre class="verbatim">(ra-transpose (ra-i 2 3) 1 0)
+</pre><pre class="example">&rArr; <code>#%2d:3:2((0 3) (1 4) (2 5))</code>
+</pre></div>
+
+<p>One can map more than one axis of the source array to the same axis of the destination array. In that case the step of the destination axis becomes the sum of the steps of all the source axes. The classic example is
+</p>
+<a name="index-diagonal"></a>
+<div class="example">
+<pre class="verbatim">(define A (ra-copy #t (ra-i 3 3)))
+(ra-fill! (ra-transpose A 0 0) 'x)
+A
+</pre><pre class="example">&rArr; <code>#%2:3:3((x 1 2) (3 x 5) (6 7 x))</code>
+</pre></div>
+
+<p>If one doesn&rsquo;t give values for all the source axes, the missing axes are sent beyond the highest one that was given. These are equivalent:
+</p>
+<div class="example">
+<pre class="verbatim">(ra-transpose (ra-i 2 3 4) 1 0 2)
+(ra-transpose (ra-i 2 3 4) 1 0)
+</pre></div>
+
+<p>as are these:
+</p>
+<div class="example">
+<pre class="verbatim">(ra-transpose (ra-i 2 3) 1)
+(ra-transpose (ra-i 2 3) 1 2)
+</pre></div>
+
+<p>Note that in the last example there is no source axis for destination axis 0. Destination axes not mentioned in the axis argument list become <a href="#x_002ddead_002daxes">dead axes</a>. The rank of the result array is always just large enough to fit all the destination axes.
+</p>
+<div class="example">
+<pre class="verbatim">(ra-dimensions (ra-transpose (ra-i 2 3) 1))
+</pre><pre class="example">&rArr; (#f 2 3)
+</pre></div>
+
+<p>In particular, <code>(ra-transpose A)</code> is equivalent to <code>(ra-transpose A 0 1 ... (- (ra-rank A) 1))</code> (which is of course the same array as <code>A</code>).
+</p>
+<p>This can be exploited to create ‘index placeholders’, e.g.
+</p><div class="example">
+<pre class="verbatim">(define (tensor-index i) (ra-transpose (ra-iota #f) i))
+(ra-for-each (compose display list) (make-ra #f 3 4) (tensor-index 0) (tensor-index 1))
+</pre><pre class="example">&rArr; <code>(#f 0 0)(#f 0 1)(#f 0 2)(#f 0 3)(#f 1 0)(#f 1 1)(#f 1 2)(#f 1 3)(#f 2 0)(#f 2 1)(#f 2 2)(#f 2 3)</code>
+</pre></div>
+
+
+
 
 
 
@@ -1046,8 +1103,6 @@ Previous: <a href="#Sources" accesskey="p" rel="prev">Sources</a>, Up: <a href="
  &nbsp; 
 <a class="summary-letter" href="#Indices_cp_letter-F"><b>F</b></a>
  &nbsp; 
-<a class="summary-letter" href="#Indices_cp_letter-G"><b>G</b></a>
- &nbsp; 
 <a class="summary-letter" href="#Indices_cp_letter-I"><b>I</b></a>
  &nbsp; 
 <a class="summary-letter" href="#Indices_cp_letter-L"><b>L</b></a>
@@ -1061,6 +1116,8 @@ Previous: <a href="#Sources" accesskey="p" rel="prev">Sources</a>, Up: <a href="
 <a class="summary-letter" href="#Indices_cp_letter-R"><b>R</b></a>
  &nbsp; 
 <a class="summary-letter" href="#Indices_cp_letter-S"><b>S</b></a>
+ &nbsp; 
+<a class="summary-letter" href="#Indices_cp_letter-T"><b>T</b></a>
  &nbsp; 
 <a class="summary-letter" href="#Indices_cp_letter-Ρ"><b>Ρ</b></a>
  &nbsp; 
@@ -1077,13 +1134,11 @@ Previous: <a href="#Sources" accesskey="p" rel="prev">Sources</a>, Up: <a href="
 <tr><td colspan="4"> <hr></td></tr>
 <tr><th><a name="Indices_cp_letter-D">D</a></th><td></td><td></td></tr>
 <tr><td></td><td valign="top"><a href="#index-dead-axes">dead axes</a>:</td><td>&nbsp;</td><td valign="top"><a href="#Special-arrays">Special arrays</a></td></tr>
+<tr><td></td><td valign="top"><a href="#index-diagonal">diagonal</a>:</td><td>&nbsp;</td><td valign="top"><a href="#Other-operations-on-arrays">Other operations on arrays</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-dim-vector">dim vector</a>:</td><td>&nbsp;</td><td valign="top"><a href="#The-pieces-of-an-array">The pieces of an array</a></td></tr>
 <tr><td colspan="4"> <hr></td></tr>
 <tr><th><a name="Indices_cp_letter-F">F</a></th><td></td><td></td></tr>
 <tr><td></td><td valign="top"><a href="#index-frame">frame</a>:</td><td>&nbsp;</td><td valign="top"><a href="#Rank-polymorphism-and-rank-extension">Rank polymorphism and rank extension</a></td></tr>
-<tr><td colspan="4"> <hr></td></tr>
-<tr><th><a name="Indices_cp_letter-G">G</a></th><td></td><td></td></tr>
-<tr><td></td><td valign="top"><a href="#index-Guile">Guile</a>:</td><td>&nbsp;</td><td valign="top"><a href="#The-pieces-of-an-array">The pieces of an array</a></td></tr>
 <tr><td colspan="4"> <hr></td></tr>
 <tr><th><a name="Indices_cp_letter-I">I</a></th><td></td><td></td></tr>
 <tr><td></td><td valign="top"><a href="#index-infinite-axes">infinite axes</a>:</td><td>&nbsp;</td><td valign="top"><a href="#Special-arrays">Special arrays</a></td></tr>
@@ -1133,6 +1188,9 @@ Previous: <a href="#Sources" accesskey="p" rel="prev">Sources</a>, Up: <a href="
 <tr><th><a name="Indices_cp_letter-S">S</a></th><td></td><td></td></tr>
 <tr><td></td><td valign="top"><a href="#index-singleton-axis">singleton axis</a>:</td><td>&nbsp;</td><td valign="top"><a href="#Special-arrays">Special arrays</a></td></tr>
 <tr><td colspan="4"> <hr></td></tr>
+<tr><th><a name="Indices_cp_letter-T">T</a></th><td></td><td></td></tr>
+<tr><td></td><td valign="top"><a href="#index-transpose">transpose</a>:</td><td>&nbsp;</td><td valign="top"><a href="#Other-operations-on-arrays">Other operations on arrays</a></td></tr>
+<tr><td colspan="4"> <hr></td></tr>
 <tr><th><a name="Indices_cp_letter-Ρ">Ρ</a></th><td></td><td></td></tr>
 <tr><td></td><td valign="top"><a href="#index-r">ρ</a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reshaping-and-resizing">Reshaping and resizing</a></td></tr>
 <tr><td colspan="4"> <hr></td></tr>
@@ -1144,8 +1202,6 @@ Previous: <a href="#Sources" accesskey="p" rel="prev">Sources</a>, Up: <a href="
 <a class="summary-letter" href="#Indices_cp_letter-D"><b>D</b></a>
  &nbsp; 
 <a class="summary-letter" href="#Indices_cp_letter-F"><b>F</b></a>
- &nbsp; 
-<a class="summary-letter" href="#Indices_cp_letter-G"><b>G</b></a>
  &nbsp; 
 <a class="summary-letter" href="#Indices_cp_letter-I"><b>I</b></a>
  &nbsp; 
@@ -1160,6 +1216,8 @@ Previous: <a href="#Sources" accesskey="p" rel="prev">Sources</a>, Up: <a href="
 <a class="summary-letter" href="#Indices_cp_letter-R"><b>R</b></a>
  &nbsp; 
 <a class="summary-letter" href="#Indices_cp_letter-S"><b>S</b></a>
+ &nbsp; 
+<a class="summary-letter" href="#Indices_cp_letter-T"><b>T</b></a>
  &nbsp; 
 <a class="summary-letter" href="#Indices_cp_letter-Ρ"><b>Ρ</b></a>
  &nbsp; 
