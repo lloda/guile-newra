@@ -759,8 +759,6 @@ Next: <a href="#Compatibility-with-old-Guile-arrays" accesskey="n" rel="next">Co
 </p>
 <p>For example:
 </p>
-
-
 <hr>
 <a name="Compatibility-with-old-Guile-arrays"></a>
 <div class="header">
@@ -769,6 +767,36 @@ Previous: <a href="#Foreign-interface" accesskey="p" rel="prev">Foreign interfac
 </div>
 <a name="Compatibility-with-old-Guile-arrays-1"></a>
 <h3 class="section">2.8 Compatibility with old Guile arrays</h3>
+
+<p>The functions <a href="#x_002dra_002d_003earray"><code>ra-&gt;array</code></a> and <a href="#x_002darray_002d_003era"><code>array-&gt;ra</code></a> are provided to convert to and from <code>newra</code> arrays and built-in Guile arrays. It is an error to use <code>ra-&gt;array</code> on arrays whose root isn&rsquo;t supported by the built-in arrays, or that have an infinite length. Except in those two cases, the conversion is transparent both ways, and the result always shares the root of the argument.
+</p>
+<div class="example">
+<pre class="verbatim">(define a (make-array 'o 2 3))
+(define b (array-&gt;ra a))
+(ra-set! b 'x 1 1)
+(array-set! a 'y 0 2)
+a
+</pre><pre class="example">&rArr; <code>#2((o o y) (o x o))</code>
+</pre><pre class="verbatim">b
+</pre><pre class="example">&rArr;  <code>#%2((o o y) (o x o))</code>
+</pre></div>
+
+<p><code>&lt;aseq&gt;</code>-root arrays must be type converted before using <code>ra-&gt;array</code>.
+</p>
+<div class="example">
+<pre class="verbatim">(ra-&gt;array (ra-copy #t (ra-i 2 3)))
+</pre><pre class="example">&rArr; #2((0 1 2) (3 4 5))
+</pre></div>
+
+<p>On dead axes, infinite lengths can be set to 1 (with <a href="#x_002dra_002dsingletonize"><code>ra-singletonize</code></a>) to allow conversion with <code>ra-&gt;array</code> or to other array systems that do singleton broadcasting.
+</p>
+<div class="example">
+<pre class="verbatim">(define a (ra-transpose (ra-i 2 3) 1 3))
+a
+</pre><pre class="example">&rArr; <code>#%4d:d:2:d:3((((0 1 2)) ((3 4 5))))</code>
+</pre><pre class="verbatim">(ra-singletonize a)
+</pre><pre class="example">&rArr; <code>#%4d:1:2:1:3((((0 1 2)) ((3 4 5))))</code>
+</pre></div>
 
 <hr>
 <a name="Advanced-use"></a>
@@ -1046,6 +1074,21 @@ Next: <a href="#Sources" accesskey="n" rel="next">Sources</a>, Previous: <a href
 <p>Placeholder for <var>n</var> full axes, used as argument to <code>ra-from</code> or <code>ra-amend!</code>. Without <var>n</var>, expand to fill the rank of the argument <var>a</var> of <code>ra-from</code> or <code>ra-amend!</code>.
 </p></dd></dl>
 
+<a name="index-ra_002d_003earray"></a>
+<a name="x_002dra_002d_003earray"></a><dl>
+<dt><a name="index-ra_002d_003earray-1"></a>function<!-- /@w -->: <strong>ra-&gt;array</strong> <em>a</em></dt>
+</dl>
+
+<a name="index-array_002d_003era"></a>
+<a name="x_002darray_002d_003era"></a><dl>
+<dt><a name="index-array_002d_003era-1"></a>function<!-- /@w -->: <strong>array-&gt;ra</strong> <em>a</em></dt>
+</dl>
+
+<a name="index-ra_002dsingletonize"></a>
+<a name="x_002dra_002dsingletonize"></a><dl>
+<dt><a name="index-ra_002dsingletonize-1"></a>function<!-- /@w -->: <strong>ra-singletonize</strong> <em>a</em></dt>
+</dl>
+
 <hr>
 <a name="Sources"></a>
 <div class="header">
@@ -1127,6 +1170,7 @@ Previous: <a href="#Sources" accesskey="p" rel="prev">Sources</a>, Up: <a href="
 <tr><td colspan="4"> <hr></td></tr>
 <tr><th><a name="Indices_cp_letter-A">A</a></th><td></td><td></td></tr>
 <tr><td></td><td valign="top"><a href="#index-APL">APL</a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reshaping-and-resizing">Reshaping and resizing</a></td></tr>
+<tr><td></td><td valign="top"><a href="#index-array_002d_003era"><code>array-&gt;ra</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
 <tr><td colspan="4"> <hr></td></tr>
 <tr><th><a name="Indices_cp_letter-C">C</a></th><td></td><td></td></tr>
 <tr><td></td><td valign="top"><a href="#index-c_002ddims"><code>c-dims</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
@@ -1163,6 +1207,7 @@ Previous: <a href="#Sources" accesskey="p" rel="prev">Sources</a>, Up: <a href="
 <tr><td></td><td valign="top"><a href="#index-prefix-slice">prefix slice</a>:</td><td>&nbsp;</td><td valign="top"><a href="#Slicing">Slicing</a></td></tr>
 <tr><td colspan="4"> <hr></td></tr>
 <tr><th><a name="Indices_cp_letter-R">R</a></th><td></td><td></td></tr>
+<tr><td></td><td valign="top"><a href="#index-ra_002d_003earray"><code>ra-&gt;array</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-ra_002damend_0021"><code>ra-amend!</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-ra_002dcell"><code>ra-cell</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-ra_002dcopy_0021"><code>ra-copy!</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
@@ -1177,6 +1222,7 @@ Previous: <a href="#Sources" accesskey="p" rel="prev">Sources</a>, Up: <a href="
 <tr><td></td><td valign="top"><a href="#index-ra_002dreshape"><code>ra-reshape</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-ra_002dreverse"><code>ra-reverse</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-ra_002dset_0021"><code>ra-set!</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
+<tr><td></td><td valign="top"><a href="#index-ra_002dsingletonize"><code>ra-singletonize</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-ra_002dslice"><code>ra-slice</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-ra_002dslice_002dfor_002deach"><code>ra-slice-for-each</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-ra_002dtile"><code>ra-tile</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>

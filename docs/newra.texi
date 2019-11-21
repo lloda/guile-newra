@@ -748,12 +748,50 @@ One of the major reasons to use arrays instead of other Scheme data structures i
 
 For example:
 
-
-
 @c ------------------------------------------------
 @node Compatibility with old Guile arrays
 @section Compatibility with old Guile arrays
 @c ------------------------------------------------
+
+The functions @ref{x-ra->array, @code{ra->array}} and @ref{x-array->ra, @code{array->ra}} are provided to convert to and from @code{newra} arrays and built-in Guile arrays. It is an error to use @code{ra->array} on arrays whose root isn't supported by the built-in arrays, or that have an infinite length. Except in those two cases, the conversion is transparent both ways, and the result always shares the root of the argument.
+
+@example
+@verbatim
+(define a (make-array 'o 2 3))
+(define b (array->ra a))
+(ra-set! b 'x 1 1)
+(array-set! a 'y 0 2)
+a
+@end verbatim
+@result{} @code{#2((o o y) (o x o))}
+@verbatim
+b
+@end verbatim
+@result{}  @code{#%2((o o y) (o x o))}
+@end example
+
+@code{<aseq>}-root arrays must be type converted before using @code{ra->array}.
+
+@example
+@verbatim
+(ra->array (ra-copy #t (ra-i 2 3)))
+@end verbatim
+@result{} #2((0 1 2) (3 4 5))
+@end example
+
+On dead axes, infinite lengths can be set to 1 (with @ref{x-ra-singletonize, @code{ra-singletonize}}) to allow conversion with @code{ra->array} or to other array systems that do singleton broadcasting.
+
+@example
+@verbatim
+(define a (ra-transpose (ra-i 2 3) 1 3))
+a
+@end verbatim
+@result{} @code{#%4d:d:2:d:3((((0 1 2)) ((3 4 5))))}
+@verbatim
+(ra-singletonize a)
+@end verbatim
+@result{} @code{#%4d:1:2:1:3((((0 1 2)) ((3 4 5))))}
+@end example
 
 @c ------------------------------------------------
 @node Advanced use
@@ -1035,6 +1073,21 @@ Check whether the first @var{n} axes of @var{ra} are in C-order. By default, che
 @deffn @w{function} ldots [n] ...
 
 Placeholder for @var{n} full axes, used as argument to @code{ra-from} or @code{ra-amend!}. Without @var{n}, expand to fill the rank of the argument @var{a} of @code{ra-from} or @code{ra-amend!}.
+@end deffn
+
+@cindex @code{ra->array}
+@anchor{x-ra->array}
+@deffn @w{function} ra->array a
+@end deffn
+
+@cindex @code{array->ra}
+@anchor{x-array->ra}
+@deffn @w{function} array->ra a
+@end deffn
+
+@cindex @code{ra-singletonize}
+@anchor{x-ra-singletonize}
+@deffn @w{function} ra-singletonize a
 @end deffn
 
 @c ------------------------------------------------

@@ -1000,6 +1000,13 @@
 
 
 ; -----------------------
+; ra-singletonize
+; -----------------------
+
+(test-equal '(1 2 1 3) (ra-dimensions (ra-singletonize (ra-transpose (ra-i 2 3) 1 3))))
+
+
+; -----------------------
 ; the end.
 ; -----------------------
 

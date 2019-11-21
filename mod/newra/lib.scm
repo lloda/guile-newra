@@ -18,7 +18,7 @@
             ra-i ra-iota
             ra-copy
             ra-reverse ra-transpose ra-order-c? ra-ravel ra-reshape ra-tile
-            ra-fold ra-fold*
+            ra-fold ra-fold* ra-singletonize
 
             vector-append))
 
@@ -576,3 +576,24 @@ See also: ra-ravel ra-reshape ra-transpose ra-from ra-order-c? c-dims
                    (vector-map (lambda (d) (make-dim (dim-len d) (dim-lo d) 0)) (apply c-dims s))
                    (%%ra-dims ra))
                   (%%ra-zero ra))))
+
+(define (ra-singletonize ra . s)
+  "
+ra-singletonize ra -> rb
+
+Set the lengths of any dead axes of RA (axes with step 0) to 1.
+
+See also: ra-transpose
+"
+  (make-ra-root
+   (ra-root ra)
+   (vector-map (lambda (dim)
+                 (match dim
+                   (($ <dim> len lo step)
+                    (make-dim (cond (len len)
+                                    ((zero? step) 1)
+                                    (else (throw 'cannot-singletonize dim)))
+                              (or lo 0)
+                              step))))
+               (ra-dims ra))
+   (ra-zero ra)))

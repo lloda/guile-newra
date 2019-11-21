@@ -497,19 +497,19 @@ If DIMS is absent, make a rank-1 ra with the full length of ROOT.
 
 See also: ra-root ra-zero ra-dims
 "
-   ((data dims zero)
+   ((root dims zero)
     (when dims
       (unless (vector? dims) (throw 'bad-dims dims))
       (vector-for-each (lambda (dim) (unless (dim? dim) (throw 'bad-dim dim))) dims))
 ; after check
-    (receive (type vlen vref vset!) (pick-root-functions data)
-      (make-ra* data zero
-                (or dims (vector (make-dim (vlen data))))
+    (receive (type vlen vref vset!) (pick-root-functions root)
+      (make-ra* root zero
+                (or dims (vector (make-dim (vlen root))))
                 type vlen vref vset!)))
-   ((data dims)
-    (make-ra-root data dims (- (ra-offset 0 dims))))
-   ((data)
-    (make-ra-root data #f 0))))
+   ((root dims)
+    (make-ra-root root dims (- (ra-offset 0 dims))))
+   ((root)
+    (make-ra-root root #f 0))))
 
 
 
