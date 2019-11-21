@@ -755,7 +755,7 @@ Next: <a href="#Compatibility-with-old-Guile-arrays" accesskey="n" rel="next">Co
 <a name="Foreign-interface-1"></a>
 <h3 class="section">2.7 Foreign interface</h3>
 
-<p>One of the major reasons to use arrays instead of other Scheme data structures is that they make it easy to pass a large amount of data to another program or library through a C interface. One just needs a pointer to the data, plus the sizes and the strides in some order — C doesn&rsquo;t have a standard consolidated array type, so the particulars are variable. In any case, the required items can be obtained trivially from a <code>newra</code> array object.
+<p>One of the major reasons to use arrays instead of other Scheme data structures is that they let one pass a large amount of data through a C interface very efficiently. The data doesn&rsquo;t need to be copied — one only needs to pass a pointer to the data, plus the sizes and the strides in some order. C doesn&rsquo;t have a standard consolidated array type, so the particulars are variable. In any case, the required items can be obtained trivially from a <code>newra</code> array object.
 </p>
 <p>For example:
 </p>
@@ -809,7 +809,7 @@ Next: <a href="#Hazards" accesskey="n" rel="next">Hazards</a>, Previous: <a href
 
 <p>NOTE This section is about a facility that hasn&rsquo;t been implemented yet.
 </p>
-<p>In array languages such as APL, scalar operations are automatically extended to work on arrays, so one can just write (the equivalent of) <code>(+ A B)</code> instead of <code>(ra-map! (make-ra ...) + A B)</code>. The basic <code>newra</code> iteration operations such as <code>ra-map!</code> already perform rank extension of their arguments (so <code>A</code> or <code>B</code> can have a different rank from the result, as long as the prefix axes match). We still need ways to:
+<p>In array languages such as APL, scalar operations are implicitly extended to work on arrays, so one can just write (the equivalent of) <code>(+ A B)</code> instead of <code>(ra-map! (make-ra ...) + A B)</code>. The basic <code>newra</code> iteration operations such as <code>ra-map!</code> already perform rank extension of their arguments (so <code>A</code> or <code>B</code> can have a different rank from the result, as long as the prefix axes match). We still need ways to:
 </p>
 <ul>
 <li> associate an operation to the ranks of their arguments, so that the right frame of iteration can be chosen.
@@ -1004,39 +1004,86 @@ Next: <a href="#Sources" accesskey="n" rel="next">Sources</a>, Previous: <a href
 <a name="index-ra_002dslice_002dfor_002deach"></a>
 <a name="x_002dra_002dslice_002dfor_002deach"></a><dl>
 <dt><a name="index-ra_002dslice_002dfor_002deach-1"></a>function<!-- /@w -->: <strong>ra-slice-for-each</strong> <em>k op a ...</em></dt>
-<dd><p>Iterate over the <var>k</var>-frames of arrays <var>a</var> ..., applying <var>op</var> to the respective slices.
+<dd><p>Iterate over the <var>k</var>-frames of arrays <var>a</var> ..., applying <var>op</var> to the respective slices. The arguments <var>a</var> ... must have matching dimensions over their <var>k</var>-frames.
 </p></dd></dl>
 
+<p>Note that it isn&rsquo;t necessary for arguments <var>a</var> to have rank ≥ <var>k</var>. For example:
+</p>
+<div class="example">
+<pre class="verbatim">(ra-slice-for-each 1
+  (lambda (a b) (display (list (a) (b))))
+  (make-ra-root #(a b))
+  (ra-i 2 3))
+</pre><pre class="example">&rArr; <code>(a #%1d:3(0 1 2))(b #%1d:3(3 4 5))</code>
+</pre></div>
+
+<div class="example">
+<pre class="verbatim">(ra-slice-for-each 2
+  (lambda (a b) (display (list (a) (b))))
+  (make-ra-root #(a b))
+  (ra-i 2 3))
+</pre><pre class="example">&rArr; <code>(a 0)(a 1)(a 2)(b 3)(b 4)(b 5)</code>
+</pre></div>
+
+<p>The lengths of &nbsp;</p>
 <a name="index-ra_002dmap_0021"></a>
 <a name="x_002dra_002dmap_0021"></a><dl>
 <dt><a name="index-ra_002dmap_0021-1"></a>function<!-- /@w -->: <strong>ra-map!</strong> <em>dst op a ...</em></dt>
-<dd><p>Iterate over arrays <var>dst</var> and <var>a</var>, applying <var>op</var> to the respective elements in <var>a</var>, and storing the result in <var>dst</var>. The bounds of the arguments must match.
-</p>
+<dd><p>Iterate over arrays <var>dst</var> <var>a</var> ... applying <var>op</var> to the respective elements in <var>a</var>, and storing the result in the respective element of <var>dst</var>. The arguments must have matching dimensions and the type of <var>dst</var> must be compatible with the results of <var>op</var>.
+</p></dd></dl>
+
 <p>This is equivalent to
 </p><pre class="verbatim">(apply ra-slice-for-each
        (rank dst)
        (lambda (dst . a)
          (ra-set! dst (apply op (map ra-ref a))))
        dst a)
-</pre></dd></dl>
-
+</pre>
 <a name="index-ra_002dcopy_0021"></a>
 <a name="x_002dra_002dcopy_0021"></a><dl>
 <dt><a name="index-ra_002dcopy_0021-1"></a>function<!-- /@w -->: <strong>ra-copy!</strong> <em>dst src</em></dt>
-<dd><p>Copy <var>src</var> to <var>dst</var>.
-</p>
-<p>This is equivalent to
+<dd><p>Copy <var>src</var> to <var>dst</var>. The arguments must have matching dimensions and be of compatible types.
+</p></dd></dl>
+
+<p>For valid arguments, this is equivalent to any one of
 </p><pre class="verbatim">(ra-map! dst identity src)
-</pre></dd></dl>
+(ra-amend! dst src)
+</pre>
+<a name="index-ra_002dfill_0021"></a>
+<a name="x_002dra_002dfill_0021"></a><dl>
+<dt><a name="index-ra_002dfill_0021-1"></a>function<!-- /@w -->: <strong>ra-fill!</strong> <em>dst value</em></dt>
+<dd><p>Assign <var>value</var> to each element of <var>dst</var>. The arguments must be of compatible types.
+</p></dd></dl>
+
+<p>This is equivalent to any one of
+</p><div class="example">
+<pre class="verbatim">(ra-map! dst (const value))
+(ra-copy! dst (make-ra value))
+(ra-amend! dst (make-ra value))
+(ra-amend! dst value) ; as long as value isn't an array
+</pre></div>
+
+<p>Compare
+</p>
+<div class="example">
+<pre class="verbatim">(ra-fill! (make-ra #f 2 2) (make-ra 'x))
+</pre><pre class="example">&rArr; #%2:2:2((#%0(x) #%0(x)) (#%0(x) #%0(x)))
+</pre><pre class="verbatim">(ra-amend! (make-ra #f 2 2) 'x)
+</pre><pre class="example">&rArr; #%2:2:2((x x) (x x))
+</pre><pre class="verbatim">(ra-amend! (make-ra #f 2 2) (make-ra 'x))
+</pre><pre class="example">&rArr; #%2:2:2((x x) (x x))
+</pre><pre class="verbatim">(ra-amend! (make-ra #f 2 2) (make-ra (make-ra 'x)))
+</pre><pre class="example">&rArr; #%2:2:2((#%0(x) #%0(x)) (#%0(x) #%0(x)))
+</pre></div>
 
 <a name="index-ra_002dorder_002dc_003f"></a>
 <a name="x_002dra_002dorder_002dc_003f"></a><dl>
 <dt><a name="index-ra_002dorder_002dc_003f-1"></a>function<!-- /@w -->: <strong>ra-order-c?</strong> <em>a [n]</em></dt>
 <dd><p>Check whether the first <var>n</var> axes of <var>ra</var> are in C-order. By default, check that the whole array is in C-order, and additionally that the step on the last axis is 1 (i.e. the array is ‘packed’).
-</p>
-<p><code>(ra-order-c? a n)</code> implies <code>(eq? (ra-root a) (ra-root (<a href="#x_002dra_002dravel"><code>ra-ravel</code></a> a n)))</code>. Note that the stronger condition <code>(ra-order-c? a)</code> is not necessary for <code>(eq? (ra-root a) (ra-root (ra-ravel a)))</code> to hold.
 </p></dd></dl>
 
+<p><code>(ra-order-c? a n)</code> implies <code>(eq? (ra-root a) (ra-root (<a href="#x_002dra_002dravel"><code>ra-ravel</code></a> a n)))</code>. Note that the stronger condition <code>(ra-order-c? a)</code> is not necessary for <code>(eq? (ra-root a) (ra-root (ra-ravel a)))</code> to hold.
+</p>
 <a name="index-ra_002dref"></a>
 <a name="x_002dra_002dref"></a><dl>
 <dt><a name="index-ra_002dref-1"></a>function<!-- /@w -->: <strong>ra-ref</strong> <em>a i ...</em></dt>
@@ -1211,6 +1258,7 @@ Previous: <a href="#Sources" accesskey="p" rel="prev">Sources</a>, Up: <a href="
 <tr><td></td><td valign="top"><a href="#index-ra_002damend_0021"><code>ra-amend!</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-ra_002dcell"><code>ra-cell</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-ra_002dcopy_0021"><code>ra-copy!</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
+<tr><td></td><td valign="top"><a href="#index-ra_002dfill_0021"><code>ra-fill!</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-ra_002dfrom"><code>ra-from</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-ra_002di"><code>ra-i</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-ra_002dindex_002dmap_0021"><code>ra-index-map!</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>

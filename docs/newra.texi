@@ -744,7 +744,7 @@ This can be exploited to create ‘index placeholders’, e.g.
 @section Foreign interface
 @c ------------------------------------------------
 
-One of the major reasons to use arrays instead of other Scheme data structures is that they make it easy to pass a large amount of data to another program or library through a C interface. One just needs a pointer to the data, plus the sizes and the strides in some order — C doesn't have a standard consolidated array type, so the particulars are variable. In any case, the required items can be obtained trivially from a @code{newra} array object.
+One of the major reasons to use arrays instead of other Scheme data structures is that they let one pass a large amount of data through a C interface very efficiently. The data doesn't need to be copied — one only needs to pass a pointer to the data, plus the sizes and the strides in some order. C doesn't have a standard consolidated array type, so the particulars are variable. In any case, the required items can be obtained trivially from a @code{newra} array object.
 
 For example:
 
@@ -800,7 +800,7 @@ a
 
 NOTE This section is about a facility that hasn't been implemented yet.
 
-In array languages such as APL, scalar operations are automatically extended to work on arrays, so one can just write (the equivalent of) @code{(+ A B)} instead of @code{(ra-map! (make-ra ...) + A B)}. The basic @code{newra} iteration operations such as @code{ra-map!} already perform rank extension of their arguments (so @code{A} or @code{B} can have a different rank from the result, as long as the prefix axes match). We still need ways to:
+In array languages such as APL, scalar operations are implicitly extended to work on arrays, so one can just write (the equivalent of) @code{(+ A B)} instead of @code{(ra-map! (make-ra ...) + A B)}. The basic @code{newra} iteration operations such as @code{ra-map!} already perform rank extension of their arguments (so @code{A} or @code{B} can have a different rank from the result, as long as the prefix axes match). We still need ways to:
 
 @itemize
 @item associate an operation to the ranks of their arguments, so that the right frame of iteration can be chosen.
@@ -1001,13 +1001,38 @@ Iterate over array @var{a}, and to each element assign the result of @code{(op i
 @cindex @code{ra-slice-for-each}
 @anchor{x-ra-slice-for-each}
 @deffn @w{function} ra-slice-for-each k op a ...
-Iterate over the @var{k}-frames of arrays @var{a} ..., applying @var{op} to the respective slices.
+Iterate over the @var{k}-frames of arrays @var{a} ..., applying @var{op} to the respective slices. The arguments @var{a} ... must have matching dimensions over their @var{k}-frames.
 @end deffn
+
+Note that it isn't necessary for arguments @var{a} to have rank ≥ @var{k}. For example:
+
+@example
+@verbatim
+(ra-slice-for-each 1
+  (lambda (a b) (display (list (a) (b))))
+  (make-ra-root #(a b))
+  (ra-i 2 3))
+@end verbatim
+@result{} @code{(a #%1d:3(0 1 2))(b #%1d:3(3 4 5))}
+@end example
+
+@example
+@verbatim
+(ra-slice-for-each 2
+  (lambda (a b) (display (list (a) (b))))
+  (make-ra-root #(a b))
+  (ra-i 2 3))
+@end verbatim
+@result{} @code{(a 0)(a 1)(a 2)(b 3)(b 4)(b 5)}
+@end example
+
+The lengths of @
 
 @cindex @code{ra-map!}
 @anchor{x-ra-map!}
 @deffn @w{function} ra-map! dst op a ...
-Iterate over arrays @var{dst} and @var{a}, applying @var{op} to the respective elements in @var{a}, and storing the result in @var{dst}. The bounds of the arguments must match.
+Iterate over arrays @var{dst} @var{a} ... applying @var{op} to the respective elements in @var{a}, and storing the result in the respective element of @var{dst}. The arguments must have matching dimensions and the type of @var{dst} must be compatible with the results of @var{op}.
+@end deffn
 
 This is equivalent to
 @verbatim
@@ -1017,26 +1042,63 @@ This is equivalent to
          (ra-set! dst (apply op (map ra-ref a))))
        dst a)
 @end verbatim
-@end deffn
 
 @cindex @code{ra-copy!}
 @anchor{x-ra-copy!}
 @deffn @w{function} ra-copy! dst src
-Copy @var{src} to @var{dst}.
+Copy @var{src} to @var{dst}. The arguments must have matching dimensions and be of compatible types.
+@end deffn
 
-This is equivalent to
+For valid arguments, this is equivalent to any one of
 @verbatim
 (ra-map! dst identity src)
+(ra-amend! dst src)
 @end verbatim
+
+@cindex @code{ra-fill!}
+@anchor{x-ra-fill!}
+@deffn @w{function} ra-fill! dst value
+Assign @var{value} to each element of @var{dst}. The arguments must be of compatible types.
 @end deffn
+
+This is equivalent to any one of
+@example
+@verbatim
+(ra-map! dst (const value))
+(ra-copy! dst (make-ra value))
+(ra-amend! dst (make-ra value))
+(ra-amend! dst value) ; as long as value isn't an array
+@end verbatim
+@end example
+
+Compare
+
+@example
+@verbatim
+(ra-fill! (make-ra #f 2 2) (make-ra 'x))
+@end verbatim
+@result{} #%2:2:2((#%0(x) #%0(x)) (#%0(x) #%0(x)))
+@verbatim
+(ra-amend! (make-ra #f 2 2) 'x)
+@end verbatim
+@result{} #%2:2:2((x x) (x x))
+@verbatim
+(ra-amend! (make-ra #f 2 2) (make-ra 'x))
+@end verbatim
+@result{} #%2:2:2((x x) (x x))
+@verbatim
+(ra-amend! (make-ra #f 2 2) (make-ra (make-ra 'x)))
+@end verbatim
+@result{} #%2:2:2((#%0(x) #%0(x)) (#%0(x) #%0(x)))
+@end example
 
 @cindex @code{ra-order-c?}
 @anchor{x-ra-order-c?}
 @deffn @w{function} ra-order-c? a [n]
 Check whether the first @var{n} axes of @var{ra} are in C-order. By default, check that the whole array is in C-order, and additionally that the step on the last axis is 1 (i.e. the array is ‘packed’).
+@end deffn
 
 @code{(ra-order-c? a n)} implies @code{(eq? (ra-root a) (ra-root (@ref{x-ra-ravel, @code{ra-ravel}} a n)))}. Note that the stronger condition @code{(ra-order-c? a)} is not necessary for @code{(eq? (ra-root a) (ra-root (ra-ravel a)))} to hold.
-@end deffn
 
 @cindex @code{ra-ref}
 @anchor{x-ra-ref}
