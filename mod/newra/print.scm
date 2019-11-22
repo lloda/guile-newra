@@ -51,7 +51,7 @@
     (if (zero? rank)
       (begin
         (display #\( port)
-        (display (ref base) port)
+        (write (ref base) port)
         (display #\) port))
       (let loop ((k 0) (b base))
         (let* ((dim (vector-ref (ra-dims ra) k))
@@ -66,7 +66,7 @@
                ((= (- rank 1) k)
                 (do ((j (or lo 0) (+ 1 j)) (b b (+ b i)))
                     ((> j hi))
-                  (display (ref b) port)
+                  (write (ref b) port)
                   (when (< j hi)
                     (display #\space port))))
                (else
