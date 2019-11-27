@@ -64,16 +64,14 @@
 ; ----------------
 
 (define (match-len? a b)
-  (or (not a) (not b) (= a b)))
+  (or (not b) (= a b)))
 
 ; ra-slice-for-each-1/2/3/4 do the same thing at increasing levels of inlining
-; and complication, except that the last one is the only one that supports
-; prefix matching. We keep the others for testing.
+; and complication, except that only ra-slice-for-each-4 supports prefix matching.
+; the others are kept for testing.
 
 ; Unlike Guile's array-for-each, etc. this one is strict; every dimension must match.
 (define (ra-slice-for-each-check k . ra)
-  (unless (pair? ra)
-    (throw 'missing-arguments))
   (let ((len (make-vector k #f))
         (lo (make-vector k #f)))
     (for-each (lambda (ra)
@@ -89,7 +87,8 @@
                         (begin
                           (unless (match-len? lenj0 lenj)
                             (throw 'mismatched-lens lenj0 lenj 'at-dim j))
-; valid len means lo must be matched
+; valid len means los must be matched.
+; lenj0 implies loj0 (cf make-dim) so we can reuse match-len? here.
                           (unless (match-len? loj0 loj)
                             (throw 'mismatched-los loj0 loj 'at-dim j)))
                         (begin
@@ -98,12 +97,11 @@
       ra)
     (do ((j 0 (+ j 1))) ((= j k))
       (unless (and (vector-ref len j) (vector-ref lo j)) (throw 'unset-len-or-lo-for-dim j)))
-    (values lo len)))
+    (values (pk 'LO lo) (pk 'LEN len))))
 
-; naive, slice recursively.
+; slice recursively.
 (define (ra-slice-for-each-1 kk op . ra)
   (receive (los lens) (apply ra-slice-for-each-check kk ra)
-; we pick a (-k)-slice for each ra and then just move along.
     (let loop-rank ((k 0) (ra ra))
       (if (= k kk)
         (apply op ra)
@@ -111,9 +109,8 @@
                (end (+ lo (vector-ref lens k))))
           (let loop-dim ((i lo))
             (unless (= i end)
-              (let ((rai (map (cut ra-slice <> i) ra)))
-                (loop-rank (+ k 1) rai)
-                (loop-dim (+ i 1))))))))))
+              (loop-rank (+ k 1) (map (cut ra-slice <> i) ra))
+              (loop-dim (+ i 1)))))))))
 
 (define (make-ra-root-prefix ra kk)
   (make-ra-root (%%ra-root ra)
@@ -122,7 +119,7 @@
                   #())
                 (ra-offset (%%ra-zero ra) (%%ra-dims ra) kk)))
 
-; moving slice
+; a single moving slice for each argument.
 (define (ra-slice-for-each-2 kk op . ra)
   (receive (los lens) (apply ra-slice-for-each-check kk ra)
 ; create (rank(ra) - k) slices that we'll use to iterate by bumping their zeros.
@@ -150,7 +147,7 @@
                  ra frame)
                 (loop-dim (+ i 1)))))))))))
 
-; moving slice, row-major unrolling.
+; moving slice with row-major unrolling.
 (define (ra-slice-for-each-3 u op . ra)
   (receive (los lens) (apply ra-slice-for-each-check u ra)
     (let/ec exit
@@ -180,7 +177,7 @@
                   (if (= k u)
 ; unrolled dimensions.
                     (let loop ((i lenm))
-; no fresh slice descriptor like in array-slice-for-each. That should be all right in newra, b/c the descriptors can be copied.
+; no fresh slice descriptor like in array-slice-for-each. Should be all right b/c the descriptors can be copied.
                       (apply op ra)
                       (cond
                        ((zero? i)
@@ -311,7 +308,7 @@
                              (let ((lenm (- len 1)))
                                (op-loop lens lenm u ra ... frame ... step ...))))))))))))))))
 
-(define (ra-slice-for-each-4 k op ra . rx)
+(define (ra-slice-for-each-4 k op . rx)
   (letrec-syntax
       ((%op
         (syntax-rules ()
@@ -325,13 +322,12 @@
            (%slice-loop k (%op-once %op ra ...) (%op-loop %op %stepu %stepk ra ...)
                         %list %let ra ...)))))
     (apply (case-lambda
-            (() (%args ra))
-            ((rb) (%args ra rb))
-            ((rb rc) (%args ra rb rc))
-            (rx
-             (let ((ry (cons ra rx)))
-               (%slice-loop k (%op-once %apply-op ry) (%op-loop %apply-op %apply-stepu %apply-stepk ry)
-                            %apply-list %apply-let ry))))
+            (() (throw 'bad-number-of-arguments))
+            ((ra) (%args ra))
+            ((ra rb) (%args ra rb))
+            ((ra rb rc) (%args ra rb rc))
+            (rx (%slice-loop k (%op-once %apply-op rx) (%op-loop %apply-op %apply-stepu %apply-stepk rx)
+                             %apply-list %apply-let rx)))
       rx)))
 
 (define ra-slice-for-each ra-slice-for-each-4)
