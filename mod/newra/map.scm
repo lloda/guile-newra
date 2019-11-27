@@ -29,22 +29,23 @@
     (list (list #'d   #'aseq-ref       #'(cut throw 'no-aseq-set! <...>))
           (list #'#t  #'vector-ref     #'vector-set!                   )
           (list #'f64 #'f64vector-ref  #'f64vector-set!                )
-          ;; (list #'f32 #'f32vector-ref  #'f32vector-set!                )
-          ;; (list #'c64 #'c64vector-ref  #'c64vector-set!                )
-          ;; (list #'c32 #'c32vector-ref  #'c32vector-set!                )
-          ;; (list #'s64 #'s64vector-ref  #'s64vector-set!                )
-          ;; (list #'s32 #'s32vector-ref  #'s32vector-set!                )
-          ;; (list #'s16 #'s16vector-ref  #'s16vector-set!                )
-          ;; (list #'s8  #'s8vector-ref   #'s8vector-set!                 )
-          ;; (list #'u64 #'u64vector-ref  #'u64vector-set!                )
-          ;; (list #'u32 #'u32vector-ref  #'u32vector-set!                )
-          ;; (list #'u16 #'u16vector-ref  #'u16vector-set!                )
-          ;; (list #'u8  #'u8vector-ref   #'u8vector-set!                 )
+          (list #'f32 #'f32vector-ref  #'f32vector-set!                )
+          (list #'c64 #'c64vector-ref  #'c64vector-set!                )
+          (list #'c32 #'c32vector-ref  #'c32vector-set!                )
+          (list #'s64 #'s64vector-ref  #'s64vector-set!                )
+          (list #'s32 #'s32vector-ref  #'s32vector-set!                )
+          (list #'s16 #'s16vector-ref  #'s16vector-set!                )
+          (list #'s8  #'s8vector-ref   #'s8vector-set!                 )
+          (list #'u64 #'u64vector-ref  #'u64vector-set!                )
+          (list #'u32 #'u32vector-ref  #'u32vector-set!                )
+          (list #'u16 #'u16vector-ref  #'u16vector-set!                )
+          (list #'u8  #'u8vector-ref   #'u8vector-set!                 )
           ;; (list #'a   #'string-ref     #'string-set!                   )
           ;; (list #'b   #'bitvector-ref  #'bitvector-set!                )
           ))
   (define syntax-accessors-2
-    (list (list #'#t  #'vector-ref     #'vector-set!                   )
+    (list (list #'d   #'aseq-ref       #'(cut throw 'no-aseq-set! <...>))
+          (list #'#t  #'vector-ref     #'vector-set!                   )
           (list #'f64 #'f64vector-ref  #'f64vector-set!                )
           ;; (list #'f32 #'f32vector-ref  #'f32vector-set!                )
           ;; (list #'s64 #'s64vector-ref  #'s64vector-set!                )
@@ -63,15 +64,14 @@
 ; ra-slice-for-each, several versions
 ; ----------------
 
-(define (match-len? a b)
-  (or (not b) (= a b)))
-
 ; ra-slice-for-each-1/2/3/4 do the same thing at increasing levels of inlining
 ; and complication, except that only ra-slice-for-each-4 supports prefix matching.
 ; the others are kept for testing.
 
 ; Unlike Guile's array-for-each, etc. this one is strict; every dimension must match.
 (define (ra-slice-for-each-check k . ra)
+  (define (match-len? a b)
+    (or (not b) (= a b)))
   (let ((len (make-vector k #f))
         (lo (make-vector k #f)))
     (for-each (lambda (ra)
@@ -87,8 +87,7 @@
                         (begin
                           (unless (match-len? lenj0 lenj)
                             (throw 'mismatched-lens lenj0 lenj 'at-dim j))
-; valid len means los must be matched.
-; lenj0 implies loj0 (cf make-dim) so we can reuse match-len? here.
+; valid len means los must be matched. lenj0 implies loj0 (cf make-dim) so we can reuse match-len?.
                           (unless (match-len? loj0 loj)
                             (throw 'mismatched-los loj0 loj 'at-dim j)))
                         (begin
@@ -96,7 +95,8 @@
                           (vector-set! lo j loj)))))))
       ra)
     (do ((j 0 (+ j 1))) ((= j k))
-      (unless (and (vector-ref len j) (vector-ref lo j)) (throw 'unset-len-or-lo-for-dim j)))
+      (unless (vector-ref len j) (throw 'unset-len-for-dim j len))
+      (unless (vector-ref lo j) (throw 'unset-lo-for-dim j lo)))
     (values lo len)))
 
 ; slice recursively.
@@ -112,21 +112,27 @@
               (loop-rank (+ k 1) (map (cut ra-slice <> i) ra))
               (loop-dim (+ i 1)))))))))
 
-(define (make-ra-root-prefix ra kk)
-  (make-ra-root (%%ra-root ra)
-                (if (< kk (%%ra-rank ra))
-                  (vector-drop (%%ra-dims ra) kk)
-                  #())
-                (ra-offset (%%ra-zero ra) (%%ra-dims ra) kk)))
+(define (make-ra-root-prefix ra framek lo)
+  (let ((dims (%%ra-dims ra)))
+    (make-ra-root (%%ra-root ra)
+                  (if (< framek (%%ra-rank ra)) (vector-drop dims framek) #())
+; variant of (ra-offset zero (%%ra-dims ra) framek) to handle lo #f (e.g. on index placeholders).
+; FIXME merge or split ra-offset. Shouldn't default to 0 there.
+                  (let loop ((k (min framek (%%ra-rank ra))) (pos (%%ra-zero ra)))
+                    (if (<= k 0)
+                      pos
+                      (let* ((k (- k 1))
+                             (dim (vector-ref dims k)))
+                        (loop k (+ pos (* (vector-ref lo k) (dim-step dim))))))))))
 
 ; a single moving slice for each argument.
 (define (ra-slice-for-each-2 kk op . frame)
   (receive (los lens) (apply ra-slice-for-each-check kk frame)
 ; create (rank(ra) - k) slices that we'll use to iterate by bumping their zeros.
-    (let ((ra (map (cut make-ra-root-prefix <> kk) frame)))
+    (let ((ra (map (cut make-ra-root-prefix <> kk los) frame)))
       (let loop-rank ((k 0))
         (if (= k kk)
-; no fresh slice descriptor like in array-slice-for-each. See below.
+; no fresh slice descriptor like in array-slice-for-each. Should be all right b/c the descriptors can be copied.
           (apply op ra)
           (let  ((lenk (vector-ref lens k)))
             (let loop-dim ((i 0))
@@ -153,7 +159,7 @@
 ; check early so we can save a step in the loop later.
       (vector-for-each (lambda (len) (when (zero? len) (exit))) lens)
 ; create (rank(ra) - k) slices that we'll use to iterate by bumping their zeros.
-      (let ((ra (map (cut make-ra-root-prefix <> u) frame)))
+      (let ((ra (map (cut make-ra-root-prefix <> u los) frame)))
 ; since we'll unroll, special case for rank 0
         (if (zero? u)
           (apply op ra)
@@ -279,11 +285,10 @@
          #`(let ((k k_))
 ; create (rank(ra) - k) slices that we'll use to iterate by bumping their zeros.
              (receive (los lens) (apply ra-slice-for-each-check k (%list frame ...))
-               (%let ((ra ...) (frame ...)
-                      (cut make-ra-root-prefix <> k))
+               (%let ((ra ...) (frame ...) (cut make-ra-root-prefix <> k los))
 ; since we'll unroll, special case for rank 0
                  (if (zero? k)
-; no need of fresh slice descriptor unlike in array-slice-for-each, since newra b/c descriptors can be copied. See also below.
+; no fresh slice descriptor like in array-slice-for-each. Should be all right b/c the descriptors can be copied.
                    (op-once ra ...)
                    (let/ec exit
 ; check early so we can save a step in the loop later.

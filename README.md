@@ -32,7 +32,7 @@ Compared with the old arrays, `newra` offers a growing list of features:
 * Settable arrays: `(set! ((make-ra #f 2 3) 1 1) 99)` returns `#%2:2:3((#f #f #f) (#f 99 #f))`.
 * Lazy index vectors (`ra-iota`, `ra-i`). These may be infinite: `((ra-iota #f 1) (- #e1e20 1))` returns `100000000000000000000`.
 * Rank extension by prefix matching: `(ra-map! (make-ra 'x 2 3) + (ra-i 2 3) (ra-iota 2 0 10))` returns `#%2:2:3((0 1 2) (13 14 15))`. Prefix matching supports undefined dimensions; the previous expression and `(ra-map! (make-ra 'x 2 3) + (ra-i #f 3) (ra-iota #f 0 10))` are equivalent.
-* Generalized transpose: axes not mentioned in the transposed axis list become axes with undefined size and zero step (‘dead’ axes). This can be used for broadcasting. For example, given `(define I (ra-iota #f 1))` and `(define J (ra-transpose (ra-iota #f 1) 1))`, then `(ra-map! (make-ra 'x 10 10) * I J)` is a multiplication table.
+* Generalized transpose: axes not mentioned in the transposed axis list become axes with undefined size and zero step (‘dead’ axes). This can be used for broadcasting. For example, given `(define I (ra-iota))` and `(define J (ra-transpose (ra-iota) 1))`, then `(ra-map! (make-ra 'x 10 10) * I J)` is a multiplication table.
 * Utilities such as `ra-reverse`, `ra-any`, `ra-every`, `ra-fold`, `ra-from`, `ra-amend!`, `ra-ravel`, `ra-reshape`, `ra-tile`.
 * Since `newra` is written entirely in Scheme, if a `newra` operation takes too long, you can actually interrupt it, which is not the case in the old system.
 
@@ -66,7 +66,7 @@ With that in mind, here is what you'd have to change. Note that the `ra-` names 
 
 * The read syntax is like that of the old system except for an extra `%`, so `#2f64((1 2) (3 4))` becomes `#%2f64((1 2) (3 4))`. The compiler doesn't support the new literal type yet. You can work around this using the reader like `(call-with-input-string "#%2f64((1 2) (3 4))" read)` or say `(list->ra 'f64 2 '((1 2) (3 4)))`.
 
-* The default printer and reader don't handle undefined size arrays as well as they could. For example `(ra-transpose (ra-i 2) 1)` prints as `#%2:d:2((0 1))`, but this cannot be read back. `(ra-iota #f)` prints as `#%1:f`.
+* The default printer and reader don't handle undefined size arrays as well as they could. For example `(ra-transpose (ra-i 2) 1)` prints as `#%2:d:2((0 1))`, but this cannot be read back. `(ra-iota #f)` prints as `#%d1:f`.
 
 * `truncated-print` doesn't support `newra` types, you'll get a lone `#` if truncation is necessary at all.
 

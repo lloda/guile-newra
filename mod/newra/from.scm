@@ -14,6 +14,7 @@
 
 (define-module (newra from)
   #:export (ra-from ra-amend! ldots
+            ra-clip
             fromb fromu amendu!))
 
 (import (newra base) (newra map) (newra lib) (srfi :8) (srfi :26) (srfi :1)
@@ -292,3 +293,29 @@ See also: ra-set! ra-from ra-copy! ra-cell ra-ref ra-slice
       (apply amendu! B C iu)
 ; we aren't making a new array so there's no need to transpose back.
       A)))
+
+
+; -----------------------
+; derived in some way from ra-from
+; -----------------------
+
+; ra-from resets the bounds so it cannot be reused here.
+(define (ra-clip a b)
+  "
+ra-clip a b
+
+Slice A to the intersection of the bounds of A and B.
+
+See also: ra-from, ra-amend, ra-reshape
+"
+  (let ((db (ra-dims b))
+        (da (vector-copy (ra-dims a))))
+    (let loop ((i (- (min (vector-length da) (vector-length db)) 1)))
+      (if (negative? i)
+        (make-ra-root (ra-root a) da (ra-zero a))
+        (let* ((dbi (vector-ref db i))
+               (dai (vector-ref da i))
+               (lo (max (dim-lo dai) (dim-lo dbi)))
+               (hi (min (dim-hi dai) (dim-hi dbi))))
+          (vector-set! da i (make-dim (max 0 (- hi lo -1)) lo (dim-step dai)))
+          (loop (- i 1)))))))

@@ -18,7 +18,8 @@
             ra-i ra-iota
             ra-copy
             ra-reverse ra-transpose ra-order-c? ra-ravel ra-reshape ra-tile
-            ra-fold ra-fold* ra-singletonize
+            ra-fold ra-fold*
+            ra-singletonize
 
             vector-append))
 
@@ -326,8 +327,13 @@ See also: ra-iota ra-i
 (define (ra-i . i)
   (make-ra-root (make-aseq) (apply c-dims i)))
 
-(define* (ra-iota len #:optional (lo 0) (step 1))
-  (make-ra-root (make-aseq lo step) (c-dims len)))
+(define ra-iota
+  (case-lambda*
+   (()
+; lo #f so it matches axes with any lo
+    (make-ra-root (make-aseq) (vector (make-dim #f #f 1))))
+   ((len #:optional (lo 0) (step 1))
+    (make-ra-root (make-aseq lo step) (c-dims len)))))
 
 ; oldra has array-copy in (ice-9 arrays). Something of the sort.
 ; FIXME handling of dead axes could be faster - maybe c-dims should be written differently.
@@ -547,7 +553,7 @@ See also: ra-ravel ra-tile ra-transpose ra-from ra-order-c? c-dims
     (throw 'bad-rank-for-reshape (ra-rank ra)))
   (let ((sdims (apply c-dims s)))
     (let ((ssize (vector-fold (lambda (d c) (* c (dim-len d))) 1 sdims)))
-      (when (> ssize (ra-length ra))
+      (when (and (ra-length ra) (> ssize (ra-length ra)))
         (throw 'bad-size-for-reshape ssize (ra-length ra))))
     (match (vector-ref (%%ra-dims ra) 0)
       (($ <dim> ilen ilo istep)

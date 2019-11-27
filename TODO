@@ -13,7 +13,7 @@ Help: [C-uc .] insert timestamp [C-cc] flip checkbox [C-uucc] partial flip check
   * [X] ra-equal?
   * [ ] root vectors are equivalent to rank-1 newra objects
 
-* TODO guile-ploy functionality [7/11]
+* TODO guile-ploy functionality [7/12]
   * [X] ra-fold ra-fold*
   * [X] ra-any ra-every
   * [X] raw prefix matching
@@ -23,7 +23,10 @@ Help: [C-uc .] insert timestamp [C-cc] flip checkbox [C-uucc] partial flip check
     - [X] ra-amend!
     - [X] (ldots)
   * [X] ra-ravel
-  * [X] ra-reshape, ra-tile
+  * [X] ra-tile
+  * [-] ra-reshape [1/2]
+    - [X] basic function
+    - [ ] placeholder
   * [ ] verbs, w/rank
   * [ ] as-ra
   * [ ] cat
@@ -50,7 +53,9 @@ Help: [C-uc .] insert timestamp [C-cc] flip checkbox [C-uucc] partial flip check
   * [ ] reading of arrays with inf axes
   * [ ] reading of arrays with dead axes
 
-* TODO quality of life [0/5]
+* TODO quality of life [1/8]
+  * [X] ra-clip
+  * [ ] make (set! ra ...) work with slices just (ra ...).
   * [ ] refactor macros
   * [ ] special rank-1 (or higher!) cases for e.g. copy or fill in the unroll section (e.g. bytevector-copy).
   * [ ] loop attack heuristics (different orders...)

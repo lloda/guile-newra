@@ -123,6 +123,25 @@
 
 (test-equal "#%1d:0()"
   (ra->string (ra-iota 0)))
+
+; default ra-iota has lo #f so it will match any lower bound and act as index placeholder.
+(test-equal "#%1@2:3(2 3 4)"
+            (ra->string (ra-copy! (make-ra-new #t 'o (c-dims '(2 4))) (ra-iota))))
+
+; 2/3/4 use moving slice but 1 uses direct slicing in the lo..hi range.
+
+(define (test-lof rsfe)
+  (test-equal
+    "(#%0(o) #%0d(2))(#%0(o) #%0d(3))(#%0(o) #%0d(4))"
+    (call-with-output-string
+     (lambda (o)
+       (rsfe 1 (lambda a (display a o)) (make-ra-new #t 'o (c-dims '(2 4))) (ra-iota))))))
+
+(test-lof ra-slice-for-each-1)
+(test-lof ra-slice-for-each-2)
+(test-lof ra-slice-for-each-3)
+(test-lof ra-slice-for-each-4)
+
 
 ; -----------------------
 ; make-ra-shared
@@ -593,7 +612,7 @@
     (call-with-output-string
      (lambda (o) (ra-slice-for-each 2 (lambda (ra0 ra1) (format o "~a-~a|" ra0 ra1)) ra0 ra1))))
   (test-assert
-   (throws-exception? 'unset-len-or-lo-for-dim
+   (throws-exception? 'unset-len-for-dim
                       (lambda () (ra-slice-for-each 3 (lambda (ra0 ra1) 0) ra0 ra1)))))
 
 
@@ -967,7 +986,7 @@
 (define (test-reshape a shape check-shape)
   (let* ((b (apply ra-reshape a shape)))
     (test-assert (ra-equal? (ra-ravel a) (ra-ravel b)))
-    (test-assert (eq? (ra-root a) (ra-root b)))
+    (test-eq (ra-root a) (ra-root b))
     (test-equal check-shape (ra-shape b))))
 
 (test-reshape (ra-i 6)
@@ -982,6 +1001,15 @@
               '(2 3) '((0 1) (0 2) (1 3)))
 (test-reshape (ra-transpose (make-ra-root (make-aseq) (c-dims '(4 9) '(1 4))) 1 0)
               '((1 2) 2) '((1 2) (0 1) (4 9)))
+
+; reshape of inf length - but lo must be set
+
+(let* ((a (ra-iota #f 9))
+       (b (ra-reshape a '(2 3))))
+  (test-equal '((2 3)) (ra-shape b))
+  (test-eq (ra-root a) (ra-root b))
+  (test-equal 9 (ra-ref b 2))
+  (test-equal 10 (ra-ref b 3)))
 
 
 ; -----------------------
@@ -1010,8 +1038,24 @@
 
 
 ; -----------------------
+; ra-clip
+; -----------------------
+
+(let* ((i0 (ra-transpose (ra-iota) 0))
+       (i1 (ra-transpose (ra-iota) 1))
+       (i2 (ra-transpose (ra-iota) 2))
+       (f (lambda a (format #f "~{~a~}" a)))
+       (b (ra-clip (ra-map! (make-ra-new #t 'a (c-dims '(4 6) '(0 2) '(0 4))) f i0 i1 i2)
+                   (ra-map! (make-ra-new #t 'b (c-dims '(2 9) '(1 4))) f i0 i1))))
+  (test-equal '((4 6) (1 2) (0 4)) (ra-shape b))
+  (test-equal
+    "#%3@4:3@1:2:5(((\"410\" \"411\" \"412\" \"413\" \"414\") (\"420\" \"421\" \"422\" \"423\" \"424\")) ((\"510\" \"511\" \"512\" \"513\" \"514\") (\"520\" \"521\" \"522\" \"523\" \"524\")) ((\"610\" \"611\" \"612\" \"613\" \"614\") (\"620\" \"621\" \"622\" \"623\" \"624\")))"
+    (ra->string b)))
+
+
+; -----------------------
 ; the end.
 ; -----------------------
 
-;; (test-end "newra")
-;; (exit (test-runner-fail-count (test-runner-current)))
+(test-end "newra")
+(exit (test-runner-fail-count (test-runner-current)))

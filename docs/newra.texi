@@ -7,7 +7,7 @@
 @c last [ma112]
 
 @set VERSION 1
-@set UPDATED 2019 November 14
+@set UPDATED 2019 November 28
 
 @copying
 @code{newra} (version @value{VERSION}, updated @value{UPDATED})
@@ -51,7 +51,7 @@ This document uses ‘array’ to refer both to the old built-in array type and 
 
 @menu
 * Introduction::      Why Guile arrays need replacing.
-* Basic use::         Using arrays as containers.
+* Basic use::         Arrays as data structures.
 * Advanced use::      Guile as an array language.
 * Hazards::           User beware.
 * Reference::         Systematic list of types and functions.
@@ -240,7 +240,7 @@ These problems are solved if the built-in type is replaced with a new type defin
 @c ------------------------------------------------
 
 @menu
-* Creating arrays::
+* Creating and accessing arrays::
 * Special arrays::
 * Iteration::
 * Slicing::
@@ -251,8 +251,8 @@ These problems are solved if the built-in type is replaced with a new type defin
 @end menu
 
 @c ------------------------------------------------
-@node Creating arrays
-@section Creating arrays
+@node Creating and accessing arrays
+@section Creating and accessing arrays
 @c ------------------------------------------------
 
 An array can be created anew (@ref{x-make-ra-new, @code{make-ra-new}}), or over an existing root (@ref{x-make-ra-root, @code{make-ra-root}}). @ref{x-c-dims, @code{c-dims}} can be used to compute the dim vector.
@@ -297,6 +297,41 @@ An existing root implies the type, so it doesn't need to be given.
 @result{} #%2f64:3:2((9.0 9.0) (9.0 9.0) (9.0 9.0))
 @end example
 
+@code{newra} arrays are applicative; to look up an element of an array, use it as a function of the indices.
+
+@example
+@verbatim
+(define a (make-ra #f 3 2))
+(set! (a 0 0) 9)
+(set! (a 1 1) 3)
+@end verbatim
+@result{} #%2:3:4((9 #f) (#f 3) (#f #f))
+@verbatim
+(a 0 0)
+@end verbatim
+@result{} 9
+@end example
+
+@cindex prefix slice
+If you give fewer indices than the rank, you get a prefix slice. This slice shares the root of the original array.
+
+@example
+@verbatim
+(a 1)
+@end verbatim
+@result{} #%1:2(#f 3)
+@verbatim
+(set! ((a 1) 0) 'b)
+@end verbatim
+@result{} #%1:2(b 3)
+@verbatim
+a
+@end verbatim
+@result{} #%2:3:4((9 #f) (b 3) (#f #f))
+@end example
+
+You can also access arrays in the more usual way with the functions @ref{x-ra-ref, @code{ra-ref}} and @ref{x-ra-set!, @code{ra-set!}}. See @ref{Slicing} for additional options.
+
 @c ------------------------------------------------
 @node Special arrays
 @section Special arrays
@@ -337,16 +372,16 @@ To make @code{<aseq>} even more useful, @code{newra} supports axes with infinite
 @example
 @verbatim
 (ra-ref (make-ra-root (make-aseq) (vector (make-dim #f)) 0) #e1e12) ; or more simply
-(ra-ref (ra-iota #f) #e1e12)
+(ra-ref (ra-iota) #e1e12)
 @end verbatim
 @result{} 1000000000000
 @end example
 
-These are treated especially when used in iteration, in that they match axes of any finite length (@ref{x-ra-map!, @code{ra-map!}}). Effectively this lets one use @code{(@ref{x-ra-transpose, @code{ra-transpose}} (ra-iota #f) k)} as a placeholder for the index over axis @code{k}.
+These are treated especially when used in iteration, in that they match axes of any finite length (@ref{x-ra-map!, @code{ra-map!}}). Effectively this lets one use @code{(@ref{x-ra-transpose, @code{ra-transpose}} (ra-iota) k)} as a placeholder for the index over axis @code{k}.
 
 @example
 @verbatim
-(ra-map! (make-ra 0 3) + (ra-iota 3) (ra-iota #f))
+(ra-map! (make-ra 0 3) + (ra-iota 3) (ra-iota))
 @end verbatim
 @result{} #1%3(0 2 4)
 @end example
@@ -368,7 +403,7 @@ These are treated especially when used in iteration, in that they match axes of 
 @end example
 
 @cindex singleton axis
-When an axis has 0 step and infinite length, it operates essentially as ‘singleton axes’ operate in other array languages. The main diference is that the ability to match any finite length is explicit; an axis with length 1 will still fail to match an axis with length 2.
+When an axis has 0 step and infinite length, it operates essentially as ‘singleton axes’ operate in other array languages. The main diference is that the ability to match any finite length is explicit; an axis with length 1 will still fail to match an axis with length 2 (say).
 
 @c ------------------------------------------------
 @node Iteration
@@ -388,8 +423,8 @@ It is common to need the indices of the elements during array iteration. @code{n
 
 @example
 @verbatim
-(define i0 (ra-iota #f))
-(define i1 (ra-transpose (ra-iota #f) 1))
+(define i0 (ra-iota))
+(define i1 (ra-transpose (ra-iota) 1))
 (ra-map! (make-ra #f 2 2) list (list->ra 2 '((A B) (C D))) i0 i1)
 @end verbatim
 @result{} #%2:2:2(((A 0 0) (B 0 1)) ((C 1 0) (D 1 1)))
@@ -714,10 +749,11 @@ Note that in the last example there is no source axis for destination axis 0. De
 
 In particular, @code{(ra-transpose A)} is equivalent to @code{(ra-transpose A 0 1 ... (- (ra-rank A) 1))} (which is of course the same array as @code{A}).
 
+@cindex index placeholder
 This can be exploited to create ‘index placeholders’, e.g.
 @example
 @verbatim
-(define (tensor-index i) (ra-transpose (ra-iota #f) i))
+(define (tensor-index i) (ra-transpose (ra-iota) i))
 (ra-for-each (compose display list) (make-ra #f 3 4) (tensor-index 0) (tensor-index 1))
 @end verbatim
 @result{} @code{(#f 0 0)(#f 0 1)(#f 0 2)(#f 0 3)(#f 1 0)(#f 1 1)(#f 1 2)(#f 1 3)(#f 2 0)(#f 2 1)(#f 2 2)(#f 2 3)}
@@ -792,6 +828,34 @@ a
 @end verbatim
 @result{} @code{#%4d:1:2:1:3((((0 1 2)) ((3 4 5))))}
 @end example
+
+One important difference between the built-in array functions and @code{newra} is that bounds matching in @code{newra} is strict: finite bounds must be identical for axes to match, while for @code{array-map!}, @code{array-for-each}, @code{array-copy!}, etc. the iteration range is the intersection of the ranges of the arguments@footnote{I rejected this approach for @code{newra} because in my experience it results in errors going undetected much more often than it saves any work.}. @code{newra} provides @ref{x-ra-clip, @code{ra-clip}} to match ranges easily.
+
+@example
+@verbatim
+(define a (make-ra-root (vector 'a 'b 'c 'd 'e 'f 'g))) ; range is 0..6
+(define b (ra-reshape (ra-iota 4) '(2 5))) ; range is 2..5
+(ra-copy! a b)
+@end verbatim
+@result{} @code{Throw to key `mismatched-lens' with args `(7 4 at-dim 0)'.}
+@verbatim
+(ra-copy! (ra-clip a b) b)
+a
+@end verbatim
+@result{} @code{#%1:7(a b 0 1 2 3 g)}
+@c Cf. using built-in arrays @c Looks like a Guile bug to me :-/
+@c @verbatim
+@c (define a (vector 'a 'b 'c 'd 'e 'f 'g)))
+@c (define b #1@2:4(0 1 2 3))
+@c (array-copy! b a)
+@c a
+@c @end verbatim
+@c @result{} @code{#(0 1 2 3 e f g)}
+@end example
+
+
+
+
 
 @c ------------------------------------------------
 @node Advanced use
@@ -1150,6 +1214,12 @@ Placeholder for @var{n} full axes, used as argument to @code{ra-from} or @code{r
 @cindex @code{ra-singletonize}
 @anchor{x-ra-singletonize}
 @deffn @w{function} ra-singletonize a
+@end deffn
+
+@cindex @code{ra-clip}
+@anchor{x-ra-clip}
+@deffn @w{function} ra-clip a b
+Slice @var{a} to the smaller of the bounds of @var{a} and @var{b}. @var{a} and @var{b} may have different ranks. In that case only the common prefix of @var{a} is sliced. The result always shares the root of @var{a}
 @end deffn
 
 @c ------------------------------------------------

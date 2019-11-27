@@ -131,7 +131,7 @@
 
 
 ; ----------------
-; root as delayed iota - an infinite arithmetic sequence.
+; root as delayed iota - an arithmetic sequence.
 ; ----------------
 
 (define-immutable-record-type <aseq>
@@ -175,10 +175,11 @@ Create an ra axis descriptor with the given parameters.
 
 See also: dim-len dim-lo dim-step c-dims dim-ref
 "
-   ((len) (make-dim* len 0 1))
-   ((len lo) (make-dim* len lo 1))
+   ((len) (make-dim len 0 1))
+   ((len lo) (make-dim len lo 1))
    ((len lo step)
-    (when (and len (or (not (integer? len)) (< len 0))) (throw 'bad-dim-len len))
+    (when (and len (or (not (integer? len)) (negative? len))) (throw 'bad-dim-len len))
+; lo #f requires len #f. FIXME doc when that can happen.
     (when (and (not lo) len) (throw 'bad-dim-lo-len lo len))
     (make-dim* len lo step))))
 
@@ -360,12 +361,12 @@ See also: ra-zero
     (ra-offset zero dims (vector-length dims)))
    ((zero dims k)
 ; min - enable prefix match, ignoring dead axes [(vector-length dims) ... (- k 1)]
-    (let loop ((j (min k (vector-length dims))) (pos zero))
-      (if (<= j 0)
+    (let loop ((k (min k (vector-length dims))) (pos zero))
+      (if (<= k 0)
         pos
-        (let* ((j (- j 1))
-               (dim (vector-ref dims j)))
-          (loop j (+ pos (* (or (dim-lo dim) 0) (dim-step dim))))))))))
+        (let* ((k (- k 1))
+               (dim (vector-ref dims k)))
+          (loop k (+ pos (* (or (dim-lo dim) 0) (dim-step dim))))))))))
 
 
 ; ----------------
