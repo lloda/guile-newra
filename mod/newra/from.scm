@@ -284,7 +284,7 @@ See also: ra-set! ra-from ra-copy! ra-cell ra-ref ra-slice
 "
   (receive (B iu tu tb) (apply parse-args A i)
 ; C needs to be transposed to match the transposition of B relative to A.
-; FIXME shouldn't need gradeup - a version of ra-transpose that takes axes in dest order?
+; FIXME shouldn't need gradeup - ra-untranspose instead?
     (let ((C (if (ra? C)
                (let ((gup (gradeup (append tu tb))))
                  (apply ra-transpose C (take gup (min (length gup) (ra-rank C)))))

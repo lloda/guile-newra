@@ -512,9 +512,6 @@ See also: ra-root ra-zero ra-dims
    ((root)
     (make-ra-root root #f 0))))
 
-
-
-
 
 ; ----------------
 ; derived functions

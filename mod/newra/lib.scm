@@ -17,7 +17,8 @@
             array->ra ra->array as-ra
             ra-i ra-iota
             ra-copy
-            ra-reverse ra-transpose ra-order-c? ra-ravel ra-reshape ra-tile
+            ra-reverse ra-transpose ra-untranspose ra-order-c?
+            ra-ravel ra-reshape ra-tile
             ra-fold ra-fold*
             ra-singletonize
 
@@ -450,6 +451,35 @@ See also: make-ra-root make-ra-new
              (throw 'bad-lo))
            odim))))))
 
+; FIXME could support other cases, e.g. axes is short but complete for the prefix.
+
+(define (ra-untranspose rb . axes_)
+  "
+ra-untranspose rb axes ... -> ra
+
+Reverse the transposition (ra-transpose ra axes ...).
+
+AXES must be a permutation of the list [0 ... (-1 (ra-rank rb))]. Each axis k =
+(AXES i) of RB is transposed to axis i = 0 ... (rak-rank rb)-1 of RA. The result
+has the same rank and the same root as the argument.
+
+See also: ra-transpose ra-dims
+"
+  (let* ((ra (ra-check rb))
+         (odims (%%ra-dims rb))
+         (ndims (make-vector (vector-length odims) #f)))
+    (let loop ((n 0) (axes axes_))
+      (if (null? axes)
+        (if (= n (vector-length odims))
+          (make-ra-root (ra-root ra) ndims (ra-zero ra))
+          (throw 'bad-untranspose-axes ra axes_))
+        (let* ((o (car axes))
+               (d (vector-ref odims o)))
+          (if (vector-ref ndims n)
+            (throw 'bad-untranspose-axes ra axes_)
+            (vector-set! ndims n (vector-ref odims o)))
+          (loop (+ n 1) (cdr axes)))))))
+
 (define* (ra-order-c? ra #:optional n)
   "
 ra-order-c? ra
@@ -457,13 +487,13 @@ ra-order-c? ra n
 
 Check whether the N-frame of RA is in C-order (aka row-major order).
 
-An ra frame is in C-order if the step of each axis is equal to the product of the
-length and the step of the following axis. Axes with size 1 are ignored. If any axis
-has size 0, the frame is in C-order.
+An ra frame is in C-order if the step of each axis is equal to the product of
+the length and the step of the following axis. Axes with length 1 are
+ignored. If any axis has length 0, the frame is in C-order.
 
 If N is not given, check whether the elements of RA are in packed C-order. This
-means that 1) the full frame of RA is in C-order, and 2) the step on the last
-axis (whose size is neither 1 or 0) is 1.
+means that 1) the full frame of RA is in C-order, and 2) on the last axis,
+either the length is 1, or the length is 0, or the step is 1.
 
 See also: ra-ravel ra-reshape ra-tile c-dims
 "

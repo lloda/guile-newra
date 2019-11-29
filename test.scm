@@ -263,6 +263,13 @@
 ; these two have a dead axes so the cannot be matched one to the other.
   (test-equal (ra-dims (ra-transpose ra3 1)) (ra-dims (ra-transpose ra3 1 2 3))))
 
+(let* ((a (ra-copy #t (ra-i 2 3 4)))
+       (b (ra-transpose a 2 0 1))
+       (c (ra-untranspose b 2 0 1)))
+  (test-eq (ra-root a) (ra-root c))
+  (test-assert (ra-equal? a c))
+  (test-equal (ra-dims a) (ra-dims c)))
+
 
 ; -----------------------
 ; ra-reverse

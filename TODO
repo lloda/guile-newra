@@ -38,13 +38,6 @@ Help: [C-uc .] insert timestamp [C-cc] flip checkbox [C-uucc] partial flip check
   * [X] broadcasting
   * [ ] drag-along facility / delayed ops
 
-* TODO replace Guile arrays [0/5]
-  * [ ] truncated-print support
-  * [ ] equal? support
-  * [ ] hooks into C / libguile
-  * [ ] compilation of literals
-  * [ ] replace all names
-
 * TODO friendlier undefined sizes [2/6]
   * [X] printing of 'd typed arrays
   * [X] printing with dead axes
@@ -55,10 +48,17 @@ Help: [C-uc .] insert timestamp [C-cc] flip checkbox [C-uucc] partial flip check
 
 * TODO quality of life [1/8]
   * [X] ra-clip
-  * [ ] make (set! ra ...) work with slices just (ra ...).
+  * [ ] make (set! (ra ...) o) work with slices just (ra ...).
   * [ ] refactor macros
   * [ ] special rank-1 (or higher!) cases for e.g. copy or fill in the unroll section (e.g. bytevector-copy).
   * [ ] loop attack heuristics (different orders...)
   * [ ] bench tracking
   * [ ] move struct defs to (newra types)
   * [ ] parameters to control print format (eg print sizes/strides, truncate...)
+
+* TODO replace Guile arrays [0/5]
+  * [ ] truncated-print support
+  * [ ] equal? support
+  * [ ] hooks into C / libguile
+  * [ ] compilation of literals
+  * [ ] replace all names
