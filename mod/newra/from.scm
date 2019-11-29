@@ -254,10 +254,6 @@ See also: ra-cell ra-ref ra-slice ra-amend! ra-set!
 ; ra-amend!
 ; -----------------------
 
-(define (gradeup l)
-  (map cadr (sort (zip l (iota (length l)))
-                  (lambda (a b) (< (car a) (car b))))))
-
 ; x m} y - https://code.jsoftware.com/wiki/Vocabulary/curlyrt#dyadic
 
 (define (ra-amend! A C . i)
@@ -284,10 +280,9 @@ See also: ra-set! ra-from ra-copy! ra-cell ra-ref ra-slice
 "
   (receive (B iu tu tb) (apply parse-args A i)
 ; C needs to be transposed to match the transposition of B relative to A.
-; FIXME shouldn't need gradeup - ra-untranspose instead?
     (let ((C (if (ra? C)
-               (let ((gup (gradeup (append tu tb))))
-                 (apply ra-transpose C (take gup (min (length gup) (ra-rank C)))))
+               (let ((gup (append tu tb)))
+                 (apply ra-untranspose C (take gup (min (length gup) (ra-rank C)))))
                (make-ra C))))
 ; apply the unbeatable axes.
       (apply amendu! B C iu)

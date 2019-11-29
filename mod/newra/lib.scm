@@ -459,26 +459,35 @@ ra-untranspose rb axes ... -> ra
 
 Reverse the transposition (ra-transpose ra axes ...).
 
-AXES must be a permutation of the list [0 ... (-1 (ra-rank rb))]. Each axis k =
-(AXES i) of RB is transposed to axis i = 0 ... (rak-rank rb)-1 of RA. The result
-has the same rank and the same root as the argument.
+AXES must be a permutation of the list [0 ... (-1 (length axes))] and not be
+longer than the rank of RB. Each axis k = (AXES i) of RB is transposed to axis i
+= 0 ... (rak-rank rb)-1 of RA. The result has the same rank and the same root as
+the argument.
 
 See also: ra-transpose ra-dims
 "
   (let* ((ra (ra-check rb))
          (odims (%%ra-dims rb))
          (ndims (make-vector (vector-length odims) #f)))
-    (let loop ((n 0) (axes axes_))
+    (let loop ((n 0) (m -1) (axes axes_))
       (if (null? axes)
         (if (= n (vector-length odims))
           (make-ra-root (ra-root ra) ndims (ra-zero ra))
-          (throw 'bad-untranspose-axes ra axes_))
+          (if (= (+ 1 m) n)
+; axes is short but complete, so the rest isn't transposed. Just copy it.
+            (let loop ((n n))
+              (if (= n (vector-length odims))
+                (make-ra-root (ra-root ra) ndims (ra-zero ra))
+                (begin
+                  (vector-set! ndims n (vector-ref odims n))
+                  (loop (+ n 1)))))
+            (throw 'bad-untranspose-axes ra n m axes_)))
         (let* ((o (car axes))
                (d (vector-ref odims o)))
           (if (vector-ref ndims n)
             (throw 'bad-untranspose-axes ra axes_)
             (vector-set! ndims n (vector-ref odims o)))
-          (loop (+ n 1) (cdr axes)))))))
+          (loop (+ n 1) (max m o) (cdr axes)))))))
 
 (define* (ra-order-c? ra #:optional n)
   "
