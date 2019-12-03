@@ -904,6 +904,47 @@ In array languages such as APL, scalar operations are implicitly extended to wor
 @chapter Hazards
 @c ------------------------------------------------
 
+@menu
+* Diferences with...::
+* Common mistakes::
+* Performance pitfalls::
+@end menu
+
+@c ------------------------------------------------
+@node Diferences with...
+@section Diferences with...
+@c ------------------------------------------------
+
+If you come to @code{newra} from other array language or library, you may want to be aware of some of these differences.
+
+Differences with builtin Guile arrays:
+
+@cindex APL
+Differences with APL:
+@itemize
+@item When a function takes multiple arguments, the meaning with more than one argument is an extension of the meaning of more one argument. This contrasts with APL where the monadic and dyadic versions of a verb are related but different functions. For example @code{(ra-transpose a)}≡@code{(ra-transpose a 0)}≡@code{(ra-transpose a 0 1)}, but (assuming @code{a} is of rank 2) @code{⍉a}≡@code{2 1⍉a}.
+@end itemize
+
+@cindex Fortran
+Differences with Fortran:
+
+@cindex NumPy
+Differences with NumPy:
+
+@cindex Octave
+@cindex Matlab
+Differences with Octave:
+
+@c ------------------------------------------------
+@node Common mistakes
+@section Common mistakes
+@c ------------------------------------------------
+
+@c ------------------------------------------------
+@node Performance pitfalls
+@section Performance pitfalls
+@c ------------------------------------------------
+
 @c ------------------------------------------------
 @node Reference
 @chapter Reference
@@ -1089,6 +1130,22 @@ The reversed array has the same root as @var{a}.
 (ra-reverse (ra-i 2 3) 0 1)
 @end verbatim
 @result{} #%1d:2:3((5 4 3) (2 1 0))
+@end example
+@end deffn
+
+@cindex @code{⌽}, rotate
+@cindex @code{⊖}, rowel
+@cindex @code{ra-rotate}
+@anchor{x-ra-rotate}
+@deffn @w{function} ra-rotate a n
+(FIXME: not implemented) Rotate the first axis of @var{a} @var{n} times. @var{n} may be any integer. The result has the type of @var{a}, unless that type is @code{d}, in which case the result is of type @code{#t}.
+
+Example:
+@example
+@verbatim
+(ra-rotate (ra-i 3 2) -1)
+@end verbatim
+@result{} #%1:3:2((2 3) (4 5) (0 1))
 @end example
 @end deffn
 

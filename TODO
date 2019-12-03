@@ -49,6 +49,7 @@ Help: [C-uc .] insert timestamp [C-cc] flip checkbox [C-uucc] partial flip check
 * TODO quality of life [1/9]
   * [X] ra-clip
   * [ ] ra-grade
+  * [ ] ra-rotate
   * [ ] make (set! (ra ...) o) work with slices just (ra ...).
   * [ ] refactor macros
   * [ ] special rank-1 (or higher!) cases for e.g. copy or fill in the unroll section (e.g. bytevector-copy).
