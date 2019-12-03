@@ -11,10 +11,10 @@ Invariant Sections, no Front-Cover Texts, and no Back-Cover Texts. -->
 <!-- Created by GNU Texinfo 6.5, http://www.gnu.org/software/texinfo/ -->
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-<title>newra —An array library for Guile 3</title>
+<title>newra —An alternative array library for Guile 3</title>
 
-<meta name="description" content="newra —An array library for Guile 3">
-<meta name="keywords" content="newra —An array library for Guile 3">
+<meta name="description" content="newra —An alternative array library for Guile 3">
+<meta name="keywords" content="newra —An alternative array library for Guile 3">
 <meta name="resource-type" content="document">
 <meta name="distribution" content="global">
 <meta name="Generator" content="makeinfo">
@@ -53,7 +53,7 @@ ul.no-bullet {list-style: none}
 </head>
 
 <body lang="en">
-<h1 class="settitle" align="center">newra —An array library for Guile 3</h1>
+<h1 class="settitle" align="center">newra —An alternative array library for Guile 3</h1>
 
 
 
@@ -589,6 +589,7 @@ Next: <a href="#Reshaping-and-resizing" accesskey="n" rel="next">Reshaping and r
 
 <p>Both <code>ra-cell</code> and <code>ra-slice</code> (and <code>ra-ref</code>) take scalar indices as arguments. The more powerful function <a href="#x_002dra_002dfrom"><code>ra-from</code></a> is able to handle arrays of indices.
 </p>
+<a name="index-_007b_002c-from"></a>
 <blockquote>
 <pre class="verbatim">(ra-from a i₀ ...) ⇒ b
 </pre></blockquote>
@@ -677,7 +678,8 @@ Next: <a href="#Other-operations-on-arrays" accesskey="n" rel="next">Other opera
 <h3 class="section">2.5 Reshaping and resizing</h3>
 
 <a name="index-APL"></a>
-<a name="index-r"></a>
+<a name="index-_002c_002c-ravel"></a>
+<a name="index-_005b_003f_005d_002c-reshape"></a>
 <p>To match APL dyadic ρ, <code>newra</code> offers a set of three different functions.
 </p>
 <p><a href="#x_002dra_002dreshape"><code>ra-reshape</code></a> and <a href="#x_002dra_002dravel"><code>ra-ravel</code></a> are in a way the inverse of each other, and neither is able to increase the size of the array. For that purpose <a href="#x_002dra_002dtile"><code>ra-tile</code></a> is provided.
@@ -706,6 +708,7 @@ Next: <a href="#Foreign-interface" accesskey="n" rel="next">Foreign interface</a
 <a name="Other-operations-on-arrays-1"></a>
 <h3 class="section">2.6 Other operations on arrays</h3>
 
+<a name="index-_005b_003f_005d_002c-transpose"></a>
 <a name="index-transpose"></a>
 <p>The most important operation on arrays, other than selection and iteration, is transposition.
 </p>
@@ -766,7 +769,9 @@ A
 </pre><pre class="example">&rArr; <code>(#f 0 0)(#f 0 1)(#f 0 2)(#f 0 3)(#f 1 0)(#f 1 1)(#f 1 2)(#f 1 3)(#f 2 0)(#f 2 1)(#f 2 2)(#f 2 3)</code>
 </pre></div>
 
-<p>The function <a href="#x_002dra_002duntranspose"><code>ra-untranspose</code></a> takes its axis arguments the other way from <code>ra-transpose</code>; the values of the arguments are the axes of the original array and the position in the argument list are the axes of the result array. This is less flexible than <code>ra-transpose</code>, but can be used to reverse an application of <code>ra-transpose</code> without having to sort (‘grade up’) the original axis arguments.
+<a name="index-_005b_003f_005d"></a>
+<a name="index-grade"></a>
+<p>The function <a href="#x_002dra_002duntranspose"><code>ra-untranspose</code></a> takes its axis arguments the other way from <code>ra-transpose</code>; the values of the arguments are the axes of the original array and the position in the argument list are the axes of the result array. This is less flexible than <code>ra-transpose</code>, but can be used to reverse an application of <code>ra-transpose</code> without having to sort (‘grade’) the original axis arguments.
 </p>
 <div class="example">
 <pre class="verbatim">(define a (ra-i 2 3 4))
@@ -861,7 +866,7 @@ Next: <a href="#Hazards" accesskey="n" rel="next">Hazards</a>, Previous: <a href
 <ul>
 <li> associate an operation to the ranks of their arguments, so that the right frame of iteration can be chosen.
 </li><li> compute the shape and type of the result (if any).
-</li><li> handle scalar arguments.
+</li><li> handle scalar (non-array) arguments.
 </li></ul>
 
 <table class="menu" border="0" cellspacing="0">
@@ -1049,6 +1054,7 @@ Next: <a href="#Sources" accesskey="n" rel="next">Sources</a>, Previous: <a href
 </pre></div>
 </dd></dl>
 
+<a name="index-_005b_003f_005d_002c-reverse"></a>
 <a name="index-ra_002dreverse"></a>
 <a name="x_002dra_002dreverse"></a><dl>
 <dt><a name="index-ra_002dreverse-1"></a>function<!-- /@w -->: <strong>ra-reverse</strong> <em>a axes ...</em></dt>
@@ -1091,7 +1097,6 @@ Next: <a href="#Sources" accesskey="n" rel="next">Sources</a>, Previous: <a href
 </pre><pre class="example">&rArr; <code>(a 0)(a 1)(a 2)(b 3)(b 4)(b 5)</code>
 </pre></div>
 
-<p>The lengths of &nbsp;</p>
 <a name="index-ra_002dmap_0021"></a>
 <a name="x_002dra_002dmap_0021"></a><dl>
 <dt><a name="index-ra_002dmap_0021-1"></a>function<!-- /@w -->: <strong>ra-map!</strong> <em>dst op a ...</em></dt>
@@ -1257,13 +1262,28 @@ Previous: <a href="#Sources" accesskey="p" rel="prev">Sources</a>, Up: <a href="
 <a name="Indices-1"></a>
 <h2 class="unnumbered">Indices</h2>
 
-<table><tr><th valign="top">Jump to: &nbsp; </th><td><a class="summary-letter" href="#Indices_cp_letter-A"><b>A</b></a>
+<table><tr><th valign="top">Jump to: &nbsp; </th><td><a class="summary-letter" href="#Indices_cp_symbol-1"><b>,</b></a>
+ &nbsp; 
+<a class="summary-letter" href="#Indices_cp_symbol-2"><b>{</b></a>
+ &nbsp; 
+<a class="summary-letter" href="#Indices_cp_symbol-3"><b>⌽</b></a>
+ &nbsp; 
+<a class="summary-letter" href="#Indices_cp_symbol-4"><b>⍉</b></a>
+ &nbsp; 
+<a class="summary-letter" href="#Indices_cp_symbol-5"><b>⍋</b></a>
+ &nbsp; 
+<a class="summary-letter" href="#Indices_cp_symbol-6"><b>⍴</b></a>
+ &nbsp; 
+<br>
+<a class="summary-letter" href="#Indices_cp_letter-A"><b>A</b></a>
  &nbsp; 
 <a class="summary-letter" href="#Indices_cp_letter-C"><b>C</b></a>
  &nbsp; 
 <a class="summary-letter" href="#Indices_cp_letter-D"><b>D</b></a>
  &nbsp; 
 <a class="summary-letter" href="#Indices_cp_letter-F"><b>F</b></a>
+ &nbsp; 
+<a class="summary-letter" href="#Indices_cp_letter-G"><b>G</b></a>
  &nbsp; 
 <a class="summary-letter" href="#Indices_cp_letter-I"><b>I</b></a>
  &nbsp; 
@@ -1281,11 +1301,27 @@ Previous: <a href="#Sources" accesskey="p" rel="prev">Sources</a>, Up: <a href="
  &nbsp; 
 <a class="summary-letter" href="#Indices_cp_letter-T"><b>T</b></a>
  &nbsp; 
-<a class="summary-letter" href="#Indices_cp_letter-Ρ"><b>Ρ</b></a>
- &nbsp; 
 </td></tr></table>
 <table class="index-cp" border="0">
 <tr><td></td><th align="left">Index Entry</th><td>&nbsp;</td><th align="left"> Section</th></tr>
+<tr><td colspan="4"> <hr></td></tr>
+<tr><th><a name="Indices_cp_symbol-1">,</a></th><td></td><td></td></tr>
+<tr><td></td><td valign="top"><a href="#index-_002c_002c-ravel"><code>,</code>, ravel</a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reshaping-and-resizing">Reshaping and resizing</a></td></tr>
+<tr><td colspan="4"> <hr></td></tr>
+<tr><th><a name="Indices_cp_symbol-2">{</a></th><td></td><td></td></tr>
+<tr><td></td><td valign="top"><a href="#index-_007b_002c-from"><code>{</code>, from</a>:</td><td>&nbsp;</td><td valign="top"><a href="#Slicing">Slicing</a></td></tr>
+<tr><td colspan="4"> <hr></td></tr>
+<tr><th><a name="Indices_cp_symbol-3">⌽</a></th><td></td><td></td></tr>
+<tr><td></td><td valign="top"><a href="#index-_005b_003f_005d_002c-reverse"><code>⌽</code>, reverse</a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
+<tr><td colspan="4"> <hr></td></tr>
+<tr><th><a name="Indices_cp_symbol-4">⍉</a></th><td></td><td></td></tr>
+<tr><td></td><td valign="top"><a href="#index-_005b_003f_005d_002c-transpose"><code>⍉</code>, transpose</a>:</td><td>&nbsp;</td><td valign="top"><a href="#Other-operations-on-arrays">Other operations on arrays</a></td></tr>
+<tr><td colspan="4"> <hr></td></tr>
+<tr><th><a name="Indices_cp_symbol-5">⍋</a></th><td></td><td></td></tr>
+<tr><td></td><td valign="top"><a href="#index-_005b_003f_005d">⍋</a>:</td><td>&nbsp;</td><td valign="top"><a href="#Other-operations-on-arrays">Other operations on arrays</a></td></tr>
+<tr><td colspan="4"> <hr></td></tr>
+<tr><th><a name="Indices_cp_symbol-6">⍴</a></th><td></td><td></td></tr>
+<tr><td></td><td valign="top"><a href="#index-_005b_003f_005d_002c-reshape"><code>⍴</code>, reshape</a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reshaping-and-resizing">Reshaping and resizing</a></td></tr>
 <tr><td colspan="4"> <hr></td></tr>
 <tr><th><a name="Indices_cp_letter-A">A</a></th><td></td><td></td></tr>
 <tr><td></td><td valign="top"><a href="#index-APL">APL</a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reshaping-and-resizing">Reshaping and resizing</a></td></tr>
@@ -1302,6 +1338,9 @@ Previous: <a href="#Sources" accesskey="p" rel="prev">Sources</a>, Up: <a href="
 <tr><td colspan="4"> <hr></td></tr>
 <tr><th><a name="Indices_cp_letter-F">F</a></th><td></td><td></td></tr>
 <tr><td></td><td valign="top"><a href="#index-frame">frame</a>:</td><td>&nbsp;</td><td valign="top"><a href="#Rank-polymorphism-and-rank-extension">Rank polymorphism and rank extension</a></td></tr>
+<tr><td colspan="4"> <hr></td></tr>
+<tr><th><a name="Indices_cp_letter-G">G</a></th><td></td><td></td></tr>
+<tr><td></td><td valign="top"><a href="#index-grade">grade</a>:</td><td>&nbsp;</td><td valign="top"><a href="#Other-operations-on-arrays">Other operations on arrays</a></td></tr>
 <tr><td colspan="4"> <hr></td></tr>
 <tr><th><a name="Indices_cp_letter-I">I</a></th><td></td><td></td></tr>
 <tr><td></td><td valign="top"><a href="#index-index-placeholder">index placeholder</a>:</td><td>&nbsp;</td><td valign="top"><a href="#Other-operations-on-arrays">Other operations on arrays</a></td></tr>
@@ -1361,17 +1400,29 @@ Previous: <a href="#Sources" accesskey="p" rel="prev">Sources</a>, Up: <a href="
 <tr><th><a name="Indices_cp_letter-T">T</a></th><td></td><td></td></tr>
 <tr><td></td><td valign="top"><a href="#index-transpose">transpose</a>:</td><td>&nbsp;</td><td valign="top"><a href="#Other-operations-on-arrays">Other operations on arrays</a></td></tr>
 <tr><td colspan="4"> <hr></td></tr>
-<tr><th><a name="Indices_cp_letter-Ρ">Ρ</a></th><td></td><td></td></tr>
-<tr><td></td><td valign="top"><a href="#index-r">ρ</a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reshaping-and-resizing">Reshaping and resizing</a></td></tr>
-<tr><td colspan="4"> <hr></td></tr>
 </table>
-<table><tr><th valign="top">Jump to: &nbsp; </th><td><a class="summary-letter" href="#Indices_cp_letter-A"><b>A</b></a>
+<table><tr><th valign="top">Jump to: &nbsp; </th><td><a class="summary-letter" href="#Indices_cp_symbol-1"><b>,</b></a>
+ &nbsp; 
+<a class="summary-letter" href="#Indices_cp_symbol-2"><b>{</b></a>
+ &nbsp; 
+<a class="summary-letter" href="#Indices_cp_symbol-3"><b>⌽</b></a>
+ &nbsp; 
+<a class="summary-letter" href="#Indices_cp_symbol-4"><b>⍉</b></a>
+ &nbsp; 
+<a class="summary-letter" href="#Indices_cp_symbol-5"><b>⍋</b></a>
+ &nbsp; 
+<a class="summary-letter" href="#Indices_cp_symbol-6"><b>⍴</b></a>
+ &nbsp; 
+<br>
+<a class="summary-letter" href="#Indices_cp_letter-A"><b>A</b></a>
  &nbsp; 
 <a class="summary-letter" href="#Indices_cp_letter-C"><b>C</b></a>
  &nbsp; 
 <a class="summary-letter" href="#Indices_cp_letter-D"><b>D</b></a>
  &nbsp; 
 <a class="summary-letter" href="#Indices_cp_letter-F"><b>F</b></a>
+ &nbsp; 
+<a class="summary-letter" href="#Indices_cp_letter-G"><b>G</b></a>
  &nbsp; 
 <a class="summary-letter" href="#Indices_cp_letter-I"><b>I</b></a>
  &nbsp; 
@@ -1388,8 +1439,6 @@ Previous: <a href="#Sources" accesskey="p" rel="prev">Sources</a>, Up: <a href="
 <a class="summary-letter" href="#Indices_cp_letter-S"><b>S</b></a>
  &nbsp; 
 <a class="summary-letter" href="#Indices_cp_letter-T"><b>T</b></a>
- &nbsp; 
-<a class="summary-letter" href="#Indices_cp_letter-Ρ"><b>Ρ</b></a>
  &nbsp; 
 </td></tr></table>
 

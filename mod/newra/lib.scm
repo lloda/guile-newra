@@ -20,23 +20,10 @@
             ra-reverse ra-transpose ra-untranspose ra-order-c?
             ra-ravel ra-reshape ra-tile
             ra-fold ra-fold*
-            ra-singletonize
-
-            vector-append))
+            ra-singletonize))
 
 (import (newra base) (newra map) (only (srfi :1) fold every any iota drop) (srfi :8) (srfi :26)
         (ice-9 control) (ice-9 match) (only (rnrs base) vector-map vector-for-each))
-
-(define (vector-append . a)
-  (let ((b (make-vector (fold (lambda (a c) (+ (vector-length a) c)) 0 a))))
-    (let loopa ((a a) (lo 0))
-      (if (null? a)
-        b
-        (let ((lena (vector-length (car a))))
-          (do ((j 0 (+ j 1)))
-              ((= j lena))
-            (vector-set! b (+ lo j) (vector-ref (car a) j)))
-          (loopa (cdr a) (+ lo lena)))))))
 
 
 ; ----------------
@@ -450,8 +437,6 @@ See also: make-ra-root make-ra-new
                        (+ (dim-step odim) (dim-step ndim)))
              (throw 'bad-lo))
            odim))))))
-
-; FIXME could support other cases, e.g. axes is short but complete for the prefix.
 
 (define (ra-untranspose rb . axes_)
   "
