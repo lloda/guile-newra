@@ -23,8 +23,9 @@
             define-inlinable-case
             <aseq> <dim> make-dim* dim-check
             <ra-vtable> pick-root-functions pick-make-root
-            %%ra-root %%ra-zero %%ra-zero-set! %%ra-dims %%ra-type %%ra-vlen %%ra-vref %%ra-vset! %%ra-rank
-            %%ra-step))
+            %%ra-root %%ra-zero %%ra-type %%ra-rank
+            %%ra-zero-set! %%ra-dims %%ra-vlen %%ra-vref %%ra-vset! %%ra-step
+            ra-shape ra-dimensions ra-length ra-size))
 
 (import (srfi :9) (srfi srfi-9 gnu) (only (srfi :1) fold every) (srfi :8)
         (srfi srfi-4 gnu) (srfi :26) (srfi :2) (ice-9 match) (ice-9 control)
@@ -523,3 +524,63 @@ See also: make-dim ra-dims make-ra-root c-dims
     (make-ra-root (if (unspecified? value) (make size) (make size value))
                   dims
                   (- (ra-offset 0 dims)))))
+
+
+; ----------------
+; misc functions for Guile compatibility
+; ----------------
+
+(define (ra-shape ra)
+  "
+ra-shape ra
+
+Return a list with the lower and upper bounds of each dimension of RA.
+
+(ra-shape (make-ra 'foo '(-1 3) 5)) ==> ((-1 3) (0 4))
+
+See also: ra-rank ra-dimensions ra-length
+"
+  (map (lambda (dim) (list (dim-lo dim) (dim-hi dim))) (vector->list (ra-dims ra))))
+
+(define (ra-dimensions ra)
+  "
+ra-dimensions ra
+
+Like ra-shape, but if the lower bound for a given dimension is zero, return
+the size of that dimension instead of a lower bound - upper bound pair.
+
+(ra-shape (make-ra 'foo '(-1 3) 5)) ==> ((-1 3) (0 4))
+(ra-dimensions (make-ra 'foo '(-1 3) 5)) ==> ((-1 3) 5)
+
+See also: ra-rank ra-shape ra-length
+"
+  (map (lambda (dim)
+         (let ((lo (dim-lo dim)))
+           (if (or (not lo) (zero? lo))
+             (dim-len dim)
+             (list lo (dim-hi dim)))))
+    (vector->list (ra-dims ra))))
+
+(define* (ra-length ra #:optional (k 0))
+  "
+ra-length ra [dim 0]
+
+Return the length of the dimension DIM of ra RA. It is an error if RA has zero
+rank.
+
+See also: ra-shape ra-dimensions ra-size
+"
+  (dim-len (vector-ref (ra-dims ra) k)))
+
+(define* (ra-size ra #:optional (n (ra-rank ra)))
+  "
+ra-size ra
+ra-size ra n
+
+Return the number of elements of ra RA, that is, the product of all its
+lengths. Ras of rank 0 have size 1. If N is given, return the product of the
+first N lengths.
+
+See also: ra-shape ra-dimensions ra-length
+"
+  (vector-fold* n (lambda (d s) (* s (dim-len d))) 1 (ra-dims ra)))
