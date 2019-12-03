@@ -905,35 +905,53 @@ In array languages such as APL, scalar operations are implicitly extended to wor
 @c ------------------------------------------------
 
 @menu
-* Diferences with...::
+* Differences with...::
 * Common mistakes::
 * Performance pitfalls::
 @end menu
 
 @c ------------------------------------------------
-@node Diferences with...
-@section Diferences with...
+@node Differences with...
+@section Differences with...
 @c ------------------------------------------------
 
-If you come to @code{newra} from other array language or library, you may want to be aware of some of these differences.
+If you come to @code{newra} from another array language or library, you may want to be aware of some of these differences.
 
 Differences with builtin Guile arrays:
 
 @cindex APL
 Differences with APL:
 @itemize
-@item When a function takes multiple arguments, the meaning with more than one argument is an extension of the meaning of more one argument. This contrasts with APL where the monadic and dyadic versions of a verb are related but different functions. For example @code{(ra-transpose a)}≡@code{(ra-transpose a 0)}≡@code{(ra-transpose a 0 1)}, but (assuming @code{a} is of rank 2) @code{⍉a}≡@code{2 1⍉a}.
+@item The default base index in @code{newra} is 0, as in @code{⎕io←0}. The base index isn't global, but it may be different per axis.
+@item @code{newra} arrays of size 1 are not equivalent to scalars and always retain their rank. For example, @code{(make-ra 99)}, @code{(make-ra 99 1)} and @code{(make-ra 99 1 1)} are all different from each other and from the scalar @code{99}, while in APL @code{99}, @code{(1 ⍴ 99)}, and @code{(1 1 ⍴ 99)} are all the same thing.
+@item When a function takes multiple arguments, the meaning with multiple arguments is an extension of the meaning with a single argument. This contrasts with APL where the monadic and dyadic versions of a verb usually have a related but independent definition. For example @code{(ra-transpose a)}≡@code{(ra-transpose a 0)}≡@code{(ra-transpose a 0 1)}, but (assuming @code{a} is of rank 2) @code{⍉a}≡@code{2 1⍉a}. Please check the documentation for each function.
 @end itemize
 
 @cindex Fortran
 Differences with Fortran:
+@itemize
+@item The default base index in @code{newra} is 0, not 1.
+@item Unlike Fortran, the default element order in arrays is row-major, or ‘last index changes fastest’. It's possible to define and manipulate arrays in any other order, including Fortran's default. However, some functions (such as @code{ra-ravel}) only support row-major order.
+@item @code{newra} uses prefix matching for rank extension on arguments on any rank, while Fortran only performs rank extension on scalar arguments.
+@end itemize
 
 @cindex NumPy
 Differences with NumPy:
+@itemize
+@item @code{newra} uses prefix matching for rank extension, while Numpy uses suffix matching. For example: FIXME.
+@item @code{newra} doesn't use singleton broadcasting. Axes of length 1 only match axes of length 1. For example, @code{(ra-map! (make-ra 0 2) + (make-ra 90 1) (make-ra 7 2))} is an error because the shapes (2), (1), (2) don't agree.
+@end itemize
+
 
 @cindex Octave
 @cindex Matlab
 Differences with Octave:
+@itemize
+@item The default base index in @code{newra} is 0, not 1. It's possible to have base indices be 1 on particular arrays (or particular axes of an array), but not globally.
+@item In Octave, any array of rank ≤ 2 is implicity a matrix (an array of rank 2). This isn't true in @code{newra}, so, for example, an array of rank 1 isn't equivalent to an array of rank 2 with a single row (a ‘row vector’).
+@item Unlike Octave, the default element order in arrays is row-major, or ‘last index changes fastest’. It's possible to define and manipulate arrays in any other order, including Octave's default. However, some functions (such as @code{ra-ravel}) only support row-major order.
+@item @code{newra} uses prefix matching for rank extension on arguments on any rank, while Octave only performs rank extension on scalar arguments.
+@end itemize
 
 @c ------------------------------------------------
 @node Common mistakes

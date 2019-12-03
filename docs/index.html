@@ -904,7 +904,7 @@ Next: <a href="#Reference" accesskey="n" rel="next">Reference</a>, Previous: <a 
 <h2 class="chapter">4 Hazards</h2>
 
 <table class="menu" border="0" cellspacing="0">
-<tr><td align="left" valign="top">&bull; <a href="#Diferences-with_002e_002e_002e" accesskey="1">Diferences with...</a>:</td><td>&nbsp;&nbsp;</td><td align="left" valign="top">
+<tr><td align="left" valign="top">&bull; <a href="#Differences-with_002e_002e_002e" accesskey="1">Differences with...</a>:</td><td>&nbsp;&nbsp;</td><td align="left" valign="top">
 </td></tr>
 <tr><td align="left" valign="top">&bull; <a href="#Common-mistakes" accesskey="2">Common mistakes</a>:</td><td>&nbsp;&nbsp;</td><td align="left" valign="top">
 </td></tr>
@@ -913,39 +913,57 @@ Next: <a href="#Reference" accesskey="n" rel="next">Reference</a>, Previous: <a 
 </table>
 
 <hr>
-<a name="Diferences-with_002e_002e_002e"></a>
+<a name="Differences-with_002e_002e_002e"></a>
 <div class="header">
 <p>
 Next: <a href="#Common-mistakes" accesskey="n" rel="next">Common mistakes</a>, Up: <a href="#Hazards" accesskey="u" rel="up">Hazards</a> &nbsp; [<a href="#Indices" title="Index" rel="index">Index</a>]</p>
 </div>
-<a name="Diferences-with_002e_002e_002e-1"></a>
-<h3 class="section">4.1 Diferences with...</h3>
+<a name="Differences-with_002e_002e_002e-1"></a>
+<h3 class="section">4.1 Differences with...</h3>
 
-<p>If you come to <code>newra</code> from other array language or library, you may want to be aware of some of these differences.
+<p>If you come to <code>newra</code> from another array language or library, you may want to be aware of some of these differences.
 </p>
 <p>Differences with builtin Guile arrays:
 </p>
 <a name="index-APL-1"></a>
 <p>Differences with APL:
 </p><ul>
-<li> When a function takes multiple arguments, the meaning with more than one argument is an extension of the meaning of more one argument. This contrasts with APL where the monadic and dyadic versions of a verb are related but different functions. For example <code>(ra-transpose a)</code>≡<code>(ra-transpose a 0)</code>≡<code>(ra-transpose a 0 1)</code>, but (assuming <code>a</code> is of rank 2) <code>⍉a</code>≡<code>2 1⍉a</code>.
+<li> The default base index in <code>newra</code> is 0, as in <code>⎕io←0</code>. The base index isn&rsquo;t global, but it may be different per axis.
+</li><li> <code>newra</code> arrays of size 1 are not equivalent to scalars and always retain their rank. For example, <code>(make-ra 99)</code>, <code>(make-ra 99 1)</code> and <code>(make-ra 99 1 1)</code> are all different from each other and from the scalar <code>99</code>, while in APL <code>99</code>, <code>(1 ⍴ 99)</code>, and <code>(1 1 ⍴ 99)</code> are all the same thing.
+</li><li> When a function takes multiple arguments, the meaning with multiple arguments is an extension of the meaning with a single argument. This contrasts with APL where the monadic and dyadic versions of a verb usually have a related but independent definition. For example <code>(ra-transpose a)</code>≡<code>(ra-transpose a 0)</code>≡<code>(ra-transpose a 0 1)</code>, but (assuming <code>a</code> is of rank 2) <code>⍉a</code>≡<code>2 1⍉a</code>. Please check the documentation for each function.
 </li></ul>
 
 <a name="index-Fortran"></a>
 <p>Differences with Fortran:
-</p>
+</p><ul>
+<li> The default base index in <code>newra</code> is 0, not 1.
+</li><li> Unlike Fortran, the default element order in arrays is row-major, or ‘last index changes fastest’. It&rsquo;s possible to define and manipulate arrays in any other order, including Fortran&rsquo;s default. However, some functions (such as <code>ra-ravel</code>) only support row-major order.
+</li><li> <code>newra</code> uses prefix matching for rank extension on arguments on any rank, while Fortran only performs rank extension on scalar arguments.
+</li></ul>
+
 <a name="index-NumPy"></a>
 <p>Differences with NumPy:
-</p>
+</p><ul>
+<li> <code>newra</code> uses prefix matching for rank extension, while Numpy uses suffix matching. For example: FIXME.
+</li><li> <code>newra</code> doesn&rsquo;t use singleton broadcasting. Axes of length 1 only match axes of length 1. For example, <code>(ra-map! (make-ra 0 2) + (make-ra 90 1) (make-ra 7 2))</code> is an error because the shapes (2), (1), (2) don&rsquo;t agree.
+</li></ul>
+
+
 <a name="index-Octave"></a>
 <a name="index-Matlab"></a>
 <p>Differences with Octave:
-</p>
+</p><ul>
+<li> The default base index in <code>newra</code> is 0, not 1. It&rsquo;s possible to have base indices be 1 on particular arrays (or particular axes of an array), but not globally.
+</li><li> In Octave, any array of rank ≤ 2 is implicity a matrix (an array of rank 2). This isn&rsquo;t true in <code>newra</code>, so, for example, an array of rank 1 isn&rsquo;t equivalent to an array of rank 2 with a single row (a ‘row vector’).
+</li><li> Unlike Octave, the default element order in arrays is row-major, or ‘last index changes fastest’. It&rsquo;s possible to define and manipulate arrays in any other order, including Octave&rsquo;s default. However, some functions (such as <code>ra-ravel</code>) only support row-major order.
+</li><li> <code>newra</code> uses prefix matching for rank extension on arguments on any rank, while Octave only performs rank extension on scalar arguments.
+</li></ul>
+
 <hr>
 <a name="Common-mistakes"></a>
 <div class="header">
 <p>
-Next: <a href="#Performance-pitfalls" accesskey="n" rel="next">Performance pitfalls</a>, Previous: <a href="#Diferences-with_002e_002e_002e" accesskey="p" rel="prev">Diferences with...</a>, Up: <a href="#Hazards" accesskey="u" rel="up">Hazards</a> &nbsp; [<a href="#Indices" title="Index" rel="index">Index</a>]</p>
+Next: <a href="#Performance-pitfalls" accesskey="n" rel="next">Performance pitfalls</a>, Previous: <a href="#Differences-with_002e_002e_002e" accesskey="p" rel="prev">Differences with...</a>, Up: <a href="#Hazards" accesskey="u" rel="up">Hazards</a> &nbsp; [<a href="#Indices" title="Index" rel="index">Index</a>]</p>
 </div>
 <a name="Common-mistakes-1"></a>
 <h3 class="section">4.2 Common mistakes</h3>
@@ -1403,7 +1421,7 @@ Previous: <a href="#Sources" accesskey="p" rel="prev">Sources</a>, Up: <a href="
 <tr><td colspan="4"> <hr></td></tr>
 <tr><th><a name="Indices_cp_letter-A">A</a></th><td></td><td></td></tr>
 <tr><td></td><td valign="top"><a href="#index-APL">APL</a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reshaping-and-resizing">Reshaping and resizing</a></td></tr>
-<tr><td></td><td valign="top"><a href="#index-APL-1">APL</a>:</td><td>&nbsp;</td><td valign="top"><a href="#Diferences-with_002e_002e_002e">Diferences with...</a></td></tr>
+<tr><td></td><td valign="top"><a href="#index-APL-1">APL</a>:</td><td>&nbsp;</td><td valign="top"><a href="#Differences-with_002e_002e_002e">Differences with...</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-array_002d_003era"><code>array-&gt;ra</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
 <tr><td colspan="4"> <hr></td></tr>
 <tr><th><a name="Indices_cp_letter-C">C</a></th><td></td><td></td></tr>
@@ -1416,7 +1434,7 @@ Previous: <a href="#Sources" accesskey="p" rel="prev">Sources</a>, Up: <a href="
 <tr><td></td><td valign="top"><a href="#index-dim-vector">dim vector</a>:</td><td>&nbsp;</td><td valign="top"><a href="#The-pieces-of-an-array">The pieces of an array</a></td></tr>
 <tr><td colspan="4"> <hr></td></tr>
 <tr><th><a name="Indices_cp_letter-F">F</a></th><td></td><td></td></tr>
-<tr><td></td><td valign="top"><a href="#index-Fortran">Fortran</a>:</td><td>&nbsp;</td><td valign="top"><a href="#Diferences-with_002e_002e_002e">Diferences with...</a></td></tr>
+<tr><td></td><td valign="top"><a href="#index-Fortran">Fortran</a>:</td><td>&nbsp;</td><td valign="top"><a href="#Differences-with_002e_002e_002e">Differences with...</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-frame">frame</a>:</td><td>&nbsp;</td><td valign="top"><a href="#Rank-polymorphism-and-rank-extension">Rank polymorphism and rank extension</a></td></tr>
 <tr><td colspan="4"> <hr></td></tr>
 <tr><th><a name="Indices_cp_letter-G">G</a></th><td></td><td></td></tr>
@@ -1437,13 +1455,13 @@ Previous: <a href="#Sources" accesskey="p" rel="prev">Sources</a>, Up: <a href="
 <tr><td></td><td valign="top"><a href="#index-make_002dra_002dnew"><code>make-ra-new</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-make_002dra_002droot"><code>make-ra-root</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-make_002dtyped_002dra"><code>make-typed-ra</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
-<tr><td></td><td valign="top"><a href="#index-Matlab">Matlab</a>:</td><td>&nbsp;</td><td valign="top"><a href="#Diferences-with_002e_002e_002e">Diferences with...</a></td></tr>
+<tr><td></td><td valign="top"><a href="#index-Matlab">Matlab</a>:</td><td>&nbsp;</td><td valign="top"><a href="#Differences-with_002e_002e_002e">Differences with...</a></td></tr>
 <tr><td colspan="4"> <hr></td></tr>
 <tr><th><a name="Indices_cp_letter-N">N</a></th><td></td><td></td></tr>
-<tr><td></td><td valign="top"><a href="#index-NumPy">NumPy</a>:</td><td>&nbsp;</td><td valign="top"><a href="#Diferences-with_002e_002e_002e">Diferences with...</a></td></tr>
+<tr><td></td><td valign="top"><a href="#index-NumPy">NumPy</a>:</td><td>&nbsp;</td><td valign="top"><a href="#Differences-with_002e_002e_002e">Differences with...</a></td></tr>
 <tr><td colspan="4"> <hr></td></tr>
 <tr><th><a name="Indices_cp_letter-O">O</a></th><td></td><td></td></tr>
-<tr><td></td><td valign="top"><a href="#index-Octave">Octave</a>:</td><td>&nbsp;</td><td valign="top"><a href="#Diferences-with_002e_002e_002e">Diferences with...</a></td></tr>
+<tr><td></td><td valign="top"><a href="#index-Octave">Octave</a>:</td><td>&nbsp;</td><td valign="top"><a href="#Differences-with_002e_002e_002e">Differences with...</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-order_002c-row_002dmajor">order, row-major</a>:</td><td>&nbsp;</td><td valign="top"><a href="#Rank-polymorphism-and-rank-extension">Rank polymorphism and rank extension</a></td></tr>
 <tr><td colspan="4"> <hr></td></tr>
 <tr><th><a name="Indices_cp_letter-P">P</a></th><td></td><td></td></tr>
