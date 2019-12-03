@@ -13,7 +13,7 @@ Help: [C-uc .] insert timestamp [C-cc] flip checkbox [C-uucc] partial flip check
   * [X] ra-equal?
   * [ ] root vectors are equivalent to rank-1 newra objects
 
-* TODO guile-ploy functionality [7/12]
+* TODO whole array functions [8/14]
   * [X] ra-fold ra-fold*
   * [X] ra-any ra-every
   * [X] raw prefix matching
@@ -27,16 +27,19 @@ Help: [C-uc .] insert timestamp [C-cc] flip checkbox [C-uucc] partial flip check
   * [-] ra-reshape [1/2]
     - [X] basic function
     - [ ] placeholder
+  * [X] ra-clip
+  * [ ] ra-grade
+  * [ ] ra-rotate
   * [ ] verbs, w/rank
   * [ ] as-ra
   * [ ] cat
-  * [ ] output types
 
-* TODO ra-ra functionality [3/4]
+* TODO fundamental features [3/5]
   * [X] unsized index vectors
   * [X] tensor indices
   * [X] broadcasting
   * [ ] drag-along facility / delayed ops
+  * [ ] output types
 
 * TODO friendlier undefined sizes [2/6]
   * [X] printing of 'd typed arrays
@@ -46,10 +49,7 @@ Help: [C-uc .] insert timestamp [C-cc] flip checkbox [C-uucc] partial flip check
   * [ ] reading of arrays with inf axes
   * [ ] reading of arrays with dead axes
 
-* TODO quality of life [1/9]
-  * [X] ra-clip
-  * [ ] ra-grade
-  * [ ] ra-rotate
+* TODO quality of life [0/8]
   * [ ] the reverse of ra-singletonize, find a good name (see 'differences with numpy' in the doc).
   * [ ] make (set! (ra ...) o) work with slices just (ra ...).
   * [ ] refactor macros

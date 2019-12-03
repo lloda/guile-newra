@@ -936,7 +936,7 @@ Next: <a href="#Common-mistakes" accesskey="n" rel="next">Common mistakes</a>, U
 <a name="index-Fortran"></a>
 <p>Differences with Fortran:
 </p><ul>
-<li> The default base index in <code>newra</code> is 0, not 1.
+<li> The default base index in <code>newra</code> is 0, not 1. Like in Fortran, the base index may be different for each axis of each array.
 </li><li> Unlike Fortran, the default element order in arrays is row-major, or ‘last index changes fastest’. It&rsquo;s possible to define and manipulate arrays in any other order, including Fortran&rsquo;s default. However, some functions (such as <code>ra-ravel</code>) only support row-major order.
 </li><li> <code>newra</code> uses prefix matching for rank extension on arguments on any rank, while Fortran only performs rank extension on scalar arguments.
 </li></ul>
@@ -947,7 +947,6 @@ Next: <a href="#Common-mistakes" accesskey="n" rel="next">Common mistakes</a>, U
 <li> <code>newra</code> uses prefix matching for rank extension, while Numpy uses suffix matching. For example: FIXME.
 </li><li> <code>newra</code> doesn&rsquo;t use singleton broadcasting. Axes of length 1 only match axes of length 1. For example, <code>(ra-map! (make-ra 0 2) + (make-ra 90 1) (make-ra 7 2))</code> is an error because the shapes (2), (1), (2) don&rsquo;t agree.
 </li></ul>
-
 
 <a name="index-Octave"></a>
 <a name="index-Matlab"></a>

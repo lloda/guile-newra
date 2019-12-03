@@ -930,7 +930,7 @@ Differences with APL:
 @cindex Fortran
 Differences with Fortran:
 @itemize
-@item The default base index in @code{newra} is 0, not 1.
+@item The default base index in @code{newra} is 0, not 1. Like in Fortran, the base index may be different for each axis of each array.
 @item Unlike Fortran, the default element order in arrays is row-major, or ‘last index changes fastest’. It's possible to define and manipulate arrays in any other order, including Fortran's default. However, some functions (such as @code{ra-ravel}) only support row-major order.
 @item @code{newra} uses prefix matching for rank extension on arguments on any rank, while Fortran only performs rank extension on scalar arguments.
 @end itemize
@@ -941,7 +941,6 @@ Differences with NumPy:
 @item @code{newra} uses prefix matching for rank extension, while Numpy uses suffix matching. For example: FIXME.
 @item @code{newra} doesn't use singleton broadcasting. Axes of length 1 only match axes of length 1. For example, @code{(ra-map! (make-ra 0 2) + (make-ra 90 1) (make-ra 7 2))} is an error because the shapes (2), (1), (2) don't agree.
 @end itemize
-
 
 @cindex Octave
 @cindex Matlab
