@@ -1250,7 +1250,7 @@ For valid arguments, this is equivalent to any one of
 @cindex @code{ra-swap!}
 @anchor{x-ra-swap!}
 @deffn @w{function} ra-swap! a b
-Swap the contents of @var{a} and @var{b}. The swap is executed in unspecified order, so the result is undefined if @var{a} and @var{b} share storage.
+Swap the contents of @var{a} and @var{b}. The swap is executed in unspecified order, so the effect on @var{a} and @var{b} is undefined if @var{a} and @var{b} share storage.
 @end deffn
 
 @cindex @code{ra-swap-in-order!}

@@ -323,7 +323,7 @@ See also: ra-from, ra-amend, ra-reshape
 
 ; based on libstdc++ stl_algo.h _RandomAccessIterator __rotate.
 ; FIXME maybe move to (lib extra) or so. Doesn't fit here.
-; FIXME custom version for k = ±1.
+; FIXME custom case for k = ±1.
 ; FIXME replace ra-from calls by bumps of zero.
 
 (define (ra-rotate! a k)
@@ -331,30 +331,28 @@ See also: ra-from, ra-amend, ra-reshape
          (rank (%%ra-rank a)))
     (match (vector-ref (%%ra-dims a) 0)
       (($ <dim> n lo step)
-       (let ((k (euclidean-remainder k n)))
-         (cond
-          ((= (* 2 k) n)
-           (ra-swap!
-            (ra-from a (ra-iota k lo))
-            (ra-from a (ra-iota k (+ lo k)))))
-          ((positive? k)
-           (let loop ((p 0) (k k) (n n))
-             (cond
-              ((zero? n) a)
-              ((< (* 2 k) n)
+       (if (zero? n)
+         a
+         (let loop ((p lo) (k (euclidean-remainder k n)) (n n))
+           (cond
+            ((zero? k) a)
+            ((= (* 2 k) n)
+             (ra-swap!
+              (ra-from a (ra-iota k p))
+              (ra-from a (ra-iota k (+ p k))))
+             a)
+            ((< (* 2 k) n)
+             (ra-swap-in-order!
+              (ra-from a (ra-iota (- n k) p))
+              (ra-from a (ra-iota (- n k) (+ p k))))
+             (let ((p (+ p (- n k)))
+                   (n (euclidean-remainder n k)))
+               (if (positive? n)
+                 (loop p (- k n) k)
+                 a)))
+            (else
+             (let ((k (- n k)))
                (ra-swap-in-order!
-                (ra-from a (ra-iota (- n k) (+ lo p)))
-                (ra-from a (ra-iota (- n k) (+ lo p k))))
-               (let ((p (+ p (- n k)))
-                     (n (euclidean-remainder n k)))
-                 (when (positive? n)
-                   (loop p (- k n) k))))
-              (else
-               (let ((k (- n k)))
-                 (ra-swap-in-order!
-                  (ra-from a (ra-iota (- n k) (+ lo p n -1) -1))
-                  (ra-from a (ra-iota (- n k) (+ lo p n (- k) -1) -1)))
-                 (let ((n (euclidean-remainder n k)))
-                   (when (positive? n)
-                     (loop p n k)))))))))
-         a)))))
+                (ra-from a (ra-iota (- n k) (+ p n -1) -1))
+                (ra-from a (ra-iota (- n k) (+ p n -1 (- k)) -1)))
+               (loop p (euclidean-remainder n k) k))))))))))
