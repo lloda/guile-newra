@@ -126,9 +126,9 @@ See also: make-typed-ra
   (make-ra-new #t value (apply c-dims d)))
 
 (define (make-ra-shared oldra mapfunc . d)
-  (ra-check oldra)
 ; get lo & len, won't use step except if the result is empty.
-  (let* ((dims (apply c-dims d))
+  (let* ((oldra (ra-check oldra))
+         (dims (apply c-dims d))
          (newrank (vector-length dims)))
 ; if the result *is* empty then it has no valid indices, so we cannot call mapfunc.
     (let emptycheck ((k 0))

@@ -13,8 +13,9 @@
 ; FIXME Simplify...
 
 (define-module (newra from)
-  #:export (ra-from ra-amend! ldots
-            ra-clip
+  #:export (ldots
+            ra-from ra-amend! ra-clip
+            ra-rotate!
             fromb fromu amendu!))
 
 (import (newra base) (newra map) (newra lib) (srfi :8) (srfi :26) (srfi :1)
@@ -314,3 +315,50 @@ See also: ra-from, ra-amend, ra-reshape
                (hi (min (dim-hi dai) (dim-hi dbi))))
           (vector-set! da i (make-dim (max 0 (- hi lo -1)) lo (dim-step dai)))
           (loop (- i 1)))))))
+
+
+; -----------------------
+; ra-rotate! in place,  first axis left (cf 2⌽l←'abcdef' ⇒ cdefab)
+; -----------------------
+
+; based on libstdc++ stl_algo.h _RandomAccessIterator __rotate.
+; FIXME maybe move to (lib extra) or so. Doesn't fit here.
+; FIXME unnecessary checks repeated in ra-ref, ra-set!. Have ra-swap! maybe.
+; FIXME custom version for k = ±1.
+; FIXME replace ra-from calls by bumps of zero.
+
+(define (ra-rotate! a k)
+  (let* ((a (ra-check a))
+         (rank (%%ra-rank a)))
+    (match (vector-ref (%%ra-dims a) 0)
+      (($ <dim> n lo step)
+       (let ((k (euclidean-remainder k n)))
+         (cond
+          ((= (* 2 k) n)
+           (ra-slice-for-each rank
+             (lambda (a b) (let ((c (ra-ref a))) (ra-set! a (ra-ref b)) (ra-set! b c)))
+             (ra-from a (ra-iota k lo))
+             (ra-from a (ra-iota k (+ lo k)))))
+          ((positive? k)
+           (let loop ((p 0) (k k) (n n))
+             (cond
+              ((zero? n) a)
+              ((< (* 2 k) n)
+               (ra-slice-for-each-in-order rank
+                 (lambda (a b) (let ((c (ra-ref a))) (ra-set! a (ra-ref b)) (ra-set! b c)))
+                 (ra-from a (ra-iota (- n k) (+ lo p)))
+                 (ra-from a (ra-iota (- n k) (+ lo p k))))
+               (let ((p (+ p (- n k)))
+                     (n (euclidean-remainder n k)))
+                 (when (positive? n)
+                   (loop p (- k n) k))))
+              (else
+               (let ((k (- n k)))
+                 (ra-slice-for-each-in-order rank
+                   (lambda (a b) (let ((c (ra-ref a))) (ra-set! a (ra-ref b)) (ra-set! b c)))
+                   (ra-from a (ra-iota (- n k) (+ lo p n -1) -1))
+                   (ra-from a (ra-iota (- n k) (+ lo p n (- k) -1) -1)))
+                 (let ((n (euclidean-remainder n k)))
+                   (when (positive? n)
+                     (loop p n k)))))))))
+         a)))))

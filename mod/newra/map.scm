@@ -11,7 +11,7 @@
 ;;; Code:
 
 (define-module (newra map)
-  #:export (ra-slice-for-each
+  #:export (ra-slice-for-each ra-slice-for-each-in-order
             ra-slice-for-each-check
             ra-slice-for-each-1 ra-slice-for-each-2 ra-slice-for-each-3 ra-slice-for-each-4
             ra-fill! ra-copy! ra-map! ra-for-each
@@ -332,6 +332,7 @@
       rx)))
 
 (define ra-slice-for-each ra-slice-for-each-4)
+(define ra-slice-for-each-in-order ra-slice-for-each-4)
 
 
 ; ----------------

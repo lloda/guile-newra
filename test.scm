@@ -1047,6 +1047,23 @@
 
 
 ; -----------------------
+; ra-rotate!
+; -----------------------
+
+(let ((a (ra-copy #t (ra-i 4 3))))
+  (ra-rotate! a 0)
+  (test-assert (ra-equal? (string->ra "#%2:4:3((0 1 2) (3 4 5) (6 7 8) (9 10 11))") a))
+  (ra-rotate! a 1)
+  (test-assert (ra-equal? (string->ra "#%2:4:3((3 4 5) (6 7 8) (9 10 11) (0 1 2))") a))
+  (ra-rotate! a 2)
+  (test-assert (ra-equal? (string->ra "#%2:4:3((9 10 11) (0 1 2) (3 4 5) (6 7 8))") a))
+  (ra-rotate! a 3)
+  (test-assert (ra-equal? (string->ra "#%2:4:3((6 7 8) (9 10 11) (0 1 2) (3 4 5))") a))
+  (ra-rotate! a -1)
+  (test-assert (ra-equal? (string->ra "#%2:4:3((3 4 5) (6 7 8) (9 10 11) (0 1 2))") a)))
+
+
+; -----------------------
 ; ra-singletonize
 ; -----------------------
 
@@ -1073,5 +1090,5 @@
 ; the end.
 ; -----------------------
 
-(test-end "newra")
-(exit (test-runner-fail-count (test-runner-current)))
+;; (test-end "newra")
+;; (exit (test-runner-fail-count (test-runner-current)))

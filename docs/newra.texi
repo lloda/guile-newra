@@ -45,7 +45,7 @@ Invariant Sections, no Front-Cover Texts, and no Back-Cover Texts.
 
 @insertcopying
 
-@code{newra} is a Scheme-only replacement for the built-in C-based array facility in Guile 2.2.
+@code{newra} is a Scheme-only replacement for the built-in C-based array facility in Guile 2.2 & 3.0.
 
 This document uses ‘array’ to refer both to the old built-in array type and to the new type introduced in @code{newra}. The distinction is made as necessary.
 
@@ -917,7 +917,10 @@ In array languages such as APL, scalar operations are implicitly extended to wor
 
 If you come to @code{newra} from another array language or library, you may want to be aware of some of these differences.
 
-Differences with builtin Guile arrays:
+Differences with built-in Guile arrays:
+@itemize
+@item @code{newra} map operations are rank-extending but require exact agreement of bounds, unlike operations on built-in arrays, which require exact rank agreement but admit overlapping bounds.
+@end itemize
 
 @cindex APL
 Differences with APL:
@@ -1155,12 +1158,29 @@ The reversed array has the same root as @var{a}.
 @cindex @code{ra-rotate}
 @anchor{x-ra-rotate}
 @deffn @w{function} ra-rotate a n
-(FIXME: not implemented) Rotate the first axis of @var{a} @var{n} times. @var{n} may be any integer. The result has the type of @var{a}, unless that type is @code{d}, in which case the result is of type @code{#t}.
+(FIXME: not implemented) Rotate the first axis of @var{a} toward the lower indices (‘to the left’) @var{n} times. @var{n} may be any integer. The result has the type of @var{a}, unless that type is @code{d}, in which case the result is of type @code{#t}.
 
 Example:
 @example
 @verbatim
-(ra-rotate (ra-i 3 2) -1)
+(ra-rotate (ra-i 3 2) 1)
+@end verbatim
+@result{} #%1:3:2((2 3) (4 5) (0 1))
+@end example
+@end deffn
+
+@cindex rotate!
+@cindex @code{ra-rotate!}
+@anchor{x-ra-rotate!}
+@deffn @w{function} ra-rotate! a n
+Rotate in place the first axis of @var{a} to the left @var{n} times. @var{n} may be any integer. @var{a} must be writable. This function returns @var{a}.
+
+Example:
+@example
+@verbatim
+(define a (ra-copy #t (ra-i 3 2)))
+(ra-rotate! a 1)
+a
 @end verbatim
 @result{} #%1:3:2((2 3) (4 5) (0 1))
 @end example

@@ -386,21 +386,21 @@ See also: ra-zero
     ra)))
 
 (define (ra-slice ra . i)
-  (ra-check ra)
-  (make-ra-root (%%ra-root ra)
-                (vector-drop (%%ra-dims ra) (length i))
-                (apply ra-pos (%%ra-zero ra) (%%ra-dims ra) i)))
+  (let ((ra (ra-check ra)))
+    (make-ra-root (%%ra-root ra)
+                  (vector-drop (%%ra-dims ra) (length i))
+                  (apply ra-pos (%%ra-zero ra) (%%ra-dims ra) i))))
 
 ; Unhappy about writing these things twice.
 (define-syntax %ra-cell
   (syntax-rules ()
     ((_ ra i ...)
-     (let ((pos (%ra-pos 0 (%%ra-zero ra) (%%ra-dims ra) i ...))
-           (leni (%length i ...)))
-       (ra-check ra)
-       (if (= (%%ra-rank ra) leni)
-         ((%%ra-vref ra) (%%ra-root ra) pos)
-         (make-ra-root (%%ra-root ra) (vector-drop (%%ra-dims ra) leni) pos))))))
+     (let ((ra (ra-check ra)))
+       (let ((pos (%ra-pos 0 (%%ra-zero ra) (%%ra-dims ra) i ...))
+             (leni (%length i ...)))
+         (if (= (%%ra-rank ra) leni)
+           ((%%ra-vref ra) (%%ra-root ra) pos)
+           (make-ra-root (%%ra-root ra) (vector-drop (%%ra-dims ra) leni) pos)))))))
 
 (define-inlinable-case ra-cell
   (case-lambda
@@ -410,12 +410,12 @@ See also: ra-zero
    ((ra i0 i1 i2) (%ra-cell ra i0 i1 i2))
    ((ra i0 i1 i2 i3) (%ra-cell ra i0 i1 i2 i3))
    ((ra . i)
-    (ra-check ra)
-    (let ((pos (apply ra-pos (%%ra-zero ra) (%%ra-dims ra) i))
-          (leni (length i)))
-      (if (= (%%ra-rank ra) leni)
-        ((%%ra-vref ra) (%%ra-root ra) pos)
-        (make-ra-root (%%ra-root ra) (vector-drop (%%ra-dims ra) leni) pos))))))
+    (let ((ra (ra-check ra)))
+      (let ((pos (apply ra-pos (%%ra-zero ra) (%%ra-dims ra) i))
+            (leni (length i)))
+        (if (= (%%ra-rank ra) leni)
+          ((%%ra-vref ra) (%%ra-root ra) pos)
+          (make-ra-root (%%ra-root ra) (vector-drop (%%ra-dims ra) leni) pos)))))))
 
 ; these depend on accessor/setter.
 

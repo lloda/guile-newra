@@ -25,7 +25,7 @@
            ra-pos ra-offset
            ra-slice ra-cell ra-ref ra-set!
 
-           ra-slice-for-each
+           ra-slice-for-each ra-slice-for-each-in-order
            ra-slice-for-each-1 ra-slice-for-each-2 ra-slice-for-each-3 ra-slice-for-each-4
            ra-fill! ra-copy! ra-map! ra-for-each
            ra-equal? ra-any ra-every
@@ -39,6 +39,7 @@
            ra-reverse ra-transpose ra-untranspose ra-order-c?
            ra-ravel ra-reshape ra-tile
            ra-fold ra-fold*
+           ra-rotate!
 
            ra-singletonize ra-clip
 

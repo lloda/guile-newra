@@ -29,7 +29,9 @@ Help: [C-uc .] insert timestamp [C-cc] flip checkbox [C-uucc] partial flip check
     - [ ] placeholder
   * [X] ra-clip
   * [ ] ra-grade
-  * [ ] ra-rotate
+  * [-] ra-rotate [1/2]
+    - [X] ra-rotate!
+    - [ ] ra-rotate
   * [ ] verbs, w/rank
   * [ ] as-ra
   * [ ] cat

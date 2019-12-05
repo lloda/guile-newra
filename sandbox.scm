@@ -12,6 +12,11 @@
         (srfi :8) (srfi :26) (ice-9 match) (srfi :1) (ice-9 format)
         (only (rnrs base) vector-map))
 
+
+; -----------------------
+; ra-amend!
+; -----------------------
+
 (ra-from (ra-copy #t (ra-i 6 4))
          (array->ra #2((0 1) (2 3) (4 5))) (array->ra #1(3 2 1)))
 (ra-amend! (ra-copy #t (ra-i 6 4)) (array->ra #(A B C))

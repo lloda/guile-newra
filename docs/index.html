@@ -124,7 +124,7 @@ Invariant Sections, no Front-Cover Texts, and no Back-Cover Texts.
 </pre></div>
 
 
-<p><code>newra</code> is a Scheme-only replacement for the built-in C-based array facility in Guile 2.2.
+<p><code>newra</code> is a Scheme-only replacement for the built-in C-based array facility in Guile 2.2 &amp; 3.0.
 </p>
 <p>This document uses ‘array’ to refer both to the old built-in array type and to the new type introduced in <code>newra</code>. The distinction is made as necessary.
 </p>
@@ -923,8 +923,11 @@ Next: <a href="#Common-mistakes" accesskey="n" rel="next">Common mistakes</a>, U
 
 <p>If you come to <code>newra</code> from another array language or library, you may want to be aware of some of these differences.
 </p>
-<p>Differences with builtin Guile arrays:
-</p>
+<p>Differences with built-in Guile arrays:
+</p><ul>
+<li> <code>newra</code> map operations are rank-extending but require exact agreement of bounds, unlike operations on built-in arrays, which require exact rank agreement but admit overlapping bounds.
+</li></ul>
+
 <a name="index-APL-1"></a>
 <p>Differences with APL:
 </p><ul>
@@ -1145,11 +1148,26 @@ Next: <a href="#Sources" accesskey="n" rel="next">Sources</a>, Previous: <a href
 <a name="index-ra_002drotate"></a>
 <a name="x_002dra_002drotate"></a><dl>
 <dt><a name="index-ra_002drotate-1"></a>function<!-- /@w -->: <strong>ra-rotate</strong> <em>a n</em></dt>
-<dd><p>(FIXME: not implemented) Rotate the first axis of <var>a</var> <var>n</var> times. <var>n</var> may be any integer. The result has the type of <var>a</var>, unless that type is <code>d</code>, in which case the result is of type <code>#t</code>.
+<dd><p>(FIXME: not implemented) Rotate the first axis of <var>a</var> toward the lower indices (‘to the left’) <var>n</var> times. <var>n</var> may be any integer. The result has the type of <var>a</var>, unless that type is <code>d</code>, in which case the result is of type <code>#t</code>.
 </p>
 <p>Example:
 </p><div class="example">
-<pre class="verbatim">(ra-rotate (ra-i 3 2) -1)
+<pre class="verbatim">(ra-rotate (ra-i 3 2) 1)
+</pre><pre class="example">&rArr; #%1:3:2((2 3) (4 5) (0 1))
+</pre></div>
+</dd></dl>
+
+<a name="index-rotate_0021"></a>
+<a name="index-ra_002drotate_0021"></a>
+<a name="x_002dra_002drotate_0021"></a><dl>
+<dt><a name="index-ra_002drotate_0021-1"></a>function<!-- /@w -->: <strong>ra-rotate!</strong> <em>a n</em></dt>
+<dd><p>Rotate in place the first axis of <var>a</var> to the left <var>n</var> times. <var>n</var> may be any integer. <var>a</var> must be writable. This function returns <var>a</var>.
+</p>
+<p>Example:
+</p><div class="example">
+<pre class="verbatim">(define a (ra-copy #t (ra-i 3 2)))
+(ra-rotate! a 1)
+a
 </pre><pre class="example">&rArr; #%1:3:2((2 3) (4 5) (0 1))
 </pre></div>
 </dd></dl>
@@ -1486,6 +1504,7 @@ Previous: <a href="#Sources" accesskey="p" rel="prev">Sources</a>, Up: <a href="
 <tr><td></td><td valign="top"><a href="#index-ra_002dreshape"><code>ra-reshape</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-ra_002dreverse"><code>ra-reverse</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-ra_002drotate"><code>ra-rotate</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
+<tr><td></td><td valign="top"><a href="#index-ra_002drotate_0021"><code>ra-rotate!</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-ra_002dset_0021"><code>ra-set!</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-ra_002dsingletonize"><code>ra-singletonize</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-ra_002dslice"><code>ra-slice</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
@@ -1496,6 +1515,7 @@ Previous: <a href="#Sources" accesskey="p" rel="prev">Sources</a>, Up: <a href="
 <tr><td></td><td valign="top"><a href="#index-rank">rank</a>:</td><td>&nbsp;</td><td valign="top"><a href="#The-pieces-of-an-array">The pieces of an array</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-rank-polymorphism">rank polymorphism</a>:</td><td>&nbsp;</td><td valign="top"><a href="#Rank-polymorphism-and-rank-extension">Rank polymorphism and rank extension</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-root-vector">root vector</a>:</td><td>&nbsp;</td><td valign="top"><a href="#The-pieces-of-an-array">The pieces of an array</a></td></tr>
+<tr><td></td><td valign="top"><a href="#index-rotate_0021">rotate!</a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
 <tr><td colspan="4"> <hr></td></tr>
 <tr><th><a name="Indices_cp_letter-S">S</a></th><td></td><td></td></tr>
 <tr><td></td><td valign="top"><a href="#index-singleton-axis">singleton axis</a>:</td><td>&nbsp;</td><td valign="top"><a href="#Special-arrays">Special arrays</a></td></tr>
