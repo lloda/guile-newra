@@ -454,7 +454,7 @@
 
 
 ; -----------------------
-; test through the ra-map! interface, also ra-copy!, ra-fill!, ra-equal?
+; test through the ra-map! interface, also ra-copy!, ra-fill!, ra-swap! ra-equal?
 ; -----------------------
 
 (define ra11 (make-ra-new #t 0 (c-dims 10)))
@@ -521,6 +521,19 @@
 (test-equal "(10 0 10 0)(9 1 9 1)(8 2 8 2)(7 3 7 3)(6 4 6 4)(5 5 5 5)(4 6 4 6)(3 7 3 7)(2 8 2 8)(1 9 1 9)"
   (call-with-output-string (lambda (s) (ra-for-each (lambda x (display x s)) ra13 ra12 ra13 ra12))))
 (test-end "ra-for-each")
+
+(test-begin "ra-swap!")
+(let* ((a (ra-copy #t (ra-i 3 2)))
+       (root-a (ra-root a))
+       (ca (ra-copy a))
+       (b (list->ra 2 '((a b) (c d) (e f))))
+       (root-b (ra-root b))
+       (cb (ra-copy b)))
+  (ra-swap! a b)
+  (test-eq root-a (ra-root a))
+  (test-eq root-b (ra-root b))
+  (test-assert (ra-equal? ca b) (ra-equal? cb a)))
+(test-end "ra-swap!")
 
 
 ; -----------------------

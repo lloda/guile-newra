@@ -1225,6 +1225,18 @@ a
 </p><pre class="verbatim">(ra-map! dst identity src)
 (ra-amend! dst src)
 </pre>
+<a name="index-ra_002dswap_0021"></a>
+<a name="x_002dra_002dswap_0021"></a><dl>
+<dt><a name="index-ra_002dswap_0021-1"></a>function<!-- /@w -->: <strong>ra-swap!</strong> <em>a b</em></dt>
+<dd><p>Swap the contents of <var>a</var> and <var>b</var>. The swap is executed in unspecified order, therefore the result is undefined if <var>a</var> and <var>b</var> share storage.
+</p></dd></dl>
+
+<a name="index-ra_002dswap_002din_002dorder_0021"></a>
+<a name="x_002dra_002dswap_002din_002dorder_0021"></a><dl>
+<dt><a name="index-ra_002dswap_002din_002dorder_0021-1"></a>function<!-- /@w -->: <strong>ra-swap-in-order!</strong> <em>a b</em></dt>
+<dd><p>Swap the contents of <var>a</var> and <var>b</var>. The swap is executed in row major order.
+</p></dd></dl>
+
 <a name="index-ra_002dfill_0021"></a>
 <a name="x_002dra_002dfill_0021"></a><dl>
 <dt><a name="index-ra_002dfill_0021-1"></a>function<!-- /@w -->: <strong>ra-fill!</strong> <em>dst value</em></dt>
@@ -1509,6 +1521,8 @@ Previous: <a href="#Sources" accesskey="p" rel="prev">Sources</a>, Up: <a href="
 <tr><td></td><td valign="top"><a href="#index-ra_002dsingletonize"><code>ra-singletonize</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-ra_002dslice"><code>ra-slice</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-ra_002dslice_002dfor_002deach"><code>ra-slice-for-each</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
+<tr><td></td><td valign="top"><a href="#index-ra_002dswap_0021"><code>ra-swap!</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
+<tr><td></td><td valign="top"><a href="#index-ra_002dswap_002din_002dorder_0021"><code>ra-swap-in-order!</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-ra_002dtile"><code>ra-tile</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-ra_002dtranspose"><code>ra-transpose</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-ra_002duntranspose"><code>ra-untranspose</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>

@@ -12,6 +12,8 @@
         (srfi :8) (srfi :26) (ice-9 match) (srfi :1) (ice-9 format)
         (only (rnrs base) vector-map))
 
+(time (ra-rotate! (ra-copy #t (ra-i 4000 3500)) 11)) ; 2.73
+
 
 ; -----------------------
 ; ra-amend!

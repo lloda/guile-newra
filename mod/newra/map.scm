@@ -14,7 +14,7 @@
   #:export (ra-slice-for-each ra-slice-for-each-in-order
             ra-slice-for-each-check
             ra-slice-for-each-1 ra-slice-for-each-2 ra-slice-for-each-3 ra-slice-for-each-4
-            ra-fill! ra-copy! ra-map! ra-for-each
+            ra-fill! ra-copy! ra-swap! ra-swap-in-order! ra-map! ra-for-each
             ra-every ra-any ra-equal?))
 
 (import (newra base) (srfi :9) (srfi srfi-9 gnu) (only (srfi :1) fold every) (srfi :8)
@@ -581,6 +581,33 @@ See also: ra-fill! ra-map!
              ((%%ra-vset! ra) da za ((%%ra-vref rb) db zb))))))
       (%dispatch %typed-copy! %copy! ra rb)
       ra)))
+
+(define (ra-swap! ra rb)
+  "
+ra-swap! ra rb
+
+Swap the contents of RB and RA. RA and RB must have matching shapes and be of
+compatible types.
+
+See also: ra-copy! ra-fill! ra-map!
+"
+  (let-syntax
+      ((%typed-swap!
+        (syntax-rules ()
+          ((_ (vref-ra vset!-ra ra da za) (vref-rb vset!-rb rb db zb))
+           (let ((c (vref-ra da za)))
+             (vset!-ra da za (vref-rb db zb))
+             (vset!-rb db zb c)))))
+       (%swap!
+        (syntax-rules ()
+          ((_ (ra da za) (rb db zb))
+           (let ((c ((%%ra-vref ra) da za)))
+             ((%%ra-vset! ra) da za ((%%ra-vref rb) db zb))
+             ((%%ra-vset! rb) db zb c))))))
+    (%dispatch %typed-swap! %swap! ra rb)
+    ra))
+
+(define ra-swap-in-order! ra-swap!)
 
 ; FIXME refactor ra-any ra-every
 

@@ -1247,6 +1247,18 @@ For valid arguments, this is equivalent to any one of
 (ra-amend! dst src)
 @end verbatim
 
+@cindex @code{ra-swap!}
+@anchor{x-ra-swap!}
+@deffn @w{function} ra-swap! a b
+Swap the contents of @var{a} and @var{b}. The swap is executed in unspecified order, so the result is undefined if @var{a} and @var{b} share storage.
+@end deffn
+
+@cindex @code{ra-swap-in-order!}
+@anchor{x-ra-swap-in-order!}
+@deffn @w{function} ra-swap-in-order! a b
+Swap the contents of @var{a} and @var{b}. The swap is executed in row major order.
+@end deffn
+
 @cindex @code{ra-fill!}
 @anchor{x-ra-fill!}
 @deffn @w{function} ra-fill! dst value

@@ -40,6 +40,7 @@ Help: [C-uc .] insert timestamp [C-cc] flip checkbox [C-uucc] partial flip check
   * [X] unsized index vectors
   * [X] tensor indices
   * [X] broadcasting
+  * [ ] ways to control iteration (dim loop order, direction, etc.)
   * [ ] drag-along facility / delayed ops
   * [ ] output types
 
