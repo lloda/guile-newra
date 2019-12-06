@@ -32,16 +32,15 @@ Help: [C-uc .] insert timestamp [C-cc] flip checkbox [C-uucc] partial flip check
   * [-] ra-rotate [1/2]
     - [X] ra-rotate!
     - [ ] ra-rotate
-  * [ ] verbs, w/rank
   * [ ] as-ra
-  * [ ] cat
+  * [ ] ra-cat
 
 * TODO fundamental features [3/5]
   * [X] unsized index vectors
   * [X] tensor indices
   * [X] broadcasting
   * [ ] ways to control iteration (dim loop order, direction, etc.)
-  * [ ] drag-along facility / delayed ops
+  * [ ] drag-along facility / lazy ops
   * [ ] output types
 
 * TODO friendlier undefined sizes [2/6]

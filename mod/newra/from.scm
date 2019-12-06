@@ -326,7 +326,7 @@ See also: ra-from, ra-amend, ra-reshape
 ; FIXME custom case for k = ±1.
 ; FIXME replace ra-from calls by bumps of zero.
 
-(define (ra-rotate! a k)
+(define (ra-rotate! k a)
   (let* ((a (ra-check a))
          (rank (%%ra-rank a)))
     (match (vector-ref (%%ra-dims a) 0)

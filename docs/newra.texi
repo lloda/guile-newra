@@ -1157,13 +1157,13 @@ The reversed array has the same root as @var{a}.
 @cindex @code{⊖}, rowel
 @cindex @code{ra-rotate}
 @anchor{x-ra-rotate}
-@deffn @w{function} ra-rotate a n
+@deffn @w{function} ra-rotate n a
 (FIXME: not implemented) Rotate the first axis of @var{a} toward the lower indices (‘to the left’) @var{n} times. @var{n} may be any integer. The result has the type of @var{a}, unless that type is @code{d}, in which case the result is of type @code{#t}.
 
 Example:
 @example
 @verbatim
-(ra-rotate (ra-i 3 2) 1)
+(ra-rotate 1 (ra-i 3 2))
 @end verbatim
 @result{} #%1:3:2((2 3) (4 5) (0 1))
 @end example
@@ -1172,14 +1172,14 @@ Example:
 @cindex rotate!
 @cindex @code{ra-rotate!}
 @anchor{x-ra-rotate!}
-@deffn @w{function} ra-rotate! a n
+@deffn @w{function} ra-rotate! n a
 Rotate in place the first axis of @var{a} to the left @var{n} times. @var{n} may be any integer. @var{a} must be writable. This function returns @var{a}.
 
 Example:
 @example
 @verbatim
 (define a (ra-copy #t (ra-i 3 2)))
-(ra-rotate! a 1)
+(ra-rotate! 1 a)
 a
 @end verbatim
 @result{} #%1:3:2((2 3) (4 5) (0 1))

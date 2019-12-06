@@ -1064,15 +1064,15 @@
 ; -----------------------
 
 (let ((a (ra-copy #t (ra-i 4 3))))
-  (ra-rotate! a 0)
+  (ra-rotate! 0 a)
   (test-assert (ra-equal? (string->ra "#%2:4:3((0 1 2) (3 4 5) (6 7 8) (9 10 11))") a))
-  (ra-rotate! a 1)
+  (ra-rotate! 1 a)
   (test-assert (ra-equal? (string->ra "#%2:4:3((3 4 5) (6 7 8) (9 10 11) (0 1 2))") a))
-  (ra-rotate! a 2)
+  (ra-rotate! 2 a)
   (test-assert (ra-equal? (string->ra "#%2:4:3((9 10 11) (0 1 2) (3 4 5) (6 7 8))") a))
-  (ra-rotate! a 3)
+  (ra-rotate! 3 a)
   (test-assert (ra-equal? (string->ra "#%2:4:3((6 7 8) (9 10 11) (0 1 2) (3 4 5))") a))
-  (ra-rotate! a -1)
+  (ra-rotate! -1 a)
   (test-assert (ra-equal? (string->ra "#%2:4:3((3 4 5) (6 7 8) (9 10 11) (0 1 2))") a)))
 
 

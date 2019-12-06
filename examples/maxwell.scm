@@ -15,7 +15,8 @@
 (define π (acos -1))
 (define : #t)
 (define ι ra-iota)
-(define ⍉ transpose-array)
+(define ⍉ ra-transpose)
+(define ⌽ ra-rotate)
 
 (define (roll A dim n)
   ...)
@@ -34,21 +35,36 @@
         (Y (make-ra 0 n m l 4))
         (dn (* 2 π (/ n))))
 
-    (ra-map! (ra-from A : : : 2) (lambda (x) (* (cos x) -1 (/ dn))) (ι n 0 dn))
-    (ra-map! (ra-from A 1 : : : 2) (lambda (x) (* (cos x) -1 (/ dn))) (ι n (- δ) (* dn (- δ))))
+    ;; A[0;;;;2]←-(÷○2÷N)×2○○2×(⍳N)÷N
+    (ra-map! (ra-from A : : : 2)
+             (lambda (x) (* (cos x) -1 (/ dn)))
+             (ra-iota n 0 dn))
 
-    ; FIXME should we write ⌽[k] ??
+    ;; A[1;;;;2]←-(÷○2÷N)×2○○2×((-DELTA)+⍳N)÷N
+    (ra-map! (ra-from A 1 : : : 2)
+             (lambda (x) (* (cos x) -1 (/ dn)))
+             (ra-iota n (- δ) (* dn (- δ))))
 
     (do ((t 1 (+ t 1))) ((= o (+ t 1)))
- ;; X←(1⌽[0]A[T;;;;])+(1⌽[1]A[T;;;;])+(1⌽[2]A[T;;;;])
- ;; Y←(¯1⌽[0]A[T;;;;])+(¯1⌽[1]A[T;;;;])+(¯1⌽[2]A[T;;;;])
- ;; A[T+1;;;;]←X+Y-A[T-1;;;;]+4×A[T;;;;]
+
+      ;; X←(1⌽[0]A[T;;;;])+(1⌽[1]A[T;;;;])+(1⌽[2]A[T;;;;])
+      FIXME
+
+      ;; Y←(¯1⌽[0]A[T;;;;])+(¯1⌽[1]A[T;;;;])+(¯1⌽[2]A[T;;;;])
+      FIXME
+
+      ;; A[T+1;;;;]←X+Y-A[T-1;;;;]+4×A[T;;;;]
+      (ra-map! (ra-from A (+ t 1))
+               (lambda (x y am1 a) (+ x y (- am1) (* 4 a)))
+               x y (ra-from A (- t 1)) (ra-from A t))
       )
 
- ;; DA[;;;;;0]←((1⌽[0]A)-(¯1⌽[0]A))÷2×DELTA
- ;; DA[;;;;;1]←-((1⌽[1]A)-(¯1⌽[1]A))÷2×DELTA
- ;; DA[;;;;;2]←-((1⌽[2]A)-(¯1⌽[2]A))÷2×DELTA
- ;; DA[;;;;;3]←-((1⌽[3]A)-(¯1⌽[3]A))÷2×DELTA
+    ;; DA[;;;;;0]←((1⌽[0]A)-(¯1⌽[0]A))÷2×DELTA
+    ;; DA[;;;;;1]←-((1⌽[1]A)-(¯1⌽[1]A))÷2×DELTA
+    ;; DA[;;;;;2]←-((1⌽[2]A)-(¯1⌽[2]A))÷2×DELTA
+    ;; DA[;;;;;3]←-((1⌽[3]A)-(¯1⌽[3]A))÷2×DELTA
+
+    (ra-map! ...)
 
     ...
 ))
