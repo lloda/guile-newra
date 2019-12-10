@@ -34,6 +34,7 @@ Help: [C-uc .] insert timestamp [C-cc] flip checkbox [C-uucc] partial flip check
     - [ ] ra-rotate
   * [ ] as-ra
   * [ ] ra-cat
+  * [ ] ra-filter, ra-select, etc.
 
 * TODO fundamental features [3/5]
   * [X] unsized index vectors

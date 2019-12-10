@@ -10,7 +10,7 @@
 ; Run with $GUILE -L mod -s bench.scm
 
 (import (newra newra) (newra tools) (newra test) (newra read) (ice-9 popen)
-        (ice-9 rdelim) (srfi :26) (srfi :8) (only (srfi :1) fold iota)
+        (ice-9 rdelim) (srfi :26) (srfi :8) (srfi :19) (only (srfi :1) fold iota)
         (ice-9 match) (ice-9 format) (only (rnrs base) vector-map))
 
 (define (command-output cmd . args)
@@ -20,7 +20,9 @@
     (values s ec)))
 
 (format #t "Guile ~a\n~!" (version))
-(format #t "newra ~a\n~!" (command-output "git" "describe" "--always" "--dirty"))
+(format #t "newra ~a ~a\n~!"
+        (string-trim-both (command-output "git" "describe" "--always" "--dirty"))
+        (date->string (current-date) "~4"))
 
 (define (format-header . x)
   (apply format #t
@@ -43,7 +45,7 @@
   (format #t "\nra-cell (applicable function) / array-ref\n==================\n")
   (for-each
       (lambda (type)
-        (format #t "\ntype ~a\n---------" type)
+        (format #t "\n~a\n---------" type)
         (format-header "ra-ref" "ra-cell" "ra-appl" "array-ref")
         (for-each
             (lambda (rank)
@@ -91,7 +93,7 @@
       (lambda (type)
         (for-each
             (lambda (nargs)
-              (format #t "\ntype ~a ~a args\n---------" type nargs)
+              (format #t "\n~a ~a args\n---------" type nargs)
               (format-header "ra*" "array*" "ra" "array")
               (for-each
                   (lambda (rank)
@@ -129,8 +131,8 @@
 (let ((m #e5e5))
   (format #t "\nra-copy! array-copy!\n==================\n")
   (for-each
-      (lambda (typesrc typedst)
-        (format #t "\ntype src ~a -> type dst ~a\n---------" typesrc typedst)
+      (lambda (typesrc typedst transposed?)
+        (format #t "\nsrc ~a -> dst ~a transposed: ~a\n---------" typesrc typedst transposed?)
         (format-header "ra" "array")
         (for-each
             (lambda (rank)
@@ -140,20 +142,24 @@
                      (scale (* 1e3 (/ m len)))
                      (ra20 (make-ra-new typesrc *unspecified* (apply c-dims nn)))
                      (ra21 (ra-map! (make-ra-new typedst 0 (apply c-dims nn)) (lambda () (random n))))
+                     (ra21 (if transposed?
+                             (apply ra-transpose ra21 (reverse (iota rank)))
+                             ra21))
                      (a20 (ra->array ra20))
                      (a21 (ra->array ra21)))
                 (format #t "rank ~a ~a:" rank nn)
                 (format-line (* scale (time (ra-copy! ra20 ra21)))
                              (* scale (time (array-copy! a21 a20))))))
           (iota 6 1)))
-    (list #t 'f64 #t)
-    (list #t 'f64 'f64)))
+    (list #t 'f64 #t    #t 'f64 #t)
+    (list #t 'f64 'f64  #t 'f64 'f64)
+    (list #f #f #f      #t #t #t)))
 
 (let ((m #e5e5))
   (format #t "\nra-fill! array-fill!\n==================\n")
   (for-each
-      (lambda (type)
-        (format #t "\ntype dst ~a\n----------" type)
+      (lambda (type transposed?)
+        (format #t "\ndst ~a transposed: ~a\n----------" type transposed?)
         (format-header "ra" "array")
         (for-each
             (lambda (rank)
@@ -162,18 +168,22 @@
                      (len (fold * 1 nn))
                      (scale (* 1e3 (/ m len)))
                      (ra20 (make-ra-new type *unspecified* (apply c-dims nn)))
+                     (ra20 (if transposed?
+                             (apply ra-transpose ra20 (reverse (iota rank)))
+                             ra20))
                      (a20 (ra->array ra20)))
                 (format #t "rank ~a ~a:" rank nn)
                 (format-line (* scale (time (ra-fill! ra20 77)))
                              (* scale (time (array-fill! a20 77))))))
           (iota 6 1)))
-    (list #t 'f64 'u8)))
+    (list #t 'f64 'u8 #t 'f64 'u8)
+    (list #f #f #f #t #t #t)))
 
 (let ((m #e5e5))
   (format #t "\nra-equal? array-equal?\n==================\n")
   (for-each
       (lambda (type)
-        (format #t "\ntype dst ~a\n----------" type)
+        (format #t "\ndst ~a\n----------" type)
         (format-header "ra" "array")
         (for-each
             (lambda (rank)
@@ -195,7 +205,7 @@
   (format #t "\nprinting\n==================\n")
   (for-each
       (lambda (type)
-        (format #t "\ntype dst ~a\n----------" type)
+        (format #t "\ndst ~a\n----------" type)
         (format-header "ra" "array1" "array2")
         (for-each
             (lambda (rank)
@@ -216,7 +226,7 @@
   (format #t "\nreading\n==================\n")
   (for-each
       (lambda (type)
-        (format #t "\ntype dst ~a\n----------" type)
+        (format #t "\ndst ~a\n----------" type)
         (format-header "ra1" "ra2" "array")
         (for-each
             (lambda (rank)
@@ -242,7 +252,7 @@
   (format #t "\nlist->ra\n==================\n")
   (for-each
       (lambda (type)
-        (format #t "\ntype dst ~a\n----------" type)
+        (format #t "\ndst ~a\n----------" type)
         (format-header "ra" "array" "ra/shape" "array/shape")
         (for-each
             (lambda (rank)
@@ -268,7 +278,7 @@
   (format #t "\nra->list\n==================\n")
   (for-each
       (lambda (type)
-        (format #t "\ntype dst ~a\n----------" type)
+        (format #t "\ndst ~a\n----------" type)
         (format-header "ra" "array")
         (for-each
             (lambda (rank)
@@ -296,7 +306,7 @@
         (syntax-rules ()
           ((_ type ref)
            (begin
-             (format #t "\ntype dst ~a\n----------" type)
+             (format #t "\ndst ~a\n----------" type)
              (format-header "ra" "handloop")
              (for-each
                  (lambda (rank)
@@ -328,7 +338,7 @@
   (format #t "\nra-index-map!\n==================\n")
   (for-each
       (lambda (type)
-        (format #t "\ntype dst ~a\n----------" type)
+        (format #t "\ndst ~a\n----------" type)
         (format-header "ra" "array")
         (for-each
             (lambda (rank)
