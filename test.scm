@@ -427,7 +427,7 @@
                                 (make-ra-shared (make-ra 1. 0 1) (const '(0 0)) 0 3)
                                 (make-ra 2. 0 3))
              x))
-         (test-end (format #f "~a" name)))))
+         (test-end test-name))))
   `(("oldra" ,array-slice-for-each ,list->array ,list->typed-array
      ,make-array ,(lambda (a b) (array-copy! b a)) ,make-shared-array
      ,(lambda (x) x) ,(lambda (x) x) ,array-set! ,array-ref)
@@ -466,6 +466,7 @@
 (test-equal 10 (ra-length ra13))
 
 (test-equal "#%1:10(0 1 2 3 4 5 6 7 8 9)" (ra->string (ra-copy! ra11 ra12)))
+(test-equal "#%1:10(0 1 2 3 4 5 6 7 8 9)" (ra->string (ra-copy! ra11 (ra-copy #t ra12))))
 (let ((ra5a (make-ra-new #t 0 (c-dims '(1 2) '(1 3))))
       (ra6a (make-ra-root (vector-copy #(1 2 3 4 5 6)) (c-dims '(1 2) '(1 3)))))
   (test-equal "#%2@1:2@1:3((1 2 3) (4 5 6))" (ra->string (ra-copy! ra5a ra6a)))

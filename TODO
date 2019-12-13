@@ -56,7 +56,7 @@ Help: [C-uc .] insert timestamp [C-cc] flip checkbox [C-uucc] partial flip check
   * [ ] the reverse of ra-singletonize, find a good name (see 'differences with numpy' in the doc).
   * [ ] make (set! (ra ...) o) work with slices just (ra ...).
   * [ ] refactor macros
-  * [ ] special rank-1 (or higher!) cases for e.g. copy or fill in the unroll section (e.g. bytevector-copy).
+  * [ ] rank-1 (or higher!) cases in the unrolled section (e.g. bytevector-copy!, bytevector-fill!).
   * [ ] loop attack heuristics (different orders...)
   * [ ] bench tracking
   * [ ] move struct defs to (newra types)

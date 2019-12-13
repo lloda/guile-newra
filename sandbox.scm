@@ -10,7 +10,14 @@
 
 (import (newra newra) (newra tools) (newra base) (rnrs io ports)
         (srfi :8) (srfi :26) (ice-9 match) (srfi :1) (ice-9 format)
-        (only (rnrs base) vector-map))
+        (only (rnrs base) vector-map)
+        (only (srfi :43) vector-copy!)
+        (only (rnrs bytevectors) bytevector-copy!))
+
+
+; -----------------------
+; ra-rotate!
+; -----------------------
 
 (time (ra-rotate! 11 (ra-copy #t (ra-i 4000 3500)))) ; 2.73 - 0.73 with ra-swap!
 
@@ -127,7 +134,7 @@
 
 (define N #e1e7
 (define y (ra-copy 'f64 (ra-iota N)))
-,time (ra-fold + 0 y)    ;  ~ 4.7s for #e1e8, 1.7s for #1e7
+,time (ra-fold + 0 y)    ;  ~ 4.7s for #e1e8, 1.7s for #e1e7
 
 
 (define y (let ((y (make-typed-array 'f64 0 N)))

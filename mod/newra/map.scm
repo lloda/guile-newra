@@ -18,8 +18,10 @@
             ra-every ra-any ra-equal?))
 
 (import (newra base) (srfi :9) (srfi srfi-9 gnu) (only (srfi :1) fold every) (srfi :8)
-        (srfi srfi-4 gnu) (srfi :26) (ice-9 match) (ice-9 control)
-        (only (rnrs base) vector-map vector-for-each))
+        (srfi srfi-4 gnu) (srfi :26) (ice-9 match) (ice-9 control) (srfi :2)
+        (only (rnrs base) vector-map vector-for-each)
+        (only (srfi :43) vector-copy!)
+        (only (rnrs bytevectors) bytevector-copy! bytevector?))
 
 ; These tables are used to inline specific type combinations in %dispatch.
 ; We handle fewer types with 2 & 3 arguments to limit the explosion in compile time.
@@ -62,7 +64,9 @@
 
 
 ; ----------------
+; ----------------
 ; ra-slice-for-each, several versions
+; ----------------
 ; ----------------
 
 ; ra-slice-for-each-1/2/3/4 do the same thing at increasing levels of inlining
@@ -248,14 +252,14 @@
          #'(lambda (lens lenm u ra ... frame ... step ...)
              (let loop-rank ((k 0))
                (if (= k u)
-                 (let loop-unrolled ((i lenm))
+                 (let loop ((i lenm))
                    (%op ra ...)
                    (cond
                     ((zero? i)
                      (%stepu (- lenm) (ra step) ...))
                     (else
                      (%stepu 1 (ra step) ...)
-                     (loop-unrolled (- i 1)))))
+                     (loop (- i 1)))))
                  (let ((lenmk (- (vector-ref lens k) 1)))
                    (let loop-dim ((i lenmk))
                      (loop-rank (+ k 1))
@@ -337,7 +341,9 @@
 
 
 ; ----------------
+; ----------------
 ; special rank-0 versions, ra-for-each, ra-map!, ra-copy!, ra-equal?
+; ----------------
 ; ----------------
 
 ; This variant of %op-loop avoids updating/rolling back %%ra-zero and instead keeps indices on the stack. The improvement is somewhat unreasonable...
@@ -356,10 +362,10 @@
              (%let ((d ...) (ra ...) %%ra-root)
                (let loop-rank ((k 0) (z (%%ra-zero ra)) ...)
                  (if (= k u)
-                   (let loop-unrolled ((i lenm) (z z) ...)
+                   (let loop ((i lenm) (z z) ...)
                      (%op (ra d z) ...)
                      (unless (zero? i)
-                       (loop-unrolled (- i 1) (+ z step) ...)))
+                       (loop (- i 1) (+ z step) ...)))
                    (let loop-dim ((i (- (vector-ref lens k) 1)) (z z) ...)
                      (loop-rank (+ k 1) z ...)
                      (unless (zero? i)
@@ -389,21 +395,57 @@
     (%slice-loop (fold (lambda (a b) (max b (ra-rank a))) 0 r)
                  op-once op-loop %apply-list %apply-let r))))
 
-(define-syntax-rule (%default %op ra ...)
+(define-syntax-rule (%sloop %op ra ...)
   (slice-loop-fun (%op-once-z %op ra ...)
                   (%op-loop-z %op ra ...)
                   ra ...))
 
-(define-syntax-rule (%apply-default %apply-op ra)
+(define-syntax-rule (%apply-sloop %apply-op ra)
   (apply slice-loop-fun
     (%op-once %apply-op ra)
     (%op-loop %apply-op %apply-stepu %apply-stepk ra)
     ra))
 
+
+; -------------------
+; custom rank-1 inner loop
+; -------------------
+
+; This is like %op-loop-z but its %op is rank 1 and replaces (loop). Used by some optimizations such as ra-copy!.
+; FIXME merge with %op-loop-z-1, e.g. have (%op0) vs (%op0 %op1) instead of just %op.
+(define-syntax %op-loop-z-1
+  (lambda (stx)
+    (syntax-case stx ()
+      ((_ %op ra_ ...)
+       (with-syntax ([(ra ...) (generate-temporaries #'(ra_ ...))]
+                     [(frame ...) (generate-temporaries #'(ra_ ...))]
+                     [(step ...) (generate-temporaries #'(ra_ ...))]
+                     [(z ...) (generate-temporaries #'(ra_ ...))]
+                     [(d ...) (generate-temporaries #'(ra_ ...))])
+         #'(lambda (lens lenm u ra ... frame ... step ...)
+             (%let ((d ...) (ra ...) %%ra-root)
+               (let loop-rank ((k 0) (z (%%ra-zero ra)) ...)
+                 (if (= k u)
+                   (%op lenm (ra d z step) ...)
+                   (let loop-dim ((i (- (vector-ref lens k) 1)) (z z) ...)
+                     (loop-rank (+ k 1) z ...)
+                     (unless (zero? i)
+                       (loop-dim (- i 1) (+ z (%%ra-step-prefix frame k)) ...))))))))))))
+
+(define-syntax-rule (%sloop1 %op0 %op1 ra ...)
+  (slice-loop-fun (%op-once-z %op0 ra ...)
+                  (%op-loop-z-1 %op1 ra ...)
+                  ra ...))
+
+
+; -------------------
+; dispatch type combinations
+; -------------------
+
 (define-syntax %%subop
   (lambda (stx)
     (syntax-case stx ()
-      ((_ %op (vref-ra vset!-ra ra) ...)
+      ((_ %op %sloop (vref-ra vset!-ra ra) ...)
        (with-syntax ([(d ...) (generate-temporaries #'(ra ...))]
                      [(z ...) (generate-temporaries #'(ra ...))])
          #'(let-syntax
@@ -411,7 +453,7 @@
                  (syntax-rules ()
                    ((_ (ra d z) ...)
                     (%op (vref-ra vset!-ra ra d z) ...)))))
-             (%default %op-op ra ...)))))))
+             (%sloop %op-op ra ...)))))))
 
 ; FIXME Zero, one, infinity :-|
 ; FIXME Partial dispatch? i.e. the first type is supported but not the others.
@@ -420,16 +462,16 @@
 (define-syntax %dispatch
   (lambda (stx)
     (syntax-case stx ()
-      ((_ %typed-op %op ra)
+      ((_ %sloop %typed-op %op ra)
        #`(case (ra-type ra)
            #,@(map (match-lambda
                      ((tag-ra vref-ra vset!-ra)
                       #`((#,tag-ra)
-                         (%%subop %typed-op
+                         (%%subop %typed-op %sloop
                                   (#,vref-ra #,vset!-ra ra)))))
                 syntax-accessors-1)
-           (else (%default %op ra))))
-      ((_ %typed-op %op ra rb)
+           (else (%sloop %op ra))))
+      ((_ %sloop %typed-op %op ra rb)
        #`(case (ra-type ra)
            #,@(map (match-lambda
                      ((tag-ra vref-ra vset!-ra)
@@ -438,15 +480,15 @@
                            #,@(map (match-lambda
                                      ((tag-rb vref-rb vset!-rb)
                                       #`((#,tag-rb)
-                                         (%%subop %typed-op
+                                         (%%subop %typed-op %sloop
                                                   (#,vref-ra #,vset!-ra ra)
                                                   (#,vref-rb #,vset!-rb rb)))))
                                 syntax-accessors-2)
-                           (else (%default %op ra rb)))
+                           (else (%sloop %op ra rb)))
                          rb)))
                 syntax-accessors-2)
-           (else (%default %op ra rb))))
-      ((_ %typed-op %op ra rb rc)
+           (else (%sloop %op ra rb))))
+      ((_ %sloop %typed-op %op ra rb rc)
        #`(case (ra-type ra)
            #,@(map (match-lambda
                      ((tag-ra vref-ra vset!-ra)
@@ -459,17 +501,22 @@
                                            #,@(map (match-lambda
                                                      ((tag-rc vref-rc vset!-rc)
                                                       #`((#,tag-rc)
-                                                         (%%subop %typed-op
+                                                         (%%subop %typed-op %sloop
                                                                   (#,vref-ra #,vset!-ra ra)
                                                                   (#,vref-rb #,vset!-rb rb)
                                                                   (#,vref-rc #,vset!-rc rc)))))
                                                 syntax-accessors-3)
-                                           (else (%default %op ra rb rc))))))
+                                           (else (%sloop %op ra rb rc))))))
                                 syntax-accessors-3)
-                           (else (%default %op ra rb rc)))
+                           (else (%sloop %op ra rb rc)))
                          rb)))
                 syntax-accessors-3)
-           (else (%default %op ra rb rc)))))))
+           (else (%sloop %op ra rb rc)))))))
+
+
+; -------------------
+; zoo
+; -------------------
 
 (define (ra-for-each op . rx)
   "
@@ -493,10 +540,10 @@ See also: ra-map! ra-slice-for-each
           ((_ rx)
            (apply op (map (lambda (ra) ((%%ra-vref ra) (%%ra-root ra) (%%ra-zero ra))) rx))))))
     (apply (case-lambda
-            ((ra) (%dispatch %typed-fe %fe ra))
-            ((ra rb) (%dispatch %typed-fe %fe ra rb))
-            ((ra rb rc) (%dispatch %typed-fe %fe ra rb rc))
-            (rx (%apply-default %apply-fe rx)))
+            ((ra) (%dispatch %sloop %typed-fe %fe ra))
+            ((ra rb) (%dispatch %sloop %typed-fe %fe ra rb))
+            ((ra rb rc) (%dispatch %sloop %typed-fe %fe ra rb rc))
+            (rx (%apply-sloop %apply-fe rx)))
       rx)))
 
 (define (ra-map! ra op . rx)
@@ -527,10 +574,10 @@ See also: ra-for-each ra-copy! ra-fill!
            ((%%ra-vset! (car rx)) (%%ra-root (car rx)) (%%ra-zero (car rx))
             (apply op (map (lambda (ra) ((%%ra-vref ra) (%%ra-root ra) (%%ra-zero ra))) (cdr rx))))))))
     (apply (case-lambda
-            (() (%dispatch %typed-map! %map! ra))
-            ((rb) (%dispatch %typed-map! %map! ra rb))
-            ((rb rc) (%dispatch %typed-map! %map! ra rb rc))
-            (rx (%apply-default %apply-map! (cons ra rx))))
+            (() (%dispatch %sloop %typed-map! %map! ra))
+            ((rb) (%dispatch %sloop %typed-map! %map! ra rb))
+            ((rb rc) (%dispatch %sloop %typed-map! %map! ra rb rc))
+            (rx (%apply-sloop %apply-map! (cons ra rx))))
       rx)
     ra))
 
@@ -553,7 +600,7 @@ See also: ra-copy! ra-map!
         (syntax-rules ()
           ((_ (ra da za))
            ((%%ra-vset! ra) da za fill)))))
-    (%dispatch %typed-fill! %fill! ra)
+    (%dispatch %sloop %typed-fill! %fill! ra)
     ra))
 
 (define (ra-copy! ra rb)
@@ -567,20 +614,58 @@ This function returns the updated ra RA.
 
 See also: ra-fill! ra-map!
 "
-  (if (zero? (ra-rank rb))
-; an optimization.
-    (ra-fill! ra (ra-ref rb))
-    (let-syntax
-        ((%typed-copy!
-          (syntax-rules ()
-            ((_ (vref-ra vset!-ra ra da za) (vref-rb vset!-rb rb db zb))
-             (vset!-ra da za (vref-rb db zb)))))
-         (%copy!
-          (syntax-rules ()
-            ((_ (ra da za) (rb db zb))
-             ((%%ra-vset! ra) da za ((%%ra-vref rb) db zb))))))
-      (%dispatch %typed-copy! %copy! ra rb)
-      ra)))
+  (define (root-copy! t)
+    (match t
+      (#t
+       (lambda (target tstart source sstart len)
+         (vector-copy! target tstart source sstart (+ sstart len 1))))
+      ((or 'u8 's8 'u16 's16 'u32 's32 'f32 'c32 'u64 's64 'f64 'c64)
+       (let ((bs (bytevector-type-size t)))
+         (lambda (target tstart source sstart len)
+           (bytevector-copy! source (* bs sstart) target (* bs tstart) (* bs len)))))
+      ('s
+       (lambda (target tstart source sstart len)
+         (string-copy! target tstart source sstart (+ sstart len 1))))
+      ('d (throw 'cannot-copy-type 'd))
+      (t #f)))
+
+  (let ((rankb (ra-rank rb)))
+; optimization 1
+    (cond ((zero? rankb)
+           (ra-fill! ra (ra-ref rb)))
+; optimization 2
+          ((and (positive? (ra-rank ra))
+                (eq? (%%ra-type ra) (%%ra-type rb))
+                (= 1 (%%ra-step ra (- rankb 1)) (%%ra-step rb (- rankb 1)))
+                ;; (< 10 (ra-length (- rankb 1)))
+                (and-let* ((root-copy! (root-copy! (%%ra-type rb))))
+; FIXME refactor with the general case below
+                  (let-syntax
+                      ((%pass
+                        (syntax-rules ()
+                          ((_ x ...) (throw 'bad-usage x ...))))
+                       (%copy!
+                        (syntax-rules ()
+                          ((_ len (ra da za stepa) (rb db zb stepb))
+; the assumption depends on traversal order...
+                           (if (= 1 stepa stepb)
+                             (root-copy! da za db zb len)
+                             (throw 'bad-assumption-in-ra-copy!))))))
+                    (%sloop1 %pass %copy! ra rb)
+                    ra))))
+; general case
+          (else
+           (let-syntax
+               ((%typed-copy!
+                 (syntax-rules ()
+                   ((_ (vref-ra vset!-ra ra da za) (vref-rb vset!-rb rb db zb))
+                    (vset!-ra da za (vref-rb db zb)))))
+                (%copy!
+                 (syntax-rules ()
+                   ((_ (ra da za) (rb db zb))
+                    ((%%ra-vset! ra) da za ((%%ra-vref rb) db zb))))))
+             (%dispatch %sloop %typed-copy! %copy! ra rb)
+             ra)))))
 
 (define (ra-swap! ra rb)
   "
@@ -604,7 +689,7 @@ See also: ra-copy! ra-fill! ra-map!
            (let ((c ((%%ra-vref ra) da za)))
              ((%%ra-vset! ra) da za ((%%ra-vref rb) db zb))
              ((%%ra-vset! rb) db zb c))))))
-    (%dispatch %typed-swap! %swap! ra rb)
+    (%dispatch %sloop %typed-swap! %swap! ra rb)
     ra))
 
 (define ra-swap-in-order! ra-swap!)
@@ -635,9 +720,9 @@ See also: ra-any ra-equal? ra-fold
       (or (null? rx)
           (begin
             (apply (case-lambda
-                    ((ra) (%dispatch %typed-pred? %pred? ra))
-                    ((ra rb) (%dispatch %typed-pred? %pred? ra rb))
-                    ((ra rb rc) (%dispatch %typed-pred? %pred? ra rb rc))
+                    ((ra) (%dispatch %sloop %typed-pred? %pred? ra))
+                    ((ra rb) (%dispatch %sloop %typed-pred? %pred? ra rb))
+                    ((ra rb rc) (%dispatch %sloop %typed-pred? %pred? ra rb rc))
                     (rx (apply ra-for-each (lambda x (unless (apply pred? x) (exit #f))) rx)))
               rx)
             #t)))))
@@ -672,9 +757,9 @@ See also: ra-every ra-equal? ra-fold
       (or (null? rx)
           (begin
             (apply (case-lambda
-                    ((ra) (%dispatch %typed-pred? %pred? ra))
-                    ((ra rb) (%dispatch %typed-pred? %pred? ra rb))
-                    ((ra rb rc) (%dispatch %typed-pred? %pred? ra rb rc))
+                    ((ra) (%dispatch %sloop %typed-pred? %pred? ra))
+                    ((ra rb) (%dispatch %sloop %typed-pred? %pred? ra rb))
+                    ((ra rb rc) (%dispatch %sloop %typed-pred? %pred? ra rb rc))
                     (rx (apply ra-for-each (lambda x (and=> (apply pred? x) exit)) rx)))
               rx)
             #f)))))
@@ -723,7 +808,7 @@ See also: ra-map! ra-for-each
           (and (apply equal-shapes? rx)
                (begin
                  (apply (case-lambda
-                         ((ra rb) (%dispatch %typed-equal? %equal? ra rb))
+                         ((ra rb) (%dispatch %sloop %typed-equal? %equal? ra rb))
                          (rx (apply ra-for-each (lambda x (unless (apply equal? x) (exit #f))) rx)))
                    rx)
                  #t))))))
