@@ -340,8 +340,7 @@
 ; special rank-0 versions, ra-for-each, ra-map!, ra-copy!, ra-equal?
 ; ----------------
 
-; This variant of %op-loop avoids updating/rolling back %%ra-zero and instead
-; keeps indices on the stack. The improvement is somewhat unreasonable...
+; This variant of %op-loop avoids updating/rolling back %%ra-zero and instead keeps indices on the stack. The improvement is somewhat unreasonable...
 ; FIXME (maybe?) doesn't work for rest list ra (%%ra-zero / %%ra-step are used directly). However, rest list ra cases are slow anyway.
 
 (define-syntax %op-loop-z
