@@ -20,7 +20,7 @@
 (import (newra base) (srfi :9) (srfi srfi-9 gnu) (only (srfi :1) fold every) (srfi :8)
         (srfi srfi-4 gnu) (srfi :26) (ice-9 match) (ice-9 control) (srfi :2)
         (only (rnrs base) vector-map vector-for-each)
-        (only (srfi :43) vector-copy!)
+        (only (srfi :43) vector-copy! vector-fill!)
         (only (rnrs bytevectors) bytevector-copy! bytevector?))
 
 ; These tables are used to inline specific type combinations in %dispatch.
@@ -591,17 +591,50 @@ This function returns the filled ra RA.
 
 See also: ra-copy! ra-map!
 "
-  (let-syntax
-      ((%typed-fill!
-        (syntax-rules ()
-          ((_ (vref-ra vset!-ra ra da za))
-           (vset!-ra da za fill))))
-       (%fill!
-        (syntax-rules ()
-          ((_ (ra da za))
-           ((%%ra-vset! ra) da za fill)))))
-    (%dispatch %sloop %typed-fill! %fill! ra)
-    ra))
+; These only support step 1. Also (FIXME) bytevector-fill! is too limited to be used here.
+; Other options are bli_?setv from BLIS or (contorted) ?axpy from CBLAS.
+  (define (line! t)
+    (match t
+      (#t
+       (lambda (fill target tstart len)
+; FIXME vector-fill! is much slower with the optional args for some reason.
+         (vector-fill! target fill tstart (+ tstart len 1))))
+      ('s
+       (lambda (fill target tstart len)
+         (string-fill! target fill tstart (+ tstart len 1))))
+      ('d (throw 'cannot-copy-type 'd))
+      (t #f)))
+
+; optimization 1
+  (cond ((and (positive? (ra-rank ra))
+              (= 1 (%%ra-step ra (- (%%ra-rank ra) 1)))
+              (and-let* ((line! (line! (%%ra-type ra))))
+                (let-syntax
+                    ((%pass
+                      (syntax-rules ()
+                        ((_ x ...) (throw 'bad-usage x ...))))
+                     (%fill!
+                      (syntax-rules ()
+                        ((_ len (ra da za stepa))
+; FIXME this assumption depends on traversal order.
+                         (if (= 1 stepa)
+                           (line! fill da za len)
+                           (throw 'bad-assumption-in-ra-fill!))))))
+                  (%sloop1 %pass %fill! ra)
+                  ra))))
+; general case
+        (else
+         (let-syntax
+             ((%typed-fill!
+               (syntax-rules ()
+                 ((_ (vref-ra vset!-ra ra da za))
+                  (vset!-ra da za fill))))
+              (%fill!
+               (syntax-rules ()
+                 ((_ (ra da za))
+                  ((%%ra-vset! ra) da za fill)))))
+           (%dispatch %sloop %typed-fill! %fill! ra)
+           ra))))
 
 (define (ra-copy! ra rb)
   "
@@ -614,7 +647,9 @@ This function returns the updated ra RA.
 
 See also: ra-fill! ra-map!
 "
-  (define (root-copy! t)
+; These only support step 1.
+; Other options are bli_?copyv from BLIS or (contorted) ?axpy from CBLAS.
+  (define (line! t)
     (match t
       (#t
        (lambda (target tstart source sstart len)
@@ -637,8 +672,7 @@ See also: ra-fill! ra-map!
           ((and (positive? (ra-rank ra))
                 (eq? (%%ra-type ra) (%%ra-type rb))
                 (= 1 (%%ra-step ra (- rankb 1)) (%%ra-step rb (- rankb 1)))
-                ;; (< 10 (ra-length (- rankb 1)))
-                (and-let* ((root-copy! (root-copy! (%%ra-type rb))))
+                (and-let* ((line! (line! (%%ra-type rb))))
 ; FIXME refactor with the general case below
                   (let-syntax
                       ((%pass
@@ -647,9 +681,9 @@ See also: ra-fill! ra-map!
                        (%copy!
                         (syntax-rules ()
                           ((_ len (ra da za stepa) (rb db zb stepb))
-; the assumption depends on traversal order...
+; FIXME this assumption depends on traversal order.
                            (if (= 1 stepa stepb)
-                             (root-copy! da za db zb len)
+                             (line! da za db zb len)
                              (throw 'bad-assumption-in-ra-copy!))))))
                     (%sloop1 %pass %copy! ra rb)
                     ra))))

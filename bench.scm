@@ -158,7 +158,7 @@
 
 (for-each
  (lambda (type native-copy! native-length)
-   (let ((m #e5e5)
+   (let ((m #e1e7)
          (rank 1)
          (typesrc type)
          (typedst type))
@@ -206,7 +206,7 @@
 
 (for-each
  (lambda (type native-fill!)
-   (let ((m #e5e5)
+   (let ((m #e1e7)
          (rank 1))
      (format #t "\ndst ~a ra-fill! array-fill! native-fill!\n==================\n" type)
      (format-header "ra" "array" "native")
