@@ -11,8 +11,8 @@
 (import (newra newra) (newra tools) (newra base) (rnrs io ports)
         (srfi :8) (srfi :26) (ice-9 match) (srfi :1) (ice-9 format)
         (only (rnrs base) vector-map)
-        (only (srfi :43) vector-copy!)
-        (only (rnrs bytevectors) bytevector-copy!))
+        (only (srfi :43) vector-copy! vector-fill!)
+        (only (rnrs bytevectors) bytevector-copy! bytevector-fill!))
 
 
 ; -----------------------
