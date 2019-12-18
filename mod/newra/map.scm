@@ -837,9 +837,17 @@ See also: ra-map! ra-for-each
             ((_ (ra da za) ...)
              (unless (equal? ((%%ra-vref ra) da za) ...)
                (exit #f))))))
-      (or (null? rx)
-          (null? (cdr rx))
-          (and (apply equal-shapes? rx)
+      (and (apply equal-shapes? rx)
+; shortcut?
+           (or (let* ((ra (car rx))
+                      (za (ra-zero ra))
+                      (ra (ra-root ra)))
+                 (let loop ((rx (cdr rx)))
+                   (or (null? rx)
+                       (and (= za (ra-zero (car rx)))
+                            (eq? ra (ra-root (car rx)))
+                            (loop (cdr rx))))))
+; no, have to go element per element.
                (begin
                  (apply (case-lambda
                          ((ra rb) (%dispatch %sloop %typed-equal? %equal? ra rb))
