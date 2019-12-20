@@ -12,7 +12,9 @@
 ;; FIXME Redo with lazy ops.
 ;;; Code:
 
-(import (newra newra) (only (srfi :43) vector-swap!) (only (rnrs base) exact) (srfi :64))
+(import (newra newra) (srfi :64) (ice-9 format)
+        (only (srfi :43) vector-swap!)
+        (only (rnrs base) exact))
 
 ; transpose/untranspose isn't convenient here :-\
 ; FIXME copying version of ra-rotate!
@@ -87,6 +89,5 @@
     F))
 
 (test-begin "maxwell")
-(define F (maxwell))
-(test-approximate 0.3039588939177449 (F 19 0 0 0 2 1) 1e-15)
+(test-approximate 0.3039588939177449 ((maxwell) 19 0 0 0 2 1) 1e-15)
 (test-end "maxwell")
