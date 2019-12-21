@@ -1101,8 +1101,25 @@
 
 
 ; -----------------------
+; a bug in c0f60b1b76118a601715d331c265d1126b0d1e7c & before
+; -----------------------
+
+(let ()
+  (define ra0 (make-ra-root #f64(0 1 2 3 4)))
+  (define ra1 (ra-copy! (make-typed-ra 'f64 0 5) ra0))
+  (test-assert (ra-equal? ra0 ra1))
+  (test-equal (ra-ref ra0 4) (ra-ref ra1 4)))
+
+(let ()
+  (define ra0 (make-ra-root #u8(0 1 2 3 4)))
+  (define ra1 (ra-copy! (make-typed-ra 'u8 0 5) ra0))
+  (test-assert (ra-equal? ra0 ra1))
+  (test-equal (ra-ref ra0 4) (ra-ref ra1 4)))
+
+
+; -----------------------
 ; the end.
 ; -----------------------
 
-(test-end "newra")
-(exit (test-runner-fail-count (test-runner-current)))
+;; (test-end "newra")
+;; (exit (test-runner-fail-count (test-runner-current)))
