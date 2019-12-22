@@ -412,8 +412,8 @@
 ; -------------------
 
 ; This is like %op-loop-z but its %op is rank 1 and replaces (loop). Used by some optimizations such as ra-copy!.
-; FIXME merge with %op-loop-z-1, e.g. have (%op0) vs (%op0 %op1) instead of just %op.
-(define-syntax %op-loop-z-1
+; FIXME make it a case of %op-loop-z, e.g. have (%op0) vs (%op0 %op1) instead of just %op.
+(define-syntax %op-loop-z1
   (lambda (stx)
     (syntax-case stx ()
       ((_ %op ra_ ...)
@@ -432,9 +432,9 @@
                      (unless (zero? i)
                        (loop-dim (- i 1) (+ z (%%ra-step-prefix frame k)) ...))))))))))))
 
-(define-syntax-rule (%sloop1 %op0 %op1 ra ...)
-  (slice-loop-fun (%op-once-z %op0 ra ...)
-                  (%op-loop-z-1 %op1 ra ...)
+(define-syntax-rule (%sloop1 %op1 ra ...)
+  (slice-loop-fun (lambda (ra ...) (throw 'bad-usage ra ...))
+                  (%op-loop-z1 %op1 ra ...)
                   ra ...))
 
 
@@ -610,17 +610,14 @@ See also: ra-copy! ra-map!
               (= 1 (%%ra-step ra (- (%%ra-rank ra) 1)))
               (and-let* ((line! (line! (%%ra-type ra))))
                 (let-syntax
-                    ((%pass
-                      (syntax-rules ()
-                        ((_ x ...) (throw 'bad-usage x ...))))
-                     (%fill!
+                    ((%fill!
                       (syntax-rules ()
                         ((_ len (ra da za stepa))
 ; FIXME this assumption depends on traversal order.
                          (if (= 1 stepa)
                            (line! fill da za len)
                            (throw 'bad-assumption-in-ra-fill!))))))
-                  (%sloop1 %pass %fill! ra)
+                  (%sloop1 %fill! ra)
                   ra))))
 ; general case
         (else
@@ -675,17 +672,14 @@ See also: ra-fill! ra-map!
                 (and-let* ((line! (line! (%%ra-type rb))))
 ; FIXME refactor with the general case below
                   (let-syntax
-                      ((%pass
-                        (syntax-rules ()
-                          ((_ x ...) (throw 'bad-usage x ...))))
-                       (%copy!
+                       ((%copy!
                         (syntax-rules ()
                           ((_ len (ra da za stepa) (rb db zb stepb))
 ; FIXME this assumption depends on traversal order.
                            (if (= 1 stepa stepb)
                              (line! da za db zb len)
                              (throw 'bad-assumption-in-ra-copy!))))))
-                    (%sloop1 %pass %copy! ra rb)
+                    (%sloop1 %copy! ra rb)
                     ra))))
 ; general case
           (else
@@ -763,7 +757,7 @@ See also: ra-any ra-equal? ra-fold
 
 (define (ra-any pred? . rx)
   "
-ra-compare pred? rx ...
+ra-any pred? rx ...
 
 RX must be ra of matching shapes. Return (PRED? RXi ..) is that is true for some
 tuple RXi ... of matching elements, otherwise return #f.
