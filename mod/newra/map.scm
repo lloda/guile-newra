@@ -270,14 +270,6 @@
                        (%stepk k 1 (ra frame) ...)
                        (loop-dim (- i 1))))))))))))))
 
-(define-syntax %op-once
-  (lambda (stx)
-    (syntax-case stx ()
-      ((_ %op ra_ ...)
-       (with-syntax ([(ra ...) (generate-temporaries #'(ra_ ...))])
-         #'(lambda (ra ...)
-             (%op ra ...)))))))
-
 (define-syntax %slice-loop
   (lambda (stx)
     (syntax-case stx ()
@@ -325,14 +317,14 @@
        (%args
         (syntax-rules ()
           ((_ ra ...)
-           (%slice-loop k (%op-once %op ra ...) (%op-loop %op %stepu %stepk ra ...)
+           (%slice-loop k %op (%op-loop %op %stepu %stepk ra ...)
                         %list %let ra ...)))))
     (apply (case-lambda
             (() (throw 'bad-number-of-arguments))
             ((ra) (%args ra))
             ((ra rb) (%args ra rb))
             ((ra rb rc) (%args ra rb rc))
-            (rx (%slice-loop k (%op-once %apply-op rx) (%op-loop %apply-op %apply-stepu %apply-stepk rx)
+            (rx (%slice-loop k %apply-op (%op-loop %apply-op %apply-stepu %apply-stepk rx)
                              %apply-list %apply-let rx)))
       rx)))
 
@@ -345,39 +337,6 @@
 ; special rank-0 versions, ra-for-each, ra-map!, ra-copy!, ra-equal?
 ; ----------------
 ; ----------------
-
-; This variant of %op-loop avoids updating/rolling back %%ra-zero and instead keeps indices on the stack. The improvement is somewhat unreasonable...
-; FIXME (maybe?) doesn't work for rest list ra (%%ra-zero / %%ra-step are used directly). However, rest list ra cases are slow anyway.
-
-(define-syntax %op-loop-z
-  (lambda (stx)
-    (syntax-case stx ()
-      ((_ %op ra_ ...)
-       (with-syntax ([(ra ...) (generate-temporaries #'(ra_ ...))]
-                     [(frame ...) (generate-temporaries #'(ra_ ...))]
-                     [(step ...) (generate-temporaries #'(ra_ ...))]
-                     [(z ...) (generate-temporaries #'(ra_ ...))]
-                     [(d ...) (generate-temporaries #'(ra_ ...))])
-         #'(lambda (lens lenm u ra ... frame ... step ...)
-             (%let ((d ...) (ra ...) %%ra-root)
-               (let loop-rank ((k 0) (z (%%ra-zero ra)) ...)
-                 (if (= k u)
-                   (let loop ((i lenm) (z z) ...)
-                     (%op (ra d z) ...)
-                     (unless (zero? i)
-                       (loop (- i 1) (+ z step) ...)))
-                   (let loop-dim ((i (- (vector-ref lens k) 1)) (z z) ...)
-                     (loop-rank (+ k 1) z ...)
-                     (unless (zero? i)
-                       (loop-dim (- i 1) (+ z (%%ra-step-prefix frame k)) ...))))))))))))
-
-(define-syntax %op-once-z
-  (lambda (stx)
-    (syntax-case stx ()
-      ((_ %op ra_ ...)
-       (with-syntax ([(ra ...) (generate-temporaries #'(ra_ ...))])
-         #'(lambda (ra ...)
-             (%op (ra (%%ra-root ra) (%%ra-zero ra)) ...)))))))
 
 ; If op-loop takes 2 args as a rest list, here we must do that as well.
 (define-inlinable-case slice-loop-fun
@@ -395,47 +354,55 @@
     (%slice-loop (fold (lambda (a b) (max b (ra-rank a))) 0 r)
                  op-once op-loop %apply-list %apply-let r))))
 
-(define-syntax-rule (%sloop %op ra ...)
-  (slice-loop-fun (%op-once-z %op ra ...)
-                  (%op-loop-z %op ra ...)
-                  ra ...))
+; This variant of %op-loop avoids updating/rolling back %%ra-zero and instead keeps indices on the stack. The improvement is somewhat unreasonable...
 
-(define-syntax-rule (%apply-sloop %apply-op ra)
-  (apply slice-loop-fun
-    (%op-once %apply-op ra)
-    (%op-loop %apply-op %apply-stepu %apply-stepk ra)
-    ra))
-
-
-; -------------------
-; custom rank-1 inner loop
-; -------------------
-
-; This is like %op-loop-z but its %op is rank 1 and replaces (loop). Used by some optimizations such as ra-copy!.
-; FIXME make it a case of %op-loop-z, e.g. have (%op0) vs (%op0 %op1) instead of just %op.
-(define-syntax %op-loop-z1
+(define-syntax %sloop
   (lambda (stx)
     (syntax-case stx ()
-      ((_ %op ra_ ...)
+; can supply special rank-1 op.
+      ((_ (%op0 %op1) ra_ ...)
        (with-syntax ([(ra ...) (generate-temporaries #'(ra_ ...))]
                      [(frame ...) (generate-temporaries #'(ra_ ...))]
                      [(step ...) (generate-temporaries #'(ra_ ...))]
                      [(z ...) (generate-temporaries #'(ra_ ...))]
                      [(d ...) (generate-temporaries #'(ra_ ...))])
-         #'(lambda (lens lenm u ra ... frame ... step ...)
-             (%let ((d ...) (ra ...) %%ra-root)
-               (let loop-rank ((k 0) (z (%%ra-zero ra)) ...)
-                 (if (= k u)
-                   (%op (+ 1 lenm) (ra d z step) ...)
-                   (let loop-dim ((i (- (vector-ref lens k) 1)) (z z) ...)
-                     (loop-rank (+ k 1) z ...)
-                     (unless (zero? i)
-                       (loop-dim (- i 1) (+ z (%%ra-step-prefix frame k)) ...))))))))))))
+         #'(slice-loop-fun
+            (lambda (ra ...)
+              (%op0 (ra (%%ra-root ra) (%%ra-zero ra)) ...))
+            (lambda (lens lenm u ra ... frame ... step ...)
+              (%let ((d ...) (ra ...) %%ra-root)
+                (let loop-rank ((k 0) (z (%%ra-zero ra)) ...)
+                  (if (= k u)
+                    (%op1 (+ 1 lenm) (ra d z step) ...)
+                    (let loop-dim ((i (- (vector-ref lens k) 1)) (z z) ...)
+                      (loop-rank (+ k 1) z ...)
+                      (unless (zero? i)
+                        (loop-dim (- i 1) (+ z (%%ra-step-prefix frame k)) ...)))))))
+            ra_ ...)))
+; if not, provide default.
+      ((_ (%op0) ra_ ...)
+       #'(let-syntax
+             ((%op1
+               (syntax-rules ::: ()
+                 ((_ len (ra d z step) :::)
+                  (let loop ((i (- len 1)) (z z) :::)
+                    (%op0 (ra d z) :::)
+                    (unless (zero? i)
+                      (loop (- i 1) (+ z step) :::)))))))
+           (%sloop (%op0 %op1) ra_ ...))))))
 
-(define-syntax-rule (%sloop1 %op1 ra ...)
-  (slice-loop-fun (lambda (ra ...) (throw 'bad-usage ra ...))
-                  (%op-loop-z1 %op1 ra ...)
-                  ra ...))
+; Use this for %op0 when there's no valid %op0.
+
+(define-syntax-rule (%pass ra ...)
+  (throw 'bad-usage ra ...))
+
+; FIXME (maybe?) doesn't work for rest list ra (%%ra-zero / %%ra-step are used directly). However, rest list ra cases are slow anyway.
+
+(define-syntax-rule (%apply-sloop %apply-op ra)
+  (apply slice-loop-fun
+    (lambda ra (%apply-op ra))
+    (%op-loop %apply-op %apply-stepu %apply-stepk ra)
+    ra))
 
 
 ; -------------------
@@ -453,7 +420,7 @@
                  (syntax-rules ()
                    ((_ (ra d z) ...)
                     (%op (vref-ra vset!-ra ra d z) ...)))))
-             (%sloop %op-op ra ...)))))))
+             (%sloop (%op-op) ra ...)))))))
 
 ; FIXME Zero, one, infinity :-|
 ; FIXME Partial dispatch? i.e. the first type is supported but not the others.
@@ -470,7 +437,7 @@
                          (%%subop %typed-op %sloop
                                   (#,vref-ra #,vset!-ra ra)))))
                 syntax-accessors-1)
-           (else (%sloop %op ra))))
+           (else (%sloop (%op) ra))))
       ((_ %sloop %typed-op %op ra rb)
        #`(case (ra-type ra)
            #,@(map (match-lambda
@@ -484,10 +451,10 @@
                                                   (#,vref-ra #,vset!-ra ra)
                                                   (#,vref-rb #,vset!-rb rb)))))
                                 syntax-accessors-2)
-                           (else (%sloop %op ra rb)))
+                           (else (%sloop (%op) ra rb)))
                          rb)))
                 syntax-accessors-2)
-           (else (%sloop %op ra rb))))
+           (else (%sloop (%op) ra rb))))
       ((_ %sloop %typed-op %op ra rb rc)
        #`(case (ra-type ra)
            #,@(map (match-lambda
@@ -506,12 +473,12 @@
                                                                   (#,vref-rb #,vset!-rb rb)
                                                                   (#,vref-rc #,vset!-rc rc)))))
                                                 syntax-accessors-3)
-                                           (else (%sloop %op ra rb rc))))))
+                                           (else (%sloop (%op) ra rb rc))))))
                                 syntax-accessors-3)
-                           (else (%sloop %op ra rb rc)))
+                           (else (%sloop (%op) ra rb rc)))
                          rb)))
                 syntax-accessors-3)
-           (else (%sloop %op ra rb rc)))))))
+           (else (%sloop (%op) ra rb rc)))))))
 
 
 ; -------------------
@@ -617,7 +584,7 @@ See also: ra-copy! ra-map!
                          (if (= 1 stepa)
                            (line! fill da za len)
                            (throw 'bad-assumption-in-ra-fill!))))))
-                  (%sloop1 %fill! ra)
+                  (%sloop (%pass %fill!) ra)
                   ra))))
 ; general case
         (else
@@ -679,7 +646,7 @@ See also: ra-fill! ra-map!
                            (if (= 1 stepa stepb)
                              (line! da za db zb len)
                              (throw 'bad-assumption-in-ra-copy!))))))
-                    (%sloop1 %copy! ra rb)
+                    (%sloop (%pass %copy!) ra rb)
                     ra))))
 ; general case
           (else
