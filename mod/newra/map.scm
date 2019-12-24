@@ -308,16 +308,13 @@
 
 (define (ra-slice-for-each-4 k op . rx)
   (letrec-syntax
-      ((%op
-        (syntax-rules ()
-          ((_ ra ...) (op ra ...))))
-       (%apply-op
+      ((%apply-op
         (syntax-rules ()
           ((_ ra) (apply op ra))))
        (%args
         (syntax-rules ()
           ((_ ra ...)
-           (%slice-loop k %op (%op-loop %op %stepu %stepk ra ...)
+           (%slice-loop k op (%op-loop op %stepu %stepk ra ...)
                         %list %let ra ...)))))
     (apply (case-lambda
             (() (throw 'bad-number-of-arguments))
