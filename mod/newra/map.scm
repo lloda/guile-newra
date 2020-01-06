@@ -20,7 +20,7 @@
 (import (newra base) (srfi :9) (srfi srfi-9 gnu) (only (srfi :1) fold every) (srfi :8)
         (srfi srfi-4 gnu) (srfi :26) (ice-9 match) (ice-9 control) (srfi :2)
         (only (rnrs base) vector-map vector-for-each)
-        (only (srfi :43) vector-copy! vector-fill!)
+        (only (srfi :43) vector-copy! vector-fill! vector-every)
         (only (rnrs bytevectors) bytevector-copy! bytevector?))
 
 ; These tables are used to inline specific type combinations in %dispatch.
@@ -242,6 +242,7 @@
   (for-each (lambda (ra frame) (%stepk k n (ra frame))) ra frame))
 
 ; Extracted from %slice-loop to be specialized for each combination of argument types.
+; FIXME only the %op needs to be specialized for types...
 (define-syntax %op-loop
   (lambda (stx)
     (syntax-case stx ()
@@ -287,9 +288,8 @@
                  (if (zero? k)
 ; no fresh slice descriptor like in array-slice-for-each. Should be all right b/c the descriptors can be copied.
                    (op-once ra ...)
-                   (let/ec exit
 ; check early so we can save a step in the loop later.
-                     (vector-for-each (lambda (len) (when (zero? len) (exit))) lens)
+                   (when (vector-every positive? lens)
 ; we'll do a normal rank-loop in [0..u) and unroll dimensions [u..k); u must be searched.
                      (let ((u (- k 1)))
                        (%let ((step ...) (frame ...) (lambda (frome) (%%ra-step-prefix frome u)))
@@ -388,7 +388,7 @@
                       (loop (- i 1) (+ z step) :::)))))))
            (%sloop (%op0 %op1) ra_ ...))))))
 
-; Use this for %op0 when there's no valid %op0.
+; Use this for %op0 when there's no valid %op0. That may happen when %op1 isn't generic enough (e.g. it only works with step 1) so %sloop is used for %op1 alone.
 
 (define-syntax-rule (%pass ra ...)
   (throw 'bad-usage ra ...))

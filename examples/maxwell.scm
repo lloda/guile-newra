@@ -8,7 +8,7 @@
 
 ;;; Commentary:
 ;; 4-vector potential vacuum field equations
-;; A version of 'Maxwell' from Chaitin 1986, Physics in APL2, p.20, as a demonstration of guile-newra.
+;; Version of 'Maxwell' from Chaitin 1986, Physics in APL2, p.20, to demo guile-newra.
 ;; FIXME Redo with lazy ops.
 ;;; Code:
 

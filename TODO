@@ -52,11 +52,12 @@ Help: [C-uc .] insert timestamp [C-cc] flip checkbox [C-uucc] partial flip check
   * [ ] reading of arrays with inf axes
   * [ ] reading of arrays with dead axes
 
-* TODO quality of life [1/8]
+* TODO quality of life [1/9]
   * [ ] the reverse of ra-singletonize, find a good name (see 'differences with numpy' in the doc).
   * [ ] make (set! (ra ...) o) work with slices just (ra ...).
   * [ ] refactor macros
   * [X] rank-1 (or higher!) cases in the unrolled section (e.g. bytevector-copy!, bytevector-fill!).
+  * [ ] rank-1 (or higher!) cases for generating functions (e.g. array->list).
   * [ ] loop attack heuristics (different orders...)
   * [ ] bench tracking
   * [ ] move struct defs to (newra types)
