@@ -33,7 +33,8 @@ Compared with the old arrays, `newra` offers a growing list of features:
 * Lazy index vectors (`ra-iota`, `ra-i`). These may be infinite: `((ra-iota #f 1) (- #e1e20 1))` returns `100000000000000000000`.
 * Rank extension by prefix matching: `(ra-map! (make-ra 'x 2 3) + (ra-i 2 3) (ra-iota 2 0 10))` returns `#%2:2:3((0 1 2) (13 14 15))`. Prefix matching supports undefined dimensions; the previous expression and `(ra-map! (make-ra 'x 2 3) + (ra-i #f 3) (ra-iota #f 0 10))` are equivalent.
 * Generalized transpose: axes not mentioned in the transposed axis list become axes with undefined size and zero step (‘dead’ axes). This can be used for broadcasting. For example, given `(define I (ra-iota))` and `(define J (ra-transpose (ra-iota) 1))`, then `(ra-map! (make-ra 'x 10 10) * I J)` is a multiplication table.
-* Utilities such as `ra-reverse`, `ra-any`, `ra-every`, `ra-fold`, `ra-from`, `ra-amend!`, `ra-ravel`, `ra-reshape`, `ra-tile`.
+* Generalized slicing with `ra-from`, `ra-amend!`: index arguments can have any rank, and use of lazy index vectors (of any rank!) results in a shared array. A stretchy index object `(ldots)` is supported; e.g. `(ra-from A (ldots) 0)` will produce the slice `A[..., 0]` for an array of any rank.
+* Utilities such as `ra-reverse`, `ra-any`, `ra-every`, `ra-fold`, `ra-ravel`, `ra-reshape`, `ra-tile`.
 * Since `newra` is written entirely in Scheme, if a `newra` operation takes too long, you can actually interrupt it, which is not the case in the old system.
 
 I'm now drafting some higher level functionality, which can be tracked in the `TODO` file.
