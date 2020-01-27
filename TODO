@@ -35,6 +35,7 @@ Help: [C-uc .] insert timestamp [C-cc] flip checkbox [C-uucc] partial flip check
   * [ ] as-ra
   * [ ] ra-cat
   * [ ] ra-filter, ra-select, etc.
+  * [ ] ra-affine map that explicitly takes an [M×(N+1)] matrix
 
 * TODO fundamental features [3/5]
   * [X] unsized index vectors
@@ -42,6 +43,9 @@ Help: [C-uc .] insert timestamp [C-cc] flip checkbox [C-uucc] partial flip check
   * [X] broadcasting
   * [ ] ways to control iteration (dim loop order, direction, etc.)
   * [ ] drag-along facility / lazy ops
+    - [ ] verbs
+    - [ ] rank conjunction
+    - [ ] each (cf array-curry in srfi-179 or the old Guile array-enclose).
   * [ ] output types
 
 * TODO friendlier undefined sizes [2/6]
@@ -53,11 +57,11 @@ Help: [C-uc .] insert timestamp [C-cc] flip checkbox [C-uucc] partial flip check
   * [ ] reading of arrays with dead axes
 
 * TODO quality of life [1/9]
+  * [X] rank-1 (or higher!) cases in the unrolled section (e.g. bytevector-copy!, bytevector-fill!).
+  * [ ] rank-1 (or higher!) cases for generating functions (e.g. array->list).
   * [ ] the reverse of ra-singletonize, find a good name (see 'differences with numpy' in the doc).
   * [ ] make (set! (ra ...) o) work with slices just (ra ...).
   * [ ] refactor macros
-  * [X] rank-1 (or higher!) cases in the unrolled section (e.g. bytevector-copy!, bytevector-fill!).
-  * [ ] rank-1 (or higher!) cases for generating functions (e.g. array->list).
   * [ ] loop attack heuristics (different orders...)
   * [ ] bench tracking
   * [ ] move struct defs to (newra types)

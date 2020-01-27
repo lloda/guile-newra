@@ -16,6 +16,19 @@
 
 
 ; -----------------------
+; lazy ops
+; -----------------------
+
+#|
+Normal arrays have bounds (lo hi) and an affine map N to 1: [inc ... zero] (a row)
+A 'general' array (expr) would have bounds (lo hi) and an affine map M×N to N: [inc₀ ... zero₀; ... incₘ₋₁ ... zeroₘ₋₁] (m rows).
+Although if eventually all leaves are 1D, do we need to make that explicit?
+So idea 1) for exprs is (op args) where each arg may be an array or an expr.
+Then any shape op on arrays needs to be beatable on the args to avoid having to store a full affine map for the expr.
+|#
+
+
+; -----------------------
 ; ra-rotate!
 ; -----------------------
 
@@ -92,7 +105,7 @@
 
 
 ; -----------------------------
-; some cases ...
+; some examples, benchmarks
 ; -----------------------------
 
 ; GEMM
@@ -102,19 +115,25 @@
 (define B (ra-copy #t(ra-i 100 100)))
 (define C (ra-copy #t (ra-i 100 100)))
 
-; Guile newra doesn't define gemm so we make it up on the spot.
+; Guile newra doesn't define gemm so we make it up on the spot. A few versions...
 
-,time (define A (let* ((A (make-typed-ra #t 0 100 100))
-                       (X (ra-transpose A 0 2)))
-                  (ra-map! X (lambda (a b c) (+ a (* b c))) X B (ra-transpose C 1))
-                  A))
-,time (define A (let* ((A (make-typed-ra #t 0 100 100))
-                       (X (ra-transpose A 0 2)))
-                  (ra-slice-for-each 3 (lambda (a b c) (set! (a) (+ (a) (* (b) (c))))) X B (ra-transpose C 1))
-                  A))
+,time (define A0 (let* ((A (make-typed-ra #t 0 100 100))
+                        (X (ra-transpose A 0 2)))
+                   (ra-map! X (lambda (a b c) (+ a (* b c))) X B (ra-transpose C 1))
+                   A))
+,time (define A1 (let* ((A (make-typed-ra #t 0 100 100))
+                        (X (ra-transpose A 0 2)))
+                   (ra-slice-for-each 3 (lambda (a b c) (set! (a) (+ (a) (* (b) (c))))) X B (ra-transpose C 1))
+                   A))
+,time (define A2 (let* ((A (make-typed-ra #t 0 100 100)))
+                   (ra-slice-for-each 2
+                     (lambda (A B C) (set! (A) (ra-fold (lambda (b c a) (+ (* b c) a)) 0 B C)))
+                     A (ra-transpose B 0 2) (ra-transpose C 2 1))
+                   A))
 
 ; check result
-(ra-fold + 0 A)
+(ra-equal? A0 A1 A2)
+(ra-fold + 0 A0)
 250032502500000
 
 (define B (i/t. 'f64 100 100))

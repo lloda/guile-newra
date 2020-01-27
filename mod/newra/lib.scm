@@ -107,7 +107,7 @@ See also: ra-fold ra-map! ra-for-each ra-slice-for-each
   "
 make-typed-ra type value d ...
 
-Return a new ra of type TYPE and dimensions D. The ra will be initialized with
+Return a new ra of type TYPE and shape D. The ra will be initialized with
 VALUE. VALUE may be *unspecified*, in which case the ra may be left
 uninitialized.
 
@@ -126,6 +126,26 @@ See also: make-typed-ra
   (make-ra-new #t value (apply c-dims d)))
 
 (define (make-ra-shared oldra mapfunc . d)
+  "
+make-ra-shared oldra mapfunc ... d
+
+Return a shared array with shape D over the root of OLDRA. MAPFUNC is a function
+of the indices of the new array and must return a list of indices to
+OLDRA.
+
+MAPFUNC is only called the minimum (+ 1 (length D)) times that are needed in
+order to determine an affine function from one set of indices to the other.
+
+For example, to displace the bounds of an array without affecting its contents:
+
+guile> (define x (ra-i 3 2))
+guile> x
+#%2d:3:2((0 1) (2 3) (4 5))
+guile> (make-ra-shared x (lambda (i j) (list (- i 2) (+ j 3))) '(2 4) '(-3 -2))
+#%2d@2:3@-3:2((0 1) (2 3) (4 5))
+
+See also: make-ra, FIXME ra-affine-map
+"
 ; get lo & len, won't use step except if the result is empty.
   (let* ((oldra (ra-check oldra))
          (dims (apply c-dims d))
