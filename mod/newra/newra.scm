@@ -20,7 +20,7 @@
            ra-check %%ra-rank %%ra-root %%ra-zero %%ra-dims
            ra-rank ra-type make-ra-new make-ra-root
            make-aseq aseq? aseq-org aseq-inc aseq-ref
-           make-dim dim? dim-len dim-lo dim-hi dim-step dim-ref
+           make-dim dim? dim-len dim-lo dim-hi dim-step
            c-dims
            ra-pos ra-offset
            ra-slice ra-cell ra-ref ra-set!

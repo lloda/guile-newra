@@ -16,7 +16,7 @@
             ra-check
             ra-rank ra-type make-ra-new make-ra-root
             make-aseq aseq? aseq-org aseq-inc aseq-ref
-            make-dim dim? dim-len dim-lo dim-hi dim-step dim-ref c-dims
+            make-dim dim? dim-len dim-lo dim-hi dim-step c-dims
             ra-pos ra-offset
             ra-slice ra-cell ra-ref ra-set!
 ; for internal (newra) use, don't re-export
@@ -143,7 +143,7 @@ make-dim len lo step
 
 Create an ra axis descriptor with the given parameters.
 
-See also: dim-len dim-lo dim-step c-dims dim-ref
+See also: dim-len dim-lo dim-step c-dims
 "
    ((len) (make-dim len 0 1))
    ((len lo) (make-dim len lo 1))
@@ -159,12 +159,6 @@ See also: dim-len dim-lo dim-step c-dims dim-ref
 (define-inlinable (dim-hi dim)
   (let ((len (dim-len dim)))
     (and len (+ (dim-lo dim) (dim-len dim) -1))))
-
-(define-inlinable (dim-ref dim i)
-  (and-let* ((len (dim-len dim)))
-    (unless (and (<= 0 i) (or (not len) (< i len)))
-      (throw 'dim-ref-out-of-range dim i)))
-  (+ (or (dim-lo dim) 0) (* (dim-step dim) i)))
 
 (define-inlinable (dim-check dim i)
   (if (and i
