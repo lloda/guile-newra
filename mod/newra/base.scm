@@ -193,17 +193,14 @@ See also: dim-len dim-lo dim-step c-dims
 ;; %:       regular macro.
 ;; %%:      skip ra? check.
 
-(define-syntax-rule (%%struct-ref a n) (struct-ref a n))
-(define-syntax-rule (%%struct-set! a n o) (struct-set! a n o))
-
-(define-inlinable (%%ra-root a) (%%struct-ref a 2))
-(define-inlinable (%%ra-zero a) (%%struct-ref a 3))
-(define-inlinable (%%ra-zero-set! a z) (%%struct-set! a 3 z)) ; set on iteration. FIXME immutable record?
-(define-inlinable (%%ra-dims a) (%%struct-ref a 4))
-(define-inlinable (%%ra-type a) (%%struct-ref a 5))
-(define-inlinable (%%ra-vlen a) (%%struct-ref a 6))
-(define-inlinable (%%ra-vref a) (%%struct-ref a 7))
-(define-inlinable (%%ra-vset! a) (%%struct-ref a 8))
+(define-inlinable (%%ra-root a) (struct-ref a 2))
+(define-inlinable (%%ra-zero a) (struct-ref a 3))
+(define-inlinable (%%ra-zero-set! a z) (struct-set! a 3 z)) ; set on iteration. FIXME immutable record?
+(define-inlinable (%%ra-dims a) (struct-ref a 4))
+(define-inlinable (%%ra-type a) (struct-ref a 5))
+(define-inlinable (%%ra-vlen a) (struct-ref a 6))
+(define-inlinable (%%ra-vref a) (struct-ref a 7))
+(define-inlinable (%%ra-vset! a) (struct-ref a 8))
 
 (define-syntax-rule (%rastruct-ref a n) (begin (ra-check a) (struct-ref a n)))
 (define-syntax-rule (%rastruct-set! a n o) (begin (ra-check a) (struct-set! a n o)))
