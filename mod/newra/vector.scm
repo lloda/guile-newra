@@ -13,7 +13,8 @@
 (define-module (newra vector)
   #:export (vector-drop vector-fold* vector-fold vector-clip vector-append))
 
-(import (srfi :26)  (only (srfi :1) fold) (only (rnrs base) vector-for-each))
+(import (srfi :26)  (only (srfi :1) fold) (only (rnrs base) vector-for-each)
+        (only (srfi :43) vector-copy!))
 
 (re-export vector-for-each)
 
@@ -43,17 +44,13 @@
    ((kons knil . vs)
     (apply vector-fold* (vector-length (car vs)) kons knil vs))))
 
-; FIXME ev. used newra shared, will be simpler.
+; avoid sharing, even when the result would be copy of the full vector
+; (e.g. ra-slice depends on this).
+
 (define (vector-clip v lo end)
-  (unless (and (<= 0 lo end) (<= end (vector-length v)))
-    (throw 'bad-arguments lo end (vector-length v)))
   (let ((w (make-vector (- end lo) *unspecified*)))
-    (let loop ((i lo))
-      (if (= i end)
-        w
-        (begin
-          (vector-set! w (- i lo) (vector-ref v i))
-          (loop (+ i 1)))))))
+    (vector-copy! w 0 v lo end)
+    w))
 
 (define (vector-drop v n)
   (vector-clip v n (vector-length v)))
@@ -66,8 +63,6 @@
     (let loopa ((a a) (lo 0))
       (if (null? a)
         b
-        (let ((lena (vector-length (car a))))
-          (do ((j 0 (+ j 1)))
-              ((= j lena))
-            (vector-set! b (+ lo j) (vector-ref (car a) j)))
-          (loopa (cdr a) (+ lo lena)))))))
+        (begin
+          (vector-copy! b lo (car a))
+          (loopa (cdr a) (+ lo (vector-length (car a)))))))))
