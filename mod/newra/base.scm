@@ -94,7 +94,7 @@
                    (_ (identifier? x) #'xname)
                    ((_ arg (... ...))
                     #'((syntax-parameterize ((name (identifier-syntax xname)))
-                         (case-lambda (formals form1 form2 ...) ...))
+                         (case-lambda DOC (formals form1 form2 ...) ...))
                        arg (... ...)))))))))
       ((_ name (case-lambda (formals form1 form2 ...) ...))
        #'(define-inlinable-case name (case-lambda "" (formals form1 form2 ...) ...))))))
@@ -202,14 +202,14 @@ See also: dim-len dim-lo dim-step c-dims
 (define-inlinable (%%ra-vref a) (struct-ref a 7))
 (define-inlinable (%%ra-vset! a) (struct-ref a 8))
 
-(define-syntax-rule (%rastruct-ref a n) (begin (ra-check a) (struct-ref a n)))
-(define-syntax-rule (%rastruct-set! a n o) (begin (ra-check a) (struct-set! a n o)))
+(define-syntax-rule (%rastruct-ref a n) (struct-ref (ra-check a) n))
+(define-syntax-rule (%rastruct-set! a n o) (struct-set! (ra-check a) n o))
 
 (define-inlinable (ra-root a)
   "
 ra-root ra -> v
 
-Return the root vector (or data vector) V of RA.
+Return the root vector (or data vector) @var{v} of @var{ra}.
 "
   (%rastruct-ref a 2))
 
@@ -217,9 +217,9 @@ Return the root vector (or data vector) V of RA.
   "
 ra-zero ra -> i
 
-Return the index I into the root vector of RA that corresponds to all array
-indices being 0. Note that I may be outside the range of the root vector,
-for example if RA is empty or its lower bounds are positive.
+Return the index @var{i} into the root vector of @var{ra} that corresponds to
+all array indices being 0. Note that I may be outside the range of the root
+vector, for example if @var{a} is empty or its lower bounds are positive.
 
 See also: ra-offset
 "
@@ -309,8 +309,8 @@ See also: ra-offset
    "
 ra-offset ra -> i
 
-Return the root vector index I that corresponds to all array indices being equal
-to the lower bound of RA in each dimension.
+Return the root vector index @var{i} that corresponds to all ra indices being
+equal to the lower bound of var{ra} in each dimension.
 
 See also: ra-zero
 "
@@ -354,6 +354,21 @@ See also: ra-zero
 
 (define-inlinable-case ra-ref
   (case-lambda
+   "
+ra-ref a i ...
+
+Return the element of ra @var{a} determined by indices @var{i}. The number of
+indices must be equal to the rank of @var{a}.
+
+For example:
+
+@lisp
+(ra-cell (ra-i 2 3) 1 1)
+@result{} 5
+@end lisp
+
+See also: ra-cell ra-slice ra-from
+"
    ((ra) (%ra-ref ra))
    ((ra i0) (%ra-ref ra i0))
    ((ra i0 i1) (%ra-ref ra i0 i1))
@@ -387,6 +402,35 @@ See also: ra-zero
     ra)))
 
 (define (ra-slice ra . i)
+   "
+ra-slice a i ...
+
+Return the prefix cell of ra @var{a} determined by indices @var{i}. The number
+of indices must be no larger than the rank of @var{a}.
+
+This function always returns an ra, even if the number of indices is equal to
+the rank of @var{a}.
+
+For example:
+
+@lisp
+(ra-cell (ra-i 2 3))
+@result{} #%2((0 1 2) (4 5 6))
+@end lisp
+
+@lisp
+(ra-cell (ra-i 2 3) 1)
+@result{} #%1(4 5 6)
+@end lisp
+
+@lisp
+(ra-cell (ra-i 2 3) 1 1)
+@result{} #%0(5)
+@end lisp
+
+See also: ra-ref ra-cell ra-from
+"
+
   (let ((ra (ra-check ra)))
     (make-ra-root (%%ra-root ra)
                   (vector-drop (%%ra-dims ra) (length i))
@@ -405,6 +449,33 @@ See also: ra-zero
 
 (define-inlinable-case ra-cell
   (case-lambda
+   "
+ra-cell a i ...
+
+Return the prefix cell of ra @var{a} determined by indices @var{i}. The number
+of indices must be no larger than the rank of @var{a}. If the number of indices
+is equal to the rank of @var{a}, then return the corresponding element (same as
+@code{ra-ref}) and not a rank-0 cell.
+
+For example:
+
+@lisp
+(ra-cell (ra-i 2 3))
+@result{} #%2((0 1 2) (4 5 6))
+@end lisp
+
+@lisp
+(ra-cell (ra-i 2 3) 1)
+@result{} #%1(4 5 6)
+@end lisp
+
+@lisp
+(ra-cell (ra-i 2 3) 1 1)
+@result{} 5
+@end lisp
+
+See also: ra-ref ra-slice ra-from
+"
    ((ra) (%ra-cell ra))
    ((ra i0) (%ra-cell ra i0))
    ((ra i0 i1) (%ra-cell ra i0 i1))
@@ -484,7 +555,7 @@ See also: ra-root ra-zero ra-dims
   "
 c-dims d ...
 
-Compute dim-vector for C-order (row-major) array of sizes D ...
+Compute dim-vector for C-order (row-major) array of sizes @var{D} ...
 
 The first size may given as #f, which indicates an infinite dimension.
 
@@ -509,10 +580,10 @@ See also: make-ra-root make-ra-new
 
 (define (make-ra-new type value dims)
   "
-make-ra-new type value dims -> RA
+make-ra-new type value dims -> ra
 
-Make new ra RA of TYPE from dim-vector DIMS, and fill it with VALUE. VALUE may
-be *unspecified*.
+Make new ra @var{ra} of @var{type} from dim-vector @var{dims}, and fill it with
+@var{value}. @var{value} may be @code{*unspecified*}.
 
 See also: make-dim ra-dims make-ra-root c-dims
 "
@@ -535,9 +606,11 @@ See also: make-dim ra-dims make-ra-root c-dims
   "
 ra-shape ra
 
-Return a list with the lower and upper bounds of each dimension of RA.
+Return a list with the lower and upper bounds of each dimension of @var{ra}.
 
+@lisp
 (ra-shape (make-ra 'foo '(-1 3) 5)) ==> ((-1 3) (0 4))
+@end lisp
 
 See also: ra-rank ra-dimensions ra-length
 "
@@ -550,8 +623,10 @@ ra-dimensions ra
 Like ra-shape, but if the lower bound for a given dimension is zero, return
 the size of that dimension instead of a lower bound - upper bound pair.
 
+@lisp
 (ra-shape (make-ra 'foo '(-1 3) 5)) ==> ((-1 3) (0 4))
 (ra-dimensions (make-ra 'foo '(-1 3) 5)) ==> ((-1 3) 5)
+@end lisp
 
 See also: ra-rank ra-shape ra-length
 "
@@ -566,8 +641,8 @@ See also: ra-rank ra-shape ra-length
   "
 ra-length ra [dim 0]
 
-Return the length of the dimension DIM of ra RA. It is an error if RA has zero
-rank.
+Return the length of the dimension @var{dim} of ra @var{ra}. It is an error if
+@var{ra} has zero rank.
 
 See also: ra-shape ra-dimensions ra-size
 "
@@ -578,9 +653,9 @@ See also: ra-shape ra-dimensions ra-size
 ra-size ra
 ra-size ra n
 
-Return the number of elements of ra RA, that is, the product of all its
-lengths. Ras of rank 0 have size 1. If N is given, return the product of the
-first N lengths.
+Return the number of elements of ra @var{ra}, that is, the product of all its
+lengths. Ras of rank 0 have size 1. If @var{n} is given, return the product of the
+first @var{n} lengths.
 
 See also: ra-shape ra-dimensions ra-length
 "

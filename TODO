@@ -2,6 +2,9 @@
 
 Help: [C-uc .] insert timestamp [C-cc] flip checkbox [C-uucc] partial flip checkbox [C-ct] flip TODO.
 
+* TODO bugs [0/1]
+  * [ ] docstrings don't work for define-inlinable-case
+
 * TODO compatibility with existing Guile arrays [8/9]
   * [X] ra-slice-for-each ra-map! ra-for-each ra-cell ra-ref ra-set!
   * [X] ra-transpose ra-reverse

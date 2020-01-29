@@ -17,12 +17,12 @@ Run the test or the benchmark with
 > $GUILE -L mod bench.scm
 ```
 
-To install the library just copy `mod/newra` somewhere in your Guile load path, and use it with `(import (newra newra))`. Examples of use are coming, but for the time being you have to read the source. Many functions have documentation. The manual is in the works ([lloda.github.io/guile-newra](https://lloda.github.io/guile-newra)).
+To install the library just copy `mod/newra` somewhere in your Guile load path, and use it with `(import (newra newra))`. Examples of use are coming (check in `examples/`), but for the time being you have to read the source. Many functions have documentation. The manual is a work in progress ([lloda.github.io/guile-newra](https://lloda.github.io/guile-newra)).
 
 
 ## Status
 
-The old array compatibility layer is mostly finished, with only a naming change (`array-xxx` becomes `ra-xxx`). The `newra` versions of the `map` and `for-each` functions are significantly faster already, but the `-ref` / `-set!` functions are a bit slower and some of the functions that have a fast path in C, such as `ra->list!`, can be several times slower in `newra`, depending on the types of the arguments.
+The old array compatibility layer is mostly finished, with only a naming change (`array-xxx` becomes `ra-xxx`). The `newra` versions of the `map` and `for-each` functions are significantly faster already, but the `-ref` / `-set!` functions are a bit slower, and some of the functions that have a fast path in C, such as `ra->list!`, can be several times slower in `newra`, depending on the types of the arguments.
 
 These issues seem fixable, and besides, the Scheme compiler is only improving as Guile 3.0 aproaches.
 
@@ -33,13 +33,9 @@ Compared with the old arrays, `newra` offers a growing list of features:
 * Lazy index vectors (`ra-iota`, `ra-i`). These may be infinite: `((ra-iota #f 1) (- #e1e20 1))` returns `100000000000000000000`.
 * Rank extension by prefix matching: `(ra-map! (make-ra 'x 2 3) + (ra-i 2 3) (ra-iota 2 0 10))` returns `#%2:2:3((0 1 2) (13 14 15))`. Prefix matching supports undefined dimensions; the previous expression and `(ra-map! (make-ra 'x 2 3) + (ra-i #f 3) (ra-iota #f 0 10))` are equivalent.
 * Generalized transpose: axes not mentioned in the transposed axis list become axes with undefined size and zero step (‘dead’ axes). This can be used for broadcasting. For example, given `(define I (ra-iota))` and `(define J (ra-transpose (ra-iota) 1))`, then `(ra-map! (make-ra 'x 10 10) * I J)` is a multiplication table.
-* Generalized slicing with `ra-from`, `ra-amend!`: index arguments can have any rank, and use of lazy index vectors (of any rank!) results in a shared array. A stretchy index object `(ldots)` is supported; e.g. `(ra-from A (ldots) 0)` will produce the slice `A[..., 0]` for an array of any rank.
+* Generalized slicing with `ra-from`, `ra-amend!`: index arguments can have any rank, and use of lazy index vectors (of any rank!) results in a shared array. A stretch index object `(ldots)` is supported; e.g. `(ra-from A (ldots) 0)` will produce the slice `A[..., 0]` for an array of any rank.
 * Utilities such as `ra-reverse`, `ra-any`, `ra-every`, `ra-fold`, `ra-ravel`, `ra-reshape`, `ra-tile`.
-* Since `newra` is written entirely in Scheme, if a `newra` operation takes too long, you can actually interrupt it, which is not the case in the old system.
-
-I'm now drafting some higher level functionality, which can be tracked in the `TODO` file.
-
-## Transition guide
+* Since `newra` is written entirely in Scheme, if a `newra` operation takes too long, you can actually interrupt it, which is not always the case in the old system.
 
 Originally I wanted `newra` to be a drop-in replacement for the old array system, reusing the same function names and all. Now I think it's better to have a parallel system where some of the flaws of old system can be cleaned up. Still it's important that programs can be easily ported to the new system.
 
@@ -69,7 +65,7 @@ With that in mind, here is what you'd have to change. Note that the `ra-` names 
 
 * The default printer and reader don't handle undefined size arrays as well as they could. For example `(ra-transpose (ra-i 2) 1)` prints as `#%2:d:2((0 1))`, but this cannot be read back. `(ra-iota #f)` prints as `#%d1:f`.
 
-* `truncated-print` doesn't support `newra` types, you'll get a lone `#` if truncation is necessary at all.
+* `truncated-print` doesn't support `newra` types, so you'll get a lone `#` if truncation is necessary at all.
 
 * `equal?` doesn't support `newra` types, so it does just `eqv?`. Instead, you can use `ra-equal?`.
 
