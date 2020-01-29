@@ -220,6 +220,7 @@
        (format-line (* scale (time (ra-fill! ra20 77)))
                     (* scale (time (array-fill! a20 77)))
                     (* scale (time (native-fill! a20 77)))))))
+; would bench 'f64 but there's no f64vector-fill!
  (list #t 'u8)
  (list vector-fill! bytevector-fill!))
 

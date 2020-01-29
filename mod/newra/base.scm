@@ -428,6 +428,9 @@ For example:
 @result{} #%0(5)
 @end lisp
 
+@code{ra-slice} can be used to copy an array descriptor; the return value
+contains a fresh copy of the dim vector of @var{ra}.
+
 See also: ra-ref ra-cell ra-from
 "
 

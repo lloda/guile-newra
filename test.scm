@@ -11,7 +11,7 @@
 
 (import (newra newra) (newra test) (newra tools) (newra read)
         (srfi :64) (srfi :26) (srfi :8) (only (srfi :1) fold iota drop)
-        (ice-9 match) (only (rnrs base) vector-map))
+        (ice-9 match) (only (rnrs base) vector-map vector-for-each))
 
 (define (ra->string ra) (call-with-output-string (cut display ra <>)))
 (define (string->ra s) (call-with-input-string s read))
@@ -1115,6 +1115,22 @@
   (define ra1 (ra-copy! (make-typed-ra 'u8 0 5) ra0))
   (test-assert (ra-equal? ra0 ra1))
   (test-equal (ra-ref ra0 4) (ra-ref ra1 4)))
+
+
+; -----------------------
+; ra-slice creates a new descriptor with no shared dim vector
+; -----------------------
+
+(let ()
+  (define ra0 (ra-i 2 3 4))
+  (define v0 (vector-copy (ra-dims ra0)))
+  (define ra1 (ra-slice ra0))
+  (test-assert (not (eq? (ra-dims ra0) (ra-dims ra1))))
+  (vector-for-each (lambda (a b) (test-equal a b))
+                   v0 (ra-dims ra1))
+  (vector-fill! (ra-dims ra1) #f)
+  (vector-for-each (lambda (a b) (test-equal a b))
+                   v0 (ra-dims ra0)))
 
 
 ; -----------------------
