@@ -10,9 +10,9 @@
 ; Run with $GUILE -L mod -s bench.scm
 
 (import (newra newra) (newra tools) (newra test) (newra read) (ice-9 popen)
-        (ice-9 rdelim) (srfi :26) (srfi :8) (srfi :19) (only (srfi :1) fold iota)
-        (rnrs bytevectors) (ice-9 match) (ice-9 format) (only (srfi :43) vector-copy!)
-        (only (rnrs base) vector-map))
+        (only (newra print) ra-print) (ice-9 rdelim) (srfi :26) (srfi :8) (srfi :19)
+        (only (srfi :1) fold iota) (rnrs bytevectors) (ice-9 match) (ice-9 format)
+        (only (srfi :43) vector-copy!) (only (rnrs base) vector-map))
 
 (define (command-output cmd . args)
   (let* ((p (apply open-pipe* OPEN_READ cmd args))
@@ -296,8 +296,8 @@
                      (len (fold * 1 nn))
                      (scale (* 1e3 (/ m len)))
                      (ra (ra-map! (make-ra-new type 0 (apply c-dims nn)) (cut random n)))
-                     (sra1 (call-with-output-string (cut (@@ (newra print) ra-print) ra <> #:dims? #t)))
-                     (sra2 (call-with-output-string (cut (@@ (newra print) ra-print) ra <> #:dims? #f)))
+                     (sra1 (call-with-output-string (cut ra-print ra <> #:dims? #t)))
+                     (sra2 (call-with-output-string (cut ra-print ra <> #:dims? #f)))
                      (a (ra->array ra))
                      (sa (call-with-output-string (cut display a <>))))
                 (format #t "rank ~a ~a:" rank nn)

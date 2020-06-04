@@ -19,7 +19,7 @@
         (only (rnrs base) vector-map)
         (only (srfi :1) fold unzip2 car+cdr))
 
-(define vector-fold (@@ (newra base) vector-fold))
+(define vector-fold (@ (newra vector) vector-fold))
 
 ; take a looked ahead 'c'. FIXME shouldn't look ahead the last one and then again in the caller.
 (define (read-number port)
@@ -40,8 +40,8 @@
     (cond ((char-whitespace? c) (get-char port) (loop (lookahead-char port)))
           (else c))))
 
-(define pick-root-functions (@@ (newra newra) pick-root-functions))
-(define pick-make-root (@@ (newra newra) pick-make-root))
+(define pick-root-functions (@ (newra base) pick-root-functions))
+(define pick-make-root (@ (newra base) pick-make-root))
 
 (define (make-root type size)
   ((pick-make-root type) size))

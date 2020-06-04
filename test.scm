@@ -25,10 +25,10 @@
 ; -----------------------
 
 (test-equal
-  6 ((@@ (newra newra) vector-fold) (lambda (a c) (+ c (car a))) 0 #((1) (2) (3))))
+  6 ((@ (newra vector) vector-fold) (lambda (a c) (+ c (car a))) 0 #((1) (2) (3))))
 
 (test-equal
-  #(2 3) ((@@ (newra newra) vector-clip) #(1 2 3 4) 1 3))
+  #(2 3) ((@ (newra vector) vector-clip) #(1 2 3 4) 1 3))
 
 ; loop-fun from (newra test) FIXME may become ra-index-map!
 
@@ -763,8 +763,8 @@
 ; from
 ; -----------------------
 
-(define fromu (@@ (newra from) fromu))
-(define fromb (@@ (newra from) fromb))
+(define fromu (@ (newra from) fromu))
+(define fromb (@ (newra from) fromb))
 
 (define A (ra-map! (make-ra 0 10 10) + (ra-transpose (ra-iota 10) 1) (ra-iota 10 0 10)))
 (define b (ra-i 2))

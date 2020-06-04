@@ -77,4 +77,4 @@
                     (display #\space port)))))
               (display #\) port))))))))
 
-(struct-set! (@@ (newra newra) <ra-vtable>) vtable-index-printer ra-print)
+(struct-set! (@ (newra base) <ra-vtable>) vtable-index-printer ra-print)

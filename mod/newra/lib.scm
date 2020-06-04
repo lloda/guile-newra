@@ -236,7 +236,7 @@ See also: ra-iota ra-i
 "
   (let* ((kk (ra-rank ra))
          (ii (make-list kk)))
-    (receive (los lens) ((@@ (newra newra) ra-slice-for-each-check) kk ra)
+    (receive (los lens) ((@ (newra map) ra-slice-for-each-check) kk ra)
       (if (= kk 0)
         (ra-set! ra (apply op ii))
         (let loop-rank ((k 0) (ra ra) (endi ii))

@@ -223,26 +223,30 @@
 
 (define (ra-from A . i)
   "
-ra-from a . i -> b
+ra-from A . i -> B
 
-Outer product slice of A by indices I ...
+Outer product slice of @var{A} by indices @var{i} ...
 
-The shape of B is the concatenation of the shapes of I, and the contents are
-obtained by looking up in each dimension of A by the indices I, that is
+The shape of @var{B} is the concatenation of the shapes of @var{i}... and the
+contents are obtained by looking up in each dimension of A by the indices I,
+that is
 
-B(i00 i01 ... i10 i11 ...) = A(i0(i00 i01 ...) i1(i10 i11 ...) ...)
+@verbatim
+B(i00 i01 ... i10 i11 ...)
+  = A(i0(i00 i01 ...) i1(i10 i11 ...) ...)
+@end verbatim
 
-where I : i0 i1 ...
+where @var{i} : i0 i1 ...
 
-The special value #t is understood as the full range of A on that axis.
+The special value #t is understood as the full range of @var{A} on that axis.
 
-Additionally, if every I is either 1) #t 2) a ra of type 'd, 3) a ra of rank 0,
-or 4) an integer, the result B shares the root of A. In all other cases a new
-root is allocated.
+Additionally, if every @var{i} ... is either 1) #t 2) a ra of type 'd, 3) a ra
+of rank 0, or 4) an integer, the result @var{B} shares the root of @var{A}. In
+all other cases a new root is allocated.
 
-The type of B is the same as that of A, with the only exception that if the type
-of A is 'd and the root of B isn't shared with the root of A, then the type of B
-is #t.
+The type of @var{B} is the same as that of @var{A}, with the only exception that
+if the type of @var{A} is 'd and the root of @var{B} isn't shared with
+the root of @var{A}, then the type of @var{B} is #t.
 
 See also: ra-cell ra-ref ra-slice ra-amend! ra-set!
 "
@@ -261,21 +265,24 @@ See also: ra-cell ra-ref ra-slice ra-amend! ra-set!
   "
 ra-amend! A C . i -> A
 
-Copy C to the outer product slice of A by indices I ...
+Copy @var{C} to the outer product slice of @var{A} by indices var{i} ...
 
-A(i0(i00 i01 ...) i1(i10 i11 ...) ...) <- C(i00 i01 ... i10 i11 ...)
+@verbatim
+A(i0(i00 i01 ...) i1(i10 i11 ...) ...)
+  <- C(i00 i01 ... i10 i11 ...)
+@end verbatim
 
-where I : i0 i1 ...
+where @var{i} : i0 i1 ...
 
-This is equivalent to (ra-copy! (ra-from A I ...) C) whenever (ra-from A I ...)
-would return a shared ra of A. I may take any of the special values accepted by
-RA-FROM.
+This is equivalent to @code{(ra-copy! (ra-from A i ...) C)} whenever
+@code{(ra-from A i ...)} would return a shared ra of @var{A}. I may take any of
+the special values accepted by @code{ra-from}.
 
-If I contains repeated indices so that the same elements of A are referenced
-more than once, the value that ends up in A may correspond to any of the
-indices.
+If I contains repeated indices or the steps of @var{A} make it so that the same
+elements of @var{A} are referenced more than once, the value that ends up in
+@var{A} may correspond to any of the indices that match those elements.
 
-This function returns the modified ra A.
+This function returns the modified ra @var{A}.
 
 See also: ra-set! ra-from ra-copy! ra-cell ra-ref ra-slice
 "
