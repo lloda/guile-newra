@@ -16,7 +16,7 @@
 (define (ra->string ra) (call-with-output-string (cut display ra <>)))
 (define (string->ra s) (call-with-input-string s read))
 
-(set! test-log-to-file #t)
+(set! test-log-to-file #f)
 (test-begin "newra")
 
 
@@ -1137,5 +1137,6 @@
 ; the end.
 ; -----------------------
 
+(define error-count (test-runner-fail-count (test-runner-current)))
 (test-end "newra")
-(exit (test-runner-fail-count (test-runner-current)))
+(exit error-count)
