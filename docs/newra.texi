@@ -1,4 +1,4 @@
-@c -*-texinfo-*-
+c -*-texinfo-*-
 @c %**start of header
 @setfilename newra.info
 @documentencoding UTF-8
@@ -51,8 +51,8 @@ This document uses ‘array’ to refer both to the old built-in array type and 
 
 @menu
 * Introduction::      Why Guile arrays need replacing.
-* Basic use::         Arrays as data structures.
-* Advanced use::      Guile as an array language.
+* Low level::         Arrays as data structures.
+* High level::        Guile as an array language.
 * Hazards::           User beware.
 * Reference::         Systematic list of types and functions.
 * @mybibnode{}::      It's been done before.
@@ -76,7 +76,7 @@ Sometimes we deal with multidimensional @emph{expressions} where the elements ar
 
 Arrays (in the form of @dfn{matrices}, @dfn{vectors}, or @dfn{tensors}) are very common objects in math and programming, and it is very useful to be able to manipulate arrays as individual entities rather than as aggregates — that is one of the main purposes of @code{newra}.
 
-The rest of this section discusses the motivation for @code{newra} in more detail. To start using the library, please jump ahead to @ref{Basic use}.
+The rest of this section discusses the motivation for @code{newra} in more detail. To start using the library, please jump ahead to @ref{Low level}.
 
 @menu
 * Rank polymorphism and rank extension::
@@ -235,8 +235,8 @@ Third, the larger functions of the array interface, such as @code{array-map!}, e
 These problems are solved if the built-in type is replaced with a new type defined in Scheme.
 
 @c ------------------------------------------------
-@node Basic use
-@chapter Basic use
+@node Low level
+@chapter Low level
 @c ------------------------------------------------
 
 @menu
@@ -870,8 +870,8 @@ a
 
 
 @c ------------------------------------------------
-@node Advanced use
-@chapter Advanced use
+@node High level
+@chapter High level
 @c ------------------------------------------------
 
 NOTE This section is about a facility that hasn't been implemented yet.
@@ -1247,6 +1247,17 @@ For valid arguments, this is equivalent to any one of
 (ra-amend! dst src)
 @end verbatim
 
+See also @ref{x-ra-copy,ra-copy} @ref{x-ra-amend!,ra-amend!} @ref{x-ra-set!,ra-set!} @ref{x-ra-map!,ra-map!}.
+
+@cindex @code{ra-copy}
+@anchor{x-ra-copy}
+@deffn @w{function} ra-copy src
+@deffnx @w{function} ra-copy type src
+Create a new array of type @var{type} (the type of ra @var{src} if @var{type} isn't provided) and copy @var{src} into it.
+@end deffn
+
+See also @ref{x-ra-copy!,ra-copy!} @ref{x-ra-amend!,ra-amend!} @ref{x-ra-set!,ra-set!}.
+
 @cindex @code{ra-swap!}
 @anchor{x-ra-swap!}
 @deffn @w{function} ra-swap! a b
@@ -1326,13 +1337,85 @@ Check whether the first @var{n} axes of @var{ra} are in C-order. By default, che
 
 @cindex @code{ra-from}
 @anchor{x-ra-from}
-@deffn @w{function} ra-from a i ...
+@deffn @w{function} ra-from a i ... → b
 @end deffn
+
+Outer product slice of @var{a} by indices @var{i} ...
+
+The shape of @var{b} is the concatenation of the shapes of @var{i}... and the
+contents are obtained by looking up in each dimension of @var{a} by the indices @var{i},
+that is
+
+@example
+@verbatim
+b(j₀₀ j₀₁ ... j₁₀ j₁₁ ...) = a(i₀(j₀₀ j₀₁ ...) i₁(j₁₀ j₁₁ ...) ...)
+@end verbatim
+@end example
+
+where @var{i} : @var{i₀} @var{i₁} ... The special value @code{#t} is understood as the full range of @var{a} on that axis.
+
+Additionally, if every @var{i} ... is either of
+@itemize
+@item @code{#t}
+@item an ra of type @code{'d}
+@item an ra of rank 0
+@item an integer
+@end itemize
+then the result @var{b} shares the root of @var{a}. In all other cases a new root is allocated.
+
+The type of @var{b} is the same as that of @var{a}, with the only exception that
+if the type of @var{a} is @code{'d} and the root of @var{b} isn't shared with
+the root of @var{a}, then the type of @var{b} is @code{#t}.
+
+See also: @ref{x-ra-cell,ra-cell} @ref{x-ra-ref,ra-ref} @ref{x-ra-slice,ra-slice} @ref{x-ra-amend!,ra-amend!} @ref{x-ra-set!,ra-set!}.
 
 @cindex @code{ra-amend!}
 @anchor{x-ra-amend!}
-@deffn @w{function} ra-amend! a o i ...
+@deffn @w{function} ra-amend! a c i ... → a
 @end deffn
+
+Copy @var{c} to the outer product slice of @var{a} by indices @var{i} ...
+
+@example
+@verbatim
+a(i₀(j₀₀ j₀₁ ...) i₁(j₁₀ j₁₁ ...) ...) <- c(j₀₀ j₀₁ ... j₁₀ j₁₁ ...)
+@end verbatim
+@end example
+
+where @var{i} : @var{i₀} @var{i₁} ...
+
+This is equivalent to @code{(ra-copy! (ra-from a i ...) c)} if @code{(ra-from a i ...)} would
+return a shared ra of @var{a}, but it also works in other cases, as long as @var{a} is
+writable. @var{i} may take any of the special values accepted by @code{ra-from}.
+
+@example
+@verbatim
+(define a (list->ra 1 '(1 2 3)))
+(define x 1)
+(define y (array->ra #(1)))
+(ra-amend! a 9 x) ; modifies a
+(ra-amend! a (array->ra #0(9)) x) ; same thing
+(ra-copy! (ra-from a x) (array->ra #0(9))) ; modifies a
+(ra-amend! a 9 y) ; modifies a
+(ra-copy! (ra-from a y) (array->ra #0(9))) ; (ra-from a y) is a new array, so a is NOT modified
+(ra-amend! (array->ra #(2 3 4)) 9 1) ; error, (array->ra #(2 3 4)) is not mutable
+@end verbatim
+@end example
+
+If @var{i} contains repeated indices or the steps of @var{a} make it so that the same elements of @var{a}
+are referenced more than once, then the value that ends up in @var{a} may correspond to any of the
+indices that match those elements. @code{newra} will @emph{not} check that each element of @var{a} is represented uniquely in its root vector.
+
+@example
+@verbatim
+(ra-amend! a (array->ra #(6 7 8)) (ra-tile (array->ra #0(1)) 3))
+@end verbatim
+@result{} #%1:3(1 8 3) ; do not rely on 8 ending up there
+@end example
+
+This function returns the modified ra @var{a}.
+
+See also: @ref{x-ra-copy!,ra-copy!} @ref{x-ra-cell,ra-cell} @ref{x-ra-ref,ra-ref} @ref{x-ra-slice,ra-slice} @ref{x-ra-from,ra-from} @ref{x-ra-set!,ra-set!}.
 
 @cindex @code{ldots}
 @anchor{x-ldots}
@@ -1346,20 +1429,60 @@ Placeholder for @var{n} full axes, used as argument to @code{ra-from} or @code{r
 @deffn @w{function} ra->array a
 @end deffn
 
+Convert built-in Guile array @var{a} (anything that satisfies @code{array?}) into an ra.
+
+This function does not create a copy of the array, but reuses the root (@code{shared-array-root}) of @var{a}, that is, @code{(eq? (ra-root (ra->array a)) (shared-array-root a))} is @code{#t}. For example, this means that if @var{a} is/isn't mutable, then the same will be true for @code{(ra->array a)}.
+
+See also: @ref{x-array->ra,array->ra}.
+
 @cindex @code{array->ra}
 @anchor{x-array->ra}
 @deffn @w{function} array->ra a
 @end deffn
+
+Convert ra @var{a} into built-in Guile array.
+
+This function does not create a copy of the ra, but reuses the root (@code{ra-root}) of @var{a}, that is, @code{(eq? (ra-root a) (shared-array-root (array->ra a)))} is @code{#t}. For example, this means that if @var{a} is/isn't mutable, then the same will be true for @code{(array->ra a)}.
+
+Not all ras can be converted into built-in Guile arrays. For example, type @code{'d} arrays, or arrays with infinite axes, are not convertible.
+
+@example
+@verbatim
+(ra->array (ra-i 3)) ; error, not convertible
+(ra->array (ra-copy #t (ra-i 3))) ; ok
+(ra->array (ra-transpose (ra-i 2 3) 1)) ; error, not convertible
+(ra->array (ra-singletonize (ra-transpose (ra-i 2 3) 1))) ; ok
+@end verbatim
+@end example
+
+See also: @ref{x-ra-singletonize,ra-singletonize} @ref{x-ra-copy!,ra-copy!} @ref{x-ra->array,ra->array}.
 
 @cindex @code{ra-singletonize}
 @anchor{x-ra-singletonize}
 @deffn @w{function} ra-singletonize a
 @end deffn
 
+Return an ra with the same root and dimensions as @var{a}, except that infinite axes (axes with step 0 and length @code{#f}) have their length set to 1.
+
+@example
+@verbatim
+(ra-dimensions (ra-transpose (ra-i 2 3) 1))
+@end verbatim
+@result{} (#f 2 3)
+@verbatim
+(ra-dimensions (ra-singletonize (ra-transpose (ra-i 2 3) 1)))
+@end verbatim
+@result{} (1 2 3)
+@verbatim
+(ra-dimensions (ra-singletonize (ra-tile (ra-i 2 3) 4)))
+@end verbatim
+@result{} (4 2 3) ; no change
+@end example
+
 @cindex @code{ra-clip}
 @anchor{x-ra-clip}
 @deffn @w{function} ra-clip a b
-Slice @var{a} to the smaller of the bounds of @var{a} and @var{b}. @var{a} and @var{b} may have different ranks. In that case only the common prefix of @var{a} is sliced. The result always shares the root of @var{a}
+Slice @var{a} to the smaller of the bounds of @var{a} and @var{b}. @var{a} and @var{b} may have different ranks. In that case only the common prefix of @var{a} is sliced. The result always shares the root of @var{a}.
 @end deffn
 
 @c ------------------------------------------------

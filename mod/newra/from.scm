@@ -240,7 +240,7 @@ where @var{i} : i0 i1 ...
 
 The special value #t is understood as the full range of @var{A} on that axis.
 
-Additionally, if every @var{i} ... is either 1) #t 2) a ra of type 'd, 3) a ra
+Additionally, if every @var{i} ... is either 1) #t 2) an ra of type 'd, 3) an ra
 of rank 0, or 4) an integer, the result @var{B} shares the root of @var{A}. In
 all other cases a new root is allocated.
 
@@ -268,8 +268,8 @@ ra-amend! A C . i -> A
 Copy @var{C} to the outer product slice of @var{A} by indices var{i} ...
 
 @verbatim
-A(i0(i00 i01 ...) i1(i10 i11 ...) ...)
-  <- C(i00 i01 ... i10 i11 ...)
+A(i0(j00 j01 ...) i1(j10 j11 ...) ...)
+  <- C(j00 j01 ... j10 j11 ...)
 @end verbatim
 
 where @var{i} : i0 i1 ...
