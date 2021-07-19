@@ -26,7 +26,7 @@
             <ra-vtable> pick-root-functions pick-make-root
             %%ra-root %%ra-zero %%ra-type %%ra-rank
             %%ra-zero-set! %%ra-dims %%ra-vlen %%ra-vref %%ra-vset! %%ra-step
-            ra-shape ra-dimensions ra-length ra-size))
+            ra-shape ra-dimensions ra-len ra-size))
 
 (import (srfi :9) (srfi srfi-9 gnu) (only (srfi :1) fold every) (srfi :8)
         (srfi srfi-4 gnu) (srfi :26) (srfi :2) (ice-9 match) (ice-9 control)
@@ -616,7 +616,7 @@ Return a list with the lower and upper bounds of each dimension of @var{ra}.
 (ra-shape (make-ra 'foo '(-1 3) 5)) ==> ((-1 3) (0 4))
 @end lisp
 
-See also: ra-rank ra-dimensions ra-length
+See also: ra-rank ra-dimensions ra-len
 "
   (map (lambda (dim) (list (dim-lo dim) (dim-hi dim))) (vector->list (ra-dims ra))))
 
@@ -632,7 +632,7 @@ the size of that dimension instead of a lower bound - upper bound pair.
 (ra-dimensions (make-ra 'foo '(-1 3) 5)) ==> ((-1 3) 5)
 @end lisp
 
-See also: ra-rank ra-shape ra-length
+See also: ra-rank ra-shape ra-len
 "
   (map (lambda (dim)
          (let ((lo (dim-lo dim)))
@@ -641,9 +641,9 @@ See also: ra-rank ra-shape ra-length
              (list lo (dim-hi dim)))))
     (vector->list (ra-dims ra))))
 
-(define* (ra-length ra #:optional (k 0))
+(define* (ra-len ra #:optional (k 0))
   "
-ra-length ra [dim 0]
+ra-len ra [dim 0]
 
 Return the length of the dimension @var{dim} of ra @var{ra}. It is an error if
 @var{ra} has zero rank.
@@ -661,6 +661,6 @@ Return the number of elements of ra @var{ra}, that is, the product of all its
 lengths. Ras of rank 0 have size 1. If @var{n} is given, return the product of the
 first @var{n} lengths.
 
-See also: ra-shape ra-dimensions ra-length
+See also: ra-shape ra-dimensions ra-len
 "
   (vector-fold* n (lambda (d s) (* s (dim-len d))) 1 (ra-dims ra)))

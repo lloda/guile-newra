@@ -173,12 +173,12 @@
 (let* ((ra5 (make-ra-new #t 0 (c-dims '(1 3) '(1 2)))))
   (array-index-map! (ra-root ra5) (lambda i i))
   (test-equal (ra->string ra5) "#%2@1:3@1:2(((0) (1)) ((2) (3)) ((4) (5)))")
-  (test-equal 3 (ra-length ra5)))
+  (test-equal 3 (ra-len ra5)))
 
 (let* ((ra5 (make-typed-ra 's64 0 '(1 3) '(1 2))))
   (array-index-map! (ra-root ra5) (lambda i (car i)))
   (test-equal (ra->string ra5) "#%2s64@1:3@1:2((0 1) (2 3) (4 5))")
-  (test-equal 3 (ra-length ra5)))
+  (test-equal 3 (ra-len ra5)))
 
 
 ; -----------------------
@@ -192,9 +192,9 @@
 (define ra7b (make-ra-root #(1 4 2 5 3 6) `#(,(make-dim 2 1 1) ,(make-dim 3 1 2)) -3))
 (test-equal (ra->string ra7b) "#%2@1:2@1:3((1 2 3) (4 5 6))")
 
-(test-equal 2 (ra-length ra6))
-(test-equal 2 (ra-length ra7a))
-(test-equal 2 (ra-length ra7b))
+(test-equal 2 (ra-len ra6))
+(test-equal 2 (ra-len ra7a))
+(test-equal 2 (ra-len ra7b))
 
 
 ; -----------------------
@@ -202,7 +202,7 @@
 ; -----------------------
 
 (define ra8 (make-ra-root (make-aseq 1) (c-dims '(1 2) '(1 3))))
-(test-equal 2 (ra-length ra8))
+(test-equal 2 (ra-len ra8))
 
 (test-equal (ra->string (ra-cell ra8)) "#%2d@1:2@1:3((1 2 3) (4 5 6))")
 (test-equal (ra->string (ra-cell ra8 1)) "#%1d@1:3(1 2 3)")
@@ -306,9 +306,9 @@
 (define ra-empty0 (make-ra-root (make-aseq 1) (c-dims '(1 0) '(2 1))))
 (define ra-empty1 (make-ra-root (make-aseq 1) (c-dims '(1 1) '(2 1))))
 (define ra-empty2 (make-ra-root (make-aseq 1) (c-dims '(1 0) '(2 2))))
-(test-equal 0 (ra-length ra-empty0))
-(test-equal 1 (ra-length ra-empty1))
-(test-equal 0 (ra-length ra-empty2))
+(test-equal 0 (ra-len ra-empty0))
+(test-equal 1 (ra-len ra-empty1))
+(test-equal 0 (ra-len ra-empty2))
 
 (for-each
  (lambda (ra-slice-for-each)
@@ -449,7 +449,7 @@
 (set! (ra9 0 2) 11)
 (set! (ra9 0 3) 22)
 (test-equal (ra->string ra9) "#%2@-1:2@1:3((99 77 88) (33 11 22))")
-(test-equal 2 (ra-length ra9))
+(test-equal 2 (ra-len ra9))
 (test-equal #2@-1:2@1:3((99 77 88) (33 44 22)) (ra->array (set! (ra9 0 2) 44)))
 
 
@@ -461,9 +461,9 @@
 (define ra12 (make-ra-root (make-aseq) (c-dims 10)))
 (define ra13 (make-ra-root (make-aseq 10 -1) (c-dims 10)))
 
-(test-equal 10 (ra-length ra11))
-(test-equal 10 (ra-length ra12))
-(test-equal 10 (ra-length ra13))
+(test-equal 10 (ra-len ra11))
+(test-equal 10 (ra-len ra12))
+(test-equal 10 (ra-len ra13))
 
 (test-equal "#%1:10(0 1 2 3 4 5 6 7 8 9)" (ra->string (ra-copy! ra11 ra12)))
 (test-equal "#%1:10(0 1 2 3 4 5 6 7 8 9)" (ra->string (ra-copy! ra11 (ra-copy #t ra12))))

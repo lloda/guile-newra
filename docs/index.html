@@ -210,11 +210,11 @@ Next: <a href="#The-pieces-of-an-array" accesskey="n" rel="next">The pieces of a
 <a name="index-order_002c-row_002dmajor"></a>
 <p>This way to lay out an array in memory is called <em>row-major order</em> or <em>C-order</em>, since it&rsquo;s the default order for built-in arrays in C. A row-major array A with sizes (n₀, n₁, ... nᵣ₋₁) can be looked up like this:
 </p>
-<a name="x_002dstrides"></a><blockquote>
+<a name="x_002dsteps"></a><blockquote>
 <p>A(i₀, i₁, ...) = (storage-of-A) [(((i₀n₁ + i₁)n₂ + i₂)n₃ + ...)+iᵣ₋₁] = (storage-of-A) [o + s₀i₀ + s₁i₁ +  ...]
 </p></blockquote>
 
-<p>where the numbers (s₀, s₁, ...) are called the <em>strides</em><a name="DOCF1" href="#FOOT1"><sup>1</sup></a>. Note that the ‘linear’ or ‘raveled’ address [o + s₀i₀ + s₁i₁ +  ...] is an affine function of (i₀, i₁, ...). If we represent an array as a tuple
+<p>where the numbers (s₀, s₁, ...) are called the <em>steps</em><a name="DOCF1" href="#FOOT1"><sup>1</sup></a>. Note that the ‘linear’ or ‘raveled’ address [o + s₀i₀ + s₁i₁ +  ...] is an affine function of (i₀, i₁, ...). If we represent an array as a tuple
 </p>
 <blockquote>
 <p>A ≡ ((storage-of-A), o, (s₀, s₁, ...))
@@ -342,11 +342,13 @@ Next: <a href="#High-level" accesskey="n" rel="next">High level</a>, Previous: <
 </td></tr>
 <tr><td align="left" valign="top">&bull; <a href="#Reshaping-and-resizing" accesskey="5">Reshaping and resizing</a>:</td><td>&nbsp;&nbsp;</td><td align="left" valign="top">
 </td></tr>
-<tr><td align="left" valign="top">&bull; <a href="#Other-operations-on-arrays" accesskey="6">Other operations on arrays</a>:</td><td>&nbsp;&nbsp;</td><td align="left" valign="top">
+<tr><td align="left" valign="top">&bull; <a href="#Concatenation" accesskey="6">Concatenation</a>:</td><td>&nbsp;&nbsp;</td><td align="left" valign="top">
 </td></tr>
-<tr><td align="left" valign="top">&bull; <a href="#Foreign-interface" accesskey="7">Foreign interface</a>:</td><td>&nbsp;&nbsp;</td><td align="left" valign="top">
+<tr><td align="left" valign="top">&bull; <a href="#Other-operations-on-arrays" accesskey="7">Other operations on arrays</a>:</td><td>&nbsp;&nbsp;</td><td align="left" valign="top">
 </td></tr>
-<tr><td align="left" valign="top">&bull; <a href="#Compatibility-with-old-Guile-arrays" accesskey="8">Compatibility with old Guile arrays</a>:</td><td>&nbsp;&nbsp;</td><td align="left" valign="top">
+<tr><td align="left" valign="top">&bull; <a href="#Foreign-interface" accesskey="8">Foreign interface</a>:</td><td>&nbsp;&nbsp;</td><td align="left" valign="top">
+</td></tr>
+<tr><td align="left" valign="top">&bull; <a href="#Compatibility-with-old-Guile-arrays" accesskey="9">Compatibility with old Guile arrays</a>:</td><td>&nbsp;&nbsp;</td><td align="left" valign="top">
 </td></tr>
 </table>
 
@@ -672,7 +674,7 @@ Next: <a href="#Reshaping-and-resizing" accesskey="n" rel="next">Reshaping and r
 <a name="Reshaping-and-resizing"></a>
 <div class="header">
 <p>
-Next: <a href="#Other-operations-on-arrays" accesskey="n" rel="next">Other operations on arrays</a>, Previous: <a href="#Slicing" accesskey="p" rel="prev">Slicing</a>, Up: <a href="#Low-level" accesskey="u" rel="up">Low level</a> &nbsp; [<a href="#Indices" title="Index" rel="index">Index</a>]</p>
+Next: <a href="#Concatenation" accesskey="n" rel="next">Concatenation</a>, Previous: <a href="#Slicing" accesskey="p" rel="prev">Slicing</a>, Up: <a href="#Low-level" accesskey="u" rel="up">Low level</a> &nbsp; [<a href="#Indices" title="Index" rel="index">Index</a>]</p>
 </div>
 <a name="Reshaping-and-resizing-1"></a>
 <h3 class="section">2.5 Reshaping and resizing</h3>
@@ -700,13 +702,25 @@ Next: <a href="#Other-operations-on-arrays" accesskey="n" rel="next">Other opera
 <p>All three functions <code>ra-reshape</code>, <code>ra-ravel</code>, and <code>ra-tile</code> operate on prefix axes. To operate on other axes, use <a href="#x_002dra_002dtranspose"><code>ra-transpose</code></a>.
 </p>
 <hr>
+<a name="Concatenation"></a>
+<div class="header">
+<p>
+Next: <a href="#Other-operations-on-arrays" accesskey="n" rel="next">Other operations on arrays</a>, Previous: <a href="#Reshaping-and-resizing" accesskey="p" rel="prev">Reshaping and resizing</a>, Up: <a href="#Low-level" accesskey="u" rel="up">Low level</a> &nbsp; [<a href="#Indices" title="Index" rel="index">Index</a>]</p>
+</div>
+<a name="Concatenation-1"></a>
+<h3 class="section">2.6 Concatenation</h3>
+
+<a name="index-concatenation"></a>
+<p><code>newra</code> offers two concatenation operations: <a href="#x_002dra_002dpcat"><code>ra-pcat</code></a> (prefix cat) and <a href="#x_002dra_002dscat"><code>ra-scat</code></a> (suffix cat).
+</p>
+<hr>
 <a name="Other-operations-on-arrays"></a>
 <div class="header">
 <p>
-Next: <a href="#Foreign-interface" accesskey="n" rel="next">Foreign interface</a>, Previous: <a href="#Reshaping-and-resizing" accesskey="p" rel="prev">Reshaping and resizing</a>, Up: <a href="#Low-level" accesskey="u" rel="up">Low level</a> &nbsp; [<a href="#Indices" title="Index" rel="index">Index</a>]</p>
+Next: <a href="#Foreign-interface" accesskey="n" rel="next">Foreign interface</a>, Previous: <a href="#Concatenation" accesskey="p" rel="prev">Concatenation</a>, Up: <a href="#Low-level" accesskey="u" rel="up">Low level</a> &nbsp; [<a href="#Indices" title="Index" rel="index">Index</a>]</p>
 </div>
 <a name="Other-operations-on-arrays-1"></a>
-<h3 class="section">2.6 Other operations on arrays</h3>
+<h3 class="section">2.7 Other operations on arrays</h3>
 
 <a name="index-_005b_003f_005d_002c-transpose"></a>
 <a name="index-transpose"></a>
@@ -789,9 +803,9 @@ A
 Next: <a href="#Compatibility-with-old-Guile-arrays" accesskey="n" rel="next">Compatibility with old Guile arrays</a>, Previous: <a href="#Other-operations-on-arrays" accesskey="p" rel="prev">Other operations on arrays</a>, Up: <a href="#Low-level" accesskey="u" rel="up">Low level</a> &nbsp; [<a href="#Indices" title="Index" rel="index">Index</a>]</p>
 </div>
 <a name="Foreign-interface-1"></a>
-<h3 class="section">2.7 Foreign interface</h3>
+<h3 class="section">2.8 Foreign interface</h3>
 
-<p>One of the major reasons to use arrays instead of other Scheme data structures is that they let one pass a large amount of data through a C interface very efficiently. The data doesn&rsquo;t need to be copied — one only needs to pass a pointer to the data, plus the sizes and the strides in some order. C doesn&rsquo;t have a standard consolidated array type, so the particulars are variable. In any case, the required items can be obtained trivially from a <code>newra</code> array object.
+<p>One of the major reasons to use arrays instead of other Scheme data structures is that they let one pass a large amount of data through a C interface very efficiently. The data doesn&rsquo;t need to be copied — one only needs to pass a pointer to the data, plus the sizes and the steps in some order. C doesn&rsquo;t have a standard consolidated array type, so the particulars are variable. In any case, the required items can be obtained trivially from a <code>newra</code> array object.
 </p>
 <p>For example:
 </p>
@@ -802,7 +816,7 @@ Next: <a href="#Compatibility-with-old-Guile-arrays" accesskey="n" rel="next">Co
 Previous: <a href="#Foreign-interface" accesskey="p" rel="prev">Foreign interface</a>, Up: <a href="#Low-level" accesskey="u" rel="up">Low level</a> &nbsp; [<a href="#Indices" title="Index" rel="index">Index</a>]</p>
 </div>
 <a name="Compatibility-with-old-Guile-arrays-1"></a>
-<h3 class="section">2.8 Compatibility with old Guile arrays</h3>
+<h3 class="section">2.9 Compatibility with old Guile arrays</h3>
 
 <p>The functions <a href="#x_002dra_002d_003earray"><code>ra-&gt;array</code></a> and <a href="#x_002darray_002d_003era"><code>array-&gt;ra</code></a> are provided to convert to and from <code>newra</code> arrays and built-in Guile arrays. It is an error to use <code>ra-&gt;array</code> on arrays whose root isn&rsquo;t supported by the built-in arrays, or that have an infinite length. Except in those two cases, the conversion is transparent both ways, and the result always shares the root of the argument.
 </p>
@@ -1065,6 +1079,22 @@ Next: <a href="#Sources" accesskey="n" rel="next">Sources</a>, Previous: <a href
 </pre></div>
 </dd></dl>
 
+<a name="index-ra_002dpcat"></a>
+<a name="x_002dra_002dpcat"></a><dl>
+<dt><a name="index-ra_002dpcat-1"></a>function<!-- /@w -->: <strong>ra-pcat</strong> <em>i x ...</em></dt>
+<dd>
+<p>Concatenate arrays <var>x</var> ... along axis <var>i</var>. The arguments are prefix-matched and rank extended before concatenation. All axes must match, except possibly the concatenation axis.
+</p>
+<p>This function always produces a new array.
+</p>
+<p>See also: <a href="#x_002dra_002dscat">ra-scat</a>, <a href="#x_002dra_002dtile">ra-tile</a>,  <a href="#Concatenation">Concatenation</a>.
+</p>
+<div class="example">
+<pre class="verbatim">(ra-pcat 1 #%1(a b) #%2((0 1) (2 3)))
+</pre><pre class="example">&rArr; #%2((a 0 1) (b 2 3))
+</pre></div>
+</dd></dl>
+
 <a name="index-ra_002dravel"></a>
 <a name="x_002dra_002dravel"></a><dl>
 <dt><a name="index-ra_002dravel-1"></a>function<!-- /@w -->: <strong>ra-ravel</strong> <em>a [n]</em></dt>
@@ -1084,6 +1114,22 @@ Next: <a href="#Sources" accesskey="n" rel="next">Sources</a>, Previous: <a href
 </p><div class="example">
 <pre class="verbatim">(ra-reshape (ra-i 4 3) 2 2)
 </pre><pre class="example">&rArr; #%1d:2:2:3(((0 1 2) (3 4 5)) ((6 7 8) (9 10 11)))
+</pre></div>
+</dd></dl>
+
+<a name="index-ra_002dscat"></a>
+<a name="x_002dra_002dscat"></a><dl>
+<dt><a name="index-ra_002dscat-1"></a>function<!-- /@w -->: <strong>ra-scat</strong> <em>i x ...</em></dt>
+<dd>
+<p>Concatenate <var>i</var>-items of arrays <var>x</var> ... . The arguments are suffix-matched and rank extended before concatenation. All axes must match, except possibly the concatenation axis.
+</p>
+<p>This function always produces a new array.
+</p>
+<p>See also: <a href="#x_002dra_002dpcat">ra-pcat</a>, <a href="#x_002dra_002dtile">ra-tile</a>, <a href="#Concatenation">Concatenation</a>.
+</p>
+<div class="example">
+<pre class="verbatim">(ra-scat 1 #%2((0 1) (2 3)) #%(a b))
+</pre><pre class="example">&rArr; #%2((0 1) (2 3) (a b))
 </pre></div>
 </dd></dl>
 
@@ -1563,6 +1609,7 @@ Previous: <a href="#Sources" accesskey="p" rel="prev">Sources</a>, Up: <a href="
 <tr><th><a name="Indices_cp_letter-C">C</a></th><td></td><td></td></tr>
 <tr><td></td><td valign="top"><a href="#index-c_002ddims"><code>c-dims</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-cell">cell</a>:</td><td>&nbsp;</td><td valign="top"><a href="#Rank-polymorphism-and-rank-extension">Rank polymorphism and rank extension</a></td></tr>
+<tr><td></td><td valign="top"><a href="#index-concatenation">concatenation</a>:</td><td>&nbsp;</td><td valign="top"><a href="#Concatenation">Concatenation</a></td></tr>
 <tr><td colspan="4"> <hr></td></tr>
 <tr><th><a name="Indices_cp_letter-D">D</a></th><td></td><td></td></tr>
 <tr><td></td><td valign="top"><a href="#index-dead-axes">dead axes</a>:</td><td>&nbsp;</td><td valign="top"><a href="#Special-arrays">Special arrays</a></td></tr>
@@ -1619,12 +1666,14 @@ Previous: <a href="#Sources" accesskey="p" rel="prev">Sources</a>, Up: <a href="
 <tr><td></td><td valign="top"><a href="#index-ra_002diota"><code>ra-iota</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-ra_002dmap_0021"><code>ra-map!</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-ra_002dorder_002dc_003f"><code>ra-order-c?</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
+<tr><td></td><td valign="top"><a href="#index-ra_002dpcat"><code>ra-pcat</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-ra_002dravel"><code>ra-ravel</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-ra_002dref"><code>ra-ref</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-ra_002dreshape"><code>ra-reshape</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-ra_002dreverse"><code>ra-reverse</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-ra_002drotate"><code>ra-rotate</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-ra_002drotate_0021"><code>ra-rotate!</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
+<tr><td></td><td valign="top"><a href="#index-ra_002dscat"><code>ra-scat</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-ra_002dset_0021"><code>ra-set!</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-ra_002dsingletonize"><code>ra-singletonize</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-ra_002dslice"><code>ra-slice</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>

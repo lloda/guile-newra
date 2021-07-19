@@ -13,7 +13,7 @@
 (define-module (newra newra))
 
 (import (newra base) (newra map) (newra print) (newra read)
-        (newra lib) (newra from))
+        (newra lib) (newra from) (newra cat))
 
 (re-export ra?
            make-ra-root ra-root ra-zero ra-dims ra-vlen ra-vref ra-vset!
@@ -31,7 +31,7 @@
            ra-equal? ra-any ra-every
 
            ra-index-map!
-           ra-length ra-size make-ra make-typed-ra make-ra-shared ra->list
+           ra-len ra-size make-ra make-typed-ra make-ra-shared ra->list
            ra-dimensions ra-shape ra-offset
            array->ra ra->array as-ra
            ra-i ra-iota
@@ -44,5 +44,7 @@
            ra-singletonize ra-clip
 
            ra-from ra-amend! ldots
+
+           ra-pcat ;; ra-scat
 
            list->ra list->typed-ra)

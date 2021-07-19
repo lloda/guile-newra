@@ -117,12 +117,12 @@ A: [[A(0, 0): [A(0, 0, 0), A(0, 0, 1) ...], A(0, 1): [A(0, 1, 0), A(0, 1, 1) ...
 @cindex order, row-major
 This way to lay out an array in memory is called @dfn{row-major order} or @dfn{C-order}, since it's the default order for built-in arrays in C. A row-major array A with sizes (n₀, n₁, ... nᵣ₋₁) can be looked up like this:
 
-@anchor{x-strides}
+@anchor{x-steps}
 @quotation
 A(i₀, i₁, ...) = (storage-of-A) [(((i₀n₁ + i₁)n₂ + i₂)n₃ + ...)+iᵣ₋₁] = (storage-of-A) [o + s₀i₀ + s₁i₁ +  ...]
 @end quotation
 
-where the numbers (s₀, s₁, ...) are called the @dfn{strides}@footnote{Cf. @url{https://en.wikipedia.org/wiki/Dope_vector, @dfn{dope vector}}}. Note that the ‘linear’ or ‘raveled’ address [o + s₀i₀ + s₁i₁ +  ...] is an affine function of (i₀, i₁, ...). If we represent an array as a tuple
+where the numbers (s₀, s₁, ...) are called the @dfn{steps}@footnote{Cf. @url{https://en.wikipedia.org/wiki/Dope_vector, @dfn{dope vector}}}. Note that the ‘linear’ or ‘raveled’ address [o + s₀i₀ + s₁i₁ +  ...] is an affine function of (i₀, i₁, ...). If we represent an array as a tuple
 
 @quotation
 A ≡ ((storage-of-A), o, (s₀, s₁, ...))
@@ -245,6 +245,7 @@ These problems are solved if the built-in type is replaced with a new type defin
 * Iteration::
 * Slicing::
 * Reshaping and resizing::
+* Concatenation::
 * Other operations on arrays::
 * Foreign interface::
 * Compatibility with old Guile arrays::
@@ -683,6 +684,14 @@ To match APL dyadic ρ, @code{newra} offers a set of three different functions.
 All three functions @code{ra-reshape}, @code{ra-ravel}, and @code{ra-tile} operate on prefix axes. To operate on other axes, use @ref{x-ra-transpose, @code{ra-transpose}}.
 
 @c ------------------------------------------------
+@node Concatenation
+@section Concatenation
+@c ------------------------------------------------
+
+@cindex concatenation
+@code{newra} offers two concatenation operations: @ref{x-ra-pcat, @code{ra-pcat}} (prefix cat) and @ref{x-ra-scat, @code{ra-scat}} (suffix cat).
+
+@c ------------------------------------------------
 @node Other operations on arrays
 @section Other operations on arrays
 @c ------------------------------------------------
@@ -691,7 +700,7 @@ All three functions @code{ra-reshape}, @code{ra-ravel}, and @code{ra-tile} opera
 @cindex transpose
 The most important operation on arrays, other than selection and iteration, is transposition.
 
-@ref{x-ra-transpose, @code{ra-transpose}} takes a source array and a list of axis arguments. These axis arguments correspond to the axes of the source array; the values of the arguments are the corresponding axes of the result array.
+@ref{x-ra-transpose, @code{ra-transpose}} takes a source array and a list of axis arguments. These correspond to the axes of the source array; the values of the arguments are the corresponding axes of the result array.
 
 @example
 @verbatim
@@ -792,7 +801,7 @@ The function @ref{x-ra-untranspose, @code{ra-untranspose}} takes its axis argume
 @section Foreign interface
 @c ------------------------------------------------
 
-One of the major reasons to use arrays instead of other Scheme data structures is that they let one pass a large amount of data through a C interface very efficiently. The data doesn't need to be copied — one only needs to pass a pointer to the data, plus the sizes and the strides in some order. C doesn't have a standard consolidated array type, so the particulars are variable. In any case, the required items can be obtained trivially from a @code{newra} array object.
+One of the major reasons to use arrays instead of other Scheme data structures is that they let one pass a large amount of data through a C interface very efficiently. The data doesn't need to be copied — one only needs to pass a pointer to the data, plus the sizes and the steps in some order. C doesn't have a standard consolidated array type, so the particulars are variable. In any case, the required items can be obtained trivially from a @code{newra} array object.
 
 For example:
 
@@ -1061,6 +1070,24 @@ Create multidimensional index array with the given lengths. The root is of type 
 @end example
 @end deffn
 
+@cindex @code{ra-pcat}
+@anchor{x-ra-pcat}
+@deffn @w{function} ra-pcat i x ...
+
+Concatenate arrays @var{x} ... along axis @var{i}. The arguments are prefix-matched and rank extended before concatenation. All axes must match, except possibly the concatenation axis.
+
+This function always produces a new array. The base indices of the result are all zero; the arguments are concatenated in argument order and their base indices are ignored. It is an error if any of the arguments has an infinite length.
+
+See also: @ref{x-ra-scat,ra-scat}, @ref{x-ra-tile,ra-tile},  @ref{Concatenation}.
+
+@example
+@verbatim
+(ra-pcat 1 #%1(a b) #%2((0 1) (2 3)))
+@end verbatim
+@result{} #%2((a 0 1) (b 2 3))
+@end example
+@end deffn
+
 @cindex @code{ra-ravel}
 @anchor{x-ra-ravel}
 @deffn @w{function} ra-ravel a [n]
@@ -1084,6 +1111,24 @@ Each of the bounds may be an integer (a length) or a pair of integers (lower and
 (ra-reshape (ra-i 4 3) 2 2)
 @end verbatim
 @result{} #%1d:2:2:3(((0 1 2) (3 4 5)) ((6 7 8) (9 10 11)))
+@end example
+@end deffn
+
+@cindex @code{ra-scat}
+@anchor{x-ra-scat}
+@deffn @w{function} ra-scat i x ...
+
+Concatenate @var{i}-items of arrays @var{x} ... . The arguments are suffix-matched and rank extended before concatenation. All axes must match, except possibly the concatenation axis.
+
+This function always produces a new array. The base indices of the result are all zero; the arguments are concatenated in argument order and their base indices are ignored. It is an error if any of the arguments has an infinite length.
+
+See also: @ref{x-ra-pcat,ra-pcat}, @ref{x-ra-tile,ra-tile}, @ref{Concatenation}.
+
+@example
+@verbatim
+(ra-scat 1 #%2((0 1) (2 3)) #%(a b))
+@end verbatim
+@result{} #%2((0 1) (2 3) (a b))
 @end example
 @end deffn
 

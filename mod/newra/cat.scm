@@ -6,163 +6,114 @@
 ; Software Foundation; either version 3 of the License, or (at your option) any
 ; later version.
 
-; WIP WIP WIP WIP WIP WIP
-
 ;;; Commentary:
 ;; Concatenation procedures for Newra.
 ;;; Code:
 
-; BUG Some cases copy and they need not, e.g.
-; (define mu (i. 2 3)) (eq? (shared-array-root mu) (shared-array-root (cat 2 mu))) => #f.
+; WIP WIP WIP WIP WIP WIP
 ; FIXME Should really work with w/rank, etc. As a verb.
 
-(define-module (ploy cat))
-(import (srfi :1) (srfi :26) (newra base) (newra lib) (newra lib) (ice-9 match))
+(define-module (newra cat)
+  #:export (ra-pcat))
 
-(define (
+(import (srfi :1) (srfi :26) (newra base) (newra lib) (newra from) (ice-9 match))
 
-; rank extension would work here except for the need to untranspose if i isn't 0.
-
-(define (plain-cat! i dest . xx)
-  (fold (lambda (x base)
-          (let ((dc ($. x i)))
-            (apply amend! dest x
-                   (append (make-list i #t)
-                           (list (J dc base))
-                           (make-list (- (array-rank x) i 1) #t)))
-            (+ base dc)))
-        0
-        xx)
-  dest)
+(define (list-subst! l k val)
+  (list-set! l k val)
+  l)
 
 (define (plain-cat! i dest . xx)
   (fold (lambda (x base)
-          (let ((dc ($. x i)))
-            (apply amend! dest x
-                   (append (make-list i #t)
-                           (list (J dc base))
-                           (make-list (- (array-rank x) i 1) #t)))
+          (let ((dc (if (< i (ra-rank x)) (ra-len x i) 1)))
+            (ra-amend! dest x (ldots i) (ra-iota dc base))
             (+ base dc)))
-        0
-        xx)
+        0 xx)
   dest)
 
-(define (list-subst l i val)
-  (let ((u (list-copy l)))
-    (list-set! u i val)
-    u))
+(define (ra-pcat type i . xx)
+  "Concatenate arrays @var{xx} ... along axis @{i}. The shapes of @var{xx}
+   ... must have matching prefixes.
 
-(define (cat! ir out . xx)
-  (let* ((xx (map (lambda (x) (if (array? x) x (make-array x))) xx)))
-    (if (> 0 ir)
-      (apply cat! 0 out
-             (map (lambda (x) (apply make-shared-array
-                                x (lambda i (drop i (- ir)))
-                                (append (make-list (- ir) 1) ($ x))))
-                  xx))
-      (let* ((x-largest-rank (fold (lambda (x xm) (if (> (array-rank x) (array-rank xm)) x xm)) (car xx) (cdr xx)))
-             (out-rank (max (+ 1 ir) (array-rank x-largest-rank)))
-             (dims-to-cat (map (lambda (x)
-                                 (if (> (array-rank x) ir)
-                                   ($. x ir)
-                                   1))
-                               xx))
-             (out-shape (list-subst (append ($ x-largest-rank)
-                                            (make-list (- out-rank (array-rank x-largest-rank)) 1))
-                                    ir (apply + dims-to-cat)))
-             (o (or out (apply make-typed-array (array-type (car xx)) *unspecified* out-shape)))
-             (xx (map (lambda (x dc) (extend-right x (list-subst out-shape ir dc)))
-                      xx dims-to-cat)))
-        (apply plain-cat! ir o xx)))))
+   The output array will have the rank of the @var{xx} with the largest rank, or
+   @code{(+ 1 i)}, whichever is larger. If necessary, the @var{xx} are rank
+   extended to this output rank. The lengths of @var{xx} must match on all axes
+   other than @var{i}.
 
-(define (icat! ir out . xx)
-  (let* ((xx (map (lambda (x) (if (array? x) x (make-array x))) xx)))
-    (if (> 0 ir)
-      (apply icat! 0 out
-             (map (lambda (x) (apply make-shared-array
-                                x (lambda i (drop-right i (- ir)))
-                                (append ($ x) (make-list (- ir) 1))))
-                  xx))
-      (let* ((x-largest-rank (fold (lambda (x xm) (if (> (array-rank x) (array-rank xm)) x xm)) (car xx) (cdr xx)))
-             (out-rank (max (+ 1 ir) (array-rank x-largest-rank)))
-             (dims-to-cat (map (lambda (x)
-                                 (if (> (array-rank x) ir)
-                                   ($. x (- (array-rank x) (+ 1 ir)))
-                                   1))
-                               xx))
-             (out-shape (list-subst (append (make-list (- out-rank (array-rank x-largest-rank)) 1)
-                                            ($ x-largest-rank))
-                                    (- out-rank (+ 1 ir)) (apply + dims-to-cat)))
-             (o (or out (apply make-typed-array (array-type (car xx)) *unspecified* out-shape)))
-             (xx (map (lambda (x dc) (extend-left x (list-subst out-shape (- out-rank (+ 1 ir)) dc)))
-                      xx dims-to-cat)))
-        (apply plain-cat! (- out-rank (+ 1 ir)) o xx)))))
+   If @var{i} is negative, the shape of each @var{xx} ... is prefix-extended by
+   @code{(- i)} singleton dimensions and the concatenation is carried out along
+   the first axis.
 
-(define (cat ir . xx)
-  "cat i . xx
+   @code{ra-pcat} always creates a new array and not a shared array.
 
-   Concatenate arrays xx ... along axis i. The shapes of xx ... must have
-   matching prefixes.
+   The type of the output is @var{type}, unless @code{#f}; else the type of the
+   first argument, unless @code{'d}; else @code{#t}.
 
-   The output array will have the rank of the xx with the largest rank, or (+ 1
-   axis), whichever is larger. If necessary, the xx are broadcast to this
-   output rank. Where none of the xx provides a dimension, the broadcast
-   dimension is 1. The dimensions of the xx must match on all axes, except
-   possibly along the axis of concatenation.
-
-   As an extension, if i is negative, the shape of each array xx ... is extended
-   by (- i) singleton dimensions on the left and the concatenation is carried
-   out along the leftmost axis.
+   'pcat' stands for 'prefix-cat'.
 
    For example:
 
-   (cat 0 (i. 1 2) (i. 2 2))      => #2((0 1) (0 1) (2 3)))
-   (cat 0 #(1 2) #(3 4 5))        => #(1 2 3 4 5))
-   (cat -1 #(1 2) #(4 5))         => #2((1 2) (4 5))
-   (cat 1 #(1 2) #(4 5))          => #2((1 4) (2 5))
-   (cat 0 a #(0 1))               => #(a 0 1)
-   (cat 1 a #(0 1))               => #2((a 0) (a 1))
-   (cat -1 a #(0 1))              => #2((a a) (0 1))
-   (cat 1 #(a b) #2((0 1) (2 3))) => #2((a 0 1) (b 2 3))
-   (cat 0 #(a b) #2((0 1) (2 3))) => #2((a a) (b b) (0 1) (2 3))
+   (ra-pcat #t 0 (ra-i 1 2) (ra-i 2 2))         => #%2((0 1) (0 1) (2 3)))
+   (ra-pcat #t 0 (ra-iota 2 1) (ra-iota 3 3))   => #%1(1 2 3 4 5))
+   (ra-pcat #t -1 (ra-iota 2 1) (ra-iota 2 4))  => #%2((1 2) (4 5))
+   (ra-pcat #t 1 (ra-iota 2 1) (ra-iota 2 4))   => #%2((1 4) (2 5))
+   (ra-pcat #t 0 (make-ra 'a) (ra-iota 2))      => #%1(a 0 1)
+   (ra-pcat #t 1 (make-ra 'a) (ra-iota 2))      => #%2((a 0) (a 1))
+   (ra-pcat #t -1 (make-ra 'a) (ra-iota 2))     => #%2((a a) (0 1))
+   (ra-pcat #t 1 (array->ra #(a b)) (ra-i 2 2)) => #%2((a 0 1) (b 2 3))
+   (ra-pcat #t 0 (array->ra #(a b)) (ra-i 2 2)) => #%2((a a) (b b) (0 1) (2 3))
 
-   See also: (cat!), (icat), (extend-right).
+   See also: ra-scat ra-tile
+
    Cf J append , stitch ,.
    "
-  (apply cat! ir #f xx))
+  (if (> 0 i)
+    (apply ra-pcat type 0 (map (cute apply ra-tile <> (make-list (max 0 (- i)) 1)) xx))
+    (match xx
+      (()
+       (throw 'ra-pcat-missing-arguments))
+      (xx
+       (let ((xm (fold (lambda (x xm) (if (> (ra-rank x) (ra-rank xm)) x xm)) (car xx) (cdr xx))))
+         (apply plain-cat! i
+                (apply make-typed-ra
+                  (or type (match (ra-type (car xx))  ('d #t) (t t)))
+                  *unspecified*
+                  (list-subst! (append (ra-dimensions xm) (make-list (max 0 (- (+ 1 i) (ra-rank xm))) 1))
+                               i (fold (lambda (x o) (+ o (if (> (ra-rank x) i) (ra-len x i) 1))) 0 xx)))
+                xx))))))
 
-(define (icat ir . xx)
-  "icat i xx ...
+(define (ra-scat type i . xx)
+  "Concatenate items of rank @var{i} of arrays @var{xx} ... The shapes of
+   @var{xx} ... must have matching suffixes.
 
-   Concatenate items of rank i of arrays xx ... The shapes of xx ... must have
-   matching suffixes.
+   The output array will have the rank of the @var{xx} with the largest rank, or
+   @code{(+ 1 i)}, whichever is larger. If necessary, the @var{xx} are rank
+   extended to this output rank. The lenghts of @var{xx} must match on all axes
+   other than @var{i}.
 
-   The output array will have the rank of the xx with the largest rank, or (+ 1
-   i), whichever is larger. If necessary, the xx are broadcast to this output
-   rank. Where none of the xx provides a dimension, the broadcast dimension is
-   1. The dimensions of the xx must match on all axes, except possibly along the
-   axis of concatenation.
+   If @var{i} is negative, the shape of each array @var{xx} ... is
+   suffix-extended by @code{(- i)} singleton dimensions and the concatenation is
+   carried out along the last axis.
 
-   As an extension, if ir is negative, the shape of each array xx ... is
-   extended by (- i) singleton dimensions on the right and the
-   concatenation is carried out along the rightmost axis.
+   @code{ra-scat} always creates a new array and not a shared array.
 
-   (icat ...) always creates a new array and not a shared array. 'icat' stands
-   for 'item-cat'.
+   The type of the output is @var{type}, unless @code{#f}; else the type of the
+   first argument, unless @code{'d}; else @code{#t}.
+
+   'scat' stands for 'suffix-cat'.
 
    For example:
 
-   (icat 0 'a 'b 'c)               => #(a b c)
-   (icat 1 'a 'b 'c)               => #2((a) (b) (c))
-   (icat 0 #(1 2 3) 4 #(5 6))      => #(1 2 3 4 5 6)
-   (icat 0 #2((0 1) (2 3)) #(a b)) => #2((0 1 a b) (2 3 a b)))
-   (icat 1 #2((0 1) (2 3)) #(a b)) => #2((0 1) (2 3) (a b))
-   (icat 1 #2((0 1)) #(a))         => error, mismatched dimensions along axis 0
-   (icat 0 #2((0 1)) #(a))         => #2((0 1 a))
-   (icat -1 #(1 2 3) #(a b c))     => #2((1 a) (2 b) (3 c))
-   (icat -1 'a #(x y z))            => #2((a x) (a y) (a z))
+   (ra-scat #t  0 'a 'b 'c)              => #(a b c)
+   (ra-scat #t 1 'a 'b 'c)               => #2((a) (b) (c))
+   (ra-scat #t 0 #(1 2 3) 4 #(5 6))      => #(1 2 3 4 5 6)
+   (ra-scat #t 0 #2((0 1) (2 3)) #(a b)) => #2((0 1 a b) (2 3 a b)))
+   (ra-scat #t 1 #2((0 1) (2 3)) #(a b)) => #2((0 1) (2 3) (a b))
+   (ra-scat #t 1 #2((0 1)) #(a))         => error, mismatched dimensions along axis 0
+   (ra-scat #t 0 #2((0 1)) #(a))         => #2((0 1 a))
+   (ra-scat #t -1 #(1 2 3) #(a b c))     => #2((1 a) (2 b) (3 c))
+   (ra-scat #t -1 'a #(x y z))           => #2((a x) (a y) (a z))
 
-   See also: (icat!), (cat), (extend-left).
+   See also: ra-pcat ra-tile
 
    Longer explanation: suppose the shapes of the arguments are
 
@@ -182,6 +133,41 @@
 
    (s5 s4 s3 (+ s2 1 r2) s1 s0).
    "
-  (apply icat! ir #f xx))
+  (throw 'broken)
+  (if (> 0 i)
+    (apply ra-pcat 0 (map (cute apply ra-tile <> (make-list (max 0 (- i)) 1)) xx))
+    (match xx
+      (()
+       (throw 'ra-pcat-missing-arguments))
+      (xx
+       (let ((xm (fold (lambda (x xm) (if (> (ra-rank x) (ra-rank xm)) x xm)) (car xx) (cdr xx))))
+         (apply plain-cat! i
+                (apply make-typed-ra
+                  (ra-type (car xx))
+                  *unspecified*
+                  (list-subst! (append (ra-dimensions xm) (make-list (max 0 (- (+ 1 i) (ra-rank xm))) 1))
+                               i (fold (lambda (x o) (+ o (if (> (ra-rank x) i) (ra-len x i) 1))) 0 xx)))
+                xx))))))
 
-(export cat cat! icat! icat)
+;; (define (icat! ir out . xx)
+;;   (let* ((xx (map (lambda (x) (if (array? x) x (make-array x))) xx)))
+;;     (if (> 0 ir)
+;;       (apply icat! 0 out
+;;              (map (lambda (x) (apply make-shared-array
+;;                                 x (lambda i (drop-right i (- ir)))
+;;                                 (append ($ x) (make-list (- ir) 1))))
+;;                   xx))
+;;       (let* ((x-largest-rank (fold (lambda (x xm) (if (> (array-rank x) (array-rank xm)) x xm)) (car xx) (cdr xx)))
+;;              (out-rank (max (+ 1 ir) (array-rank x-largest-rank)))
+;;              (dims-to-cat (map (lambda (x)
+;;                                  (if (> (array-rank x) ir)
+;;                                    ($. x (- (array-rank x) (+ 1 ir)))
+;;                                    1))
+;;                                xx))
+;;              (out-shape (list-subst (append (make-list (- out-rank (array-rank x-largest-rank)) 1)
+;;                                             ($ x-largest-rank))
+;;                                     (- out-rank (+ 1 ir)) (apply + dims-to-cat)))
+;;              (o (or out (apply make-typed-array (array-type (car xx)) *unspecified* out-shape)))
+;;              (xx (map (lambda (x dc) (extend-left x (list-subst out-shape (- out-rank (+ 1 ir)) dc)))
+;;                       xx dims-to-cat)))
+;;         (apply plain-cat! (- out-rank (+ 1 ir)) o xx)))))
