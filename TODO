@@ -16,17 +16,19 @@ Help: [C-uc .] insert timestamp [C-cc] flip checkbox [C-uucc] partial flip check
   * [X] ra-equal?
   * [ ] root vectors are equivalent to rank-1 newra objects
 
-* TODO whole array functions [8/14]
+* TODO whole array functions [8/15]
   * [X] ra-fold ra-fold*
   * [X] ra-any ra-every
   * [X] raw prefix matching
   * [X] generalized prefix matching
-  * [X] high level slicing [3/3]
+  * [-] high level slicing [3/4]
     - [X] ra-from
     - [X] ra-amend!
     - [X] (ldots)
+    - [ ] axis insertion
   * [X] ra-ravel
   * [X] ra-tile
+  * [X] ra-cat (ra-pcat, ra-scat)
   * [-] ra-reshape [1/2]
     - [X] basic function
     - [ ] placeholder
@@ -36,7 +38,6 @@ Help: [C-uc .] insert timestamp [C-cc] flip checkbox [C-uucc] partial flip check
     - [X] ra-rotate!
     - [ ] ra-rotate
   * [ ] as-ra
-  * [ ] ra-cat
   * [ ] ra-filter, ra-select, etc.
   * [ ] ra-affine map that explicitly takes an [M×(N+1)] matrix
 

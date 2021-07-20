@@ -691,7 +691,7 @@ All three functions @code{ra-reshape}, @code{ra-ravel}, and @code{ra-tile} opera
 @cindex concatenation
 @code{newra} offers two concatenation operations: @ref{x-ra-pcat, @code{ra-pcat}} (prefix cat) and @ref{x-ra-scat, @code{ra-scat}} (suffix cat).
 
-For @code{ra-pcat}, the arguments are prefix-matched, and the concatenation axis is counted from the left. E.g. for three ras @var{r}, @var{s}, @var{t} with shapes
+For @code{ra-pcat}, the arguments are prefix-matched, and the concatenation axis is counted from the left. E.g. for three arrays @var{r}, @var{s}, @var{t} with shapes
 
 @example
 @verbatim
@@ -705,9 +705,9 @@ Then @code{(define val (ra-pcat #t 1 r s t))} will prefix-match these to (it is 
 
 @example
 @verbatim
-(r₀ r₁ s₂ s₃ s₄ s₅)
+(s₀ r₁ s₂ s₃ s₄ s₅)
 (s₀ s₁ s₂ s₃ s₄ s₅)
-(t₀ t₁ s₂ s₃ s₄ s₅)
+(s₀ t₁ s₂ s₃ s₄ s₅)
 @end verbatim
 @end example
 
@@ -1645,7 +1645,7 @@ Convert ra @var{a} into built-in Guile array.
 
 This function does not create a copy of the ra, but reuses the root (@code{ra-root}) of @var{a}, that is, @code{(eq? (ra-root a) (shared-array-root (array->ra a)))} is @code{#t}. For example, this means that if @var{a} is/isn't mutable, then the same will be true for @code{(array->ra a)}.
 
-Not all ras can be converted into built-in Guile arrays. For example, type @code{'d} arrays, or arrays with infinite axes, are not convertible.
+Not all arrays can be converted into built-in Guile arrays. For example, type @code{'d} arrays, or arrays with infinite axes, are not convertible.
 
 @example
 @verbatim

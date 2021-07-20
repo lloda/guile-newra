@@ -713,7 +713,7 @@ Next: <a href="#Other-operations-on-arrays" accesskey="n" rel="next">Other opera
 <a name="index-concatenation"></a>
 <p><code>newra</code> offers two concatenation operations: <a href="#x_002dra_002dpcat"><code>ra-pcat</code></a> (prefix cat) and <a href="#x_002dra_002dscat"><code>ra-scat</code></a> (suffix cat).
 </p>
-<p>For <code>ra-pcat</code>, the arguments are prefix-matched, and the concatenation axis is counted from the left. E.g. for three ras <var>r</var>, <var>s</var>, <var>t</var> with shapes
+<p>For <code>ra-pcat</code>, the arguments are prefix-matched, and the concatenation axis is counted from the left. E.g. for three arrays <var>r</var>, <var>s</var>, <var>t</var> with shapes
 </p>
 <div class="example">
 <pre class="verbatim">(r₀ r₁ r₂ r₃)
@@ -724,9 +724,9 @@ Next: <a href="#Other-operations-on-arrays" accesskey="n" rel="next">Other opera
 <p>Then <code>(define val (ra-pcat #t 1 r s t))</code> will prefix-match these to (it is an error if any of <code>r₀=s₀=t₀</code>, <code>r₂=s₂</code>, or <code>r₃=s₃</code> don&rsquo;t hold)
 </p>
 <div class="example">
-<pre class="verbatim">(r₀ r₁ s₂ s₃ s₄ s₅)
+<pre class="verbatim">(s₀ r₁ s₂ s₃ s₄ s₅)
 (s₀ s₁ s₂ s₃ s₄ s₅)
-(t₀ t₁ s₂ s₃ s₄ s₅)
+(s₀ t₁ s₂ s₃ s₄ s₅)
 </pre></div>
 
 <p>and then concatenate them along axis 1 into an array of shape <code>(s₀ (r₁+s1+t₁) s₂ s₃ s₄ s₅)</code>.
@@ -1578,7 +1578,7 @@ indices that match those elements. <code>newra</code> will <em>not</em> check th
 </p>
 <p>This function does not create a copy of the ra, but reuses the root (<code>ra-root</code>) of <var>a</var>, that is, <code>(eq? (ra-root a) (shared-array-root (array-&gt;ra a)))</code> is <code>#t</code>. For example, this means that if <var>a</var> is/isn&rsquo;t mutable, then the same will be true for <code>(array-&gt;ra a)</code>.
 </p>
-<p>Not all ras can be converted into built-in Guile arrays. For example, type <code>'d</code> arrays, or arrays with infinite axes, are not convertible.
+<p>Not all arrays can be converted into built-in Guile arrays. For example, type <code>'d</code> arrays, or arrays with infinite axes, are not convertible.
 </p>
 <div class="example">
 <pre class="verbatim">(ra-&gt;array (ra-i 3)) ; error, not convertible
