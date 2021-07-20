@@ -1134,6 +1134,30 @@
 
 
 ; -----------------------
+; concatenation
+; -----------------------
+
+(test-assert (ra-equal? (ra-pcat #t 0 (ra-i 1 2) (ra-i 2 2))         (array->ra #2((0 1) (0 1) (2 3)))))
+(test-assert (ra-equal? (ra-pcat #t 0 (ra-iota 2 1) (ra-iota 3 3))   (array->ra #1(1 2 3 4 5))))
+(test-assert (ra-equal? (ra-pcat #t -1 (ra-iota 2 1) (ra-iota 2 4))  (array->ra #2((1 2) (4 5)))))
+(test-assert (ra-equal? (ra-pcat #t 1 (ra-iota 2 1) (ra-iota 2 4))   (array->ra #2((1 4) (2 5)))))
+(test-assert (ra-equal? (ra-pcat #t 0 (make-ra 'a) (ra-iota 2))      (array->ra #1(a 0 1))))
+(test-assert (ra-equal? (ra-pcat #t 1 (make-ra 'a) (ra-iota 2))      (array->ra #2((a 0) (a 1)))))
+(test-assert (ra-equal? (ra-pcat #t -1 (make-ra 'a) (ra-iota 2))     (array->ra #2((a a) (0 1)))))
+(test-assert (ra-equal? (ra-pcat #t 1 (array->ra #(a b)) (ra-i 2 2)) (array->ra #2((a 0 1) (b 2 3)))))
+(test-assert (ra-equal? (ra-pcat #t 0 (array->ra #(a b)) (ra-i 2 2)) (array->ra #2((a a) (b b) (0 1) (2 3)))))
+
+(test-assert (ra-equal? (ra-scat #t 0 (make-ra 'a) (make-ra 'b) (make-ra 'c))              (array->ra #1(a b c))))
+(test-assert (ra-equal? (ra-scat #t 1 (make-ra 'a) (make-ra 'b) (make-ra 'c))              (array->ra #2((a) (b) (c)))))
+(test-assert (ra-equal? (ra-scat #t 0 (array->ra #(1 2 3)) (make-ra 4) (array->ra #(5 6))) (array->ra #1(1 2 3 4 5 6))))
+(test-assert (ra-equal? (ra-scat #t 0 (array->ra #2((0 1) (2 3))) (array->ra #(a b)))      (array->ra #2((0 1 a b) (2 3 a b)))))
+(test-assert (ra-equal? (ra-scat #t 1 (array->ra #2((0 1) (2 3))) (array->ra #(a b)))      (array->ra #2((0 1) (2 3) (a b)))))
+(test-assert (ra-equal? (ra-scat #t 0 (array->ra #2((0 1))) (array->ra #(a)))              (array->ra #2((0 1 a)))))
+(test-assert (ra-equal? (ra-scat #t -1 (array->ra #(1 2 3)) (array->ra #(a b c)))          (array->ra #2((1 a) (2 b) (3 c)))))
+(test-assert (ra-equal? (ra-scat #t -1 (make-ra 'a) (array->ra #(x y z)))                  (array->ra #2((a x) (a y) (a z)))))
+
+
+; -----------------------
 ; the end.
 ; -----------------------
 

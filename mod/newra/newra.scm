@@ -37,7 +37,7 @@
            ra-i ra-iota
            ra-copy
            ra-reverse ra-transpose ra-untranspose ra-order-c?
-           ra-ravel ra-reshape ra-tile
+           ra-ravel ra-reshape ra-tile ra-tile-right
            ra-fold ra-fold*
            ra-rotate!
 
@@ -45,6 +45,6 @@
 
            ra-from ra-amend! ldots
 
-           ra-pcat ;; ra-scat
+           ra-pcat ra-scat
 
            list->ra list->typed-ra)

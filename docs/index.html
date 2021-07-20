@@ -713,6 +713,70 @@ Next: <a href="#Other-operations-on-arrays" accesskey="n" rel="next">Other opera
 <a name="index-concatenation"></a>
 <p><code>newra</code> offers two concatenation operations: <a href="#x_002dra_002dpcat"><code>ra-pcat</code></a> (prefix cat) and <a href="#x_002dra_002dscat"><code>ra-scat</code></a> (suffix cat).
 </p>
+<p>For <code>ra-pcat</code>, the arguments are prefix-matched, and the concatenation axis is counted from the left. E.g. for three ras <var>r</var>, <var>s</var>, <var>t</var> with shapes
+</p>
+<div class="example">
+<pre class="verbatim">(r₀ r₁ r₂ r₃)
+(s₀ s₁ s₂ s₃ s₄ s₅)
+(t₀ t₁)
+</pre></div>
+
+<p>Then <code>(define val (ra-pcat #t 1 r s t))</code> will prefix-match these to (it is an error if any of <code>r₀=s₀=t₀</code>, <code>r₂=s₂</code>, or <code>r₃=s₃</code> don&rsquo;t hold)
+</p>
+<div class="example">
+<pre class="verbatim">(r₀ r₁ s₂ s₃ s₄ s₅)
+(s₀ s₁ s₂ s₃ s₄ s₅)
+(t₀ t₁ s₂ s₃ s₄ s₅)
+</pre></div>
+
+<p>and then concatenate them along axis 1 into an array of shape <code>(s₀ (r₁+s1+t₁) s₂ s₃ s₄ s₅)</code>.
+</p>
+<p>For <code>ra-scat</code>, the arguments are suffix-matched, and the concatenation axis is counted from the right. It can be useful to think of the axis argument of <code>ra-scat</code> as indicating cell rank, so the code above means &lsquo;concatenate 1-cells&rsquo;.
+</p>
+<p>For both <code>ra-pcat</code> and <code>ra-scat</code>, axes other than the concatenation axis must match across all of the arguments.
+</p>
+<div class="example">
+<pre class="verbatim">(ra-pcat #t 0 (ra-i 3 2) (ra-i 2))
+</pre><pre class="example">&rArr; <code>#%2:4:2((0 1) (2 3) (4 5) (0 0) (1 1))</code>
+</pre></div>
+
+<div class="example">
+<pre class="verbatim">(ra-scat #t 1 (ra-i 3 2) (ra-i 2))
+</pre><pre class="example">&rArr; <code>#%2:4:2((0 1) (2 3) (4 5) (0 1))</code>
+</pre></div>
+
+<p>Both <code>ra-pcat</code> and <code>ra-scat</code> accept a negative concatenation axis. That will rank-extend all the arguments to the left (<code>ra-pcat</code>) or to the right (<code>ra-scat</code>) before concatenating on the leftmost (<code>ra-pcat</code>) or rightmost (<code>ra-scat</code>) axis. In the same way, one may give a concatenation axis which is beyond the rank of the argument with the highest rank. Consider
+</p>
+<div class="example">
+<pre class="verbatim">(ra-pcat #t -1 (ra-i 3) (array-&gt;ra #(a b c)))
+</pre><pre class="example">&rArr; <code>#%2:2:3((0 1 2) (a b c))</code>
+</pre></div>
+<div class="example">
+<pre class="verbatim">(ra-pcat #t 0 (ra-i 3) (array-&gt;ra #(a b c)))
+</pre><pre class="example">&rArr; <code>#%1:6(0 1 2 a b c)</code>
+</pre></div>
+<div class="example">
+<pre class="verbatim">(ra-pcat #t 1 (ra-i 3) (array-&gt;ra #(a b c)))
+</pre><pre class="example">&rArr; <code>#%2:3:2((0 a) (1 b) (2 c))</code>
+</pre></div>
+
+<p>vs
+</p>
+<div class="example">
+<pre class="verbatim">(ra-scat #t -1 (ra-i 3) (array-&gt;ra #(a b c)))
+</pre><pre class="example">&rArr; <code>#%2:3:2((0 a) (1 b) (2 c))</code>
+</pre></div>
+<div class="example">
+<pre class="verbatim">(ra-scat #t 0 (ra-i 3) (array-&gt;ra #(a b c)))
+</pre><pre class="example">&rArr; <code>#%1:6(0 1 2 a b c)</code>
+</pre></div>
+<div class="example">
+<pre class="verbatim">(ra-scat #t 1 (ra-i 3) (array-&gt;ra #(a b c)))
+</pre><pre class="example">&rArr; <code>#%2:2:3((0 1 2) (a b c))</code>
+</pre></div>
+
+<p>Cf J append (,) stitch (,.).
+</p>
 <hr>
 <a name="Other-operations-on-arrays"></a>
 <div class="header">
@@ -726,7 +790,7 @@ Next: <a href="#Foreign-interface" accesskey="n" rel="next">Foreign interface</a
 <a name="index-transpose"></a>
 <p>The most important operation on arrays, other than selection and iteration, is transposition.
 </p>
-<p><a href="#x_002dra_002dtranspose"><code>ra-transpose</code></a> takes a source array and a list of axis arguments. These axis arguments correspond to the axes of the source array; the values of the arguments are the corresponding axes of the result array.
+<p><a href="#x_002dra_002dtranspose"><code>ra-transpose</code></a> takes a source array and one axis argument for each of the dimensions of the source array. The values of the arguments are the corresponding axes of the result array.
 </p>
 <div class="example">
 <pre class="verbatim">(ra-dimensions (ra-transpose (ra-i 10 20 30) 2 0 1))
@@ -752,17 +816,17 @@ A
 </pre><pre class="example">&rArr; <code>#%2:3:3((x 1 2) (3 x 5) (6 7 x))</code>
 </pre></div>
 
-<p>If one doesn&rsquo;t give values for all the source axes, the missing axes are sent beyond the highest one that was given. These are equivalent:
+<p>If one doesn&rsquo;t give values for all of the source axes, the missing axes are sent beyond the highest one that was given. These are equivalent:
 </p>
 <div class="example">
 <pre class="verbatim">(ra-transpose (ra-i 2 3 4) 1 0 2)
-(ra-transpose (ra-i 2 3 4) 1 0)
+(ra-transpose (ra-i 2 3 4) 1 0) ; fill with (+ 1 (max 1 0))
 </pre></div>
 
 <p>as are these:
 </p>
 <div class="example">
-<pre class="verbatim">(ra-transpose (ra-i 2 3) 1)
+<pre class="verbatim">(ra-transpose (ra-i 2 3) 1) ; fill with (+ 1 (max 1))
 (ra-transpose (ra-i 2 3) 1 2)
 </pre></div>
 
@@ -1002,10 +1066,38 @@ Next: <a href="#Sources" accesskey="n" rel="next">Sources</a>, Previous: <a href
 <a name="Reference-1"></a>
 <h2 class="chapter">5 Reference</h2>
 
+<a name="index-c_002ddims"></a>
+<a name="x_002dc_002ddims"></a><dl>
+<dt><a name="index-c_002ddims-1"></a>function<!-- /@w -->: <strong>c-dims</strong> <em>bounds ...</em></dt>
+<dd>
+<p>Create dims for C-order array (packed elements, last dimension changing fastest).
+</p>
+<p>Each of the bounds may be an integer (a length) or a pair of integers (lower and upper bounds).
+</p><div class="example">
+<pre class="verbatim">(c-dims 2 3)
+</pre><pre class="example">&rArr; <code>#(#&lt;&lt;dim&gt; len: 2 lo: 0 step: 3&gt; #&lt;&lt;dim&gt; len: 3 lo: 0 step: 1&gt;)</code>
+</pre></div>
+</dd></dl>
+
+<a name="index-make_002dra"></a>
+<a name="x_002dmake_002dra"></a><dl>
+<dt><a name="index-make_002dra-1"></a>function<!-- /@w -->: <strong>make-ra</strong> <em>val bounds ...</em></dt>
+<dd>
+<p>Create an ra with the given <var>bounds</var>, filled with <var>val</var>.
+</p>
+<div class="example">
+<pre class="verbatim">(make-ra 0 '(2 3) 4)
+</pre><pre class="example">&rArr; <code>#%2@2:2:4((0 0 0 0) (0 0 0 0))</code>
+</pre></div>
+
+<p>See also: <a href="#x_002dmake_002dtyped_002dra"><code>make-typed-ra</code></a>, <a href="#x_002dmake_002dra_002dnew"><code>ra-make-ra-new</code></a>, <a href="#x_002dra_002dshape"><code>ra-shape</code></a>.
+</p>
+</dd></dl>
+
 <a name="index-make_002dra_002dnew"></a>
 <a name="x_002dmake_002dra_002dnew"></a><dl>
 <dt><a name="index-make_002dra_002dnew-1"></a>function<!-- /@w -->: <strong>make-ra-new</strong> <em>type value dims</em></dt>
-<dd><p>Create an array over a new root of the given <var>type</var> and the necessary size (according to <var>dims</var>), and fill it with <var>value</var>.
+<dd><p>Create an ra over a new root of the given <var>type</var> and the necessary size (according to <var>dims</var>), and fill it with <var>value</var>.
 </p><div class="example">
 <pre class="verbatim">(make-ra-new 'u8 0 (c-dims 3 2))
 </pre><pre class="example">&rArr; #%2u8:3:2((0 0) (0 0) (0 0))
@@ -1032,27 +1124,39 @@ Next: <a href="#Sources" accesskey="n" rel="next">Sources</a>, Previous: <a href
 </pre></div>
 </dd></dl>
 
-<a name="index-make_002dra"></a>
-<a name="x_002dmake_002dra"></a><dl>
-<dt><a name="index-make_002dra-1"></a>function<!-- /@w -->: <strong>make-ra</strong> <em>val bounds ...</em></dt>
-</dl>
-
 <a name="index-make_002dtyped_002dra"></a>
 <a name="x_002dmake_002dtyped_002dra"></a><dl>
 <dt><a name="index-make_002dtyped_002dra-1"></a>function<!-- /@w -->: <strong>make-typed-ra</strong> <em>type val bounds ...</em></dt>
 </dl>
 
-<a name="index-c_002ddims"></a>
-<a name="x_002dc_002ddims"></a><dl>
-<dt><a name="index-c_002ddims-1"></a>function<!-- /@w -->: <strong>c-dims</strong> <em>bounds ...</em></dt>
+<a name="index-ra_002dshape"></a>
+<a name="x_002dra_002dshape"></a><dl>
+<dt><a name="index-ra_002dshape-1"></a>function<!-- /@w -->: <strong>ra-shape</strong> <em>a</em></dt>
 <dd>
-<p>Create dims for C-order array (packed elements, last dimension changing fastest).
+<p>Return the shape (a list of two-element lists, each containing the lower and upper bound of each axis) of ra <var>a</var>.
 </p>
-<p>Each of the bounds may be an integer (a length) or a pair of integers (lower and upper bounds).
-</p><div class="example">
-<pre class="verbatim">(c-dims 2 3)
-</pre><pre class="example">&rArr; #(#&lt;&lt;dim&gt; len: 2 lo: 0 step: 3&gt; #&lt;&lt;dim&gt; len: 3 lo: 0 step: 1&gt;)
+<div class="example">
+<pre class="verbatim">(ra-shape (make-ra 0 '(2 3) 4))
+</pre><pre class="example">&rArr; <code>((2 3) (0 3))</code>
 </pre></div>
+
+<p>See also: <a href="#x_002dra_002ddimensions"><code>ra-dimensions</code></a>, <a href="#x_002dmake_002dra"><code>make-ra</code></a>.
+</p>
+</dd></dl>
+
+<a name="index-ra_002ddimensions"></a>
+<a name="x_002dra_002ddimensions"></a><dl>
+<dt><a name="index-ra_002ddimensions-1"></a>function<!-- /@w -->: <strong>ra-dimensions</strong> <em>a</em></dt>
+<dd>
+<p>Return the lengths of <var>a</var>, as a list.
+</p>
+<div class="example">
+<pre class="verbatim">(ra-shape (make-ra 0 '(2 3) 4))
+</pre><pre class="example">&rArr; <code>(2 3)</code>
+</pre></div>
+
+<p>See also: <a href="#x_002dra_002dshape"><code>ra-shape</code></a>, <a href="#x_002dmake_002dra"><code>make-ra</code></a>.
+</p>
 </dd></dl>
 
 <a name="index-ra_002diota"></a>
@@ -1081,16 +1185,16 @@ Next: <a href="#Sources" accesskey="n" rel="next">Sources</a>, Previous: <a href
 
 <a name="index-ra_002dpcat"></a>
 <a name="x_002dra_002dpcat"></a><dl>
-<dt><a name="index-ra_002dpcat-1"></a>function<!-- /@w -->: <strong>ra-pcat</strong> <em>i x ...</em></dt>
+<dt><a name="index-ra_002dpcat-1"></a>function<!-- /@w -->: <strong>ra-pcat</strong> <em>type i x ...</em></dt>
 <dd>
 <p>Concatenate arrays <var>x</var> ... along axis <var>i</var>. The arguments are prefix-matched and rank extended before concatenation. All axes must match, except possibly the concatenation axis.
 </p>
-<p>This function always produces a new array.
+<p>This function always produces a new array, of the type given. If <var>type</var> is <code>#f</code> then the type of the first <var>x</var> is used. The base indices of the result are all zero; the arguments are concatenated in argument order and their base indices are ignored.
 </p>
-<p>See also: <a href="#x_002dra_002dscat">ra-scat</a>, <a href="#x_002dra_002dtile">ra-tile</a>,  <a href="#Concatenation">Concatenation</a>.
+<p>See also: <a href="#x_002dra_002dscat"><code>ra-scat</code></a>, <a href="#x_002dra_002dtile"><code>ra-tile</code></a>,  <a href="#Concatenation">Concatenation</a>.
 </p>
 <div class="example">
-<pre class="verbatim">(ra-pcat 1 #%1(a b) #%2((0 1) (2 3)))
+<pre class="verbatim">(ra-pcat #f 1 #%1(a b) #%2((0 1) (2 3)))
 </pre><pre class="example">&rArr; #%2((a 0 1) (b 2 3))
 </pre></div>
 </dd></dl>
@@ -1103,6 +1207,9 @@ Next: <a href="#Sources" accesskey="n" rel="next">Sources</a>, Previous: <a href
 <pre class="verbatim">(ra-ravel (ra-i 2 3))
 </pre><pre class="example">&rArr; #%1d:6(0 1 2 3 4 5)
 </pre></div>
+
+<p>See also: <a href="#x_002dra_002dreshape"><code>ra-reshape</code></a>, <a href="#x_002dra_002dtile"><code>ra-tile</code></a>.
+</p>
 </dd></dl>
 
 <a name="index-ra_002dreshape"></a>
@@ -1115,20 +1222,23 @@ Next: <a href="#Sources" accesskey="n" rel="next">Sources</a>, Previous: <a href
 <pre class="verbatim">(ra-reshape (ra-i 4 3) 2 2)
 </pre><pre class="example">&rArr; #%1d:2:2:3(((0 1 2) (3 4 5)) ((6 7 8) (9 10 11)))
 </pre></div>
+
+<p>See also: <a href="#x_002dra_002dravel"><code>ra-ravel</code></a>, <a href="#x_002dra_002dtile"><code>ra-tile</code></a>.
+</p>
 </dd></dl>
 
 <a name="index-ra_002dscat"></a>
 <a name="x_002dra_002dscat"></a><dl>
-<dt><a name="index-ra_002dscat-1"></a>function<!-- /@w -->: <strong>ra-scat</strong> <em>i x ...</em></dt>
+<dt><a name="index-ra_002dscat-1"></a>function<!-- /@w -->: <strong>ra-scat</strong> <em>type i x ...</em></dt>
 <dd>
 <p>Concatenate <var>i</var>-items of arrays <var>x</var> ... . The arguments are suffix-matched and rank extended before concatenation. All axes must match, except possibly the concatenation axis.
 </p>
-<p>This function always produces a new array.
+<p>This function always produces a new array, of the type given. If <var>type</var> is <code>#f</code> then the type of the first <var>x</var> is used. The base indices of the result are all zero; the arguments are concatenated in argument order and their base indices are ignored.
 </p>
-<p>See also: <a href="#x_002dra_002dpcat">ra-pcat</a>, <a href="#x_002dra_002dtile">ra-tile</a>, <a href="#Concatenation">Concatenation</a>.
+<p>See also: <a href="#x_002dra_002dpcat"><code>ra-pcat</code></a>, <a href="#x_002dra_002dtile"><code>ra-tile</code></a>, <a href="#Concatenation">Concatenation</a>.
 </p>
 <div class="example">
-<pre class="verbatim">(ra-scat 1 #%2((0 1) (2 3)) #%(a b))
+<pre class="verbatim">(ra-scat #t 1 #%2((0 1) (2 3)) #%(a b))
 </pre><pre class="example">&rArr; #%2((0 1) (2 3) (a b))
 </pre></div>
 </dd></dl>
@@ -1143,6 +1253,24 @@ Next: <a href="#Sources" accesskey="n" rel="next">Sources</a>, Previous: <a href
 <pre class="verbatim">(ra-tile (ra-i 3) 2)
 </pre><pre class="example">&rArr; #%1d:2:3((0 1 2) (0 1 2))
 </pre></div>
+
+<p>See also: <a href="#x_002dra_002dravel"><code>ra-ravel</code></a>, <a href="#x_002dra_002dreshape"><code>ra-reshape</code></a>, <a href="#x_002dra_002dtile_002dright"><code>ra-tile-right</code></a>.
+</p>
+</dd></dl>
+
+<a name="index-ra_002dtile_002dright"></a>
+<a name="x_002dra_002dtile_002dright"></a><dl>
+<dt><a name="index-ra_002dtile_002dright-1"></a>function<!-- /@w -->: <strong>ra-tile-right</strong> <em>a bounds ...</em></dt>
+<dd><p>Repeat array <var>a</var> by appending axes with the given <var>bounds</var>.
+</p>
+<p>Each of the bounds may be an integer (a length) or a pair of integers (lower and upper bounds).
+</p><div class="example">
+<pre class="verbatim">(ra-tile-right (ra-i 3) 2)
+</pre><pre class="example">&rArr; #%1d:3:2((0 0) (1 1) (2 2))
+</pre></div>
+
+<p>See also: <a href="#x_002dra_002dtile"><code>ra-tile</code></a>, <a href="#x_002dra_002dravel"><code>ra-ravel</code></a>, <a href="#x_002dra_002dreshape"><code>ra-reshape</code></a>.
+</p>
 </dd></dl>
 
 <a name="index-ra_002dtranspose"></a>
@@ -1271,7 +1399,7 @@ a
 </p><pre class="verbatim">(ra-map! dst identity src)
 (ra-amend! dst src)
 </pre>
-<p>See also <a href="#x_002dra_002dcopy">ra-copy</a> <a href="#x_002dra_002damend_0021">ra-amend!</a> <a href="#x_002dra_002dset_0021">ra-set!</a> <a href="#x_002dra_002dmap_0021">ra-map!</a>.
+<p>See also <a href="#x_002dra_002dcopy"><code>ra-copy</code></a> <a href="#x_002dra_002damend_0021"><code>ra-amend!</code></a> <a href="#x_002dra_002dset_0021"><code>ra-set!</code></a> <a href="#x_002dra_002dmap_0021"><code>ra-map!</code></a>.
 </p>
 <a name="index-ra_002dcopy"></a>
 <a name="x_002dra_002dcopy"></a><dl>
@@ -1280,7 +1408,7 @@ a
 <dd><p>Create a new array of type <var>type</var> (the type of ra <var>src</var> if <var>type</var> isn&rsquo;t provided) and copy <var>src</var> into it.
 </p></dd></dl>
 
-<p>See also <a href="#x_002dra_002dcopy_0021">ra-copy!</a> <a href="#x_002dra_002damend_0021">ra-amend!</a> <a href="#x_002dra_002dset_0021">ra-set!</a>.
+<p>See also <a href="#x_002dra_002dcopy_0021"><code>ra-copy!</code></a> <a href="#x_002dra_002damend_0021"><code>ra-amend!</code></a> <a href="#x_002dra_002dset_0021"><code>ra-set!</code></a>.
 </p>
 <a name="index-ra_002dswap_0021"></a>
 <a name="x_002dra_002dswap_0021"></a><dl>
@@ -1379,7 +1507,7 @@ that is
 if the type of <var>a</var> is <code>'d</code> and the root of <var>b</var> isn&rsquo;t shared with
 the root of <var>a</var>, then the type of <var>b</var> is <code>#t</code>.
 </p>
-<p>See also: <a href="#x_002dra_002dcell">ra-cell</a> <a href="#x_002dra_002dref">ra-ref</a> <a href="#x_002dra_002dslice">ra-slice</a> <a href="#x_002dra_002damend_0021">ra-amend!</a> <a href="#x_002dra_002dset_0021">ra-set!</a>.
+<p>See also: <a href="#x_002dra_002dcell"><code>ra-cell</code></a> <a href="#x_002dra_002dref"><code>ra-ref</code></a> <a href="#x_002dra_002dslice"><code>ra-slice</code></a> <a href="#x_002dra_002damend_0021"><code>ra-amend!</code></a> <a href="#x_002dra_002dset_0021"><code>ra-set!</code></a>.
 </p>
 <a name="index-ra_002damend_0021"></a>
 <a name="x_002dra_002damend_0021"></a><dl>
@@ -1421,7 +1549,7 @@ indices that match those elements. <code>newra</code> will <em>not</em> check th
 
 <p>This function returns the modified ra <var>a</var>.
 </p>
-<p>See also: <a href="#x_002dra_002dcopy_0021">ra-copy!</a> <a href="#x_002dra_002dcell">ra-cell</a> <a href="#x_002dra_002dref">ra-ref</a> <a href="#x_002dra_002dslice">ra-slice</a> <a href="#x_002dra_002dfrom">ra-from</a> <a href="#x_002dra_002dset_0021">ra-set!</a>.
+<p>See also: <a href="#x_002dra_002dcopy_0021"><code>ra-copy!</code></a> <a href="#x_002dra_002dcell"><code>ra-cell</code></a> <a href="#x_002dra_002dref"><code>ra-ref</code></a> <a href="#x_002dra_002dslice"><code>ra-slice</code></a> <a href="#x_002dra_002dfrom"><code>ra-from</code></a> <a href="#x_002dra_002dset_0021"><code>ra-set!</code></a>.
 </p>
 <a name="index-ldots-1"></a>
 <a name="x_002dldots"></a><dl>
@@ -1439,7 +1567,7 @@ indices that match those elements. <code>newra</code> will <em>not</em> check th
 </p>
 <p>This function does not create a copy of the array, but reuses the root (<code>shared-array-root</code>) of <var>a</var>, that is, <code>(eq? (ra-root (ra-&gt;array a)) (shared-array-root a))</code> is <code>#t</code>. For example, this means that if <var>a</var> is/isn&rsquo;t mutable, then the same will be true for <code>(ra-&gt;array a)</code>.
 </p>
-<p>See also: <a href="#x_002darray_002d_003era">array-&gt;ra</a>.
+<p>See also: <a href="#x_002darray_002d_003era"><code>array-&gt;ra</code></a>.
 </p>
 <a name="index-array_002d_003era"></a>
 <a name="x_002darray_002d_003era"></a><dl>
@@ -1459,7 +1587,7 @@ indices that match those elements. <code>newra</code> will <em>not</em> check th
 (ra-&gt;array (ra-singletonize (ra-transpose (ra-i 2 3) 1))) ; ok
 </pre></div>
 
-<p>See also: <a href="#x_002dra_002dsingletonize">ra-singletonize</a> <a href="#x_002dra_002dcopy_0021">ra-copy!</a> <a href="#x_002dra_002d_003earray">ra-&gt;array</a>.
+<p>See also: <a href="#x_002dra_002dsingletonize"><code>ra-singletonize</code></a> <a href="#x_002dra_002dcopy_0021"><code>ra-copy!</code></a> <a href="#x_002dra_002d_003earray"><code>ra-&gt;array</code></a>.
 </p>
 <a name="index-ra_002dsingletonize"></a>
 <a name="x_002dra_002dsingletonize"></a><dl>
@@ -1659,6 +1787,7 @@ Previous: <a href="#Sources" accesskey="p" rel="prev">Sources</a>, Up: <a href="
 <tr><td></td><td valign="top"><a href="#index-ra_002dclip"><code>ra-clip</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-ra_002dcopy"><code>ra-copy</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-ra_002dcopy_0021"><code>ra-copy!</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
+<tr><td></td><td valign="top"><a href="#index-ra_002ddimensions"><code>ra-dimensions</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-ra_002dfill_0021"><code>ra-fill!</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-ra_002dfrom"><code>ra-from</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-ra_002di"><code>ra-i</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
@@ -1675,12 +1804,14 @@ Previous: <a href="#Sources" accesskey="p" rel="prev">Sources</a>, Up: <a href="
 <tr><td></td><td valign="top"><a href="#index-ra_002drotate_0021"><code>ra-rotate!</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-ra_002dscat"><code>ra-scat</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-ra_002dset_0021"><code>ra-set!</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
+<tr><td></td><td valign="top"><a href="#index-ra_002dshape"><code>ra-shape</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-ra_002dsingletonize"><code>ra-singletonize</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-ra_002dslice"><code>ra-slice</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-ra_002dslice_002dfor_002deach"><code>ra-slice-for-each</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-ra_002dswap_0021"><code>ra-swap!</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-ra_002dswap_002din_002dorder_0021"><code>ra-swap-in-order!</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-ra_002dtile"><code>ra-tile</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
+<tr><td></td><td valign="top"><a href="#index-ra_002dtile_002dright"><code>ra-tile-right</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-ra_002dtranspose"><code>ra-transpose</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-ra_002duntranspose"><code>ra-untranspose</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-rank">rank</a>:</td><td>&nbsp;</td><td valign="top"><a href="#The-pieces-of-an-array">The pieces of an array</a></td></tr>

@@ -112,7 +112,7 @@
 ; ------------------------
 
 ; the empty case is needed so that (fromu A) shares the root of A, which is something (ra-from) relies on.
-; fixme factor make-B out of fromu and the shared part of fromu amendu! and TBD fromu-copy!
+; FIXME factor make-B out of fromu and the shared part of fromu amendu! and TBD fromu-copy!
 
 (define (broadcast-indices . i)
   (let* ((frame (fold (lambda (i c) (+ c (ra-rank i))) 0 i))
@@ -232,8 +232,7 @@ contents are obtained by looking up in each dimension of A by the indices I,
 that is
 
 @verbatim
-B(i00 i01 ... i10 i11 ...)
-  = A(i0(i00 i01 ...) i1(i10 i11 ...) ...)
+B(i00 i01 ... i10 i11 ...) = A(i0(i00 i01 ...) i1(i10 i11 ...) ...)
 @end verbatim
 
 where @var{i} : i0 i1 ...
@@ -268,8 +267,7 @@ ra-amend! A C . i -> A
 Copy @var{C} to the outer product slice of @var{A} by indices var{i} ...
 
 @verbatim
-A(i0(j00 j01 ...) i1(j10 j11 ...) ...)
-  <- C(j00 j01 ... j10 j11 ...)
+A(i0(j00 j01 ...) i1(j10 j11 ...) ...) <- C(j00 j01 ... j10 j11 ...)
 @end verbatim
 
 where @var{i} : i0 i1 ...

@@ -691,6 +691,90 @@ All three functions @code{ra-reshape}, @code{ra-ravel}, and @code{ra-tile} opera
 @cindex concatenation
 @code{newra} offers two concatenation operations: @ref{x-ra-pcat, @code{ra-pcat}} (prefix cat) and @ref{x-ra-scat, @code{ra-scat}} (suffix cat).
 
+For @code{ra-pcat}, the arguments are prefix-matched, and the concatenation axis is counted from the left. E.g. for three ras @var{r}, @var{s}, @var{t} with shapes
+
+@example
+@verbatim
+(r₀ r₁ r₂ r₃)
+(s₀ s₁ s₂ s₃ s₄ s₅)
+(t₀ t₁)
+@end verbatim
+@end example
+
+Then @code{(define val (ra-pcat #t 1 r s t))} will prefix-match these to (it is an error if any of @code{r₀=s₀=t₀}, @code{r₂=s₂}, or @code{r₃=s₃} don't hold)
+
+@example
+@verbatim
+(r₀ r₁ s₂ s₃ s₄ s₅)
+(s₀ s₁ s₂ s₃ s₄ s₅)
+(t₀ t₁ s₂ s₃ s₄ s₅)
+@end verbatim
+@end example
+
+and then concatenate them along axis 1 into an array of shape @code{(s₀ (r₁+s1+t₁) s₂ s₃ s₄ s₅)}.
+
+For @code{ra-scat}, the arguments are suffix-matched, and the concatenation axis is counted from the right. It can be useful to think of the axis argument of @code{ra-scat} as indicating cell rank, so the code above means `concatenate 1-cells'.
+
+For both @code{ra-pcat} and @code{ra-scat}, axes other than the concatenation axis must match across all of the arguments.
+
+@example
+@verbatim
+(ra-pcat #t 0 (ra-i 3 2) (ra-i 2))
+@end verbatim
+@result{} @code{#%2:4:2((0 1) (2 3) (4 5) (0 0) (1 1))}
+@end example
+
+@example
+@verbatim
+(ra-scat #t 1 (ra-i 3 2) (ra-i 2))
+@end verbatim
+@result{} @code{#%2:4:2((0 1) (2 3) (4 5) (0 1))}
+@end example
+
+Both @code{ra-pcat} and @code{ra-scat} accept a negative concatenation axis. That will rank-extend all the arguments to the left (@code{ra-pcat}) or to the right (@code{ra-scat}) before concatenating on the leftmost (@code{ra-pcat}) or rightmost (@code{ra-scat}) axis. In the same way, one may give a concatenation axis which is beyond the rank of the argument with the highest rank. Consider
+
+@example
+@verbatim
+(ra-pcat #t -1 (ra-i 3) (array->ra #(a b c)))
+@end verbatim
+@result{} @code{#%2:2:3((0 1 2) (a b c))}
+@end example
+@example
+@verbatim
+(ra-pcat #t 0 (ra-i 3) (array->ra #(a b c)))
+@end verbatim
+@result{} @code{#%1:6(0 1 2 a b c)}
+@end example
+@example
+@verbatim
+(ra-pcat #t 1 (ra-i 3) (array->ra #(a b c)))
+@end verbatim
+@result{} @code{#%2:3:2((0 a) (1 b) (2 c))}
+@end example
+
+vs
+
+@example
+@verbatim
+(ra-scat #t -1 (ra-i 3) (array->ra #(a b c)))
+@end verbatim
+@result{} @code{#%2:3:2((0 a) (1 b) (2 c))}
+@end example
+@example
+@verbatim
+(ra-scat #t 0 (ra-i 3) (array->ra #(a b c)))
+@end verbatim
+@result{} @code{#%1:6(0 1 2 a b c)}
+@end example
+@example
+@verbatim
+(ra-scat #t 1 (ra-i 3) (array->ra #(a b c)))
+@end verbatim
+@result{} @code{#%2:2:3((0 1 2) (a b c))}
+@end example
+
+Cf J append (,) stitch (,.).
+
 @c ------------------------------------------------
 @node Other operations on arrays
 @section Other operations on arrays
@@ -700,7 +784,7 @@ All three functions @code{ra-reshape}, @code{ra-ravel}, and @code{ra-tile} opera
 @cindex transpose
 The most important operation on arrays, other than selection and iteration, is transposition.
 
-@ref{x-ra-transpose, @code{ra-transpose}} takes a source array and a list of axis arguments. These correspond to the axes of the source array; the values of the arguments are the corresponding axes of the result array.
+@ref{x-ra-transpose, @code{ra-transpose}} takes a source array and one axis argument for each of the dimensions of the source array. The values of the arguments are the corresponding axes of the result array.
 
 @example
 @verbatim
@@ -732,12 +816,12 @@ A
 @result{} @code{#%2:3:3((x 1 2) (3 x 5) (6 7 x))}
 @end example
 
-If one doesn't give values for all the source axes, the missing axes are sent beyond the highest one that was given. These are equivalent:
+If one doesn't give values for all of the source axes, the missing axes are sent beyond the highest one that was given. These are equivalent:
 
 @example
 @verbatim
 (ra-transpose (ra-i 2 3 4) 1 0 2)
-(ra-transpose (ra-i 2 3 4) 1 0)
+(ra-transpose (ra-i 2 3 4) 1 0) ; fill with (+ 1 (max 1 0))
 @end verbatim
 @end example
 
@@ -745,7 +829,7 @@ as are these:
 
 @example
 @verbatim
-(ra-transpose (ra-i 2 3) 1)
+(ra-transpose (ra-i 2 3) 1) ; fill with (+ 1 (max 1))
 (ra-transpose (ra-i 2 3) 1 2)
 @end verbatim
 @end example
@@ -979,10 +1063,42 @@ Differences with Octave:
 @chapter Reference
 @c ------------------------------------------------
 
+@cindex @code{c-dims}
+@anchor{x-c-dims}
+@deffn @w{function} c-dims bounds ...
+
+Create dims for C-order array (packed elements, last dimension changing fastest).
+
+Each of the bounds may be an integer (a length) or a pair of integers (lower and upper bounds).
+@example
+@verbatim
+(c-dims 2 3)
+@end verbatim
+@result{} @code{#(#<<dim> len: 2 lo: 0 step: 3> #<<dim> len: 3 lo: 0 step: 1>)}
+@end example
+@end deffn
+
+@cindex @code{make-ra}
+@anchor{x-make-ra}
+@deffn @w{function} make-ra val bounds ...
+
+Create an ra with the given @var{bounds}, filled with @var{val}.
+
+@example
+@verbatim
+(make-ra 0 '(2 3) 4)
+@end verbatim
+@result{} @code{#%2@@2:2:4((0 0 0 0) (0 0 0 0))}
+@end example
+
+See also: @ref{x-make-typed-ra,@code{make-typed-ra}}, @ref{x-make-ra-new,@code{ra-make-ra-new}}, @ref{x-ra-shape,@code{ra-shape}}.
+
+@end deffn
+
 @cindex @code{make-ra-new}
 @anchor{x-make-ra-new}
 @deffn @w{function} make-ra-new type value dims
-Create an array over a new root of the given @var{type} and the necessary size (according to @var{dims}), and fill it with @var{value}.
+Create an ra over a new root of the given @var{type} and the necessary size (according to @var{dims}), and fill it with @var{value}.
 @example
 @verbatim
 (make-ra-new 'u8 0 (c-dims 3 2))
@@ -1017,29 +1133,43 @@ Create an array over the given @var{root}.
 @end example
 @end deffn
 
-@cindex @code{make-ra}
-@anchor{x-make-ra}
-@deffn @w{function} make-ra val bounds ...
-@end deffn
-
 @cindex @code{make-typed-ra}
 @anchor{x-make-typed-ra}
 @deffn @w{function} make-typed-ra type val bounds ...
 @end deffn
 
-@cindex @code{c-dims}
-@anchor{x-c-dims}
-@deffn @w{function} c-dims bounds ...
+@cindex @code{ra-shape}
+@anchor{x-ra-shape}
+@deffn @w{function} ra-shape a
 
-Create dims for C-order array (packed elements, last dimension changing fastest).
+Return the shape (a list of two-element lists, each containing the lower and upper bound of each axis) of ra @var{a}.
 
-Each of the bounds may be an integer (a length) or a pair of integers (lower and upper bounds).
 @example
 @verbatim
-(c-dims 2 3)
+(ra-shape (make-ra 0 '(2 3) 4))
 @end verbatim
-@result{} #(#<<dim> len: 2 lo: 0 step: 3> #<<dim> len: 3 lo: 0 step: 1>)
+@result{} @code{((2 3) (0 3))}
 @end example
+
+See also: @ref{x-ra-dimensions,@code{ra-dimensions}}, @ref{x-make-ra,@code{make-ra}}.
+
+@end deffn
+
+@cindex @code{ra-dimensions}
+@anchor{x-ra-dimensions}
+@deffn @w{function} ra-dimensions a
+
+Return the lengths of @var{a}, as a list.
+
+@example
+@verbatim
+(ra-shape (make-ra 0 '(2 3) 4))
+@end verbatim
+@result{} @code{(2 3)}
+@end example
+
+See also: @ref{x-ra-shape,@code{ra-shape}}, @ref{x-make-ra,@code{make-ra}}.
+
 @end deffn
 
 @cindex @code{ra-iota}
@@ -1072,17 +1202,17 @@ Create multidimensional index array with the given lengths. The root is of type 
 
 @cindex @code{ra-pcat}
 @anchor{x-ra-pcat}
-@deffn @w{function} ra-pcat i x ...
+@deffn @w{function} ra-pcat type i x ...
 
 Concatenate arrays @var{x} ... along axis @var{i}. The arguments are prefix-matched and rank extended before concatenation. All axes must match, except possibly the concatenation axis.
 
-This function always produces a new array. The base indices of the result are all zero; the arguments are concatenated in argument order and their base indices are ignored. It is an error if any of the arguments has an infinite length.
+This function always produces a new array, of the type given. If @var{type} is @code{#f} then the type of the first @var{x} is used. The base indices of the result are all zero; the arguments are concatenated in argument order and their base indices are ignored.
 
-See also: @ref{x-ra-scat,ra-scat}, @ref{x-ra-tile,ra-tile},  @ref{Concatenation}.
+See also: @ref{x-ra-scat,@code{ra-scat}}, @ref{x-ra-tile,@code{ra-tile}},  @ref{Concatenation}.
 
 @example
 @verbatim
-(ra-pcat 1 #%1(a b) #%2((0 1) (2 3)))
+(ra-pcat #f 1 #%1(a b) #%2((0 1) (2 3)))
 @end verbatim
 @result{} #%2((a 0 1) (b 2 3))
 @end example
@@ -1098,6 +1228,9 @@ Ravel the first @var{n} axes of array @var{a} to C order, the whole array by def
 @end verbatim
 @result{} #%1d:6(0 1 2 3 4 5)
 @end example
+
+See also: @ref{x-ra-reshape,@code{ra-reshape}}, @ref{x-ra-tile,@code{ra-tile}}.
+
 @end deffn
 
 @cindex @code{ra-reshape}
@@ -1112,21 +1245,24 @@ Each of the bounds may be an integer (a length) or a pair of integers (lower and
 @end verbatim
 @result{} #%1d:2:2:3(((0 1 2) (3 4 5)) ((6 7 8) (9 10 11)))
 @end example
+
+See also: @ref{x-ra-ravel,@code{ra-ravel}}, @ref{x-ra-tile,@code{ra-tile}}.
+
 @end deffn
 
 @cindex @code{ra-scat}
 @anchor{x-ra-scat}
-@deffn @w{function} ra-scat i x ...
+@deffn @w{function} ra-scat type i x ...
 
 Concatenate @var{i}-items of arrays @var{x} ... . The arguments are suffix-matched and rank extended before concatenation. All axes must match, except possibly the concatenation axis.
 
-This function always produces a new array. The base indices of the result are all zero; the arguments are concatenated in argument order and their base indices are ignored. It is an error if any of the arguments has an infinite length.
+This function always produces a new array, of the type given. If @var{type} is @code{#f} then the type of the first @var{x} is used. The base indices of the result are all zero; the arguments are concatenated in argument order and their base indices are ignored.
 
-See also: @ref{x-ra-pcat,ra-pcat}, @ref{x-ra-tile,ra-tile}, @ref{Concatenation}.
+See also: @ref{x-ra-pcat,@code{ra-pcat}}, @ref{x-ra-tile,@code{ra-tile}}, @ref{Concatenation}.
 
 @example
 @verbatim
-(ra-scat 1 #%2((0 1) (2 3)) #%(a b))
+(ra-scat #t 1 #%2((0 1) (2 3)) #%(a b))
 @end verbatim
 @result{} #%2((0 1) (2 3) (a b))
 @end example
@@ -1144,6 +1280,26 @@ Each of the bounds may be an integer (a length) or a pair of integers (lower and
 @end verbatim
 @result{} #%1d:2:3((0 1 2) (0 1 2))
 @end example
+
+See also: @ref{x-ra-ravel,@code{ra-ravel}}, @ref{x-ra-reshape,@code{ra-reshape}}, @ref{x-ra-tile-right,@code{ra-tile-right}}.
+
+@end deffn
+
+@cindex @code{ra-tile-right}
+@anchor{x-ra-tile-right}
+@deffn @w{function} ra-tile-right a bounds ...
+Repeat array @var{a} by appending axes with the given @var{bounds}.
+
+Each of the bounds may be an integer (a length) or a pair of integers (lower and upper bounds).
+@example
+@verbatim
+(ra-tile-right (ra-i 3) 2)
+@end verbatim
+@result{} #%1d:3:2((0 0) (1 1) (2 2))
+@end example
+
+See also: @ref{x-ra-tile,@code{ra-tile}}, @ref{x-ra-ravel,@code{ra-ravel}}, @ref{x-ra-reshape,@code{ra-reshape}}.
+
 @end deffn
 
 @cindex @code{ra-transpose}
@@ -1292,7 +1448,7 @@ For valid arguments, this is equivalent to any one of
 (ra-amend! dst src)
 @end verbatim
 
-See also @ref{x-ra-copy,ra-copy} @ref{x-ra-amend!,ra-amend!} @ref{x-ra-set!,ra-set!} @ref{x-ra-map!,ra-map!}.
+See also @ref{x-ra-copy,@code{ra-copy}} @ref{x-ra-amend!,@code{ra-amend!}} @ref{x-ra-set!,@code{ra-set!}} @ref{x-ra-map!,@code{ra-map!}}.
 
 @cindex @code{ra-copy}
 @anchor{x-ra-copy}
@@ -1301,7 +1457,7 @@ See also @ref{x-ra-copy,ra-copy} @ref{x-ra-amend!,ra-amend!} @ref{x-ra-set!,ra-s
 Create a new array of type @var{type} (the type of ra @var{src} if @var{type} isn't provided) and copy @var{src} into it.
 @end deffn
 
-See also @ref{x-ra-copy!,ra-copy!} @ref{x-ra-amend!,ra-amend!} @ref{x-ra-set!,ra-set!}.
+See also @ref{x-ra-copy!,@code{ra-copy!}} @ref{x-ra-amend!,@code{ra-amend!}} @ref{x-ra-set!,@code{ra-set!}}.
 
 @cindex @code{ra-swap!}
 @anchor{x-ra-swap!}
@@ -1412,7 +1568,7 @@ The type of @var{b} is the same as that of @var{a}, with the only exception that
 if the type of @var{a} is @code{'d} and the root of @var{b} isn't shared with
 the root of @var{a}, then the type of @var{b} is @code{#t}.
 
-See also: @ref{x-ra-cell,ra-cell} @ref{x-ra-ref,ra-ref} @ref{x-ra-slice,ra-slice} @ref{x-ra-amend!,ra-amend!} @ref{x-ra-set!,ra-set!}.
+See also: @ref{x-ra-cell,@code{ra-cell}} @ref{x-ra-ref,@code{ra-ref}} @ref{x-ra-slice,@code{ra-slice}} @ref{x-ra-amend!,@code{ra-amend!}} @ref{x-ra-set!,@code{ra-set!}}.
 
 @cindex @code{ra-amend!}
 @anchor{x-ra-amend!}
@@ -1460,7 +1616,7 @@ indices that match those elements. @code{newra} will @emph{not} check that each 
 
 This function returns the modified ra @var{a}.
 
-See also: @ref{x-ra-copy!,ra-copy!} @ref{x-ra-cell,ra-cell} @ref{x-ra-ref,ra-ref} @ref{x-ra-slice,ra-slice} @ref{x-ra-from,ra-from} @ref{x-ra-set!,ra-set!}.
+See also: @ref{x-ra-copy!,@code{ra-copy!}} @ref{x-ra-cell,@code{ra-cell}} @ref{x-ra-ref,@code{ra-ref}} @ref{x-ra-slice,@code{ra-slice}} @ref{x-ra-from,@code{ra-from}} @ref{x-ra-set!,@code{ra-set!}}.
 
 @cindex @code{ldots}
 @anchor{x-ldots}
@@ -1478,7 +1634,7 @@ Convert built-in Guile array @var{a} (anything that satisfies @code{array?}) int
 
 This function does not create a copy of the array, but reuses the root (@code{shared-array-root}) of @var{a}, that is, @code{(eq? (ra-root (ra->array a)) (shared-array-root a))} is @code{#t}. For example, this means that if @var{a} is/isn't mutable, then the same will be true for @code{(ra->array a)}.
 
-See also: @ref{x-array->ra,array->ra}.
+See also: @ref{x-array->ra,@code{array->ra}}.
 
 @cindex @code{array->ra}
 @anchor{x-array->ra}
@@ -1500,7 +1656,7 @@ Not all ras can be converted into built-in Guile arrays. For example, type @code
 @end verbatim
 @end example
 
-See also: @ref{x-ra-singletonize,ra-singletonize} @ref{x-ra-copy!,ra-copy!} @ref{x-ra->array,ra->array}.
+See also: @ref{x-ra-singletonize,@code{ra-singletonize}} @ref{x-ra-copy!,@code{ra-copy!}} @ref{x-ra->array,@code{ra->array}}.
 
 @cindex @code{ra-singletonize}
 @anchor{x-ra-singletonize}

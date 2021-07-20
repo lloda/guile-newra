@@ -12,7 +12,7 @@
 
 (define-module (newra lib reshape)
   #:export (ra-reverse ra-transpose ra-untranspose ra-order-c?
-            ra-ravel ra-reshape ra-tile
+            ra-ravel ra-reshape ra-tile ra-tile-right
             ra-singletonize))
 
 (import (newra base) (newra map) (only (srfi :1) fold every any iota drop) (srfi :8) (srfi :26)
@@ -255,13 +255,33 @@ Each element of S is either a list of two integers (LO HI) or an integer LEN.
 
 The result always shares the root of RA.
 
-See also: ra-ravel ra-reshape ra-transpose ra-from ra-order-c? c-dims
+See also: ra-ravel ra-reshape ra-transpose ra-from ra-tile-right ra-order-c? c-dims
 "
   (let ((ra (ra-check ra)))
     (make-ra-root (%%ra-root ra)
                   (vector-append
                    (vector-map (lambda (d) (make-dim (dim-len d) (dim-lo d) 0)) (apply c-dims s))
                    (%%ra-dims ra))
+                  (%%ra-zero ra))))
+
+(define (ra-tile-right ra . s)
+  "
+ra-tile-right ra s ... -> rb
+
+Replicate ra RA by the shape S ... The shape of RB will be the shape of RA
+concatenated with S.
+
+Each element of S is either a list of two integers (LO HI) or an integer LEN.
+
+The result always shares the root of RA.
+
+See also: ra-ravel ra-reshape ra-transpose ra-from ra-tile ra-order-c? c-dims
+"
+  (let ((ra (ra-check ra)))
+    (make-ra-root (%%ra-root ra)
+                  (vector-append
+                   (%%ra-dims ra)
+                   (vector-map (lambda (d) (make-dim (dim-len d) (dim-lo d) 0)) (apply c-dims s)))
                   (%%ra-zero ra))))
 
 (define (ra-singletonize ra . s)
