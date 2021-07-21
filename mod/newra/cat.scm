@@ -1,6 +1,6 @@
 ; -*- mode: scheme; coding: utf-8 -*-
 
-;; (c) Daniel Llorens - 2012-2013, 2015, 2020
+;; (c) Daniel Llorens - 2020-2021
 ; This library is free software; you can redistribute it and/or modify it under
 ; the terms of the GNU General Public License as published by the Free
 ; Software Foundation; either version 3 of the License, or (at your option) any
@@ -9,9 +9,6 @@
 ;;; Commentary:
 ;; Concatenation procedures for Newra.
 ;;; Code:
-
-; WIP WIP WIP WIP WIP WIP
-; FIXME Should really work with w/rank, etc. As a verb.
 
 (define-module (newra cat)
   #:export (ra-pcat ra-scat))
@@ -35,7 +32,7 @@
 (define (ra-pcat type i . xx)
   "
 Concatenate arrays @var{xx} ... along axis @{i}. The shapes of @var{xx} ... must
-have matching prefixes.
+have matching prefixes except at axis @{i}.
 
 The output array will have the rank of the @var{xx} with the largest rank, or
 @code{(+ 1 i)}, whichever is larger. If necessary, the @var{xx} are rank
@@ -55,6 +52,7 @@ first argument, unless @code{'d}; else @code{#t}.
 
 For example:
 
+@verbatim
 (ra-pcat #t 0 (ra-i 1 2) (ra-i 2 2))         => #%2((0 1) (0 1) (2 3)))
 (ra-pcat #t 0 (ra-iota 2 1) (ra-iota 3 3))   => #%1(1 2 3 4 5))
 (ra-pcat #t -1 (ra-iota 2 1) (ra-iota 2 4))  => #%2((1 2) (4 5))
@@ -64,6 +62,7 @@ For example:
 (ra-pcat #t -1 (make-ra 'a) (ra-iota 2))     => #%2((a a) (0 1))
 (ra-pcat #t 1 (array->ra #(a b)) (ra-i 2 2)) => #%2((a 0 1) (b 2 3))
 (ra-pcat #t 0 (array->ra #(a b)) (ra-i 2 2)) => #%2((a a) (b b) (0 1) (2 3))
+@end verbatim
 
 See also: ra-scat ra-tile ra-tile-right
 "
@@ -85,12 +84,12 @@ See also: ra-scat ra-tile ra-tile-right
 (define (ra-scat type i . xx)
   "
 Concatenate items of rank @var{i} of arrays @var{xx} ... The shapes of @var{xx}
-... must have matching suffixes.
+... must have matching suffixes except at axis @code{(- (ra-rank x) 1 i)} for
+each @var{x} in @var{xx}.
 
 The output array will have the rank of the @var{xx} with the largest rank, or
 @code{(+ 1 i)}, whichever is larger. If necessary, the @var{xx} are rank
-extended to this output rank. The lenghts of @var{xx} must match on all axes
-other than @var{i}.
+extended to this output rank.
 
 If @var{i} is negative, the shape of each array @var{xx} ... is suffix-extended
 by @code{(- i)} singleton dimensions and the concatenation is carried out along
@@ -105,6 +104,7 @@ first argument, unless @code{'d}; else @code{#t}.
 
 For example:
 
+@verbatim
 (ra-scat #t 0 (make-ra 'a) (make-ra 'b) (make-ra 'c))              => #%1(a b c)
 (ra-scat #t 1 (make-ra 'a) (make-ra 'b) (make-ra 'c))              => #%2((a) (b) (c))
 (ra-scat #t 0 (array->ra #(1 2 3)) (make-ra 4) (array->ra #(5 6))) => #%1(1 2 3 4 5 6)
@@ -114,6 +114,7 @@ For example:
 (ra-scat #t 0 (array->ra #2((0 1))) (array->ra #(a)))              => #%2((0 1 a))
 (ra-scat #t -1 (array->ra #(1 2 3)) (array->ra #(a b c)))          => #%2((1 a) (2 b) (3 c))
 (ra-scat #t -1 (make-ra 'a) (array->ra #(x y z)))                  => #%2((a x) (a y) (a z))
+@end verbatim
 
 See also: ra-pcat ra-tile ra-tile-right
 "

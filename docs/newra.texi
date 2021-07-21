@@ -7,12 +7,12 @@ c -*-texinfo-*-
 @c last [ma112]
 
 @set VERSION 1
-@set UPDATED 2019 November 28
+@set UPDATED 2021 July 21
 
 @copying
 @code{newra} (version @value{VERSION}, updated @value{UPDATED})
 
-(c) lloda 2017--2019
+(c) lloda 2017--2021
 
 @smalldisplay
 Permission is granted to copy, distribute and/or modify this document
@@ -45,7 +45,7 @@ Invariant Sections, no Front-Cover Texts, and no Back-Cover Texts.
 
 @insertcopying
 
-@code{newra} is a Scheme-only replacement for the built-in C-based array facility in Guile 2.2 & 3.0.
+@code{newra} is a Scheme-only replacement for the built-in C-based array facility in Guile 3.0.
 
 This document uses ‘array’ to refer both to the old built-in array type and to the new type introduced in @code{newra}. The distinction is made as necessary.
 
@@ -70,7 +70,7 @@ This document uses ‘array’ to refer both to the old built-in array type and 
 @chapter Introduction
 @c ------------------------------------------------
 
-A multidimensional array is a container (or rather a container view) whose elements can be looked up using a multi-index (i₀, i₁, ...). Each of the indices i₀, i₁, ... has a constant range [l₀, h₀], [l₁, h₁], ... independent of the values of the other indices, so the array is ‘rectangular’. The number of indices in the multi-index is the @dfn{rank} of the array, and the list ((l₀ h₀) (l₁ h₁) ... (lᵣ₋₁ hᵣ₋₁)) is the @dfn{shape} of the array. We speak of a rank-@math{r} array or of an @math{r}-array.
+A multidimensional array is a container (or rather a container view) whose elements can be looked up using a multi-index (i₀, i₁, ...). Each of the indices i₀, i₁, ... has a constant range [l₀, h₀], [l₁, h₁], ... independent of the values of the other indices, so the array is ‘rectangular’. The number of indices in the multi-index is the @dfn{rank} of the array, and the list ([l₀ h₀] [l₁ h₁] ... [lᵣ₋₁ hᵣ₋₁]) is the @dfn{shape} of the array. We speak of a rank-@math{r} array or of an @math{r}-array.
 
 Sometimes we deal with multidimensional @emph{expressions} where the elements aren't stored anywhere, but are computed on demand when the expression is looked up. In this general sense, an ‘array’ is just a function of integers with a rectangular domain. Such an array would be immutable.
 
@@ -705,15 +705,52 @@ Then @code{(define val (ra-pcat #t 1 r s t))} will prefix-match these to (it is 
 
 @example
 @verbatim
-(s₀ r₁ s₂ s₃ s₄ s₅)
-(s₀ s₁ s₂ s₃ s₄ s₅)
-(s₀ t₁ s₂ s₃ s₄ s₅)
+(s₀ |r₁| s₂ s₃ s₄ s₅)
+(s₀ |s₁| s₂ s₃ s₄ s₅)
+(s₀ |t₁| s₂ s₃ s₄ s₅)
 @end verbatim
 @end example
 
 and then concatenate them along axis 1 into an array of shape @code{(s₀ (r₁+s1+t₁) s₂ s₃ s₄ s₅)}.
 
-For @code{ra-scat}, the arguments are suffix-matched, and the concatenation axis is counted from the right. It can be useful to think of the axis argument of @code{ra-scat} as indicating cell rank, so the code above means `concatenate 1-cells'.
+For @code{ra-scat}, the arguments are suffix-matched, and the concatenation axis is counted from the right. For example
+
+@example
+@verbatim
+(define r (ra-i 2 3 2))
+(define s (list->ra 1 '(a b)))
+(ra-scat #t 1 r s)
+@end verbatim
+@end example
+
+the axes are aligned as
+
+@example
+@verbatim
+(r₀ r₁ r₂)
+      (s₀)
+@end verbatim
+@end example
+
+and suffix-matched
+
+@example
+@verbatim
+(r₀ |r₁| r₂)
+(r₀ | 1| s₀)
+@end verbatim
+@end example
+
+for a result
+
+@example
+@verbatim
+(ra-scat #t 1 r s)
+@end verbatim
+@result{} @code{#%3(((0 1) (2 3) (4 5) (a b)) ((6 7) (8 9) (10 11) (a b)))}
+@end example
+
+Note that the rank extension of @code{s} on the concatenation axis yields a length of 1 (and not @code{r₀}). It can be useful to think of the axis argument of @code{ra-scat} as indicating cell rank, so the code above means `concatenate 1-cells'.
 
 For both @code{ra-pcat} and @code{ra-scat}, axes other than the concatenation axis must match across all of the arguments.
 
@@ -1397,7 +1434,6 @@ Iterate over array @var{a}, and to each element assign the result of @code{(op i
 @anchor{x-ra-slice-for-each}
 @deffn @w{function} ra-slice-for-each k op a ...
 Iterate over the @var{k}-frames of arrays @var{a} ..., applying @var{op} to the respective slices. The arguments @var{a} ... must have matching dimensions over their @var{k}-frames.
-@end deffn
 
 Note that it isn't necessary for arguments @var{a} to have rank ≥ @var{k}. For example:
 
@@ -1420,12 +1456,12 @@ Note that it isn't necessary for arguments @var{a} to have rank ≥ @var{k}. For
 @end verbatim
 @result{} @code{(a 0)(a 1)(a 2)(b 3)(b 4)(b 5)}
 @end example
+@end deffn
 
 @cindex @code{ra-map!}
 @anchor{x-ra-map!}
 @deffn @w{function} ra-map! dst op a ...
 Iterate over arrays @var{dst} @var{a} ... applying @var{op} to the respective elements in @var{a}, and storing the result in the respective element of @var{dst}. The arguments must have matching dimensions and the type of @var{dst} must be compatible with the results of @var{op}.
-@end deffn
 
 This is equivalent to
 @verbatim
@@ -1435,12 +1471,12 @@ This is equivalent to
          (ra-set! dst (apply op (map ra-ref a))))
        dst a)
 @end verbatim
+@end deffn
 
 @cindex @code{ra-copy!}
 @anchor{x-ra-copy!}
 @deffn @w{function} ra-copy! dst src
 Copy @var{src} to @var{dst}. The arguments must have matching dimensions and be of compatible types.
-@end deffn
 
 For valid arguments, this is equivalent to any one of
 @verbatim
@@ -1458,6 +1494,7 @@ Create a new array of type @var{type} (the type of ra @var{src} if @var{type} is
 @end deffn
 
 See also @ref{x-ra-copy!,@code{ra-copy!}} @ref{x-ra-amend!,@code{ra-amend!}} @ref{x-ra-set!,@code{ra-set!}}.
+@end deffn
 
 @cindex @code{ra-swap!}
 @anchor{x-ra-swap!}
@@ -1475,7 +1512,6 @@ Swap the contents of @var{a} and @var{b}. The swap is executed in row major orde
 @anchor{x-ra-fill!}
 @deffn @w{function} ra-fill! dst value
 Assign @var{value} to each element of @var{dst}. The arguments must be of compatible types.
-@end deffn
 
 This is equivalent to any one of
 @example
@@ -1508,13 +1544,16 @@ Compare
 @result{} #%2:2:2((#%0(x) #%0(x)) (#%0(x) #%0(x)))
 @end example
 
+@end deffn
+
 @cindex @code{ra-order-c?}
 @anchor{x-ra-order-c?}
 @deffn @w{function} ra-order-c? a [n]
 Check whether the first @var{n} axes of @var{ra} are in C-order. By default, check that the whole array is in C-order, and additionally that the step on the last axis is 1 (i.e. the array is ‘packed’).
-@end deffn
 
 @code{(ra-order-c? a n)} implies @code{(eq? (ra-root a) (ra-root (@ref{x-ra-ravel, @code{ra-ravel}} a n)))}. Note that the stronger condition @code{(ra-order-c? a)} is not necessary for @code{(eq? (ra-root a) (ra-root (ra-ravel a)))} to hold.
+
+@end deffn
 
 @cindex @code{ra-ref}
 @anchor{x-ra-ref}
@@ -1539,7 +1578,6 @@ Check whether the first @var{n} axes of @var{ra} are in C-order. By default, che
 @cindex @code{ra-from}
 @anchor{x-ra-from}
 @deffn @w{function} ra-from a i ... → b
-@end deffn
 
 Outer product slice of @var{a} by indices @var{i} ...
 
@@ -1555,7 +1593,7 @@ b(j₀₀ j₀₁ ... j₁₀ j₁₁ ...) = a(i₀(j₀₀ j₀₁ ...) i₁(j�
 
 where @var{i} : @var{i₀} @var{i₁} ... The special value @code{#t} is understood as the full range of @var{a} on that axis.
 
-Additionally, if every @var{i} ... is either of
+Additionally, if each @var{i} ... is one of
 @itemize
 @item @code{#t}
 @item an ra of type @code{'d}
@@ -1570,10 +1608,11 @@ the root of @var{a}, then the type of @var{b} is @code{#t}.
 
 See also: @ref{x-ra-cell,@code{ra-cell}} @ref{x-ra-ref,@code{ra-ref}} @ref{x-ra-slice,@code{ra-slice}} @ref{x-ra-amend!,@code{ra-amend!}} @ref{x-ra-set!,@code{ra-set!}}.
 
+@end deffn
+
 @cindex @code{ra-amend!}
 @anchor{x-ra-amend!}
 @deffn @w{function} ra-amend! a c i ... → a
-@end deffn
 
 Copy @var{c} to the outer product slice of @var{a} by indices @var{i} ...
 
@@ -1618,6 +1657,8 @@ This function returns the modified ra @var{a}.
 
 See also: @ref{x-ra-copy!,@code{ra-copy!}} @ref{x-ra-cell,@code{ra-cell}} @ref{x-ra-ref,@code{ra-ref}} @ref{x-ra-slice,@code{ra-slice}} @ref{x-ra-from,@code{ra-from}} @ref{x-ra-set!,@code{ra-set!}}.
 
+@end deffn
+
 @cindex @code{ldots}
 @anchor{x-ldots}
 @deffn @w{function} ldots [n] ...
@@ -1628,7 +1669,6 @@ Placeholder for @var{n} full axes, used as argument to @code{ra-from} or @code{r
 @cindex @code{ra->array}
 @anchor{x-ra->array}
 @deffn @w{function} ra->array a
-@end deffn
 
 Convert built-in Guile array @var{a} (anything that satisfies @code{array?}) into an ra.
 
@@ -1636,10 +1676,11 @@ This function does not create a copy of the array, but reuses the root (@code{sh
 
 See also: @ref{x-array->ra,@code{array->ra}}.
 
+@end deffn
+
 @cindex @code{array->ra}
 @anchor{x-array->ra}
 @deffn @w{function} array->ra a
-@end deffn
 
 Convert ra @var{a} into built-in Guile array.
 
@@ -1658,10 +1699,11 @@ Not all arrays can be converted into built-in Guile arrays. For example, type @c
 
 See also: @ref{x-ra-singletonize,@code{ra-singletonize}} @ref{x-ra-copy!,@code{ra-copy!}} @ref{x-ra->array,@code{ra->array}}.
 
+@end deffn
+
 @cindex @code{ra-singletonize}
 @anchor{x-ra-singletonize}
 @deffn @w{function} ra-singletonize a
-@end deffn
 
 Return an ra with the same root and dimensions as @var{a}, except that infinite axes (axes with step 0 and length @code{#f}) have their length set to 1.
 
@@ -1679,6 +1721,8 @@ Return an ra with the same root and dimensions as @var{a}, except that infinite 
 @end verbatim
 @result{} (4 2 3) ; no change
 @end example
+
+@end deffn
 
 @cindex @code{ra-clip}
 @anchor{x-ra-clip}
@@ -1707,7 +1751,12 @@ Slice @var{a} to the smaller of the bounds of @var{a} and @var{b}. @var{a} and @
 @item @mybibitem{SSM14} @tab Justin Slepak, Olin Shivers, and Panagiotis Manolios. An array-oriented language with static rank polymorphism. In Z. Shao, editor, ESOP 2014, LNCS 8410, pages 27–46, 2014.
 @item @mybibitem{Vel01} @tab Todd Veldhuizen. Blitz++ user’s guide, February 2001.
 @item @mybibitem{Wad90} @tab Philip Wadler. Deforestation: transforming programs to eliminate trees. Theoretical Computer Science, 73(2): 231--248, June 1990. @url{https://doi.org/10.1016/0304-3975%2890%2990147-A}
-
+@item @mybibitem{SRFI-4} @tab Marc Feeley. SRFI-4: Homogeneous numeric vector datatypes, May 1999. @url{https://srfi.schemers.org/srfi-4/srfi-4.html}
+@item @mybibitem{SRFI-25} @tab Jussi Piitulainen. SRFI-25: Multi-dimensional array primitives, May 2002. @url{https://srfi.schemers.org/srfi-25/srfi-25.html}
+@item @mybibitem{SRFI-122} @tab Bradley J. Lucier. SRFI-122: Nonempty intervals and generalized arrays, December 2016. @url{https://srfi.schemers.org/srfi-122/srfi-122.html}
+@item @mybibitem{SRFI-160} @tab John Cowan and Shiro Kawai. SRFI-160: Homogeneous numeric vector libraries, November 2020. @url{https://srfi.schemers.org/srfi-160/srfi-160.html}
+@item @mybibitem{SRFI-163} @tab Per Bothner. SRFI-163: Enhanced array literals, January 2019. @url{https://srfi.schemers.org/srfi-163/srfi-163.html}
+@item @mybibitem{SRFI-164} @tab Per Bothner. SRFI-164: Enhanced multi-dimensional arrays, August  2019. @url{https://srfi.schemers.org/srfi-164/srfi-164.html}
 @end multitable
 
 @c ------------------------------------------------
