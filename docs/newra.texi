@@ -1,4 +1,4 @@
-c -*-texinfo-*-
+@c -*-texinfo-*-
 @c %**start of header
 @setfilename newra.info
 @documentencoding UTF-8
@@ -246,6 +246,7 @@ These problems are solved if the built-in type is replaced with a new type defin
 * Slicing::
 * Reshaping and resizing::
 * Concatenation::
+* Transposition::
 * Other operations on arrays::
 * Foreign interface::
 * Compatibility with old Guile arrays::
@@ -813,13 +814,12 @@ vs
 Cf J append (,) stitch (,.).
 
 @c ------------------------------------------------
-@node Other operations on arrays
-@section Other operations on arrays
+@node Transposition
+@section Transposition
 @c ------------------------------------------------
 
 @cindex @code{⍉}, transpose
 @cindex transpose
-The most important operation on arrays, other than selection and iteration, is transposition.
 
 @ref{x-ra-transpose, @code{ra-transpose}} takes a source array and one axis argument for each of the dimensions of the source array. The values of the arguments are the corresponding axes of the result array.
 
@@ -916,6 +916,12 @@ The function @ref{x-ra-untranspose, @code{ra-untranspose}} takes its axis argume
 @c @end example
 
 @c @end deffn
+
+@c ------------------------------------------------
+@node Other operations on arrays
+@section Other operations on arrays
+@c ------------------------------------------------
+
 
 @c ------------------------------------------------
 @node Foreign interface

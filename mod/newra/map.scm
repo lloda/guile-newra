@@ -14,7 +14,7 @@
   #:export (ra-slice-for-each ra-slice-for-each-in-order
             ra-slice-for-each-check
             ra-slice-for-each-1 ra-slice-for-each-2 ra-slice-for-each-3 ra-slice-for-each-4
-            ra-fill! ra-copy! ra-swap! ra-swap-in-order! ra-map! ra-for-each
+            ra-fill! ra-copy! ra-swap! ra-swap-in-order! ra-map! ra-map-in-order! ra-for-each
             ra-every ra-any ra-equal?))
 
 (import (newra base) (srfi :9) (srfi srfi-9 gnu) (only (srfi :1) fold every) (srfi :8)
@@ -544,6 +544,8 @@ See also: ra-for-each ra-copy! ra-fill!
             (rx (%apply-sloop %apply-map! (cons ra rx))))
       rx)
     ra))
+
+(define ra-map-in-order! ra-map!)
 
 (define (ra-fill! ra fill)
   "
