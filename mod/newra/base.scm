@@ -364,7 +364,7 @@ indices must be equal to the rank of @var{a}.
 For example:
 
 @lisp
-(ra-cell (ra-i 2 3) 1 1)
+(ra-ref (ra-i 2 3) 1 1)
 @result{} 5
 @end lisp
 
@@ -415,17 +415,17 @@ the rank of @var{a}.
 For example:
 
 @lisp
-(ra-cell (ra-i 2 3))
+(ra-slice (ra-i 2 3))
 @result{} #%2((0 1 2) (4 5 6))
 @end lisp
 
 @lisp
-(ra-cell (ra-i 2 3) 1)
+(ra-slice (ra-i 2 3) 1)
 @result{} #%1(4 5 6)
 @end lisp
 
 @lisp
-(ra-cell (ra-i 2 3) 1 1)
+(ra-slice (ra-i 2 3) 1 1)
 @result{} #%0(5)
 @end lisp
 
