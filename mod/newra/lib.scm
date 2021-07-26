@@ -18,8 +18,9 @@
             ra-copy
             ra-fold ra-fold*))
 
-(import (newra base) (newra map) (only (srfi :1) fold every any iota drop) (srfi :8) (srfi :26)
+(import (only (srfi :1) fold every any iota drop) (srfi :8) (srfi :26)
         (ice-9 control) (ice-9 match) (only (rnrs base) vector-map vector-for-each)
+        (newra base) (newra map)
         (newra lib reshape))
 
 (re-export ra-reverse ra-transpose ra-untranspose ra-order-c?
@@ -290,17 +291,18 @@ See also: ra-iota ra-i
 (define ra-copy
   (case-lambda
    "
-ra-copy ra -> rb
-ra-copy type ra -> rb
+@deffn @w{function} ra-copy src
+@deffnx @w{function} ra-copy type src
 
-Copy the contents of RA into a new ra RB of type TYPE and the same shape as
-RA. TYPE defaults to (ra-type RA) if not given.
+Copy the contents of @var{src} into a new ra of type @var{type} and the same
+shape as @var{src}. @var{type} defaults to @code{(ra-type src)} if not given, or
+@code{#t} if @code{(ra-type src)} is @code{'d}.
 
-If RA has dead axes, those are preserved in RB.
+If @var{src} has dead axes, those are preserved in the result.
 
 See also: ra-copy! as-ra
 "
-   ((ra) (ra-copy (ra-type ra) ra))
+   ((ra) (ra-copy (match (ra-type ra) ('d #t) (t t)) ra))
    ((type ra)
     (let* ((shape (map (match-lambda
                          (($ <dim> len lo step)
