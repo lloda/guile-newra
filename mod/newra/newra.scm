@@ -12,8 +12,9 @@
 
 (define-module (newra newra))
 
-(import (newra base) (newra map) (newra print) (newra read)
-        (newra lib) (newra from) (newra cat))
+(import (newra base) (newra map) (newra print) (newra read) (newra from)
+        (newra cat) (newra format)
+        (newra lib))
 
 (re-export ra?
            make-ra-root ra-root ra-zero ra-dims ra-vlen ra-vref ra-vset!
@@ -47,4 +48,6 @@
 
            ra-pcat ra-scat
 
-           list->ra list->typed-ra)
+           list->ra list->typed-ra
+
+           ra-format)

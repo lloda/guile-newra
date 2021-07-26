@@ -9,7 +9,7 @@
 
 ; Run with $GUILE -L mod -s test.scm
 
-(import (newra newra) (newra test) (newra tools) (newra read)
+(import (newra newra) (newra test) (newra tools) (newra read) (newra format)
         (srfi :64) (srfi :26) (srfi :8) (only (srfi :1) fold iota drop)
         (ice-9 match) (only (rnrs base) vector-map vector-for-each))
 
@@ -1155,6 +1155,41 @@
 (test-assert (ra-equal? (ra-scat #t 0 (array->ra #2((0 1))) (array->ra #(a)))              (array->ra #2((0 1 a)))))
 (test-assert (ra-equal? (ra-scat #t -1 (array->ra #(1 2 3)) (array->ra #(a b c)))          (array->ra #2((1 a) (2 b) (3 c)))))
 (test-assert (ra-equal? (ra-scat #t -1 (make-ra 'a) (array->ra #(x y z)))                  (array->ra #2((a x) (a y) (a z)))))
+
+
+; -----------------------
+; demo of ra-format FIXME somehow check
+; -----------------------
+
+(define ra (ra-i 1 8 9 3))
+(define ra (ra-map! (ra-copy #t ra) sqrt ra))
+(ra-format #t ra "~4,2f")
+
+(define ra (ra-set! (ra-set! (ra-copy #t (ra-i 3 4 3))
+                             (ra-i 2 3) 1 2 1)
+                    (make-ra-root #(hello world of ras) (c-dims 2 2))
+                    2 1 2))
+(ra-format #t ra "~a")
+
+(define ra (ra-i 2 2 2 2 2 2 2 2))
+(ra-format #t ra "~a")
+
+(define ra (ra-tile-right (ra-set! (ra-copy #t (ra-i 7)) (make-ra-root #(hello world of ras) (c-dims 2 2)) 3) 1))
+(ra-format #t ra "~a")
+
+; example from srfi-164
+(define arr
+   #2@1:2@1:3((#2((1 2) (3 4)) 9 #2((3 4) (5 6)))
+              (#(42 43) #2((8 7 6)) #2((90 91) (100 101)))))
+(define ra (array->ra arr))
+(define ra (ra-map! (ra-copy ra) (lambda (x) (if (array? x) (array->ra x) x)) ra))
+(ra-format #t ra "~a")
+
+(define ra (array->ra #2@1:2@1:3((1 2 3) (4 5 6))))
+(ra-format #t ra "~a")
+
+(define ra (make-ra 'zero))
+(ra-format #t ra "~a")
 
 
 ; -----------------------
