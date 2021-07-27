@@ -2,9 +2,9 @@
 
 Help: [C-uc .] insert timestamp [C-cc] flip checkbox [C-uucc] partial flip checkbox [C-ct] flip TODO.
 
-* TODO bugs [0/1]
+* TODO bugs [1/2]
   * [ ] docstrings don't work for define-inlinable-case
-  * [ ] (call-with-input-string "#3()" read) vs (call-with-input-string "#%3()" read)
+  * [X] (call-with-input-string "#3()" read) vs (call-with-input-string "#%3()" read)
 
 * TODO compatibility with existing Guile arrays [8/9]
   * [X] ra-slice-for-each ra-map! ra-for-each ra-cell ra-ref ra-set!
@@ -17,7 +17,7 @@ Help: [C-uc .] insert timestamp [C-cc] flip checkbox [C-uucc] partial flip check
   * [X] ra-equal?
   * [ ] root vectors are equivalent to rank-1 newra objects
 
-* TODO whole array functions [7/15]
+* TODO whole array functions [6/15]
   * [X] ra-fold ra-fold*
   * [X] ra-any ra-every
   * [X] raw prefix matching
@@ -31,7 +31,10 @@ Help: [C-uc .] insert timestamp [C-cc] flip checkbox [C-uucc] partial flip check
     - [X] (ra-ravel a [n])
     - [ ] (ra-ravel a [n [org]])
   * [X] ra-tile
-  * [X] ra-cat (ra-pcat, ra-scat)
+  * [-] ra-cat (ra-pcat, ra-scat)
+    - [X] implementation
+    - [X] tests
+    - [ ] tests with non-zero base indices
   * [-] ra-reshape [1/2]
     - [X] basic function
     - [ ] placeholder
@@ -69,10 +72,12 @@ Help: [C-uc .] insert timestamp [C-cc] flip checkbox [C-uucc] partial flip check
   * [ ] the reverse of ra-singletonize, find a good name (see 'differences with numpy' in the doc).
   * [ ] make (set! (ra ...) o) work with slices just (ra ...).
   * [ ] refactor macros
-  * [ ] loop attack heuristics (different orders...)
   * [ ] bench tracking
   * [ ] move struct defs to (newra types)
   * [ ] parameters to control print format (eg print sizes/strides, truncate...)
+    - [ ] CL/SRFI-163 style rank-0 (e.g. '#0 x' instead of '#0(x)').
+    - [ ] print sizes in prefix
+    - [ ] pretty-print
   * [X] pretty printer
     - [X] basic ra-format
     - [ ] compact mode

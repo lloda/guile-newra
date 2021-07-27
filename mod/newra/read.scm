@@ -203,10 +203,10 @@
                                  (else
                                   (throw 'too-many-elements-on-dim (- rank k))))))))))))
                     (make-ra-root
-                     (root-resize temp (vector-fold * 1 len))
+                     (root-resize temp (vector-fold (lambda (a b) (* (if a a 0) b)) 1 len))
                      (apply c-dims
-                       (vector->list (vector-map (lambda (lo len) (list lo (+ lo len -1)))
-                                                 lo len)))))))))))))))) ; FIXME
+                       (vector->list (vector-map (lambda (lo len) (if len (list lo (+ lo len -1)) (list 0 -1)))
+                                                 lo len))))))))))))))))
 
 ; The docstring is from Guile's list->typed-array.
 

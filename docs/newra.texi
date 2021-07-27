@@ -143,7 +143,7 @@ Note that we can iterate over these items by simply bumping the pointer o+s₀i�
 @section The pieces of an array
 @c ------------------------------------------------
 
-An @code{newra} array is in fact an aggregate of the following pieces:
+An @code{newra} array is an aggregate of the following pieces:
 
 @cindex rank
 @cindex dim vector
@@ -178,7 +178,7 @@ In @code{newra} code,
 @result{} @code{#%2:2:2((2 3) (4 5))}
 @end example
 
-The default print style means @code{#%RANK:LEN₀:LEN₁(...)}.
+The default print style means @code{#%RANK:LEN₀:LEN₁(...)} (@ref{Writing and reading}).
 
 It's unusual to need to specify the dims directly. More commonly, one creates an array of whatever size
 
@@ -215,6 +215,30 @@ and the other way around,
 > b
 @end verbatim
 @result{} @code{#%2:3:2((Z Z) (Z Z) (Z Z))}
+
+@cindex shared root
+@cindex new array
+It is often important to know whether an operation on an array returns a different view of its argument, or instead it allocates a new root which can be modified without affecting the original argument. When we say that a function `creates a new array', we mean that it allocates a new root.
+
+Generally a given function will always do one or the other, e.g. the result of @ref{x-ra-tile, @code{ra-tile}} always shares the root of its argument, while @ref{x-ra-copy, @code{ra-copy}} always creates a new array. Some functions, like @ref{x-ra-ravel, @code{ra-ravel}}, may do either, depending on their arguments. For example, the result of
+
+@example
+@verbatim
+(ra-ravel (ra-iota 3 4))
+@end verbatim
+@result{} @code{#%1d:12(0 1 2 3 4 5 6 7 8 9 10 11)}
+@end example
+
+shares the root of @code{(ra-iota 3 4)}, but
+
+@example
+@verbatim
+(ra-ravel (ra-transpose (ra-iota 3 4) 1 0))
+@end verbatim
+@result{} @code{#%1:12(0 4 8 1 5 9 2 6 10 3 7 11)}
+@end example
+
+doesn't.
 
 @c ------------------------------------------------
 @node Built-in Guile arrays
@@ -502,7 +526,7 @@ The basic array iteration operations in @code{newra} all operate by effect. This
 @result{} #%1:3(-1 -2 -3)
 @end example
 
-It is common to need the indices of the elements during array iteration. @code{newra} iteration operations do not keep track of those indices@footnote{Except for @ref{x-ra-index-map!, @code{ra-index-map!}}, which is provided out of compatibility with the older array system.} because it isn't free to do so. You need to pass the indices you need as arguments, but it's easy to do so by using an infinite index vector together with @ref{x-ra-transpose, @code{ra-transpose}}.
+It is common to need the indices of the elements during array iteration. @code{newra} iteration operations do not keep track of those indices@footnote{Except for @ref{x-ra-index-map!, @code{ra-index-map!}}, which is provided out of compatibility with the older array system.} because that has a cost. You need to pass the indices you need as arguments, but it's easy to do so by using an infinite index vector together with @ref{x-ra-transpose, @code{ra-transpose}}.
 
 @example
 @verbatim
@@ -1155,6 +1179,7 @@ Differences with Fortran:
 @item @code{newra} uses prefix matching for rank extension on arguments on any rank, while Fortran only performs rank extension on scalar arguments.
 @end itemize
 
+@cindex Python
 @cindex NumPy
 Differences with NumPy:
 @itemize
@@ -1187,6 +1212,29 @@ Differences with Octave:
 @chapter Reference
 @c ------------------------------------------------
 
+@cindex @code{array->ra}
+@anchor{x-array->ra}
+@deffn @w{function} array->ra a
+
+Convert ra @var{a} into built-in Guile array.
+
+This function does not create a copy of the ra, but reuses the root (@code{ra-root}) of @var{a}, that is, @code{(eq? (ra-root a) (shared-array-root (array->ra a)))} is @code{#t}. For example, this means that if @var{a} is/isn't mutable, then the same will be true for @code{(array->ra a)}.
+
+Not all arrays can be converted into built-in Guile arrays. For example, type @code{'d} arrays, or arrays with infinite axes, are not convertible.
+
+@example
+@verbatim
+(ra->array (ra-i 3)) ; error, not convertible
+(ra->array (ra-copy #t (ra-i 3))) ; ok
+(ra->array (ra-transpose (ra-i 2 3) 1)) ; error, not convertible
+(ra->array (ra-singletonize (ra-transpose (ra-i 2 3) 1))) ; ok
+@end verbatim
+@end example
+
+See also: @ref{x-ra-singletonize,@code{ra-singletonize}} @ref{x-ra-copy!,@code{ra-copy!}} @ref{x-ra->array,@code{ra->array}}.
+
+@end deffn
+
 @cindex @code{c-dims}
 @anchor{x-c-dims}
 @deffn @w{function} c-dims bounds ...
@@ -1200,6 +1248,13 @@ Each of the bounds may be an integer (a length) or a pair of integers (lower and
 @end verbatim
 @result{} @code{#(#<<dim> len: 2 lo: 0 step: 3> #<<dim> len: 3 lo: 0 step: 1>)}
 @end example
+@end deffn
+
+@cindex @code{ldots}
+@anchor{x-ldots}
+@deffn @w{function} ldots [n] ...
+
+Placeholder for @var{n} full axes, used as argument to @code{ra-from} or @code{ra-amend!}. Without @var{n}, expand to fill the rank of the argument @var{a} of @ref{x-ra-from,@code{ra-from}} or @ref{x-ra-amend!,@code{ra-amend!}}.
 @end deffn
 
 @cindex @code{make-ra}
@@ -1266,6 +1321,23 @@ Create an array over the given @var{root}.
 @anchor{x-ra-clip}
 @deffn @w{function} ra-clip a b
 Slice @var{a} to the smaller of the bounds of @var{a} and @var{b}. @var{a} and @var{b} may have different ranks. In that case only the common prefix of @var{a} is sliced. The result always shares the root of @var{a}.
+@end deffn
+
+@cindex @code{ra-dimensions}
+@anchor{x-ra-dimensions}
+@deffn @w{function} ra-dimensions a
+
+Return the lengths of @var{a}, as a list.
+
+@example
+@verbatim
+(ra-shape (make-ra 0 '(2 3) 4))
+@end verbatim
+@result{} @code{(2 3)}
+@end example
+
+See also: @ref{x-ra-shape,@code{ra-shape}}, @ref{x-make-ra,@code{make-ra}}.
+
 @end deffn
 
 @cindex @code{ra-format}
@@ -1370,38 +1442,18 @@ This function doesn't handle large arrays in any particular way and it isn't rec
 
 @end deffn
 
-@cindex @code{ra-shape}
-@anchor{x-ra-shape}
-@deffn @w{function} ra-shape a
+@cindex @code{ra-i}
+@anchor{x-ra-i}
+@deffn @w{function} ra-i len ...
 
-Return the shape (a list of two-element lists, each containing the lower and upper bound of each axis) of ra @var{a}.
-
-@example
-@verbatim
-(ra-shape (make-ra 0 '(2 3) 4))
-@end verbatim
-@result{} @code{((2 3) (0 3))}
-@end example
-
-See also: @ref{x-ra-dimensions,@code{ra-dimensions}}, @ref{x-make-ra,@code{make-ra}}.
-
-@end deffn
-
-@cindex @code{ra-dimensions}
-@anchor{x-ra-dimensions}
-@deffn @w{function} ra-dimensions a
-
-Return the lengths of @var{a}, as a list.
+Create multidimensional index array with the given lengths. The root is of type @code{<aseq>}.
 
 @example
 @verbatim
-(ra-shape (make-ra 0 '(2 3) 4))
+(ra-i 2 3 4)
 @end verbatim
-@result{} @code{(2 3)}
+@result{} #%3d:2:3:4(((0 1 2 3) (4 5 6 7) (8 9 10 11)) ((12 13 14 15) (16 17 18 19) (20 21 22 23)))
 @end example
-
-See also: @ref{x-ra-shape,@code{ra-shape}}, @ref{x-make-ra,@code{make-ra}}.
-
 @end deffn
 
 @cindex @code{ra-iota}
@@ -1415,20 +1467,6 @@ Create rank-1 index array. The root is of type @code{<aseq>}.
 (ra-iota 4 3 -1)
 @end verbatim
 @result{} #%1d:4(3 2 1 0)
-@end example
-@end deffn
-
-@cindex @code{ra-i}
-@anchor{x-ra-i}
-@deffn @w{function} ra-i len ...
-
-Create multidimensional index array with the given lengths. The root is of type @code{<aseq>}.
-
-@example
-@verbatim
-(ra-i 2 3 4)
-@end verbatim
-@result{} #%3d:2:3:4(((0 1 2 3) (4 5 6 7) (8 9 10 11)) ((12 13 14 15) (16 17 18 19) (20 21 22 23)))
 @end example
 @end deffn
 
@@ -1508,6 +1546,56 @@ See also: @ref{x-ra-ravel,@code{ra-ravel}}, @ref{x-ra-tile,@code{ra-tile}}.
 
 @end deffn
 
+@cindex @code{⌽}, reverse
+@cindex @code{ra-reverse}
+@anchor{x-ra-reverse}
+@deffn @w{function} ra-reverse a axes ...
+Reverse the given @var{axes} of @var{a}.
+
+The reversed array has the same root as @var{a}.
+@example
+@verbatim
+(ra-reverse (ra-i 2 3) 0 1)
+@end verbatim
+@result{} #%1d:2:3((5 4 3) (2 1 0))
+@end example
+@end deffn
+
+@cindex @code{⌽}, rotate
+@cindex @code{⊖}, rowel
+@cindex @code{ra-rotate}
+@anchor{x-ra-rotate}
+@deffn @w{function} ra-rotate n a
+(FIXME: not implemented) Rotate the first axis of @var{a} toward the lower indices (‘to the left’) @var{n} times. @var{n} may be any integer. The result has the type of @var{a}, unless that type is @code{d}, in which case the result is of type @code{#t}.
+
+This function always returns a new array.
+
+Example:
+@example
+@verbatim
+(ra-rotate 1 (ra-i 3 2))
+@end verbatim
+@result{} #%1:3:2((2 3) (4 5) (0 1))
+@end example
+@end deffn
+
+@cindex rotate!
+@cindex @code{ra-rotate!}
+@anchor{x-ra-rotate!}
+@deffn @w{function} ra-rotate! n a
+Rotate in place the first axis of @var{a} to the left @var{n} times. @var{n} may be any integer. @var{a} must be writable. This function returns @var{a}.
+
+Example:
+@example
+@verbatim
+(define a (ra-copy #t (ra-i 3 2)))
+(ra-rotate! 1 a)
+a
+@end verbatim
+@result{} #%1:3:2((2 3) (4 5) (0 1))
+@end example
+@end deffn
+
 @cindex @code{ra-scat}
 @anchor{x-ra-scat}
 @deffn @w{function} ra-scat type i x ...
@@ -1524,6 +1612,23 @@ See also: @ref{x-ra-pcat,@code{ra-pcat}}, @ref{x-ra-tile,@code{ra-tile}}, @ref{C
 @end verbatim
 @result{} #%2((0 1) (2 3) (a b))
 @end example
+@end deffn
+
+@cindex @code{ra-shape}
+@anchor{x-ra-shape}
+@deffn @w{function} ra-shape a
+
+Return the shape (a list of two-element lists, each containing the lower and upper bound of each axis) of ra @var{a}.
+
+@example
+@verbatim
+(ra-shape (make-ra 0 '(2 3) 4))
+@end verbatim
+@result{} @code{((2 3) (0 3))}
+@end example
+
+See also: @ref{x-ra-dimensions,@code{ra-dimensions}}, @ref{x-make-ra,@code{make-ra}}.
+
 @end deffn
 
 @cindex @code{ra-tile}
@@ -1594,54 +1699,6 @@ but
 (ra-transpose (ra-transpose (ra-i 2 3 4) 2 1 0) 2 1 0)
 @end verbatim
 @result{} @code{#%3d:4:2:3(((0 4 8) (12 16 20)) ((1 5 9) (13 17 21)) ((2 6 10) (14 18 22)) ((3 7 11) (15 19 23)))}
-@end example
-@end deffn
-
-@cindex @code{⌽}, reverse
-@cindex @code{ra-reverse}
-@anchor{x-ra-reverse}
-@deffn @w{function} ra-reverse a axes ...
-Reverse the given @var{axes} of @var{a}.
-
-The reversed array has the same root as @var{a}.
-@example
-@verbatim
-(ra-reverse (ra-i 2 3) 0 1)
-@end verbatim
-@result{} #%1d:2:3((5 4 3) (2 1 0))
-@end example
-@end deffn
-
-@cindex @code{⌽}, rotate
-@cindex @code{⊖}, rowel
-@cindex @code{ra-rotate}
-@anchor{x-ra-rotate}
-@deffn @w{function} ra-rotate n a
-(FIXME: not implemented) Rotate the first axis of @var{a} toward the lower indices (‘to the left’) @var{n} times. @var{n} may be any integer. The result has the type of @var{a}, unless that type is @code{d}, in which case the result is of type @code{#t}.
-
-Example:
-@example
-@verbatim
-(ra-rotate 1 (ra-i 3 2))
-@end verbatim
-@result{} #%1:3:2((2 3) (4 5) (0 1))
-@end example
-@end deffn
-
-@cindex rotate!
-@cindex @code{ra-rotate!}
-@anchor{x-ra-rotate!}
-@deffn @w{function} ra-rotate! n a
-Rotate in place the first axis of @var{a} to the left @var{n} times. @var{n} may be any integer. @var{a} must be writable. This function returns @var{a}.
-
-Example:
-@example
-@verbatim
-(define a (ra-copy #t (ra-i 3 2)))
-(ra-rotate! 1 a)
-a
-@end verbatim
-@result{} #%1:3:2((2 3) (4 5) (0 1))
 @end example
 @end deffn
 
@@ -1823,9 +1880,7 @@ Additionally, if each @var{i} ... is one of
 @end itemize
 then the result @var{b} shares the root of @var{a}. In all other cases a new root is allocated.
 
-The type of @var{b} is the same as that of @var{a}, with the only exception that
-if the type of @var{a} is @code{'d} and the root of @var{b} isn't shared with
-the root of @var{a}, then the type of @var{b} is @code{#t}.
+The type of @var{b} is the same as that of @var{a}, with the only exception that if the type of @var{a} is @code{'d} and the root of @var{b} cannot be shared with the root of @var{a}, then the type of @var{b} is @code{#t}.
 
 See also: @ref{x-ra-cell,@code{ra-cell}} @ref{x-ra-ref,@code{ra-ref}} @ref{x-ra-slice,@code{ra-slice}} @ref{x-ra-amend!,@code{ra-amend!}} @ref{x-ra-set!,@code{ra-set!}}.
 
@@ -1874,17 +1929,10 @@ indices that match those elements. @code{newra} will @emph{not} check that each 
 @result{} #%1:3(1 8 3) ; do not rely on 8 ending up there
 @end example
 
-This function returns the modified ra @var{a}.
+This function returns the modified array @var{a}.
 
 See also: @ref{x-ra-copy!,@code{ra-copy!}} @ref{x-ra-cell,@code{ra-cell}} @ref{x-ra-ref,@code{ra-ref}} @ref{x-ra-slice,@code{ra-slice}} @ref{x-ra-from,@code{ra-from}} @ref{x-ra-set!,@code{ra-set!}}.
 
-@end deffn
-
-@cindex @code{ldots}
-@anchor{x-ldots}
-@deffn @w{function} ldots [n] ...
-
-Placeholder for @var{n} full axes, used as argument to @code{ra-from} or @code{ra-amend!}. Without @var{n}, expand to fill the rank of the argument @var{a} of @code{ra-from} or @code{ra-amend!}.
 @end deffn
 
 @cindex @code{ra->array}
@@ -1896,29 +1944,6 @@ Convert built-in Guile array @var{a} (anything that satisfies @code{array?}) int
 This function does not create a copy of the array, but reuses the root (@code{shared-array-root}) of @var{a}, that is, @code{(eq? (ra-root (ra->array a)) (shared-array-root a))} is @code{#t}. For example, this means that if @var{a} is/isn't mutable, then the same will be true for @code{(ra->array a)}.
 
 See also: @ref{x-array->ra,@code{array->ra}}.
-
-@end deffn
-
-@cindex @code{array->ra}
-@anchor{x-array->ra}
-@deffn @w{function} array->ra a
-
-Convert ra @var{a} into built-in Guile array.
-
-This function does not create a copy of the ra, but reuses the root (@code{ra-root}) of @var{a}, that is, @code{(eq? (ra-root a) (shared-array-root (array->ra a)))} is @code{#t}. For example, this means that if @var{a} is/isn't mutable, then the same will be true for @code{(array->ra a)}.
-
-Not all arrays can be converted into built-in Guile arrays. For example, type @code{'d} arrays, or arrays with infinite axes, are not convertible.
-
-@example
-@verbatim
-(ra->array (ra-i 3)) ; error, not convertible
-(ra->array (ra-copy #t (ra-i 3))) ; ok
-(ra->array (ra-transpose (ra-i 2 3) 1)) ; error, not convertible
-(ra->array (ra-singletonize (ra-transpose (ra-i 2 3) 1))) ; ok
-@end verbatim
-@end example
-
-See also: @ref{x-ra-singletonize,@code{ra-singletonize}} @ref{x-ra-copy!,@code{ra-copy!}} @ref{x-ra->array,@code{ra->array}}.
 
 @end deffn
 
