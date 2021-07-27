@@ -242,6 +242,7 @@ These problems are solved if the built-in type is replaced with a new type defin
 @menu
 * Creating and accessing arrays::
 * Special arrays::
+* Writing and reading::
 * Iteration::
 * Slicing::
 * Reshaping and resizing::
@@ -406,6 +407,86 @@ These are treated especially when used in iteration, in that they match axes of 
 
 @cindex singleton axis
 When an axis has 0 step and infinite length, it operates essentially as ‘singleton axes’ operate in other array languages. The main diference is that the ability to match any finite length is explicit; an axis with length 1 will still fail to match an axis with length 2 (say).
+
+@c ------------------------------------------------
+@node Writing and reading
+@section Writing and reading
+@c ------------------------------------------------
+
+The read syntax for arrays is @url{https://www.gnu.org/software/guile/manual/html_node/Array-Syntax.html,the same} as for built-in Guile arrays, except that @code{#%} is used instead of @code{#}. Full dimensions are printed by default, even when they are not required to read an array.
+
+@example
+@verbatim
+(call-with-input-string "#%1(2 2 2)" read)
+@end verbatim
+@result{} @code{#%1:3(2 2 2)}
+@end example
+
+@example
+@verbatim
+(call-with-input-string "#%1:3(2 2 2)" read)
+@end verbatim
+@result{} @code{#%1:3(2 2 2)}
+@end example
+
+Dead axes print as @code{d}. This cannot be read back.
+
+@example
+@verbatim
+(display (ra-transpose (ra-copy (ra-iota 3)) 1))
+@end verbatim
+@result{} @code{#%2:d:3((0 1 2))}
+@end example
+
+Likewise, arrays with root of type @code{d} cannot be read back either.
+
+@example
+@verbatim
+(define s (format #f "~a" (ra-i 2 3)))
+s
+@end verbatim
+@result{} @code{"#%2d:2:3((0 1 2) (3 4 5))"}
+@end example
+
+@example
+@verbatim
+(call-with-input-string s read)
+@end verbatim
+@result{} error: cannot make array of type d
+@end example
+
+Truncated output is not supported yet.
+
+@example
+@verbatim
+(format #f "~@y" (ra-i 2 3))
+@end verbatim
+@result{} @code{"#%2d:2:3((0 1 2) (3 4 5))"} ; ok, but we didn't need to truncate
+@end example
+
+@example
+@verbatim
+(format #f "~@y" (ra-i 99 99))
+@end verbatim
+@result{} @code{"#" ; ouch}
+@end example
+
+The function @ref{x-ra-format, @code{ra-format}} can be used to pretty print arrays. This type of output cannot be read back, either.
+
+@example
+@verbatim
+(ra-format #t (list->ra 2 '((1 hello) (try 2) (never 3.14))))
+@end verbatim
+@result{}
+┌────┬─────┐
+│   1│hello│
+├────┼─────┤
+│ try│    2│
+├────┼─────┤
+│ever│ 3.14│
+└────┴─────┘
+@end example
+
 
 @c ------------------------------------------------
 @node Iteration
@@ -1189,14 +1270,16 @@ Slice @var{a} to the smaller of the bounds of @var{a} and @var{b}. @var{a} and @
 
 @cindex @code{ra-format}
 @anchor{x-ra-format}
-@deffn @w{function} ra-format port ra [fmt] @result{}
-@deffnx @w{function} ra-format #f ra [fmt] @result{} sc
+@deffn @w{function} ra-format port ra #:fmt #:prefix?
+@deffnx @w{function} ra-format #f ra #:fmt #:prefix? @result{} sc
 
-Pretty print array @var{ra}. Each of the elements of @var{ra} is printed using @code{(format … cell fmt)} (from @code{(ice-9 format)}). If the element is itself an array, it is printed using @code{ra-format} recursively.
+Pretty print array @var{ra}. Each of the elements of @var{ra} is formatted using @code{(format #f fmt el)} from @url{https://www.gnu.org/software/guile/manual/html_node/Formatted-Output.html,@code{(ice-9 format)}}. @var{fmt} defauts to @code{"~a"}. If the element is itself an array, it is formatted using @code{ra-format} recursively.
 
 If @var{port} is @code{#t}, the array is printed to standard output. If is @code{#f}, nothing is printed; instead, the function returns a rank-2 character array @var{sc} with the result of the printing.
 
-This function handles arrays of rank up to 8. The even dimensions (counting from the end) are arranged horizontally, while the odd dimensions are arranged vertically. The dimensions are separated visually using box-drawing characters. This might look better in a terminal than in a browser, depending on the font.
+If @var{prefix?} is @code{#t}, the array print prefix @ref{x-ra-print-prefix,@code{ra-print-prefix}} is printed over the first line of the printout if the rank of @var{ra} is 2 or greater, else it is printed on a separate line above the printout.
+
+This function handles arrays of rank up to 8. The even dimensions (counting from the last one) are arranged horizontally, while the odd dimensions are arranged vertically. The dimensions are separated visually using @url{https://unicode.org/charts/nameslist/n_2500.html,box-drawing characters}. This might look better in a terminal than in a browser, depending on the font.
 
 A 0-array:
 @example
@@ -1262,19 +1345,20 @@ A nested array (example from @mybibcite{SRFI-163}):
 @verbatim
 (ra-format #t (call-with-input-string "#%2@1:2@1:3((#%2((1 2) (3 4)) 9 #%2((3 4) (5 6)))
                                        (#%(42 43) #%2((8 7 6)) #%2((90 91) (100 101))))))"
-                                      read))
+                                      read)
+           #:prefix? #t)
 @end verbatim
 @result{}
 @verbatim
-┌───────┬───────┬─────────┐
-│  ┌─┬─┐│      9│    ┌─┬─┐│
-│  │1│2││       │    │3│4││
-│  ├─┼─┤│       │    ├─┼─┤│
-│  │3│4││       │    │5│6││
-│  └─┴─┘│       │    └─┴─┘│
+#%2@1:2@1:3─────┬─────────┐
+│#%2:2:2│      9│  #%2:2:2│
+││1│2│  │       │  │3│4│  │
+│├─┼─┤  │       │  ├─┼─┤  │
+││3│4│  │       │  │5│6│  │
+│└─┴─┘  │       │  └─┴─┘  │
 ├───────┼───────┼─────────┤
-││42│43││┌─┬─┬─┐│┌───┬───┐│
-│       ││8│7│6│││ 90│ 91││
+│#%1:2  │#%2:1:3│#%2:2:2─┐│
+││42│43│││8│7│6│││ 90│ 91││
 │       │└─┴─┴─┘│├───┼───┤│
 │       │       ││100│101││
 │       │       │└───┴───┘│
@@ -1363,6 +1447,32 @@ See also: @ref{x-ra-scat,@code{ra-scat}}, @ref{x-ra-tile,@code{ra-tile}},  @ref{
 (ra-pcat #f 1 #%1(a b) #%2((0 1) (2 3)))
 @end verbatim
 @result{} #%2((a 0 1) (b 2 3))
+@end example
+@end deffn
+
+@cindex @code{print prefix}
+@cindex @code{ra-print-prefix}
+@anchor{x-ra-print-prefix}
+@deffn @w{function} ra-print-prefix ra port #:dims?
+
+Return the print prefix for array @var{ra}. This is a string that details the type, rank, and (optionally) the dimensions of @var{ra}, and is part of the default read syntax for arrays. This is the same syntax as that of the @url{https://www.gnu.org/software/guile/manual/html_node/Array-Syntax.html,the built in Guile arrays}, except that @var{dims?} defaults to true and @code{#%} is used instead of @code{#}.
+
+This function is provided by the module @code{(newra print)}.
+
+See also: @ref{x-ra-format,@code{ra-format}}, @ref{Writing and reading}.
+
+@example
+@verbatim
+(call-with-output-string (cut ra-print-prefix (make-ra 4 '(3 4) '(2 3)) <>))
+@end verbatim
+@result{} @code{"#%2@@3:2@@2:2"}
+@end example
+
+@example
+@verbatim
+(call-with-output-string (cut ra-print-prefix (make-ra 4 '(3 4) '(2 3)) <> #:dims? #t))
+@end verbatim
+@result{} @code{"#%2@@3@@2"}
 @end example
 @end deffn
 

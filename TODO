@@ -4,6 +4,7 @@ Help: [C-uc .] insert timestamp [C-cc] flip checkbox [C-uucc] partial flip check
 
 * TODO bugs [0/1]
   * [ ] docstrings don't work for define-inlinable-case
+  * [ ] (call-with-input-string "#3()" read) vs (call-with-input-string "#%3()" read)
 
 * TODO compatibility with existing Guile arrays [8/9]
   * [X] ra-slice-for-each ra-map! ra-for-each ra-cell ra-ref ra-set!

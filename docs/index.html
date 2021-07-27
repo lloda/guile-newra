@@ -336,19 +336,21 @@ Next: <a href="#High-level" accesskey="n" rel="next">High level</a>, Previous: <
 </td></tr>
 <tr><td align="left" valign="top">&bull; <a href="#Special-arrays" accesskey="2">Special arrays</a>:</td><td>&nbsp;&nbsp;</td><td align="left" valign="top">
 </td></tr>
-<tr><td align="left" valign="top">&bull; <a href="#Iteration" accesskey="3">Iteration</a>:</td><td>&nbsp;&nbsp;</td><td align="left" valign="top">
+<tr><td align="left" valign="top">&bull; <a href="#Writing-and-reading" accesskey="3">Writing and reading</a>:</td><td>&nbsp;&nbsp;</td><td align="left" valign="top">
 </td></tr>
-<tr><td align="left" valign="top">&bull; <a href="#Slicing" accesskey="4">Slicing</a>:</td><td>&nbsp;&nbsp;</td><td align="left" valign="top">
+<tr><td align="left" valign="top">&bull; <a href="#Iteration" accesskey="4">Iteration</a>:</td><td>&nbsp;&nbsp;</td><td align="left" valign="top">
 </td></tr>
-<tr><td align="left" valign="top">&bull; <a href="#Reshaping-and-resizing" accesskey="5">Reshaping and resizing</a>:</td><td>&nbsp;&nbsp;</td><td align="left" valign="top">
+<tr><td align="left" valign="top">&bull; <a href="#Slicing" accesskey="5">Slicing</a>:</td><td>&nbsp;&nbsp;</td><td align="left" valign="top">
 </td></tr>
-<tr><td align="left" valign="top">&bull; <a href="#Concatenation" accesskey="6">Concatenation</a>:</td><td>&nbsp;&nbsp;</td><td align="left" valign="top">
+<tr><td align="left" valign="top">&bull; <a href="#Reshaping-and-resizing" accesskey="6">Reshaping and resizing</a>:</td><td>&nbsp;&nbsp;</td><td align="left" valign="top">
 </td></tr>
-<tr><td align="left" valign="top">&bull; <a href="#Transposition" accesskey="7">Transposition</a>:</td><td>&nbsp;&nbsp;</td><td align="left" valign="top">
+<tr><td align="left" valign="top">&bull; <a href="#Concatenation" accesskey="7">Concatenation</a>:</td><td>&nbsp;&nbsp;</td><td align="left" valign="top">
 </td></tr>
-<tr><td align="left" valign="top">&bull; <a href="#Other-operations-on-arrays" accesskey="8">Other operations on arrays</a>:</td><td>&nbsp;&nbsp;</td><td align="left" valign="top">
+<tr><td align="left" valign="top">&bull; <a href="#Transposition" accesskey="8">Transposition</a>:</td><td>&nbsp;&nbsp;</td><td align="left" valign="top">
 </td></tr>
-<tr><td align="left" valign="top">&bull; <a href="#Foreign-interface" accesskey="9">Foreign interface</a>:</td><td>&nbsp;&nbsp;</td><td align="left" valign="top">
+<tr><td align="left" valign="top">&bull; <a href="#Other-operations-on-arrays" accesskey="9">Other operations on arrays</a>:</td><td>&nbsp;&nbsp;</td><td align="left" valign="top">
+</td></tr>
+<tr><td align="left" valign="top">&bull; <a href="#Foreign-interface">Foreign interface</a>:</td><td>&nbsp;&nbsp;</td><td align="left" valign="top">
 </td></tr>
 <tr><td align="left" valign="top">&bull; <a href="#Compatibility-with-old-Guile-arrays">Compatibility with old Guile arrays</a>:</td><td>&nbsp;&nbsp;</td><td align="left" valign="top">
 </td></tr>
@@ -424,7 +426,7 @@ Next: <a href="#Special-arrays" accesskey="n" rel="next">Special arrays</a>, Up:
 <a name="Special-arrays"></a>
 <div class="header">
 <p>
-Next: <a href="#Iteration" accesskey="n" rel="next">Iteration</a>, Previous: <a href="#Creating-and-accessing-arrays" accesskey="p" rel="prev">Creating and accessing arrays</a>, Up: <a href="#Low-level" accesskey="u" rel="up">Low level</a> &nbsp; [<a href="#Indices" title="Index" rel="index">Index</a>]</p>
+Next: <a href="#Writing-and-reading" accesskey="n" rel="next">Writing and reading</a>, Previous: <a href="#Creating-and-accessing-arrays" accesskey="p" rel="prev">Creating and accessing arrays</a>, Up: <a href="#Low-level" accesskey="u" rel="up">Low level</a> &nbsp; [<a href="#Indices" title="Index" rel="index">Index</a>]</p>
 </div>
 <a name="Special-arrays-1"></a>
 <h3 class="section">2.2 Special arrays</h3>
@@ -487,13 +489,81 @@ Next: <a href="#Iteration" accesskey="n" rel="next">Iteration</a>, Previous: <a 
 <p>When an axis has 0 step and infinite length, it operates essentially as ‘singleton axes’ operate in other array languages. The main diference is that the ability to match any finite length is explicit; an axis with length 1 will still fail to match an axis with length 2 (say).
 </p>
 <hr>
+<a name="Writing-and-reading"></a>
+<div class="header">
+<p>
+Next: <a href="#Iteration" accesskey="n" rel="next">Iteration</a>, Previous: <a href="#Special-arrays" accesskey="p" rel="prev">Special arrays</a>, Up: <a href="#Low-level" accesskey="u" rel="up">Low level</a> &nbsp; [<a href="#Indices" title="Index" rel="index">Index</a>]</p>
+</div>
+<a name="Writing-and-reading-1"></a>
+<h3 class="section">2.3 Writing and reading</h3>
+
+<p>The read syntax for arrays is <a href="https://www.gnu.org/software/guile/manual/html_node/Array-Syntax.html">the same</a> as for built-in Guile arrays, except that <code>#%</code> is used instead of <code>#</code>. Full dimensions are printed by default, even when they are not required to read an array.
+</p>
+<div class="example">
+<pre class="verbatim">(call-with-input-string &quot;#%1(2 2 2)&quot; read)
+</pre><pre class="example">&rArr; <code>#%1:3(2 2 2)</code>
+</pre></div>
+
+<div class="example">
+<pre class="verbatim">(call-with-input-string &quot;#%1:3(2 2 2)&quot; read)
+</pre><pre class="example">&rArr; <code>#%1:3(2 2 2)</code>
+</pre></div>
+
+<p>Dead axes print as <code>d</code>. This cannot be read back.
+</p>
+<div class="example">
+<pre class="verbatim">(display (ra-transpose (ra-copy (ra-iota 3)) 1))
+</pre><pre class="example">&rArr; <code>#%2:d:3((0 1 2))</code>
+</pre></div>
+
+<p>Likewise, arrays with root of type <code>d</code> cannot be read back either.
+</p>
+<div class="example">
+<pre class="verbatim">(define s (format #f &quot;~a&quot; (ra-i 2 3)))
+s
+</pre><pre class="example">&rArr; <code>&quot;#%2d:2:3((0 1 2) (3 4 5))&quot;</code>
+</pre></div>
+
+<div class="example">
+<pre class="verbatim">(call-with-input-string s read)
+</pre><pre class="example">&rArr; error: cannot make array of type d
+</pre></div>
+
+<p>Truncated output is not supported yet.
+</p>
+<div class="example">
+<pre class="verbatim">(format #f &quot;~@y&quot; (ra-i 2 3))
+</pre><pre class="example">&rArr; <code>&quot;#%2d:2:3((0 1 2) (3 4 5))&quot;</code> ; ok, but we didn't need to truncate
+</pre></div>
+
+<div class="example">
+<pre class="verbatim">(format #f &quot;~@y&quot; (ra-i 99 99))
+</pre><pre class="example">&rArr; <code>&quot;#&quot; ; ouch</code>
+</pre></div>
+
+<p>The function <a href="#x_002dra_002dformat"><code>ra-format</code></a> can be used to pretty print arrays. This type of output cannot be read back, either.
+</p>
+<div class="example">
+<pre class="verbatim">(ra-format #t (list-&gt;ra 2 '((1 hello) (try 2) (never 3.14))))
+</pre><pre class="example">&rArr;
+┌────┬─────┐
+│   1│hello│
+├────┼─────┤
+│ try│    2│
+├────┼─────┤
+│ever│ 3.14│
+└────┴─────┘
+</pre></div>
+
+
+<hr>
 <a name="Iteration"></a>
 <div class="header">
 <p>
-Next: <a href="#Slicing" accesskey="n" rel="next">Slicing</a>, Previous: <a href="#Special-arrays" accesskey="p" rel="prev">Special arrays</a>, Up: <a href="#Low-level" accesskey="u" rel="up">Low level</a> &nbsp; [<a href="#Indices" title="Index" rel="index">Index</a>]</p>
+Next: <a href="#Slicing" accesskey="n" rel="next">Slicing</a>, Previous: <a href="#Writing-and-reading" accesskey="p" rel="prev">Writing and reading</a>, Up: <a href="#Low-level" accesskey="u" rel="up">Low level</a> &nbsp; [<a href="#Indices" title="Index" rel="index">Index</a>]</p>
 </div>
 <a name="Iteration-1"></a>
-<h3 class="section">2.3 Iteration</h3>
+<h3 class="section">2.4 Iteration</h3>
 
 <p>The basic array iteration operations in <code>newra</code> all operate by effect. This gives you control of how the result is allocated. If one of the arguments is designated as destination, as is the case with <a href="#x_002dra_002dmap_0021"><code>ra-map!</code></a>, then that is the result of the whole iteration. For example:
 </p>
@@ -546,7 +616,7 @@ Next: <a href="#Slicing" accesskey="n" rel="next">Slicing</a>, Previous: <a href
 Next: <a href="#Reshaping-and-resizing" accesskey="n" rel="next">Reshaping and resizing</a>, Previous: <a href="#Iteration" accesskey="p" rel="prev">Iteration</a>, Up: <a href="#Low-level" accesskey="u" rel="up">Low level</a> &nbsp; [<a href="#Indices" title="Index" rel="index">Index</a>]</p>
 </div>
 <a name="Slicing-1"></a>
-<h3 class="section">2.4 Slicing</h3>
+<h3 class="section">2.5 Slicing</h3>
 
 <p>Slicing refers to the operation of taking a partial view of an array (e.g. a row or a column out of a matrix) through modification of the dim vector. This can be done with creative uses of <a href="#x_002dra_002dravel"><code>ra-ravel</code></a>, <a href="#x_002dra_002dreshape"><code>ra-reshape</code></a> and <a href="#x_002dra_002dtranspose"><code>ra-transpose</code></a>, and of course by direct modification of the dim vector, but the facilities described in this section are usually a lot clearer.
 </p>
@@ -679,7 +749,7 @@ Next: <a href="#Reshaping-and-resizing" accesskey="n" rel="next">Reshaping and r
 Next: <a href="#Concatenation" accesskey="n" rel="next">Concatenation</a>, Previous: <a href="#Slicing" accesskey="p" rel="prev">Slicing</a>, Up: <a href="#Low-level" accesskey="u" rel="up">Low level</a> &nbsp; [<a href="#Indices" title="Index" rel="index">Index</a>]</p>
 </div>
 <a name="Reshaping-and-resizing-1"></a>
-<h3 class="section">2.5 Reshaping and resizing</h3>
+<h3 class="section">2.6 Reshaping and resizing</h3>
 
 <a name="index-APL"></a>
 <a name="index-_002c_002c-ravel"></a>
@@ -710,7 +780,7 @@ Next: <a href="#Concatenation" accesskey="n" rel="next">Concatenation</a>, Previ
 Next: <a href="#Transposition" accesskey="n" rel="next">Transposition</a>, Previous: <a href="#Reshaping-and-resizing" accesskey="p" rel="prev">Reshaping and resizing</a>, Up: <a href="#Low-level" accesskey="u" rel="up">Low level</a> &nbsp; [<a href="#Indices" title="Index" rel="index">Index</a>]</p>
 </div>
 <a name="Concatenation-1"></a>
-<h3 class="section">2.6 Concatenation</h3>
+<h3 class="section">2.7 Concatenation</h3>
 
 <a name="index-concatenation"></a>
 <p><code>newra</code> offers two concatenation operations: <a href="#x_002dra_002dpcat"><code>ra-pcat</code></a> (prefix cat) and <a href="#x_002dra_002dscat"><code>ra-scat</code></a> (suffix cat).
@@ -815,7 +885,7 @@ Next: <a href="#Transposition" accesskey="n" rel="next">Transposition</a>, Previ
 Next: <a href="#Other-operations-on-arrays" accesskey="n" rel="next">Other operations on arrays</a>, Previous: <a href="#Concatenation" accesskey="p" rel="prev">Concatenation</a>, Up: <a href="#Low-level" accesskey="u" rel="up">Low level</a> &nbsp; [<a href="#Indices" title="Index" rel="index">Index</a>]</p>
 </div>
 <a name="Transposition-1"></a>
-<h3 class="section">2.7 Transposition</h3>
+<h3 class="section">2.8 Transposition</h3>
 
 <a name="index-_005b_003f_005d_002c-transpose"></a>
 <a name="index-transpose"></a>
@@ -897,7 +967,7 @@ A
 Next: <a href="#Foreign-interface" accesskey="n" rel="next">Foreign interface</a>, Previous: <a href="#Transposition" accesskey="p" rel="prev">Transposition</a>, Up: <a href="#Low-level" accesskey="u" rel="up">Low level</a> &nbsp; [<a href="#Indices" title="Index" rel="index">Index</a>]</p>
 </div>
 <a name="Other-operations-on-arrays-1"></a>
-<h3 class="section">2.8 Other operations on arrays</h3>
+<h3 class="section">2.9 Other operations on arrays</h3>
 
 
 <hr>
@@ -907,7 +977,7 @@ Next: <a href="#Foreign-interface" accesskey="n" rel="next">Foreign interface</a
 Next: <a href="#Compatibility-with-old-Guile-arrays" accesskey="n" rel="next">Compatibility with old Guile arrays</a>, Previous: <a href="#Other-operations-on-arrays" accesskey="p" rel="prev">Other operations on arrays</a>, Up: <a href="#Low-level" accesskey="u" rel="up">Low level</a> &nbsp; [<a href="#Indices" title="Index" rel="index">Index</a>]</p>
 </div>
 <a name="Foreign-interface-1"></a>
-<h3 class="section">2.9 Foreign interface</h3>
+<h3 class="section">2.10 Foreign interface</h3>
 
 <p>One of the major reasons to use arrays instead of other Scheme data structures is that they let one pass a large amount of data through a C interface very efficiently. The data doesn&rsquo;t need to be copied — one only needs to pass a pointer to the data, plus the sizes and the steps in some order. C doesn&rsquo;t have a standard consolidated array type, so the particulars are variable. In any case, the required items can be obtained trivially from a <code>newra</code> array object.
 </p>
@@ -920,7 +990,7 @@ Next: <a href="#Compatibility-with-old-Guile-arrays" accesskey="n" rel="next">Co
 Previous: <a href="#Foreign-interface" accesskey="p" rel="prev">Foreign interface</a>, Up: <a href="#Low-level" accesskey="u" rel="up">Low level</a> &nbsp; [<a href="#Indices" title="Index" rel="index">Index</a>]</p>
 </div>
 <a name="Compatibility-with-old-Guile-arrays-1"></a>
-<h3 class="section">2.10 Compatibility with old Guile arrays</h3>
+<h3 class="section">2.11 Compatibility with old Guile arrays</h3>
 
 <p>The functions <a href="#x_002dra_002d_003earray"><code>ra-&gt;array</code></a> and <a href="#x_002darray_002d_003era"><code>array-&gt;ra</code></a> are provided to convert to and from <code>newra</code> arrays and built-in Guile arrays. It is an error to use <code>ra-&gt;array</code> on arrays whose root isn&rsquo;t supported by the built-in arrays, or that have an infinite length. Except in those two cases, the conversion is transparent both ways, and the result always shares the root of the argument.
 </p>
@@ -1177,14 +1247,16 @@ Next: <a href="#Sources" accesskey="n" rel="next">Sources</a>, Previous: <a href
 
 <a name="index-ra_002dformat"></a>
 <a name="x_002dra_002dformat"></a><dl>
-<dt><a name="index-ra_002dformat-1"></a>function<!-- /@w -->: <strong>ra-format</strong> <em>port ra [fmt] &rArr;</em></dt>
-<dt><a name="index-ra_002dformat-2"></a>function<!-- /@w -->: <strong>ra-format</strong> <em>#f ra [fmt] &rArr; sc</em></dt>
+<dt><a name="index-ra_002dformat-1"></a>function<!-- /@w -->: <strong>ra-format</strong> <em>port ra #:fmt #:prefix?</em></dt>
+<dt><a name="index-ra_002dformat-2"></a>function<!-- /@w -->: <strong>ra-format</strong> <em>#f ra #:fmt #:prefix? &rArr; sc</em></dt>
 <dd>
-<p>Pretty print array <var>ra</var>. Each of the elements of <var>ra</var> is printed using <code>(format … cell fmt)</code> (from <code>(ice-9 format)</code>). If the element is itself an array, it is printed using <code>ra-format</code> recursively.
+<p>Pretty print array <var>ra</var>. Each of the elements of <var>ra</var> is formatted using <code>(format #f fmt el)</code> from <a href="https://www.gnu.org/software/guile/manual/html_node/Formatted-Output.html"><code>(ice-9 format)</code></a>. <var>fmt</var> defauts to <code>&quot;~a&quot;</code>. If the element is itself an array, it is formatted using <code>ra-format</code> recursively.
 </p>
 <p>If <var>port</var> is <code>#t</code>, the array is printed to standard output. If is <code>#f</code>, nothing is printed; instead, the function returns a rank-2 character array <var>sc</var> with the result of the printing.
 </p>
-<p>This function handles arrays of rank up to 8. The even dimensions (counting from the end) are arranged horizontally, while the odd dimensions are arranged vertically. The dimensions are separated visually using box-drawing characters. This might look better in a terminal than in a browser, depending on the font.
+<p>If <var>prefix?</var> is <code>#t</code>, the array print prefix <a href="#x_002dra_002dprint_002dprefix"><code>ra-print-prefix</code></a> is printed over the first line of the printout if the rank of <var>ra</var> is 2 or greater, else it is printed on a separate line above the printout.
+</p>
+<p>This function handles arrays of rank up to 8. The even dimensions (counting from the last one) are arranged horizontally, while the odd dimensions are arranged vertically. The dimensions are separated visually using <a href="https://unicode.org/charts/nameslist/n_2500.html">box-drawing characters</a>. This might look better in a terminal than in a browser, depending on the font.
 </p>
 <p>A 0-array:
 </p><div class="example">
@@ -1234,17 +1306,18 @@ Next: <a href="#Sources" accesskey="n" rel="next">Sources</a>, Previous: <a href
 <div class="example">
 <pre class="verbatim">(ra-format #t (call-with-input-string &quot;#%2@1:2@1:3((#%2((1 2) (3 4)) 9 #%2((3 4) (5 6)))
                                        (#%(42 43) #%2((8 7 6)) #%2((90 91) (100 101))))))&quot;
-                                      read))
+                                      read)
+           #:prefix? #t)
 </pre><pre class="example">&rArr;
-</pre><pre class="verbatim">┌───────┬───────┬─────────┐
-│  ┌─┬─┐│      9│    ┌─┬─┐│
-│  │1│2││       │    │3│4││
-│  ├─┼─┤│       │    ├─┼─┤│
-│  │3│4││       │    │5│6││
-│  └─┴─┘│       │    └─┴─┘│
+</pre><pre class="verbatim">#%2@1:2@1:3─────┬─────────┐
+│#%2:2:2│      9│  #%2:2:2│
+││1│2│  │       │  │3│4│  │
+│├─┼─┤  │       │  ├─┼─┤  │
+││3│4│  │       │  │5│6│  │
+│└─┴─┘  │       │  └─┴─┘  │
 ├───────┼───────┼─────────┤
-││42│43││┌─┬─┬─┐│┌───┬───┐│
-│       ││8│7│6│││ 90│ 91││
+│#%1:2  │#%2:1:3│#%2:2:2─┐│
+││42│43│││8│7│6│││ 90│ 91││
 │       │└─┴─┴─┘│├───┼───┤│
 │       │       ││100│101││
 │       │       │└───┴───┘│
@@ -1322,6 +1395,28 @@ Next: <a href="#Sources" accesskey="n" rel="next">Sources</a>, Previous: <a href
 <div class="example">
 <pre class="verbatim">(ra-pcat #f 1 #%1(a b) #%2((0 1) (2 3)))
 </pre><pre class="example">&rArr; #%2((a 0 1) (b 2 3))
+</pre></div>
+</dd></dl>
+
+<a name="index-print-prefix"></a>
+<a name="index-ra_002dprint_002dprefix"></a>
+<a name="x_002dra_002dprint_002dprefix"></a><dl>
+<dt><a name="index-ra_002dprint_002dprefix-1"></a>function<!-- /@w -->: <strong>ra-print-prefix</strong> <em>ra port #:dims?</em></dt>
+<dd>
+<p>Return the print prefix for array <var>ra</var>. This is a string that details the type, rank, and (optionally) the dimensions of <var>ra</var>, and is part of the default read syntax for arrays. This is the same syntax as that of the <a href="https://www.gnu.org/software/guile/manual/html_node/Array-Syntax.html">the built in Guile arrays</a>, except that <var>dims?</var> defaults to true and <code>#%</code> is used instead of <code>#</code>.
+</p>
+<p>This function is provided by the module <code>(newra print)</code>.
+</p>
+<p>See also: <a href="#x_002dra_002dformat"><code>ra-format</code></a>, <a href="#Writing-and-reading">Writing and reading</a>.
+</p>
+<div class="example">
+<pre class="verbatim">(call-with-output-string (cut ra-print-prefix (make-ra 4 '(3 4) '(2 3)) &lt;&gt;))
+</pre><pre class="example">&rArr; <code>&quot;#%2@3:2@2:2&quot;</code>
+</pre></div>
+
+<div class="example">
+<pre class="verbatim">(call-with-output-string (cut ra-print-prefix (make-ra 4 '(3 4) '(2 3)) &lt;&gt; #:dims? #t))
+</pre><pre class="example">&rArr; <code>&quot;#%2@3@2&quot;</code>
 </pre></div>
 </dd></dl>
 
@@ -1918,6 +2013,7 @@ Previous: <a href="#Sources" accesskey="p" rel="prev">Sources</a>, Up: <a href="
 <tr><td></td><td valign="top"><a href="#index-prefix-matching">prefix matching</a>:</td><td>&nbsp;</td><td valign="top"><a href="#Iteration">Iteration</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-prefix-slice">prefix slice</a>:</td><td>&nbsp;</td><td valign="top"><a href="#Creating-and-accessing-arrays">Creating and accessing arrays</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-prefix-slice-1">prefix slice</a>:</td><td>&nbsp;</td><td valign="top"><a href="#Slicing">Slicing</a></td></tr>
+<tr><td></td><td valign="top"><a href="#index-print-prefix"><code>print prefix</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
 <tr><td colspan="4"> <hr></td></tr>
 <tr><th><a name="Indices_cp_letter-R">R</a></th><td></td><td></td></tr>
 <tr><td></td><td valign="top"><a href="#index-ra_002d_003earray"><code>ra-&gt;array</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
@@ -1936,6 +2032,7 @@ Previous: <a href="#Sources" accesskey="p" rel="prev">Sources</a>, Up: <a href="
 <tr><td></td><td valign="top"><a href="#index-ra_002dmap_0021"><code>ra-map!</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-ra_002dorder_002dc_003f"><code>ra-order-c?</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-ra_002dpcat"><code>ra-pcat</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
+<tr><td></td><td valign="top"><a href="#index-ra_002dprint_002dprefix"><code>ra-print-prefix</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-ra_002dravel"><code>ra-ravel</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-ra_002dref"><code>ra-ref</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-ra_002dreshape"><code>ra-reshape</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>

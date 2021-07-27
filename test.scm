@@ -1163,19 +1163,19 @@
 
 (define ra (ra-i 1 8 9 3))
 (define ra (ra-map! (ra-copy #t ra) sqrt ra))
-(ra-format #t ra "~4,2f")
+(ra-format #t ra #:fmt "~4,2f")
 
 (define ra (ra-set! (ra-set! (ra-copy #t (ra-i 3 4 3))
                              (ra-i 2 3) 1 2 1)
                     (make-ra-root #(hello world of ras) (c-dims 2 2))
                     2 1 2))
-(ra-format #t ra "~a")
+(ra-format #t ra #:fmt "~a")
 
 (define ra (ra-i 2 2 2 2 2 2 2 2))
-(ra-format #t ra "~a")
+(ra-format #t ra)
 
 (define ra (ra-tile-right (ra-set! (ra-copy #t (ra-i 7)) (make-ra-root #(hello world of ras) (c-dims 2 2)) 3) 1))
-(ra-format #t ra "~a")
+(ra-format #t ra)
 
 ; example from srfi-164
 (define arr
@@ -1183,13 +1183,13 @@
               (#(42 43) #2((8 7 6)) #2((90 91) (100 101)))))
 (define ra (array->ra arr))
 (define ra (ra-map! (ra-copy ra) (lambda (x) (if (array? x) (array->ra x) x)) ra))
-(ra-format #t ra "~a")
+(ra-format #t ra #:prefix? #t)
 
 (define ra (array->ra #2@1:2@1:3((1 2 3) (4 5 6))))
-(ra-format #t ra "~a")
+(ra-format #t ra)
 
 (define ra (make-ra 'zero))
-(ra-format #t ra "~a")
+(ra-format #t ra)
 
 
 ; -----------------------

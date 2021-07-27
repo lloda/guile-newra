@@ -31,8 +31,8 @@
 
 (define (ra-pcat type i . xx)
   "
-Concatenate arrays @var{xx} ... along axis @{i}. The shapes of @var{xx} ... must
-have matching prefixes except at axis @{i}.
+Concatenate arrays @var{xx} ... along axis @var{i}. The shapes of @var{xx} ... must
+have matching prefixes except at axis @var{i}.
 
 The output array will have the rank of the @var{xx} with the largest rank, or
 @code{(+ 1 i)}, whichever is larger. If necessary, the @var{xx} are rank
