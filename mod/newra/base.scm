@@ -559,9 +559,9 @@ See also: ra-root ra-zero ra-dims
   "
 c-dims d ...
 
-Compute dim-vector for C-order (row-major) array of sizes @var{D} ...
+Compute dim-vector for C-order (row-major) array of lengths @var{D} ...
 
-The first size may given as #f, which indicates an infinite dimension.
+The first length may given as #f, which indicates an infinite dimension.
 
 See also: make-ra-root make-ra-new
 "

@@ -18,25 +18,25 @@
 (import (newra base) (newra map) (only (srfi :1) fold every any iota drop) (srfi :8) (srfi :26)
         (ice-9 control) (ice-9 match) (only (rnrs base) vector-map vector-for-each))
 
-(define (ra-reverse ra . k)
+(define (ra-reverse a . k)
   "
-ra-reverse ra k ...
-
-Reverse axes K ... of ra RA, 0 <= K < (ra-rank RA). The contents of RA are not
-copied.
+Reverse axes @var{k} ... of array @var{a}, 0 <= @var{k} < @code{(ra-rank
+@var{a})}. The result shares the root of @var{a}.
 
 Example:
 
+@lisp
   (ra-reverse (list->ra 2 '((0 1 2) (3 4 5))) 0 1)
-    -> #%2:2:3((2 1 0) (5 4 3)))
+  @result{} #%2:2:3((2 1 0) (5 4 3)))
+@end lisp
 
 See also: ra-transpose make-ra-shared
 "
-  (let* ((ra (ra-check ra))
-         (ndims (vector-copy (%%ra-dims ra))))
-    (let loop ((k k) (zero (%%ra-zero ra)))
+  (let* ((a (ra-check a))
+         (ndims (vector-copy (%%ra-dims a))))
+    (let loop ((k k) (zero (%%ra-zero a)))
       (if (null? k)
-        (make-ra-root (%%ra-root ra) ndims zero)
+        (make-ra-root (%%ra-root a) ndims zero)
         (match (vector-ref ndims (car k))
           (($ <dim> len lo step)
            (vector-set! ndims (car k) (make-dim len lo (- step)))
@@ -44,21 +44,19 @@ See also: ra-transpose make-ra-shared
 
 (define (ra-transpose ra . axes)
   "
-ra-transpose ra axes ... -> rb
+Transpose each axis 0, 1, ... of @var{a} to matching destination @var{axes}.
 
-Transpose the axes of ra RA. AXES must be a list of integers, and it must not be
-longer than the rank of RA. Each axis i = 0 ... (ra-rank ra)-1 is transposed to
-axis k = (AXES i) of RB. Therefore the rank of RB is 1+max(k).
+An axis @var{k} of the result @var{b} may be referenced multiple times in
+@var{axes} ... for source axes @var{i} ... . In that case the size of axis
+@var{k} in the result is the smallest of the sizes of the source axes @var{i}
+... , and the step of @var{k} is the sum of all the steps of @var{i} ... . The
+lower bounds of @var{i} ... must all be the same.
 
-An axis k of RB may be referenced multiple times in AXES, by RA axes i ... . In
-that case the size of k is the smallest of the sizes of i ..., and the step of k
-is the sum of all the steps of i ... . The lower bounds of i ... must all be the
-same.
+Any axis of @var{b} that is not referenced in @var{axes} is a `dead' axis with
+undefined dimension and step 0.
 
-Any axis of RB that is not referenced in AXES is a `dead' axis with undefined
-dimension and step 0.
-
-Axes of RA that aren't listed in AXES are transposed to the end of RB's axes.
+Axes of @var{ra} that aren't listed in @var{axes} are transposed to the end of
+@var{b}'s axes.
 
 See also: make-ra-root make-ra-new
 "
@@ -97,14 +95,14 @@ See also: make-ra-root make-ra-new
 
 (define (ra-untranspose rb . axes_)
   "
-ra-untranspose rb axes ... -> ra
+Transpose @var{axes} of @var{rb} to matching destination axes 0, 1, ... of the
+result @var{ra}. This is the inverse of (ra-transpose @var{ra} @var{axes} ...)
+-> @var{rb}.
 
-Reverse the transposition (ra-transpose ra axes ...).
-
-AXES must be a permutation of the list [0 ... (-1 (length axes))] and not be
-longer than the rank of RB. Each axis k = (AXES i) of RB is transposed to axis i
-= 0 ... (rak-rank rb)-1 of RA. The result has the same rank and the same root as
-the argument.
+@var{axes} must be a permutation of the list [0 ... (- (length @var{axes}) 1)]
+and not be longer than the rank of @var{rb}. Each axis k = (@var{axes} i) of
+@var{rb} is transposed to axis i = 0 ... (ra-rank @var{rb})-1 of @var{ra}. The
+result has the same rank and the same root as the argument.
 
 See also: ra-transpose ra-dims
 "
@@ -131,32 +129,32 @@ See also: ra-transpose ra-dims
             (vector-set! ndims n (vector-ref odims o)))
           (loop (+ n 1) (max m o) (cdr axes)))))))
 
-(define* (ra-order-c? ra #:optional n)
+(define* (ra-order-c? ra #:optional n (org 0))
   "
-ra-order-c? ra
-ra-order-c? ra n
+ra-order-c? ra [n [org]]
 
-Check whether the N-frame of RA is in C-order (aka row-major order).
+Check whether axes [@var{org} .. @var{org}+@var{n}) of @var{ra} are in C-order
+(aka row-major order).
 
-An ra frame is in C-order if the step of each axis is equal to the product of
+An array frame is in C-order if the step of each axis is equal to the product of
 the length and the step of the following axis. Axes with length 1 are
-ignored. If any axis has length 0, the frame is in C-order.
+ignored. If any axis has length 0, the frame is automatically in C-order.
 
-If N is not given, check whether the elements of RA are in packed C-order. This
-means that 1) the full frame of RA is in C-order, and 2) on the last axis,
-either the length is 1, or the length is 0, or the step is 1.
+If @var{n} is not given, check whether the elements of @var{ra} are in packed
+C-order. This means that 1) the full frame of RA is in C-order, and 2) on the
+last axis, either the length is 1, or the length is 0, or the step is 1.
 
 See also: ra-ravel ra-reshape ra-tile c-dims
 "
   (let* ((ra (ra-check ra))
          (dims (%%ra-dims ra))
          (rank (vector-length dims))
-         (nn (or n rank)))
-    (unless (<= 0 nn rank)
-      (throw 'bad-number-of-axes n rank))
+         (end (or (and n (+ n org)) rank)))
+    (unless (<= 0 end rank)
+      (throw 'bad-axes-org-end-rank org end rank))
 ; look for an axis with len > 1
-    (let loop ((i 0) (step #f))
-      (if (>= i nn)
+    (let loop ((i org) (step #f))
+      (if (>= i end)
 ; no more axes; check the last step if n was #f
         (or (not step) n (= step 1))
         (match (vector-ref dims i)
@@ -171,21 +169,22 @@ See also: ra-ravel ra-reshape ra-tile c-dims
 
 ; cf https://code.jsoftware.com/wiki/Vocabulary/comma
 
-(define* (ra-ravel ra #:optional (n (ra-rank ra)))
+(define* (ra-ravel ra #:optional (n (ra-rank ra)) (org 0))
   "
-ra-ravel ra -> rb
-ra-ravel ra n -> rb
+ra-ravel ra [n [org]] -> rb
 
-Return the row-major ravel of the N-frame of RA. N defaults to the rank of RA.
+Return the row-major ravel of the axes [@var{org} .. @var{org}+@var{n}) of
+@var{n}. @var{n} defaults to the rank of @var{ra} and @var{org} defaults to 0.
 
-The result RB is a ra with rank (rank(RA) - N + 1) that may or may not share the
-root of RA.
+The result @var{rb} is an array with rank (rank(@var{ra}) - @var{n} + 1) that
+may or may not share the root of RA.
 
-When RB does not share the root of RA, then it has the same type as RA unless
-that type is 'd, in which case it has type #t.
+When @var{rb} does not share the root of @var{ra}, then it has the same type as
+RA unless that type is @code{d}, in which case it has type @code{#t}.
 
 See also: ra-reshape ra-transpose ra-from ra-order-c?
 "
+  (unless (zero? org) (throw 'not-yet))
   (define (pure-ravel ra n)
     (let ((od (%%ra-dims ra))
           (rank (vector-length (%%ra-dims ra))))
@@ -220,15 +219,16 @@ See also: ra-reshape ra-transpose ra-from ra-order-c?
   "
 ra-reshape ra s ... -> rb
 
-Reshape the first axis of ra RA into shape S ... The shape of RB will be S
-concatenated with the rest of the shape of RA. The total size of the new axes
-must fit in the first axis of RA.
+Reshape the first axis of @var{ra} into shape @var{s} ... The shape of the
+result @var{rb} will be @var{s} concatenated with the rest of the shape of
+@var{ra}. The total size of the new axes must fit in the first axis of @var{ra}.
 
-Each element of S is either a list of two integers (LO HI) or an integer LEN.
+Each element of @var{s} is either a list of two integers @code{(lo hi)} or an
+integer @code{len}.
 
-The result always shares the root of RA.
+The result always shares the root of @var{ra}.
 
-See also: ra-ravel ra-tile ra-transpose ra-from ra-order-c? c-dims
+See also: ra-ravel ra-tile ra-transpose ra-from ra-order-c? c-dims make-ra-new
 "
   (unless (positive? (ra-rank ra))
     (throw 'bad-rank-for-reshape (ra-rank ra)))

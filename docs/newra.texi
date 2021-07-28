@@ -764,7 +764,7 @@ a
 @cindex APL
 @cindex @code{,}, ravel
 @cindex @code{⍴}, reshape
-To match APL dyadic ρ, @code{newra} offers a set of three different functions.
+To match APL ρ, @code{newra} offers three separate functions.
 
 @ref{x-ra-reshape, @code{ra-reshape}} and @ref{x-ra-ravel, @code{ra-ravel}} are in a way the inverse of each other, and neither is able to increase the size of the array. For that purpose @ref{x-ra-tile, @code{ra-tile}} is provided.
 
@@ -782,9 +782,9 @@ To match APL dyadic ρ, @code{newra} offers a set of three different functions.
 @end verbatim
 @result{} (10 3 4)
 @verbatim
-(ra-dimensions (ra-reshape (ra-ravel (ra-tile (ra-i 2 3 4) 5) 2) 2 5))
+(ra-dimensions (ra-reshape (ra-ravel (ra-tile (ra-i 2 3 4) 5) 2) 3 3))
 @end verbatim
-@result{} (2 5 3 4)
+@result{} (3 3 3 4)
 @end example
 
 @code{ra-reshape} and @code{ra-tile} always reuse the root of the argument. On the other hand @code{ra-ravel} may not be able to — this is one of the reasons to have three different functions instead of only one. You can check in advance whether @code{ra-ravel} will reuse the root with the function @ref{x-ra-order-c?, @code{ra-order-c?}}.
@@ -1395,9 +1395,7 @@ See also: @ref{Slicing}, @ref{Compatibility with old Guile arrays}.
 @anchor{x-ra-dimensions}
 @deffn @w{function} ra-dimensions a
 
-Return the dimensions of @var{a} as a list, like @ref{x-ra-shape,ra-shape}, but the dimensions that have lower bound zero are represented by their length alone, instead of a two-element list @code{(lo, hi)}.
-
-This is a convenience for the common case when lower bounds are always zero.
+Return the dimensions of @var{a} as a list, like @ref{x-ra-shape,@code{ra-shape}}, but the dimensions that have lower bound zero are represented by their length alone, instead of a two-element list @code{(lo, hi)}. This is a convenience for the common case when lower bounds are zero.
 
 @example
 @verbatim
@@ -1526,7 +1524,28 @@ A nested array (example from @mybibcite{SRFI-163}):
 @end verbatim
 @end example
 
-This function doesn't handle large arrays in any particular way and it isn't recommended for those cases (yet).
+Looking at the return value when @var{port} is @code{#f}:
+@example
+@verbatim
+(ra-format #t (ra-format #f (ra-i 2 3) #:prefix? #f) #:prefix? #f)
+@end verbatim
+@result{}
+@verbatim
+┌─┬─┬─┬─┬─┬─┬─┐
+│┌│─│┬│─│┬│─│┐│
+├─┼─┼─┼─┼─┼─┼─┤
+│││0│││1│││2│││
+├─┼─┼─┼─┼─┼─┼─┤
+│├│─│┼│─│┼│─│┤│
+├─┼─┼─┼─┼─┼─┼─┤
+│││3│││4│││5│││
+├─┼─┼─┼─┼─┼─┼─┤
+│└│─│┴│─│┴│─│┘│
+└─┴─┴─┴─┴─┴─┴─┘
+@end verbatim
+@end example
+
+This function doesn't handle large arrays in any particular way. User beware!
 
 @end deffn
 

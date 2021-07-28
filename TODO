@@ -3,8 +3,9 @@
 Help: [C-uc .] insert timestamp [C-cc] flip checkbox [C-uucc] partial flip checkbox [C-ct] flip TODO.
 
 * TODO bugs [1/2]
-  * [ ] docstrings don't work for define-inlinable-case
   * [X] (call-with-input-string "#3()" read) vs (call-with-input-string "#%3()" read)
+  * [ ] docstrings don't work for define-inlinable-case
+  * [ ] zero lengths break ra-format
 
 * TODO compatibility with existing Guile arrays [8/9]
   * [X] ra-slice-for-each ra-map! ra-for-each ra-cell ra-ref ra-set!
@@ -29,6 +30,7 @@ Help: [C-uc .] insert timestamp [C-cc] flip checkbox [C-uucc] partial flip check
     - [ ] axis insertion
   * [-] ra-ravel
     - [X] (ra-ravel a [n])
+    - [X] (ra-order-c? a [n [org]])
     - [ ] (ra-ravel a [n [org]])
   * [X] ra-tile
   * [-] ra-cat (ra-pcat, ra-scat)

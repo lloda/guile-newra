@@ -776,7 +776,7 @@ Next: <a href="#Concatenation" accesskey="n" rel="next">Concatenation</a>, Previ
 <a name="index-APL"></a>
 <a name="index-_002c_002c-ravel"></a>
 <a name="index-_005b_003f_005d_002c-reshape"></a>
-<p>To match APL dyadic ρ, <code>newra</code> offers a set of three different functions.
+<p>To match APL ρ, <code>newra</code> offers three separate functions.
 </p>
 <p><a href="#x_002dra_002dreshape"><code>ra-reshape</code></a> and <a href="#x_002dra_002dravel"><code>ra-ravel</code></a> are in a way the inverse of each other, and neither is able to increase the size of the array. For that purpose <a href="#x_002dra_002dtile"><code>ra-tile</code></a> is provided.
 </p>
@@ -787,8 +787,8 @@ Next: <a href="#Concatenation" accesskey="n" rel="next">Concatenation</a>, Previ
 </pre><pre class="example">&rArr; (5 2 3 4)
 </pre><pre class="verbatim">(ra-dimensions (ra-ravel (ra-tile (ra-i 2 3 4) 5) 2))
 </pre><pre class="example">&rArr; (10 3 4)
-</pre><pre class="verbatim">(ra-dimensions (ra-reshape (ra-ravel (ra-tile (ra-i 2 3 4) 5) 2) 2 5))
-</pre><pre class="example">&rArr; (2 5 3 4)
+</pre><pre class="verbatim">(ra-dimensions (ra-reshape (ra-ravel (ra-tile (ra-i 2 3 4) 5) 2) 3 3))
+</pre><pre class="example">&rArr; (3 3 3 4)
 </pre></div>
 
 <p><code>ra-reshape</code> and <code>ra-tile</code> always reuse the root of the argument. On the other hand <code>ra-ravel</code> may not be able to — this is one of the reasons to have three different functions instead of only one. You can check in advance whether <code>ra-ravel</code> will reuse the root with the function <a href="#x_002dra_002dorder_002dc_003f"><code>ra-order-c?</code></a>.
@@ -1358,9 +1358,7 @@ Next: <a href="#Sources" accesskey="n" rel="next">Sources</a>, Previous: <a href
 <a name="x_002dra_002ddimensions"></a><dl>
 <dt><a name="index-ra_002ddimensions-1"></a>function<!-- /@w -->: <strong>ra-dimensions</strong> <em>a</em></dt>
 <dd>
-<p>Return the dimensions of <var>a</var> as a list, like <a href="#x_002dra_002dshape">ra-shape</a>, but the dimensions that have lower bound zero are represented by their length alone, instead of a two-element list <code>(lo, hi)</code>.
-</p>
-<p>This is a convenience for the common case when lower bounds are always zero.
+<p>Return the dimensions of <var>a</var> as a list, like <a href="#x_002dra_002dshape"><code>ra-shape</code></a>, but the dimensions that have lower bound zero are represented by their length alone, instead of a two-element list <code>(lo, hi)</code>. This is a convenience for the common case when lower bounds are zero.
 </p>
 <div class="example">
 <pre class="verbatim">(ra-dimensions (make-ra 0 '(2 3) 4))
@@ -1462,7 +1460,24 @@ element
 └───────┴───────┴─────────┘
 </pre></div>
 
-<p>This function doesn&rsquo;t handle large arrays in any particular way and it isn&rsquo;t recommended for those cases (yet).
+<p>Looking at the return value when <var>port</var> is <code>#f</code>:
+</p><div class="example">
+<pre class="verbatim">(ra-format #t (ra-format #f (ra-i 2 3) #:prefix? #f) #:prefix? #f)
+</pre><pre class="example">&rArr;
+</pre><pre class="verbatim">┌─┬─┬─┬─┬─┬─┬─┐
+│┌│─│┬│─│┬│─│┐│
+├─┼─┼─┼─┼─┼─┼─┤
+│││0│││1│││2│││
+├─┼─┼─┼─┼─┼─┼─┤
+│├│─│┼│─│┼│─│┤│
+├─┼─┼─┼─┼─┼─┼─┤
+│││3│││4│││5│││
+├─┼─┼─┼─┼─┼─┼─┤
+│└│─│┴│─│┴│─│┘│
+└─┴─┴─┴─┴─┴─┴─┘
+</pre></div>
+
+<p>This function doesn&rsquo;t handle large arrays in any particular way. User beware!
 </p>
 </dd></dl>
 
