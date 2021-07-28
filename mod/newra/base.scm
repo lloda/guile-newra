@@ -308,10 +308,8 @@ See also: ra-offset
 (define-inlinable-case ra-offset
   (case-lambda
    "
-ra-offset ra -> i
-
 Return the root vector index @var{i} that corresponds to all ra indices being
-equal to the lower bound of var{ra} in each dimension.
+equal to the lower bound of var{ra} in axes [@var{org} ... @var{org}+@var{k}).
 
 See also: ra-zero
 "
@@ -320,11 +318,13 @@ See also: ra-zero
       (ra-offset (%%ra-zero ra) (%%ra-dims ra))))
 ; internally - useful for some types of loops, or to transition from Guile C arrays.
    ((zero dims)
-    (ra-offset zero dims (vector-length dims)))
+    (ra-offset zero dims (vector-length dims) 0))
    ((zero dims k)
+    (ra-offset zero dims k 0))
+   ((zero dims k org)
 ; min - enable prefix match, ignoring dead axes [(vector-length dims) ... (- k 1)]
-    (let loop ((k (min k (vector-length dims))) (pos zero))
-      (if (<= k 0)
+    (let loop ((k (min (+ k org) (vector-length dims))) (pos zero))
+      (if (<= k org)
         pos
         (let* ((k (- k 1))
                (dim (vector-ref dims k)))
@@ -652,15 +652,17 @@ See also: ra-shape ra-dimensions ra-size
 "
   (dim-len (vector-ref (ra-dims ra) k)))
 
-(define* (ra-size ra #:optional (n (ra-rank ra)))
+(define* (ra-size ra #:optional (n (ra-rank ra)) (org 0))
   "
-ra-size ra
-ra-size ra n
+ra-size ra [n [org]]
 
-Return the number of elements of ra @var{ra}, that is, the product of all its
-lengths. Ras of rank 0 have size 1. If @var{n} is given, return the product of the
-first @var{n} lengths.
+Return the product of the lengths of axes [@var{org} .. @var{org}+@var{n}) of
+@var{ra}.
+
+@var{n} defaults to the rank of @var{ra} and @var{org} defaults to 0, so by
+default @code{(ra-size ra)} will return the number of elements of
+@var{ra}. Arrays of rank 0 have size 1.
 
 See also: ra-shape ra-dimensions ra-len
 "
-  (vector-fold* n (lambda (d s) (* s (dim-len d))) 1 (ra-dims ra)))
+  (vector-fold* n org (lambda (d s) (* s (dim-len d))) 1 (ra-dims ra)))

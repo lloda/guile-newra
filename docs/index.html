@@ -1220,6 +1220,7 @@ Next: <a href="#Sources" accesskey="n" rel="next">Sources</a>, Previous: <a href
 <a name="x_002dc_002ddims"></a><dl>
 <dt><a name="index-c_002ddims-1"></a>function<!-- /@w -->: <strong>c-dims</strong> <em>bounds ...</em></dt>
 <dd>
+<a name="index-packed-array"></a>
 <p>Create dims for C-order array (packed elements, last dimension changing fastest).
 </p>
 <p>Each of the bounds may be an integer (a length) or a pair of integers (lower and upper bounds).
@@ -1547,13 +1548,66 @@ element
 
 <a name="index-ra_002dravel"></a>
 <a name="x_002dra_002dravel"></a><dl>
-<dt><a name="index-ra_002dravel-1"></a>function<!-- /@w -->: <strong>ra-ravel</strong> <em>a [n]</em></dt>
-<dd><p>Ravel the first <var>n</var> axes of array <var>a</var> to C order, the whole array by default.
+<dt><a name="index-ra_002dravel-1"></a>function<!-- /@w -->: <strong>ra-ravel</strong> <em>a [n [org]]</em></dt>
+<dd><p>Ravel axes [<var>n</var> ... <var>org</var>) of array <var>a</var> in C order. <var>n</var> defaults to the rank of <var>a</var> and <var>org</var> defaults to 0.
+</p>
+<p>For example:
 </p><div class="example">
 <pre class="verbatim">(ra-ravel (ra-i 2 3))
 </pre><pre class="example">&rArr; #%1d:6(0 1 2 3 4 5)
 </pre></div>
 
+<p>Consider this 3-array:
+</p>
+<div class="example">
+<pre class="verbatim">(ra-format #t (ra-i 2 3 4))
+</pre><pre class="example">&rArr;
+</pre><pre class="verbatim">#%3d:2:3:4║──┬──┬──┬──║
+║0│1│ 2│ 3║12│13│14│15║
+║─┼─┼──┼──║──┼──┼──┼──║
+║4│5│ 6│ 7║16│17│18│19║
+║─┼─┼──┼──║──┼──┼──┼──║
+║8│9│10│11║20│21│22│23║
+║─┴─┴──┴──║──┴──┴──┴──║
+</pre></div>
+
+<p>Ravel axes 0..1:
+</p>
+<div class="example">
+<pre class="verbatim">(ra-format #t (ra-ravel (ra-i 2 3 4) 2)) ; or (ra-ravel ... 2 0)
+</pre><pre class="example">&rArr;
+</pre><pre class="verbatim">#%2d:6:4─┬──┐
+│ 0│ 1│ 2│ 3│
+├──┼──┼──┼──┤
+│ 4│ 5│ 6│ 7│
+├──┼──┼──┼──┤
+│ 8│ 9│10│11│
+├──┼──┼──┼──┤
+│12│13│14│15│
+├──┼──┼──┼──┤
+│16│17│18│19│
+├──┼──┼──┼──┤
+│20│21│22│23│
+└──┴──┴──┴──┘
+</pre></div>
+
+<p>Ravel axes 1..2:
+</p>
+<div class="example">
+<pre class="verbatim">(ra-format #t (ra-ravel (ra-i 2 3 4) 2 1))
+</pre><pre class="example">&rArr;
+</pre><pre class="verbatim"></pre><pre class="example">#%2d:2:12┬──┬──┬──┬──┬──┬──┬──┬──┬──┐
+│ 0│ 1│ 2│ 3│ 4│ 5│ 6│ 7│ 8│ 9│10│11│
+├──┼──┼──┼──┼──┼──┼──┼──┼──┼──┼──┼──┤
+│12│13│14│15│16│17│18│19│20│21│22│23│
+└──┴──┴──┴──┴──┴──┴──┴──┴──┴──┴──┴──┘
+</pre></div>
+
+<p>To ravel other combinations of axes, use <a href="#Transposition">Transposition</a>.
+</p>
+<a name="index-packed-array-1"></a>
+<p>The full ravel of an array doesn&rsquo;t necessarily result in a rank-1 &lsquo;packed&rsquo; array, that is, one where the step is 1. If that is required, one can use <code>(ra-ravel (ra-copy ra))</code>, since <a href="#x_002dra_002dorder_002dc_003f"><code>ra-order-c?</code></a> is always true for a newly created array<a name="DOCF5" href="#FOOT5"><sup>5</sup></a> .
+</p>
 <p>See also: <a href="#x_002dra_002dreshape"><code>ra-reshape</code></a>, <a href="#x_002dra_002dtile"><code>ra-tile</code></a>.
 </p>
 </dd></dl>
@@ -1855,6 +1909,7 @@ a
 </p>
 </dd></dl>
 
+<a name="index-packed-array-2"></a>
 <a name="index-ra_002dorder_002dc_003f"></a>
 <a name="x_002dra_002dorder_002dc_003f"></a><dl>
 <dt><a name="index-ra_002dorder_002dc_003f-1"></a>function<!-- /@w -->: <strong>ra-order-c?</strong> <em>a [n]</em></dt>
@@ -2204,6 +2259,9 @@ Previous: <a href="#Sources" accesskey="p" rel="prev">Sources</a>, Up: <a href="
 <tr><td></td><td valign="top"><a href="#index-order_002c-row_002dmajor">order, row-major</a>:</td><td>&nbsp;</td><td valign="top"><a href="#Rank-polymorphism-and-rank-extension">Rank polymorphism and rank extension</a></td></tr>
 <tr><td colspan="4"> <hr></td></tr>
 <tr><th><a name="Indices_cp_letter-P">P</a></th><td></td><td></td></tr>
+<tr><td></td><td valign="top"><a href="#index-packed-array">packed array</a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
+<tr><td></td><td valign="top"><a href="#index-packed-array-1">packed array</a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
+<tr><td></td><td valign="top"><a href="#index-packed-array-2">packed array</a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-prefix-matching">prefix matching</a>:</td><td>&nbsp;</td><td valign="top"><a href="#Iteration">Iteration</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-prefix-slice">prefix slice</a>:</td><td>&nbsp;</td><td valign="top"><a href="#Creating-and-accessing-arrays">Creating and accessing arrays</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-prefix-slice-1">prefix slice</a>:</td><td>&nbsp;</td><td valign="top"><a href="#Slicing">Slicing</a></td></tr>
@@ -2318,6 +2376,8 @@ Previous: <a href="#Sources" accesskey="p" rel="prev">Sources</a>, Up: <a href="
 <p>Except for <a href="#x_002dra_002dindex_002dmap_0021"><code>ra-index-map!</code></a>, which is provided out of compatibility with the older array system.</p>
 <h3><a name="FOOT4" href="#DOCF4">(4)</a></h3>
 <p>I rejected this approach for <code>newra</code> because in my experience it results in errors going undetected much more often than it saves any work.</p>
+<h3><a name="FOOT5" href="#DOCF5">(5)</a></h3>
+<p>Note that the ravel operation in <code>(ra-ravel (ra-copy ra))</code> is free, while it might not be in <code>(ra-copy (ra-ravel ra))</code>, so it is preferable, in principle, to copy first.</p>
 </div>
 <hr>
 

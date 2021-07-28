@@ -11,7 +11,7 @@
 ;;; Code:
 
 (define-module (newra vector)
-  #:export (vector-drop vector-fold* vector-fold vector-clip vector-append))
+  #:export (vector-drop vector-fold* vector-fold vector-clip vector-append vector-take))
 
 (import (srfi :26)  (only (srfi :1) fold) (only (rnrs base) vector-for-each)
         (only (srfi :43) vector-copy!))
@@ -20,17 +20,17 @@
 
 (define vector-fold*
   (case-lambda
-   ((n kons knil)
+   ((n org kons knil)
     (throw 'missing-arguments))
-   ((n kons knil v)
-    (let ((end n))
-      (let loop ((i 0) (k knil))
+   ((n org kons knil v)
+    (let ((end (+ n org)))
+      (let loop ((i org) (k knil))
         (if (= i end)
           k
           (loop (+ i 1) (kons (vector-ref v i) k))))))
-   ((n kons knil . vs)
-    (let ((end n))
-      (let loop ((i 0) (k knil))
+   ((n org kons knil . vs)
+    (let ((end (+ n org)))
+      (let loop ((i org) (k knil))
         (if (= i end)
           k
           (loop (+ i 1) (apply kons (append (map (cut vector-ref <> i) vs) (list k))))))))))
@@ -40,9 +40,9 @@
    ((kons knil)
     (throw 'missing-arguments))
    ((kons knil v)
-    (vector-fold* (vector-length v) kons knil v))
+    (vector-fold* (vector-length v) 0 kons knil v))
    ((kons knil . vs)
-    (apply vector-fold* (vector-length (car vs)) kons knil vs))))
+    (apply vector-fold* (vector-length (car vs)) 0 kons knil vs))))
 
 ; avoid sharing, even when the result would be copy of the full vector
 ; (e.g. ra-slice depends on this).

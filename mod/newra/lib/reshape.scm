@@ -15,8 +15,10 @@
             ra-ravel ra-reshape ra-tile ra-tile-right
             ra-singletonize))
 
-(import (newra base) (newra map) (only (srfi :1) fold every any iota drop) (srfi :8) (srfi :26)
-        (ice-9 control) (ice-9 match) (only (rnrs base) vector-map vector-for-each))
+(import (newra base) (newra map) (newra vector)
+        (ice-9 match) (ice-9 control)
+        (only (srfi :1) fold every any iota drop) (srfi :8) (srfi :26)
+        (only (rnrs base) vector-map vector-for-each))
 
 (define (ra-reverse a . k)
   "
@@ -144,6 +146,8 @@ If @var{n} is not given, check whether the elements of @var{ra} are in packed
 C-order. This means that 1) the full frame of RA is in C-order, and 2) on the
 last axis, either the length is 1, or the length is 0, or the step is 1.
 
+Single axes (@var{n} = 1) are always in C-order.
+
 See also: ra-ravel ra-reshape ra-tile c-dims
 "
   (let* ((ra (ra-check ra))
@@ -173,8 +177,9 @@ See also: ra-ravel ra-reshape ra-tile c-dims
   "
 ra-ravel ra [n [org]] -> rb
 
-Return the row-major ravel of the axes [@var{org} .. @var{org}+@var{n}) of
-@var{n}. @var{n} defaults to the rank of @var{ra} and @var{org} defaults to 0.
+Return an array where axes [@var{org} .. @var{org}+@var{n}) of @var{ra} have
+been raveled in C order. @var{n} defaults to the rank of @var{ra} and @var{org}
+defaults to 0.
 
 The result @var{rb} is an array with rank (rank(@var{ra}) - @var{n} + 1) that
 may or may not share the root of RA.
@@ -184,26 +189,27 @@ RA unless that type is @code{d}, in which case it has type @code{#t}.
 
 See also: ra-reshape ra-transpose ra-from ra-order-c?
 "
-  (unless (zero? org) (throw 'not-yet))
-  (define (pure-ravel ra n)
+  (define (pure-ravel ra n org)
     (let ((od (%%ra-dims ra))
-          (rank (vector-length (%%ra-dims ra))))
+          (rank (vector-length (%%ra-dims ra)))
+          (end (+ n org)))
       (make-ra-root (%%ra-root ra)
 ; the ravel is based at 0, so we don't want (ra-zero ra).
                     (vector-append
-                     (vector (make-dim (ra-size ra n) 0
+                     (vector-take od org)
+                     (vector (make-dim (ra-size ra n org) 0
                                        (cond ((zero? rank) 1)
-                                             ((positive? n) (dim-step (vector-ref od (- n 1))))
+                                             ((positive? n) (dim-step (vector-ref od (- end 1))))
                                              (else 1))))
-                     (vector-drop od n))
+                     (vector-drop od end))
                     (ra-offset (%%ra-zero ra) od n))))
   (pure-ravel
-   (if (ra-order-c? ra n)
+   (if (ra-order-c? ra n org)
      ra
      (ra-copy! (make-ra-new (match (%%ra-type ra) ('d #t) (x x))
                                *unspecified* (apply c-dims (ra-dimensions ra)))
                ra))
-   n))
+   n org))
 
 ; cf https://www.jsoftware.com/papers/APLDictionary1.htm#rho
 ; ... ⍺⍴⍵ produces a result of shape ⍺ from the elements of ⍵ ...

@@ -1237,6 +1237,7 @@ See also: @ref{x-ra-singletonize,@code{ra-singletonize}} @ref{x-ra-copy!,@code{r
 @anchor{x-c-dims}
 @deffn @w{function} c-dims bounds ...
 
+@cindex packed array
 Create dims for C-order array (packed elements, last dimension changing fastest).
 
 Each of the bounds may be an integer (a length) or a pair of integers (lower and upper bounds).
@@ -1625,14 +1626,79 @@ See also: @ref{x-ra-format,@code{ra-format}}, @ref{Writing and reading}.
 
 @cindex @code{ra-ravel}
 @anchor{x-ra-ravel}
-@deffn @w{function} ra-ravel a [n]
-Ravel the first @var{n} axes of array @var{a} to C order, the whole array by default.
+@deffn @w{function} ra-ravel a [n [org]]
+Ravel axes [@var{n} ... @var{org}) of array @var{a} in C order. @var{n} defaults to the rank of @var{a} and @var{org} defaults to 0.
+
+For example:
 @example
 @verbatim
 (ra-ravel (ra-i 2 3))
 @end verbatim
 @result{} #%1d:6(0 1 2 3 4 5)
 @end example
+
+Consider this 3-array:
+
+@example
+@verbatim
+(ra-format #t (ra-i 2 3 4))
+@end verbatim
+@result{}
+@verbatim
+#%3d:2:3:4║──┬──┬──┬──║
+║0│1│ 2│ 3║12│13│14│15║
+║─┼─┼──┼──║──┼──┼──┼──║
+║4│5│ 6│ 7║16│17│18│19║
+║─┼─┼──┼──║──┼──┼──┼──║
+║8│9│10│11║20│21│22│23║
+║─┴─┴──┴──║──┴──┴──┴──║
+@end verbatim
+@end example
+
+Ravel axes 0..1:
+
+@example
+@verbatim
+(ra-format #t (ra-ravel (ra-i 2 3 4) 2)) ; or (ra-ravel ... 2 0)
+@end verbatim
+@result{}
+@verbatim
+#%2d:6:4─┬──┐
+│ 0│ 1│ 2│ 3│
+├──┼──┼──┼──┤
+│ 4│ 5│ 6│ 7│
+├──┼──┼──┼──┤
+│ 8│ 9│10│11│
+├──┼──┼──┼──┤
+│12│13│14│15│
+├──┼──┼──┼──┤
+│16│17│18│19│
+├──┼──┼──┼──┤
+│20│21│22│23│
+└──┴──┴──┴──┘
+@end verbatim
+@end example
+
+Ravel axes 1..2:
+
+@example
+@verbatim
+(ra-format #t (ra-ravel (ra-i 2 3 4) 2 1))
+@end verbatim
+@result{}
+@verbatim
+@end verbatim
+#%2d:2:12┬──┬──┬──┬──┬──┬──┬──┬──┬──┐
+│ 0│ 1│ 2│ 3│ 4│ 5│ 6│ 7│ 8│ 9│10│11│
+├──┼──┼──┼──┼──┼──┼──┼──┼──┼──┼──┼──┤
+│12│13│14│15│16│17│18│19│20│21│22│23│
+└──┴──┴──┴──┴──┴──┴──┴──┴──┴──┴──┴──┘
+@end example
+
+To ravel other combinations of axes, use @ref{Transposition}.
+
+@cindex packed array
+The full ravel of an array doesn't necessarily result in a rank-1 `packed' array, that is, one where the step is 1. If that is required, one can use @code{(ra-ravel (ra-copy ra))}, since @ref{x-ra-order-c?, @code{ra-order-c?}} is always true for a newly created array@footnote{Note that the ravel operation in @code{(ra-ravel (ra-copy ra))} is free, while it might not be in @code{(ra-copy (ra-ravel ra))}, so it is preferable, in principle, to copy first.} .
 
 See also: @ref{x-ra-reshape,@code{ra-reshape}}, @ref{x-ra-tile,@code{ra-tile}}.
 
@@ -1981,6 +2047,7 @@ See also: @ref{x-ra-set!,@code{ra-set!}}, @ref{x-ra-copy!,@code{ra-copy!}}, @ref
 
 @end deffn
 
+@cindex packed array
 @cindex @code{ra-order-c?}
 @anchor{x-ra-order-c?}
 @deffn @w{function} ra-order-c? a [n]

@@ -1016,6 +1016,18 @@
   (test-ravel-n (ra-transpose ra 1 0) #f)
   (test-ravel-n (ra-transpose rb 1 0) #f))
 
+; not prefix, free ravel
+
+(test-assert
+    (ra-equal? (string->ra "#%2d:2:12((0 1 2 3 4 5 6 7 8 9 10 11) (12 13 14 15 16 17 18 19 20 21 22 23))")
+               (ra-ravel (ra-i 2 3 4) 2 1)))
+
+; not prefix, copy required
+
+(test-assert
+    (ra-equal? (string->ra "#%2:2:12((0 4 8 1 5 9 2 6 10 3 7 11) (12 16 20 13 17 21 14 18 22 15 19 23))")
+               (ra-ravel (ra-transpose (ra-i 2 3 4) 0 2 1) 2 1)))
+
 
 ; -----------------------
 ; ra-reshape
