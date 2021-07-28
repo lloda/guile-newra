@@ -9,7 +9,7 @@
 
 ; Run with $GUILE -L mod -s test.scm
 
-(import (newra newra) (newra test) (newra tools) (newra read) (newra format)
+(import (newra newra) (newra test) (newra tools) (newra read)
         (srfi :64) (srfi :26) (srfi :8) (only (srfi :1) fold iota drop)
         (ice-9 match) (only (rnrs base) vector-map vector-for-each))
 
@@ -1165,35 +1165,35 @@
 ; demo of ra-format FIXME somehow check
 ; -----------------------
 
-(define ra (ra-i 1 8 9 3))
-(define ra (ra-map! (ra-copy #t ra) sqrt ra))
-(ra-format #t ra #:fmt "~4,2f")
+(let* ((ra (ra-i 1 8 9 3))
+       (ra (ra-map! (ra-copy #t ra) sqrt ra)))
+  (ra-format #t ra #:fmt "~4,2f"))
 
-(define ra (ra-set! (ra-set! (ra-copy #t (ra-i 3 4 3))
-                             (ra-i 2 3) 1 2 1)
-                    (make-ra-root #(hello world of ras) (c-dims 2 2))
-                    2 1 2))
-(ra-format #t ra #:fmt "~a")
+(let ((ra (ra-set! (ra-set! (ra-copy #t (ra-i 3 4 3))
+                            (ra-i 2 3) 1 2 1)
+                   (make-ra-root #(hello world of ras) (c-dims 2 2))
+                   2 1 2)))
+  (ra-format #t ra #:fmt "~a"))
 
-(define ra (ra-i 2 2 2 2 2 2 2 2))
-(ra-format #t ra)
+(let ((ra (ra-i 2 2 2 2 2 2 2 2)))
+  (ra-format #t ra))
 
-(define ra (ra-tile-right (ra-set! (ra-copy #t (ra-i 7)) (make-ra-root #(hello world of ras) (c-dims 2 2)) 3) 1))
-(ra-format #t ra)
+(let ((ra (ra-tile-right (ra-set! (ra-copy #t (ra-i 7)) (make-ra-root #(hello world of ras) (c-dims 2 2)) 3) 1)))
+  (ra-format #t ra))
 
 ; example from srfi-164
-(define arr
-   #2@1:2@1:3((#2((1 2) (3 4)) 9 #2((3 4) (5 6)))
-              (#(42 43) #2((8 7 6)) #2((90 91) (100 101)))))
-(define ra (array->ra arr))
-(define ra (ra-map! (ra-copy ra) (lambda (x) (if (array? x) (array->ra x) x)) ra))
-(ra-format #t ra #:prefix? #t)
+(let* ((arr
+       #2@1:2@1:3((#2((1 2) (3 4)) 9 #2((3 4) (5 6)))
+                  (#(42 43) #2((8 7 6)) #2((90 91) (100 101)))))
+       (ra (array->ra arr))
+       (ra (ra-map! (ra-copy ra) (lambda (x) (if (array? x) (array->ra x) x)) ra)))
+  (ra-format #t ra #:prefix? #t))
 
-(define ra (array->ra #2@1:2@1:3((1 2 3) (4 5 6))))
-(ra-format #t ra)
+(let ((ra (array->ra #2@1:2@1:3((1 2 3) (4 5 6)))))
+  (ra-format #t ra))
 
-(define ra (make-ra 'zero))
-(ra-format #t ra)
+(let ((ra (make-ra 'zero)))
+  (ra-format #t ra))
 
 
 ; -----------------------
