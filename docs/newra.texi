@@ -45,7 +45,7 @@ Invariant Sections, no Front-Cover Texts, and no Back-Cover Texts.
 
 @insertcopying
 
-@code{newra} is a Scheme-only replacement for the built-in C-based array facility in Guile 3.0.
+@code{newra} is a pure Scheme replacement for the built-in C-based array facility in Guile 3.0.
 
 This document uses ‘array’ to refer both to the old built-in array type and to the new type introduced in @code{newra}. The distinction is made as necessary.
 
@@ -1214,22 +1214,25 @@ Differences with Octave:
 @anchor{x-array->ra}
 @deffn @w{function} array->ra a
 
-Convert ra @var{a} into built-in Guile array.
+Convert built-in Guile array @var{a} (anything that satisfies @code{array?}) into a (@code{newra)} array.
 
-This function does not create a copy of the ra, but reuses the root (@code{ra-root}) of @var{a}, that is, @code{(eq? (ra-root a) (shared-array-root (array->ra a)))} is @code{#t}. For example, this means that if @var{a} is/isn't mutable, then the same will be true for @code{(array->ra a)}.
-
-Not all arrays can be converted into built-in Guile arrays. For example, type @code{d} arrays, or arrays with infinite axes, are not convertible.
+This function doesn't create a copy of the array, but reuses the root (@code{shared-array-root}) of @var{a}, that is, @code{(eq? (ra-root (array->ra a)) (shared-array-root a))} is @code{#t}.
 
 @example
 @verbatim
-(ra->array (ra-i 3)) ; error, type d not convertible
-(ra->array (ra-copy (ra-i 3))) ; ok, (ra-copy (ra-i 3)) has type #t
-(ra->array (ra-transpose (ra-i 2 3) 1)) ; error, not convertible
-(ra->array (ra-singletonize (ra-transpose (ra-i 2 3) 1))) ; ok
+(define a (make-array 'x 2 2))
+(define b (array->ra v))
+b
 @end verbatim
+@result{} @code{#%2:2:2((x x) (x x))}
+@verbatim
+(ra-fill! b 'y)
+a
+@end verbatim
+@result{} @code{#2((y y) (y y))}
 @end example
 
-See also: @ref{x-ra-singletonize,@code{ra-singletonize}} @ref{x-ra-copy!,@code{ra-copy!}} @ref{x-ra->array,@code{ra->array}}.
+See also: @ref{x-ra->array,@code{ra->array}}.
 
 @end deffn
 
@@ -1627,7 +1630,7 @@ See also: @ref{x-ra-format,@code{ra-format}}, @ref{Writing and reading}.
 @cindex @code{ra-ravel}
 @anchor{x-ra-ravel}
 @deffn @w{function} ra-ravel a [n [org]]
-Ravel axes [@var{n} ... @var{org}) of array @var{a} in C order. @var{n} defaults to the rank of @var{a} and @var{org} defaults to 0.
+Ravel axes [@var{org} ... @var{org+n}) of array @var{a} in C order. @var{n} defaults to the rank of @var{a} and @var{org} defaults to 0.
 
 For example:
 @example
@@ -1698,7 +1701,7 @@ Ravel axes 1..2:
 To ravel other combinations of axes, use @ref{Transposition}.
 
 @cindex packed array
-The full ravel of an array doesn't necessarily result in a rank-1 `packed' array, that is, one where the step is 1. If that is required, one can use @code{(ra-ravel (ra-copy ra))}, since @ref{x-ra-order-c?, @code{ra-order-c?}} is always true for a newly created array@footnote{Note that the ravel operation in @code{(ra-ravel (ra-copy ra))} is free, while it might not be in @code{(ra-copy (ra-ravel ra))}, so it is preferable, in principle, to copy first.} .
+The full ravel of an array doesn't necessarily result in a rank-1 `packed' array, that is, one where the step is 1. If that is required, one can use @code{(ra-ravel (ra-copy ra))}, since @ref{x-ra-order-c?, @code{ra-order-c?}} is always true for the result of @code{ra-copy}@footnote{Note that the ravel operation in @code{(ra-ravel (ra-copy ra))} is free, while it might not be in @code{(ra-copy (ra-ravel ra))}, so it is preferable, in principle, to copy first.} .
 
 See also: @ref{x-ra-reshape,@code{ra-reshape}}, @ref{x-ra-tile,@code{ra-tile}}.
 
@@ -2203,15 +2206,27 @@ See also: @ref{x-ra-copy!,@code{ra-copy!}} @ref{x-ra-cell,@code{ra-cell}} @ref{x
 
 @end deffn
 
+
 @cindex @code{ra->array}
 @anchor{x-ra->array}
 @deffn @w{function} ra->array a
 
-Convert built-in Guile array @var{a} (anything that satisfies @code{array?}) into an ra.
+Convert (@code{newra}) array @var{a} into built-in Guile array.
 
-This function does not create a copy of the array, but reuses the root (@code{shared-array-root}) of @var{a}, that is, @code{(eq? (ra-root (ra->array a)) (shared-array-root a))} is @code{#t}. For example, this means that if @var{a} is/isn't mutable, then the same will be true for @code{(ra->array a)}.
+This function does not create a copy of the array, but reuses the root (@code{ra-root}) of @var{a}, that is, @code{(eq? (ra-root a) (shared-array-root (ra->array a)))} is @code{#t}.
 
-See also: @ref{x-array->ra,@code{array->ra}}.
+Not all arrays can be converted into built-in Guile arrays. For example, type @code{d} arrays, or arrays with infinite axes, are not convertible.
+
+@example
+@verbatim
+(ra->array (ra-i 3)) ; error, type d not convertible
+(ra->array (ra-copy (ra-i 3))) ; ok, (ra-copy (ra-i 3)) has type #t
+(ra->array (ra-transpose (ra-i 2 3) 1)) ; error, not convertible
+(ra->array (ra-singletonize (ra-transpose (ra-i 2 3) 1))) ; ok
+@end verbatim
+@end example
+
+See also: @ref{x-array->ra,@code{array->ra}}, @ref{x-ra-singletonize,@code{ra-singletonize}}, @ref{x-ra-copy!,@code{ra-copy!}}.
 
 @end deffn
 
