@@ -7,7 +7,7 @@
 @c last [ma112]
 
 @set VERSION 1
-@set UPDATED 2021 July 26
+@set UPDATED 2021 July 29
 
 @copying
 @code{newra} (version @value{VERSION}, updated @value{UPDATED})
@@ -171,7 +171,7 @@ define an array A(i₀, i₁) = v(1 + 2·i₀ + 1·i₁), 0≤i₀<2, 0≤i₁<2
 
 In @code{newra} code,
 
-@example @c [ma106]
+@example
 @verbatim
 (make-ra-root (vector 1 2 3 4 5 6 7) 1 (vector (make-dim 2 0 2) (make-dim 2 0 1)))
 @end verbatim
@@ -182,28 +182,35 @@ The default print style means @code{#%RANK:LEN₀:LEN₁(...)} (@ref{Writing and
 
 It's unusual to need to specify the dims directly. More commonly, one creates an array of whatever size
 
+@example
 @verbatim
 > (define a (make-ra #f 3 4))
 > a
 @end verbatim
 @result{} @code{#%2:3:4((#f #f #f #f) (#f #f #f #f) (#f #f #f #f))}
+@end example
 
 which automatically creates a root of the required size, so that all the array elements are distinct. Then one operates on the array without making reference to the underlying root,
 
+@example
 @verbatim
 > (ra-set! a 99 2 2)
 @end verbatim
 @result{} @code{#%2:3:4((#f #f #f #f) (#f #f 99 #f) (#f #f #f #f))}
+@end example
 
 Still, since the array is just a view of the root, any changes on the array are reflected there as well
 
+@example
 @verbatim
 > (ra-root a)
 @end verbatim
 @result{} @code{#(#f #f #f #f #f #f #f #f #f #f 99 #f)}
+@end example
 
 and the other way around,
 
+@example
 @verbatim
 > (define b (make-ra-root (vector 'x) 0 (vector (make-dim 3 0 0) (make-dim 2 0 0))))
 > b
@@ -215,6 +222,7 @@ and the other way around,
 > b
 @end verbatim
 @result{} @code{#%2:3:2((Z Z) (Z Z) (Z Z))}
+@end example
 
 @cindex shared root
 @cindex new array
@@ -1919,13 +1927,14 @@ See also: @ref{x-ra-transpose,@code{ra-transpose}}, @ref{Transposition}.
 @cindex @code{ra-index-map!}
 @anchor{x-ra-index-map!}
 @deffn @w{function} ra-index-map! a op @result{} a
-Iterate over array @var{a}, assigning to each element the result of @code{(op i₀ ...)}, where @code{i₀ ...} are the indices of that element.
+Iterate over array @var{a} in unspecified order, assigning to each element the result of @code{(op i₀ ...)}, where @code{i₀ ...} are the indices of that element.
 
 For example:
 
 @example
 @verbatim
 (ra-index-map! (make-ra #t 3 4) -)
+(ra-map! (make-ra #t 3 4) - (ra-iota) (ra-transpose (ra-iota) 1)) ; same thing
 @end verbatim
 @result{} @code{#%2:3:4((0 -1 -2 -3) (1 0 -1 -2) (2 1 0 -1))}
 @end example
