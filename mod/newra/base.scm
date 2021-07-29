@@ -26,7 +26,7 @@
             <ra-vtable> pick-root-functions pick-make-root
             %%ra-root %%ra-zero %%ra-type %%ra-rank
             %%ra-zero-set! %%ra-dims %%ra-vlen %%ra-vref %%ra-vset! %%ra-step
-            ra-shape ra-dimensions ra-len ra-size))
+            ra-shape ra-dimensions ra-len ra-lo ra-size))
 
 (import (srfi :9) (srfi srfi-9 gnu) (only (srfi :1) fold every) (srfi :71)
         (srfi srfi-4 gnu) (srfi :26) (srfi :2) (ice-9 match) (ice-9 control)
@@ -643,14 +643,25 @@ See also: ra-rank ra-shape ra-len
 
 (define* (ra-len ra #:optional (k 0))
   "
-ra-len ra [dim 0]
+ra-len ra [k]
 
-Return the length of the dimension @var{dim} of ra @var{ra}. It is an error if
-@var{ra} has zero rank.
+Return the length of axis @var{k} of array @var{ra}. @var{k} defaults to 0. It
+is an error if @var{ra} has zero rank.
 
-See also: ra-shape ra-dimensions ra-size
+See also: ra-shape ra-dimensions ra-size ra-lo
 "
   (dim-len (vector-ref (ra-dims ra) k)))
+
+(define* (ra-lo ra #:optional (k 0))
+  "
+ra-lo ra [k]
+
+Return the lower bound of axis @var{k} of array @var{ra}. @var{k} defaults to
+0. It is an error if @var{ra} has zero rank.
+
+See also: ra-shape ra-dimensions ra-len
+"
+  (dim-lo (vector-ref (ra-dims ra) k)))
 
 (define* (ra-size ra #:optional (n (ra-rank ra)) (org 0))
   "

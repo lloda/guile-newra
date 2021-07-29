@@ -9,7 +9,6 @@ if (NOT "$ENV{MAKEINFO}" STREQUAL "")
 else()
   find_program(MAKEINFO_EXECUTABLE makeinfo)
 endif()
-
 message ("Using makeinfo : ${MAKEINFO_EXECUTABLE}")
 
 set (man_in ${CMAKE_CURRENT_SOURCE_DIR}/newra.texi)

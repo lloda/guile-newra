@@ -884,6 +884,34 @@ For both @code{ra-pcat} and @code{ra-scat}, axes other than the concatenation ax
 @result{} @code{#%2:4:2((0 1) (2 3) (4 5) (0 1))}
 @end example
 
+In particular, it is not enough for the lengths to be the same; both bounds must match.
+
+@example
+@verbatim
+(ra-pcat #t 0 (make-ra 'a '(1 1) '(1 4))
+              (make-ra 'b '(2 2) '(1 4)))
+@end verbatim
+@result{} @code{#%2:2@@1:4((a a a a) (b b b b))} ; axes 1 match, axes 0 don't need to
+@end example
+
+@example
+@verbatim
+(ra-pcat #t 1 (make-ra 'a '(1 1) '(1 4))
+              (make-ra 'b '(2 2) '(1 4)))
+@end verbatim
+@result{} error ; axes 0 don't match
+@end example
+
+Here @ref{x-ra-reshape,@code{ra-reshape}} is used to move axis 0 of the second argument into agreement.@footnote{An example of how using base indices other than 0 is generally worthless trouble, not least for the library author.}
+
+@example
+@verbatim
+(ra-pcat #t 1 (make-ra 'a '(1 1) '(1 4))
+              (ra-reshape (make-ra 'b '(2 2) '(1 4)) '(1 1)))
+@end verbatim
+@result{} @code{#%2@@1:1:8((a a a a b b b b))}
+@end example
+
 Both @code{ra-pcat} and @code{ra-scat} accept a negative concatenation axis. That will rank-extend all the arguments to the left (@code{ra-pcat}) or to the right (@code{ra-scat}) before concatenating on the leftmost (@code{ra-pcat}) or rightmost (@code{ra-scat}) axis. In the same way, one may give a concatenation axis which is beyond the rank of the argument with the highest rank. Consider
 
 @example
@@ -1711,7 +1739,7 @@ To ravel other combinations of axes, use @ref{Transposition}.
 @cindex packed array
 The full ravel of an array doesn't necessarily result in a rank-1 `packed' array, that is, one where the step is 1. If that is required, one can use @code{(ra-ravel (ra-copy ra))}, since @ref{x-ra-order-c?, @code{ra-order-c?}} is always true for the result of @code{ra-copy}@footnote{Note that the ravel operation in @code{(ra-ravel (ra-copy ra))} is free, while it might not be in @code{(ra-copy (ra-ravel ra))}, so it is preferable, in principle, to copy first.} .
 
-See also: @ref{x-ra-reshape,@code{ra-reshape}}, @ref{x-ra-tile,@code{ra-tile}}.
+See also: @ref{x-ra-reshape,@code{ra-reshape}}, @ref{x-ra-tile,@code{ra-tile}}, @ref{Reshaping}.
 
 @end deffn
 
@@ -1742,7 +1770,7 @@ Each of the bounds may be an integer (a length) or a pair of integers (lower and
 @result{} error, 4·3 > 10
 @end example
 
-See also: @ref{x-ra-ravel,@code{ra-ravel}}, @ref{x-ra-tile,@code{ra-tile}}.
+See also: @ref{x-ra-ravel,@code{ra-ravel}}, @ref{x-ra-tile,@code{ra-tile}}, @ref{Reshaping}.
 
 @end deffn
 
@@ -1856,7 +1884,7 @@ Each of the bounds may be an integer (a length) or a pair of integers (lower and
 
 The tiled array shares the root of @var{a}.
 
-See also: @ref{x-ra-ravel,@code{ra-ravel}}, @ref{x-ra-reshape,@code{ra-reshape}}, @ref{x-ra-tile-right,@code{ra-tile-right}}.
+See also: @ref{x-ra-ravel,@code{ra-ravel}}, @ref{x-ra-reshape,@code{ra-reshape}}, @ref{x-ra-tile-right,@code{ra-tile-right}}, @ref{Reshaping}.
 
 @end deffn
 

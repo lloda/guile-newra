@@ -3,7 +3,7 @@
 <!-- Created by GNU Texinfo 6.8, https://www.gnu.org/software/texinfo/ -->
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-<!-- newra (version 1, updated 2021 July 26)
+<!-- newra (version 1, updated 2021 July 29)
 
 (c) lloda 2017-2021
 
@@ -105,7 +105,7 @@ Next: <a href="#Introduction" accesskey="n" rel="next">Introduction</a> &nbsp; [
 </div>
 <span id="newra"></span><h1 class="top"><code>newra</code></h1>
 
-<p><code>newra</code> (version 1, updated 2021 July 26)
+<p><code>newra</code> (version 1, updated 2021 July 29)
 </p>
 <p>(c) lloda 2017&ndash;2021
 </p>
@@ -845,6 +845,28 @@ Next: <a href="#Transposition" accesskey="n" rel="next">Transposition</a>, Previ
 </pre><pre class="example">&rArr; <code>#%2:4:2((0 1) (2 3) (4 5) (0 1))</code>
 </pre></div>
 
+<p>In particular, it is not enough for the lengths to be the same; both bounds must match.
+</p>
+<div class="example">
+<pre class="verbatim">(ra-pcat #t 0 (make-ra 'a '(1 1) '(1 4))
+              (make-ra 'b '(2 2) '(1 4)))
+</pre><pre class="example">&rArr; <code>#%2:2@1:4((a a a a) (b b b b))</code> ; axes 1 match, axes 0 don't need to
+</pre></div>
+
+<div class="example">
+<pre class="verbatim">(ra-pcat #t 1 (make-ra 'a '(1 1) '(1 4))
+              (make-ra 'b '(2 2) '(1 4)))
+</pre><pre class="example">&rArr; error ; axes 0 don't match
+</pre></div>
+
+<p>Here <a href="#x_002dra_002dreshape"><code>ra-reshape</code></a> is used to move axis 0 of the second argument into agreement.<a id="DOCF4" href="#FOOT4"><sup>4</sup></a>
+</p>
+<div class="example">
+<pre class="verbatim">(ra-pcat #t 1 (make-ra 'a '(1 1) '(1 4))
+              (ra-reshape (make-ra 'b '(2 2) '(1 4)) '(1 1)))
+</pre><pre class="example">&rArr; <code>#%2@1:1:8((a a a a b b b b))</code>
+</pre></div>
+
 <p>Both <code>ra-pcat</code> and <code>ra-scat</code> accept a negative concatenation axis. That will rank-extend all the arguments to the left (<code>ra-pcat</code>) or to the right (<code>ra-scat</code>) before concatenating on the leftmost (<code>ra-pcat</code>) or rightmost (<code>ra-scat</code>) axis. In the same way, one may give a concatenation axis which is beyond the rank of the argument with the highest rank. Consider
 </p>
 <div class="example">
@@ -1021,7 +1043,7 @@ a
 </pre><pre class="example">&rArr; <code>#%4d:1:2:1:3((((0 1 2)) ((3 4 5))))</code>
 </pre></div>
 
-<p>One important difference between the built-in array functions and <code>newra</code> is that bounds matching in <code>newra</code> is strict: finite bounds must be identical for axes to match, while for <code>array-map!</code>, <code>array-for-each</code>, <code>array-copy!</code>, etc. the iteration range is the intersection of the ranges of the arguments<a id="DOCF4" href="#FOOT4"><sup>4</sup></a>. <code>newra</code> provides <a href="#x_002dra_002dclip"><code>ra-clip</code></a> to match ranges easily.
+<p>One important difference between the built-in array functions and <code>newra</code> is that bounds matching in <code>newra</code> is strict: finite bounds must be identical for axes to match, while for <code>array-map!</code>, <code>array-for-each</code>, <code>array-copy!</code>, etc. the iteration range is the intersection of the ranges of the arguments<a id="DOCF5" href="#FOOT5"><sup>5</sup></a>. <code>newra</code> provides <a href="#x_002dra_002dclip"><code>ra-clip</code></a> to match ranges easily.
 </p>
 <div class="example">
 <pre class="verbatim">(define a (make-ra-root (vector 'a 'b 'c 'd 'e 'f 'g))) ; range is 0..6
@@ -1580,9 +1602,9 @@ element
 <p>To ravel other combinations of axes, use <a href="#Transposition">Transposition</a>.
 </p>
 <span id="index-packed-array-1"></span>
-<p>The full ravel of an array doesn&rsquo;t necessarily result in a rank-1 &lsquo;packed&rsquo; array, that is, one where the step is 1. If that is required, one can use <code>(ra-ravel (ra-copy ra))</code>, since <a href="#x_002dra_002dorder_002dc_003f"><code>ra-order-c?</code></a> is always true for the result of <code>ra-copy</code><a id="DOCF5" href="#FOOT5"><sup>5</sup></a> .
+<p>The full ravel of an array doesn&rsquo;t necessarily result in a rank-1 &lsquo;packed&rsquo; array, that is, one where the step is 1. If that is required, one can use <code>(ra-ravel (ra-copy ra))</code>, since <a href="#x_002dra_002dorder_002dc_003f"><code>ra-order-c?</code></a> is always true for the result of <code>ra-copy</code><a id="DOCF6" href="#FOOT6"><sup>6</sup></a> .
 </p>
-<p>See also: <a href="#x_002dra_002dreshape"><code>ra-reshape</code></a>, <a href="#x_002dra_002dtile"><code>ra-tile</code></a>.
+<p>See also: <a href="#x_002dra_002dreshape"><code>ra-reshape</code></a>, <a href="#x_002dra_002dtile"><code>ra-tile</code></a>, <a href="#Reshaping">Reshaping</a>.
 </p>
 </dd></dl>
 
@@ -1607,7 +1629,7 @@ element
 </pre><pre class="example">&rArr; error, 4·3 &gt; 10
 </pre></div>
 
-<p>See also: <a href="#x_002dra_002dravel"><code>ra-ravel</code></a>, <a href="#x_002dra_002dtile"><code>ra-tile</code></a>.
+<p>See also: <a href="#x_002dra_002dravel"><code>ra-ravel</code></a>, <a href="#x_002dra_002dtile"><code>ra-tile</code></a>, <a href="#Reshaping">Reshaping</a>.
 </p>
 </dd></dl>
 
@@ -1709,7 +1731,7 @@ a
 
 <p>The tiled array shares the root of <var>a</var>.
 </p>
-<p>See also: <a href="#x_002dra_002dravel"><code>ra-ravel</code></a>, <a href="#x_002dra_002dreshape"><code>ra-reshape</code></a>, <a href="#x_002dra_002dtile_002dright"><code>ra-tile-right</code></a>.
+<p>See also: <a href="#x_002dra_002dravel"><code>ra-ravel</code></a>, <a href="#x_002dra_002dreshape"><code>ra-reshape</code></a>, <a href="#x_002dra_002dtile_002dright"><code>ra-tile-right</code></a>, <a href="#Reshaping">Reshaping</a>.
 </p>
 </dd></dl>
 
@@ -2362,8 +2384,10 @@ Previous: <a href="#Sources" accesskey="p" rel="prev">Sources</a>, Up: <a href="
 <h5><a id="FOOT3" href="#DOCF3">(3)</a></h5>
 <p>Except for <a href="#x_002dra_002dindex_002dmap_0021"><code>ra-index-map!</code></a>, which is provided out of compatibility with the older array system.</p>
 <h5><a id="FOOT4" href="#DOCF4">(4)</a></h5>
-<p>I rejected this approach for <code>newra</code> because in my experience it results in errors going undetected much more often than it saves any work.</p>
+<p>An example of how using base indices other than 0 everywhere is generally worthless trouble, not least for the library author.</p>
 <h5><a id="FOOT5" href="#DOCF5">(5)</a></h5>
+<p>I rejected this approach for <code>newra</code> because in my experience it results in errors going undetected much more often than it saves any work.</p>
+<h5><a id="FOOT6" href="#DOCF6">(6)</a></h5>
 <p>Note that the ravel operation in <code>(ra-ravel (ra-copy ra))</code> is free, while it might not be in <code>(ra-copy (ra-ravel ra))</code>, so it is preferable, in principle, to copy first.</p>
 </div>
 

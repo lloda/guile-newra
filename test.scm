@@ -1174,6 +1174,27 @@
 (test-assert (ra-equal? (ra-scat #t -1 (array->ra #(1 2 3)) (array->ra #(a b c)))          (array->ra #2((1 a) (2 b) (3 c)))))
 (test-assert (ra-equal? (ra-scat #t -1 (make-ra 'a) (array->ra #(x y z)))                  (array->ra #2((a x) (a y) (a z)))))
 
+; non-zero base indices on the concat axis
+
+(let* ((a0 (ra-i 2 4))
+       (a1 (ra-reshape a0 '(1 2)))
+       (b (ra-i 1 4)))
+  (test-assert (ra-equal? (ra-pcat #t 0 a0 b) (ra-pcat #t 0 a1 b))))
+
+(let* ((a0 (ra-i 4 2))
+       (a1 (ra-untranspose (ra-reshape (ra-transpose a0 1 0) '(1 2)) 1 0))
+       (b (ra-i 4 1)))
+  (test-assert (ra-equal? (ra-scat #t 0 a0 b) (ra-scat #t 0 a1 b))))
+
+; non-zero base indices on a non-concat axis
+
+(let ((a (make-ra 'a '(1 2) '(1 4)))
+      (b (make-ra 'b '(1 3) '(1 4))))
+  (test-equal "#%2:5@1:4((a a a a) (a a a a) (b b b b) (b b b b) (b b b b))"
+    (ra->string (ra-pcat #t 0 a b)))
+  (test-equal "#%2:5@1:4((a a a a) (a a a a) (b b b b) (b b b b) (b b b b))"
+    (ra->string (ra-scat #t 1 a b))))
+
 
 ; -----------------------
 ; demo of ra-format FIXME somehow check

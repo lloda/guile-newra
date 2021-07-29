@@ -212,8 +212,7 @@
 (define list->ra
   (case-lambda
    "
-list->ra shape l -> ra
-list->ra type shape l -> ra
+list->ra [type] shape l -> ra
 
 Convert the nested list L to a RA of type TYPE. TYPE defaults to #t.
 

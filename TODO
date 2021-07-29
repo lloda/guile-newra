@@ -18,7 +18,7 @@ Help: [C-uc .] insert timestamp [C-cc] flip checkbox [C-uucc] partial flip check
   * [X] ra-equal?
   * [ ] root vectors are equivalent to rank-1 newra objects
 
-* TODO whole array functions [6/15]
+* TODO whole array functions [8/15]
   * [X] ra-fold ra-fold*
   * [X] ra-any ra-every
   * [X] raw prefix matching
@@ -28,15 +28,15 @@ Help: [C-uc .] insert timestamp [C-cc] flip checkbox [C-uucc] partial flip check
     - [X] ra-amend!
     - [X] (ldots)
     - [ ] axis insertion
-  * [-] ra-ravel
+  * [X] ra-ravel
     - [X] (ra-ravel a [n])
     - [X] (ra-order-c? a [n [org]])
-    - [ ] (ra-ravel a [n [org]])
+    - [X] (ra-ravel a [n [org]])
   * [X] ra-tile
-  * [-] ra-cat (ra-pcat, ra-scat)
+  * [X] ra-cat (ra-pcat, ra-scat)
     - [X] implementation
     - [X] tests
-    - [ ] tests with non-zero base indices
+    - [X] tests with non-zero base indices
   * [-] ra-reshape [1/2]
     - [X] basic function
     - [ ] placeholder
@@ -48,6 +48,9 @@ Help: [C-uc .] insert timestamp [C-cc] flip checkbox [C-uucc] partial flip check
   * [ ] as-ra
   * [ ] ra-filter, ra-select, etc.
   * [ ] ra-affine map that explicitly takes an [M×(N+1)] matrix
+
+* TODO misc array manipulation [0/1]
+  * [ ] mapping of indices (beyond ra-reshape/ra-from)
 
 * TODO fundamental features [3/5]
   * [X] unsized index vectors

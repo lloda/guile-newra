@@ -13,7 +13,7 @@
 (define-module (newra cat)
   #:export (ra-pcat ra-scat))
 
-(import (srfi :1) (srfi :26) (newra base) (newra lib) (newra from) (ice-9 match))
+(import (srfi :1) (srfi :26) (srfi :71) (newra base) (newra lib) (newra from) (ice-9 match))
 
 (define (list-subst! l k val)
   (list-set! l k val)
@@ -21,9 +21,19 @@
 
 (define (plain-cat! i dest . xx)
   (fold (lambda (x base)
-          (let ((dc (if (< i (ra-rank x)) (ra-len x i) 1)))
-            (ra-amend! dest x (ldots i) (ra-iota dc base))
-            (+ base dc)))
+          (let ((len lo hi (if (< i (ra-rank x))
+                             (let ((d (vector-ref (ra-dims x) i)))
+                               (values (dim-len d) (dim-lo d) (dim-hi d)))
+                             (values 1 0 0))))
+            (ra-amend! dest
+; optimization
+                       (if (zero? lo)
+                         x
+; move index range from (lo hi) to (0 len). Note that (ra-from x (ldots i) #t) doesn't do that.
+; could use ra-reshape on axis i, FIXME make that easier.
+                         (ra-from x (ldots i) (ra-iota len lo)))
+                       (ldots i) (ra-iota len base))
+            (+ base len)))
         0 xx)
   dest)
 
@@ -31,12 +41,12 @@
 
 (define (ra-pcat type i . xx)
   "
-Concatenate arrays @var{xx} ... along axis @var{i}. The shapes of @var{xx} ... must
-have matching prefixes except at axis @var{i}.
+Concatenate arrays @var{xx} ... along axis @var{i}. The shapes of @var{xx}
+... must have matching prefixes except at axis @var{i}.
 
 The output array will have the rank of the @var{xx} with the largest rank, or
 @code{(+ 1 i)}, whichever is larger. If necessary, the @var{xx} are rank
-extended to this output rank. The lengths of @var{xx} must match on all axes
+extended to this output rank. The bounds of @var{xx} must match on all axes
 other than @var{i}.
 
 If @var{i} is negative, the shape of each @var{xx} ... is prefix-extended by
@@ -89,7 +99,8 @@ each @var{x} in @var{xx}.
 
 The output array will have the rank of the @var{xx} with the largest rank, or
 @code{(+ 1 i)}, whichever is larger. If necessary, the @var{xx} are rank
-extended to this output rank.
+extended to this output rank. The bounds of @var{xx} must match on all axes
+other than @code{(- (ra-rank x) 1 i)}.
 
 If @var{i} is negative, the shape of each array @var{xx} ... is suffix-extended
 by @code{(- i)} singleton dimensions and the concatenation is carried out along
