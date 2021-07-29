@@ -18,7 +18,7 @@
             ra-copy
             ra-fold ra-fold*))
 
-(import (only (srfi :1) fold every any iota drop) (srfi :8) (srfi :26)
+(import (only (srfi :1) fold every any iota drop) (srfi :26) (srfi :71)
         (ice-9 control) (ice-9 match) (only (rnrs base) vector-map vector-for-each)
         (newra base) (newra map)
         (newra lib reshape))
@@ -220,24 +220,25 @@ See also: as-ra
   "
 ra-index-map! ra op -> ra
 
-Apply OP to the indices of each element of RA in turn, storing the result in the
-corresponding element.  The value returned and the order of application are
-unspecified.
+Apply @var{op} to the indices of each element of @var{ra} in turn, storing the
+result in the corresponding element. The order of iteration is unspecified.
 
-This function returns the modified RA.
+This function returns the modified @var{ra}.
 
 For example:
 
+@example
 guile> (define x (make-ra 0 2 3))
 guile> (ra-index-map! x (lambda x x))
 guile> x
 #%2:2:3(((0 0) (0 1) (0 2)) ((1 0) (1 1) (1 2)))
+@end example
 
-See also: ra-iota ra-i
+See also: @code{ra-iota} @code{ra-i}
 "
   (let* ((kk (ra-rank ra))
-         (ii (make-list kk)))
-    (receive (los lens) ((@ (newra map) ra-slice-for-each-check) kk ra)
+         (ii (make-list kk))
+         (los lens ((@ (newra map) ra-slice-for-each-check) kk ra)))
       (if (= kk 0)
         (ra-set! ra (apply op ii))
         (let loop-rank ((k 0) (ra ra) (endi ii))
@@ -257,8 +258,8 @@ See also: ra-iota ra-i
                   (begin
                     (set-car! endi i)
                     (loop-rank (+ k 1) (ra-slice ra i) (cdr endi))
-                    (loop-dim (+ i 1))))))))))
-    ra))
+                    (loop-dim (+ i 1)))))))))
+      ra))
 
 
 ; ----------------

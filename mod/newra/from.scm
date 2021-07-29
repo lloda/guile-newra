@@ -18,8 +18,8 @@
             ra-rotate!
             fromb fromu amendu!))
 
-(import (newra base) (newra map) (newra lib) (srfi :8) (srfi :26) (srfi :1)
-        (srfi :9) (srfi srfi-9 gnu) (ice-9 control) (ice-9 match)
+(import (srfi :1) (srfi :9) (srfi srfi-9 gnu) (srfi :26) (srfi :71)
+        (newra base) (newra map) (newra lib) (ice-9 control) (ice-9 match)
         (only (rnrs base) vector-map vector-for-each))
 
 (define-immutable-record-type <ldots>
@@ -92,19 +92,19 @@
                                        (and lo ilo ilen (+ lo (* istep (+ ilo ilen -1))))
                                        (and hi ilo (+ hi (* istep ilo))))))))
 
-                           (let ((lo (and lo (aseq-ref root lo)))
-                                 (hi (and hi (aseq-ref root hi))))
-                             (receive (lo hi) (if (negative? rinc) (values hi lo) (values lo hi))
+                           (let* ((lo (and lo (aseq-ref root lo)))
+                                  (hi (and hi (aseq-ref root hi)))
+                                  (lo hi (if (negative? rinc) (values hi lo) (values lo hi))))
 ; we don't use dim-check as that requires integer i.
-                               (when (dim-lo dimA)
-                                 (unless (and lo (>= lo (dim-lo dimA)))
-                                   (throw 'dim-check-out-of-range dimA lo)))
-                               (when (dim-hi dimA)
-                                 (unless (and hi (<= hi (dim-hi dimA)))
-                                   (throw 'dim-check-out-of-range dimA lo)))
-                               (loopj (+ j 1) irest
-                                      (+ zero (* (dim-step dimA) (+ rorg (* rinc izero))))
-                                      (cons bdimsj bdims)))))))))))))))))))
+                             (when (dim-lo dimA)
+                               (unless (and lo (>= lo (dim-lo dimA)))
+                                 (throw 'dim-check-out-of-range dimA lo)))
+                             (when (dim-hi dimA)
+                               (unless (and hi (<= hi (dim-hi dimA)))
+                                 (throw 'dim-check-out-of-range dimA lo)))
+                             (loopj (+ j 1) irest
+                                    (+ zero (* (dim-step dimA) (+ rorg (* rinc izero))))
+                                    (cons bdimsj bdims))))))))))))))))))
 
 
 ; ------------------------
@@ -134,15 +134,15 @@
               (apply c-dims
                 (append (append-map ra-shape i)
                         (map (lambda (dim) (list (dim-lo dim) (dim-hi dim)))
-                          (drop (vector->list (ra-dims A)) (length i))))))))
-      (receive (frame i) (apply broadcast-indices i)
-        (if (= frame (ra-rank A) (ra-rank C))
+                          (drop (vector->list (ra-dims A)) (length i)))))))
+          (frame i (apply broadcast-indices i)))
+      (if (= frame (ra-rank A) (ra-rank C))
 ; optimization
-          (apply ra-map! C A i)
-          (apply ra-slice-for-each frame
-                 (lambda (C . i) (ra-copy! C (apply (lambda i (apply ra-slice A i)) (map ra-ref i))))
-                 C i))
-        C)))))
+        (apply ra-map! C A i)
+        (apply ra-slice-for-each frame
+               (lambda (C . i) (ra-copy! C (apply (lambda i (apply ra-slice A i)) (map ra-ref i))))
+               C i))
+      C))))
 
 (define amendu!
   (case-lambda
@@ -150,7 +150,7 @@
 ; optimization I
     (ra-copy! A C))
    ((A C . i)
-    (receive (frame i) (apply broadcast-indices i)
+    (let ((frame i (apply broadcast-indices i)))
       (if (= (ra-rank A) (length i))
 ; optimization II
         (apply ra-for-each
@@ -249,7 +249,7 @@ the root of @var{A}, then the type of @var{B} is #t.
 
 See also: ra-cell ra-ref ra-slice ra-amend! ra-set!
 "
-  (receive (B iu tu tb) (apply parse-args A i)
+  (let ((B iu tu tb (apply parse-args A i)))
 ; apply the unbeatable axes and undo the transposition. ra-transpose handles any trailing axes
     (apply ra-transpose (apply fromu B iu) (append tu tb))))
 
@@ -284,16 +284,16 @@ This function returns the modified ra @var{A}.
 
 See also: ra-set! ra-from ra-copy! ra-cell ra-ref ra-slice
 "
-  (receive (B iu tu tb) (apply parse-args A i)
+  (let* ((B iu tu tb (apply parse-args A i))
 ; C needs to be transposed to match the transposition of B relative to A.
-    (let ((C (if (ra? C)
-               (let ((gup (append tu tb)))
-                 (apply ra-untranspose C (take gup (min (length gup) (ra-rank C)))))
-               (make-ra C))))
+         (C (if (ra? C)
+              (let ((gup (append tu tb)))
+                (apply ra-untranspose C (take gup (min (length gup) (ra-rank C)))))
+              (make-ra C))))
 ; apply the unbeatable axes.
-      (apply amendu! B C iu)
+    (apply amendu! B C iu)
 ; we aren't making a new array so there's no need to transpose back.
-      A)))
+    A))
 
 
 ; -----------------------

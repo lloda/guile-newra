@@ -28,7 +28,7 @@
             %%ra-zero-set! %%ra-dims %%ra-vlen %%ra-vref %%ra-vset! %%ra-step
             ra-shape ra-dimensions ra-len ra-size))
 
-(import (srfi :9) (srfi srfi-9 gnu) (only (srfi :1) fold every) (srfi :8)
+(import (srfi :9) (srfi srfi-9 gnu) (only (srfi :1) fold every) (srfi :71)
         (srfi srfi-4 gnu) (srfi :26) (srfi :2) (ice-9 match) (ice-9 control)
         (newra vector) (only (rnrs base) vector-for-each))
 
@@ -539,7 +539,7 @@ See also: ra-root ra-zero ra-dims
       (unless (vector? dims) (throw 'bad-dims dims))
       (vector-for-each (lambda (dim) (unless (dim? dim) (throw 'bad-dim dim))) dims))
 ; after check
-    (receive (type vlen vref vset!) (pick-root-functions root)
+    (let ((type vlen vref vset! (pick-root-functions root)))
       (make-ra* root zero
                 (or dims (vector (make-dim (vlen root))))
                 type vlen vref vset!)))

@@ -2,7 +2,7 @@
 
 ## newra
 
-guile-newra (`newra`) wants to replace the old (2.2/3.0) Guile array system, which is almost entirely implemented in C.
+guile-newra (`newra`) wants to replace the old (≤ 3.0) Guile array system, which is almost entirely implemented in C.
 
 The new implementation should be at least as fast. I think this is feasible once the Scheme compiler goes native, because for the most part the array functions are used to call back to Scheme, and a Scheme implementation could get rid of the back and forth, optimize the type dispatches, etc.
 
