@@ -177,9 +177,9 @@
                             (ra-iota (ra-len sq 1) (+ o1 1 (- l1 (ra-len sq 1) 1)))) ; align right
                    sq))
        (apply ra-untranspose s (ra->list (ra-pcat #f 0 dim0 dim1)))
-       (apply ra-reshape (scan-0 (ra-ravel l0)) (ra-dimensions l0))
+       (apply ra-reshape (scan-0 (ra-ravel l0)) 0 (ra-dimensions l0))
        l0
-       (ra-transpose (apply ra-reshape (scan-0 (ra-ravel l1)) (ra-dimensions l1)) (ra-rank l0))
+       (ra-transpose (apply ra-reshape (scan-0 (ra-ravel l1)) 0 (ra-dimensions l1)) (ra-rank l0))
        (ra-transpose l1 (ra-rank l0)))))
 ; print prefix
   (when prefix

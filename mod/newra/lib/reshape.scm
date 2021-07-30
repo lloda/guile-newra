@@ -228,16 +228,15 @@ See also: ra-reshape ra-transpose ra-from ra-order-c?
 ; cf http://www2.phys.canterbury.ac.nz/dept/docs/manuals/Fortran-90/HTMLNotesnode102.html#ReshapeIntrinsic1
 ; RESHAPE(SOURCE,SHAPE[,PAD][,ORDER])
 
-(define (ra-reshape ra . s)
+(define (ra-reshape ra k . s)
   "
-ra-reshape ra s ... -> rb
+ra-reshape ra k s ... -> rb
 
-Reshape the first axis of @var{ra} into shape @var{s} ... The shape of the
-result @var{rb} will be @var{s} concatenated with the rest of the shape of
-@var{ra}. The total size of the new axes must fit in the first axis of @var{ra}.
+Reshape axis @var{k} of @var{ra} into shape @var{s} ... Each of the @var{s} is
+either a list of two integers @code{(lo hi)} or an integer @code{len}.
 
-Each of the @var{s} is either a list of two integers @code{(lo hi)} or an
-integer @code{len}.
+The total size of the new axes must fit in axis @var{k} of @var{ra}. The result
+has rank = rank(@var{ra})-1+card(@var{s}).
 
 The result shares the root of @var{ra}.
 
@@ -249,12 +248,16 @@ See also: ra-ravel ra-tile ra-transpose ra-from ra-order-c? c-dims make-ra-new
     (let ((ssize (vector-fold (lambda (d c) (* c (dim-len d))) 1 sdims)))
       (when (and (ra-len ra) (> ssize (ra-len ra)))
         (throw 'bad-size-for-reshape ssize (ra-len ra))))
-    (match (vector-ref (%%ra-dims ra) 0)
+    (match (vector-ref (%%ra-dims ra) k)
       (($ <dim> ilen ilo istep)
-       (let* ((sdims (vector-map (lambda (d) (make-dim (dim-len d) (dim-lo d) (* (dim-step d) istep))) sdims))
-              (bdims (vector-append sdims (vector-drop (%%ra-dims ra) 1))))
+       (let ((sdims (vector-map (lambda (d) (make-dim (dim-len d) (dim-lo d) (* (dim-step d) istep))) sdims))
+             (adims (%%ra-dims ra)))
          (make-ra-root (%%ra-root ra)
-                       bdims
+; FIXME do like in ra-tile and save the take/drop copies
+                       (vector-append
+                        (vector-take adims k)
+                        sdims
+                        (vector-drop adims (+ k 1)))
                        (+ (ra-zero ra) (- (ra-offset 0 sdims)) (* ilo istep))))))))
 
 (define (ra-tile ra k . s)

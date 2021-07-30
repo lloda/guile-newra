@@ -1,8 +1,5 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
 <html>
-<!-- Created by GNU Texinfo 6.8, https://www.gnu.org/software/texinfo/ -->
-<head>
-<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
 <!-- newra (version 1, updated 2021 July 30)
 
 (c) lloda 2017-2021
@@ -11,6 +8,9 @@ Permission is granted to copy, distribute and/or modify this document
 under the terms of the GNU Free Documentation License, Version 1.3 or
 any later version published by the Free Software Foundation; with no
 Invariant Sections, no Front-Cover Texts, and no Back-Cover Texts. -->
+<!-- Created by GNU Texinfo 6.7, http://www.gnu.org/software/texinfo/ -->
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
 <title>newra —An alternative array library for Guile 3</title>
 
 <meta name="description" content="newra —An alternative array library for Guile 3">
@@ -18,18 +18,15 @@ Invariant Sections, no Front-Cover Texts, and no Back-Cover Texts. -->
 <meta name="resource-type" content="document">
 <meta name="distribution" content="global">
 <meta name="Generator" content="makeinfo">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-
 <link href="#Top" rel="start" title="Top">
 <link href="#Indices" rel="index" title="Indices">
-<link href="#Introduction" rel="next" title="Introduction">
 <style type="text/css">
 <!--
-a.copiable-anchor {visibility: hidden; text-decoration: none; line-height: 0em}
 a.summary-letter {text-decoration: none}
 blockquote.indentedblock {margin-right: 0em}
 div.display {margin-left: 3.2em}
 div.example {margin-left: 3.2em}
+div.lisp {margin-left: 3.2em}
 kbd {font-style: oblique}
 pre.display {font-family: inherit}
 pre.format {font-family: inherit}
@@ -38,7 +35,6 @@ pre.menu-preformatted {font-family: serif}
 span.nolinebreak {white-space: nowrap}
 span.roman {font-family: initial; font-weight: normal}
 span.sansserif {font-family: sans-serif; font-weight: normal}
-span:hover a.copiable-anchor {visibility: visible}
 ul.no-bullet {list-style: none}
 -->
 </style>
@@ -98,8 +94,7 @@ ul.no-bullet {list-style: none}
 
 
 
-<div class="top" id="Top">
-<div class="header">
+<span id="Top"></span><div class="header">
 <p>
 Next: <a href="#Introduction" accesskey="n" rel="next">Introduction</a> &nbsp; [<a href="#Indices" title="Index" rel="index">Index</a>]</p>
 </div>
@@ -120,28 +115,34 @@ Invariant Sections, no Front-Cover Texts, and no Back-Cover Texts.
 </p>
 <p>This document uses ‘array’ to refer both to the old built-in array type and to the new type introduced in <code>newra</code>. The distinction is made as necessary.
 </p>
+<table class="menu" border="0" cellspacing="0">
+<tr><td align="left" valign="top">&bull; <a href="#Introduction" accesskey="1">Introduction</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">Why Guile arrays need replacing.
+</td></tr>
+<tr><td align="left" valign="top">&bull; <a href="#Low-level" accesskey="2">Low level</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">Arrays as data structures.
+</td></tr>
+<tr><td align="left" valign="top">&bull; <a href="#High-level" accesskey="3">High level</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">Guile as an array language.
+</td></tr>
+<tr><td align="left" valign="top">&bull; <a href="#Hazards" accesskey="4">Hazards</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">User beware.
+</td></tr>
+<tr><td align="left" valign="top">&bull; <a href="#Reference" accesskey="5">Reference</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">Systematic list of types and functions.
+</td></tr>
+<tr><td align="left" valign="top">&bull; <a href="#Sources" accesskey="6">Sources</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">It&rsquo;s been done before.
+</td></tr>
+<tr><td align="left" valign="top">&bull; <a href="#Indices" rel="index" accesskey="7">Indices</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">Or try the search function.
+</td></tr>
+</table>
 
 
 
-<ul class="section-toc">
-<li><a href="#Introduction" accesskey="1">Introduction</a></li>
-<li><a href="#Low-level" accesskey="2">Low level</a></li>
-<li><a href="#High-level" accesskey="3">High level</a></li>
-<li><a href="#Hazards" accesskey="4">Hazards</a></li>
-<li><a href="#Reference" accesskey="5">Reference</a></li>
-<li><a href="#Sources" accesskey="6">Sources</a></li>
-<li><a href="#Indices" accesskey="7">Indices</a></li>
-</ul>
 <hr>
-<div class="chapter" id="Introduction">
-<div class="header">
+<span id="Introduction"></span><div class="header">
 <p>
-Next: <a href="#Low-level" accesskey="n" rel="next">Low level</a>, Previous: <a href="#Top" accesskey="p" rel="prev"><code>newra</code></a>, Up: <a href="#Top" accesskey="u" rel="up"><code>newra</code></a> &nbsp; [<a href="#Indices" title="Index" rel="index">Index</a>]</p>
+Next: <a href="#Low-level" accesskey="n" rel="next">Low level</a>, Previous: <a href="#Top" accesskey="p" rel="prev">Top</a>, Up: <a href="#Top" accesskey="u" rel="up">Top</a> &nbsp; [<a href="#Indices" title="Index" rel="index">Index</a>]</p>
 </div>
 <span id="Introduction-1"></span><h2 class="chapter">1 Introduction</h2>
 
 <span id="index-bounds"></span>
-<p>A multidimensional array is a container (or rather a container view) whose elements can be looked up using a multi-index (i₀, i₁, ...). Each of the indices i₀, i₁, ... has constant bounds [l₀, h₀], [l₁, h₁], ... independent of the values of the other indices, so the array is ‘rectangular’. The number of indices in the multi-index is the <em>rank</em> of the array, and the list ([l₀ h₀] [l₁ h₁] ... [lᵣ₋₁ hᵣ₋₁]) is the <em>shape</em> of the array. We speak of a rank-<em class='math'>r</em> array or of an <em class='math'>r</em>-array.
+<p>A multidimensional array is a container (or rather a container view) whose elements can be looked up using a multi-index (i₀, i₁, ...). Each of the indices i₀, i₁, ... has constant bounds [l₀, h₀], [l₁, h₁], ... independent of the values of the other indices, so the array is ‘rectangular’. The number of indices in the multi-index is the <em>rank</em> of the array, and the list ([l₀ h₀] [l₁ h₁] ... [lᵣ₋₁ hᵣ₋₁]) is the <em>shape</em> of the array. We speak of a rank-<em>r</em> array or of an <em>r</em>-array.
 </p>
 <p>This is a 2-array with bounds [0, 2] on both axes:
 </p><pre class="verbatim">┌───────┬───────┬───────┐
@@ -169,26 +170,28 @@ Next: <a href="#Low-level" accesskey="n" rel="next">Low level</a>, Previous: <a 
 </p>
 <p>The rest of this section discusses the motivation for <code>newra</code> in more detail. To start using the library, please jump ahead to <a href="#Low-level">Low level</a>.
 </p>
+<table class="menu" border="0" cellspacing="0">
+<tr><td align="left" valign="top">&bull; <a href="#Rank-polymorphism-and-rank-extension" accesskey="1">Rank polymorphism and rank extension</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">
+</td></tr>
+<tr><td align="left" valign="top">&bull; <a href="#The-pieces-of-an-array" accesskey="2">The pieces of an array</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">
+</td></tr>
+<tr><td align="left" valign="top">&bull; <a href="#Built_002din-Guile-arrays" accesskey="3">Built-in Guile arrays</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">
+</td></tr>
+</table>
 
-<ul class="section-toc">
-<li><a href="#Rank-polymorphism-and-rank-extension" accesskey="1">Rank polymorphism and rank extension</a></li>
-<li><a href="#The-pieces-of-an-array" accesskey="2">The pieces of an array</a></li>
-<li><a href="#Built_002din-Guile-arrays" accesskey="3">Built-in Guile arrays</a></li>
-</ul>
 <hr>
-<div class="section" id="Rank-polymorphism-and-rank-extension">
-<div class="header">
+<span id="Rank-polymorphism-and-rank-extension"></span><div class="header">
 <p>
 Next: <a href="#The-pieces-of-an-array" accesskey="n" rel="next">The pieces of an array</a>, Up: <a href="#Introduction" accesskey="u" rel="up">Introduction</a> &nbsp; [<a href="#Indices" title="Index" rel="index">Index</a>]</p>
 </div>
 <span id="Rank-polymorphism-and-rank-extension-1"></span><h3 class="section">1.1 Rank polymorphism and rank extension</h3>
 
 <span id="index-rank-polymorphism"></span>
-<p><em>Rank polymorphism</em> is the ability to treat an array of rank <em class='math'>r</em> as an array of lower rank where the elements are themselves arrays.
+<p><em>Rank polymorphism</em> is the ability to treat an array of rank <em>r</em> as an array of lower rank where the elements are themselves arrays.
 </p>
 <span id="index-cell"></span>
 <span id="index-frame"></span>
-<p>Think of a matrix A, a 2-array with lengths (l₀, l₁) where the elements A(i₀, i₁) are numbers. If we consider the subarrays (rows) A(0, ...), A(1, ...), ..., A(l₀-1, ...) as individual elements, then we have a new view of A as a 1-array of size s₀ with those rows as elements. We say that the rows A(i₀)≡A(i₀, ...) are the 1-<em>cells</em> of A, and the numbers A(i₀, i₁) are 0-cells of A. For an array of arbitrary rank <em class='math'>r</em> the (<em class='math'>r</em>-1)-cells of A are called its <em>items</em>. The prefix of the shape (l₀, l₁, ... lₙ₋₁₋ₖ) that is not taken up by the k-cell is called the (r-k)-<em>frame</em>.
+<p>Think of a matrix A, a 2-array with lengths (l₀, l₁) where the elements A(i₀, i₁) are numbers. If we consider the subarrays (rows) A(0, ...), A(1, ...), ..., A(l₀-1, ...) as individual elements, then we have a new view of A as a 1-array of size s₀ with those rows as elements. We say that the rows A(i₀)≡A(i₀, ...) are the 1-<em>cells</em> of A, and the numbers A(i₀, i₁) are 0-cells of A. For an array of arbitrary rank <em>r</em> the (<em>r</em>-1)-cells of A are called its <em>items</em>. The prefix of the shape (l₀, l₁, ... lₙ₋₁₋ₖ) that is not taken up by the k-cell is called the (r-k)-<em>frame</em>.
 </p>
 <table>
 <tr><td width="40%"><pre class="verbatim">┌───────┬───────┬───────┐
@@ -250,9 +253,7 @@ A(2)
 <p>Note that we can iterate over these items by simply bumping the pointer o+s₀·i₀. This means that iterating over (k&gt;0)-cells doesn&rsquo;t have to cost any more than iterating over 0-cells (<a href="#x_002dra_002dslice_002dfor_002deach"><code>ra-slice-for-each</code></a>).
 </p>
 <hr>
-</div>
-<div class="section" id="The-pieces-of-an-array">
-<div class="header">
+<span id="The-pieces-of-an-array"></span><div class="header">
 <p>
 Next: <a href="#Built_002din-Guile-arrays" accesskey="n" rel="next">Built-in Guile arrays</a>, Previous: <a href="#Rank-polymorphism-and-rank-extension" accesskey="p" rel="prev">Rank polymorphism and rank extension</a>, Up: <a href="#Introduction" accesskey="u" rel="up">Introduction</a> &nbsp; [<a href="#Indices" title="Index" rel="index">Index</a>]</p>
 </div>
@@ -348,9 +349,7 @@ Each dim consists of a length (<em>len</em>), a lower bound (<em>lo</em>), and a
 <p>doesn&rsquo;t.
 </p>
 <hr>
-</div>
-<div class="section" id="Built_002din-Guile-arrays">
-<div class="header">
+<span id="Built_002din-Guile-arrays"></span><div class="header">
 <p>
 Previous: <a href="#The-pieces-of-an-array" accesskey="p" rel="prev">The pieces of an array</a>, Up: <a href="#Introduction" accesskey="u" rel="up">Introduction</a> &nbsp; [<a href="#Indices" title="Index" rel="index">Index</a>]</p>
 </div>
@@ -370,32 +369,39 @@ Previous: <a href="#The-pieces-of-an-array" accesskey="p" rel="prev">The pieces 
 <p>These problems are solved if the built-in type is replaced with a new type defined in Scheme.
 </p>
 <hr>
-</div>
-</div>
-<div class="chapter" id="Low-level">
-<div class="header">
+<span id="Low-level"></span><div class="header">
 <p>
-Next: <a href="#High-level" accesskey="n" rel="next">High level</a>, Previous: <a href="#Introduction" accesskey="p" rel="prev">Introduction</a>, Up: <a href="#Top" accesskey="u" rel="up"><code>newra</code></a> &nbsp; [<a href="#Indices" title="Index" rel="index">Index</a>]</p>
+Next: <a href="#High-level" accesskey="n" rel="next">High level</a>, Previous: <a href="#Introduction" accesskey="p" rel="prev">Introduction</a>, Up: <a href="#Top" accesskey="u" rel="up">Top</a> &nbsp; [<a href="#Indices" title="Index" rel="index">Index</a>]</p>
 </div>
 <span id="Low-level-1"></span><h2 class="chapter">2 Low level</h2>
 
+<table class="menu" border="0" cellspacing="0">
+<tr><td align="left" valign="top">&bull; <a href="#Creating-and-accessing-arrays" accesskey="1">Creating and accessing arrays</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">
+</td></tr>
+<tr><td align="left" valign="top">&bull; <a href="#Special-arrays" accesskey="2">Special arrays</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">
+</td></tr>
+<tr><td align="left" valign="top">&bull; <a href="#Writing-and-reading" accesskey="3">Writing and reading</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">
+</td></tr>
+<tr><td align="left" valign="top">&bull; <a href="#Iteration" accesskey="4">Iteration</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">
+</td></tr>
+<tr><td align="left" valign="top">&bull; <a href="#Slicing" accesskey="5">Slicing</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">
+</td></tr>
+<tr><td align="left" valign="top">&bull; <a href="#Reshaping" accesskey="6">Reshaping</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">
+</td></tr>
+<tr><td align="left" valign="top">&bull; <a href="#Concatenation" accesskey="7">Concatenation</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">
+</td></tr>
+<tr><td align="left" valign="top">&bull; <a href="#Transposition" accesskey="8">Transposition</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">
+</td></tr>
+<tr><td align="left" valign="top">&bull; <a href="#Other-operations-on-arrays" accesskey="9">Other operations on arrays</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">
+</td></tr>
+<tr><td align="left" valign="top">&bull; <a href="#Foreign-interface">Foreign interface</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">
+</td></tr>
+<tr><td align="left" valign="top">&bull; <a href="#Compatibility-with-old-Guile-arrays">Compatibility with old Guile arrays</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">
+</td></tr>
+</table>
 
-<ul class="section-toc">
-<li><a href="#Creating-and-accessing-arrays" accesskey="1">Creating and accessing arrays</a></li>
-<li><a href="#Special-arrays" accesskey="2">Special arrays</a></li>
-<li><a href="#Writing-and-reading" accesskey="3">Writing and reading</a></li>
-<li><a href="#Iteration" accesskey="4">Iteration</a></li>
-<li><a href="#Slicing" accesskey="5">Slicing</a></li>
-<li><a href="#Reshaping" accesskey="6">Reshaping</a></li>
-<li><a href="#Concatenation" accesskey="7">Concatenation</a></li>
-<li><a href="#Transposition" accesskey="8">Transposition</a></li>
-<li><a href="#Other-operations-on-arrays" accesskey="9">Other operations on arrays</a></li>
-<li><a href="#Foreign-interface">Foreign interface</a></li>
-<li><a href="#Compatibility-with-old-Guile-arrays">Compatibility with old Guile arrays</a></li>
-</ul>
 <hr>
-<div class="section" id="Creating-and-accessing-arrays">
-<div class="header">
+<span id="Creating-and-accessing-arrays"></span><div class="header">
 <p>
 Next: <a href="#Special-arrays" accesskey="n" rel="next">Special arrays</a>, Up: <a href="#Low-level" accesskey="u" rel="up">Low level</a> &nbsp; [<a href="#Indices" title="Index" rel="index">Index</a>]</p>
 </div>
@@ -461,9 +467,7 @@ Next: <a href="#Special-arrays" accesskey="n" rel="next">Special arrays</a>, Up:
 <p>You can also access arrays in the more usual way with the functions <a href="#x_002dra_002dref"><code>ra-ref</code></a> and <a href="#x_002dra_002dset_0021"><code>ra-set!</code></a>. See <a href="#Slicing">Slicing</a> for additional options.
 </p>
 <hr>
-</div>
-<div class="section" id="Special-arrays">
-<div class="header">
+<span id="Special-arrays"></span><div class="header">
 <p>
 Next: <a href="#Writing-and-reading" accesskey="n" rel="next">Writing and reading</a>, Previous: <a href="#Creating-and-accessing-arrays" accesskey="p" rel="prev">Creating and accessing arrays</a>, Up: <a href="#Low-level" accesskey="u" rel="up">Low level</a> &nbsp; [<a href="#Indices" title="Index" rel="index">Index</a>]</p>
 </div>
@@ -481,8 +485,8 @@ Next: <a href="#Writing-and-reading" accesskey="n" rel="next">Writing and readin
 <p><code>newra</code> supports an additional root vector type, <code>&lt;aseq&gt;</code>, representing an infinite arithmetic sequence.
 </p>
 <span id="index-make_002daseq"></span>
-<span id="x_002dnone"></span><dl class="def">
-<dt id="index-make_002daseq-1"><span class="category">function<!-- /@w -->: </span><span><strong>make-aseq</strong> <em>[org [inc]]</em><a href='#index-make_002daseq-1' class='copiable-anchor'> &para;</a></span></dt>
+<span id="x_002dnone"></span><dl>
+<dt id="index-make_002daseq-1">function<!-- /@w -->: <strong>make-aseq</strong> <em>[org [inc]]</em></dt>
 <dd>
 <p>Create an arithmetic sequence [<code>org, org+inc, org+2·inc, ...</code>]. The default values of <code>org</code> and <code>inc</code> are respectively 0 and 1. For example:
 </p>
@@ -527,9 +531,7 @@ Next: <a href="#Writing-and-reading" accesskey="n" rel="next">Writing and readin
 <p>When an axis has 0 step and infinite length, it operates essentially as ‘singleton axes’ operate in other array languages. The main diference is that the ability to match any finite length is explicit; an axis with length 1 will still fail to match an axis with length 2 (say).
 </p>
 <hr>
-</div>
-<div class="section" id="Writing-and-reading">
-<div class="header">
+<span id="Writing-and-reading"></span><div class="header">
 <p>
 Next: <a href="#Iteration" accesskey="n" rel="next">Iteration</a>, Previous: <a href="#Special-arrays" accesskey="p" rel="prev">Special arrays</a>, Up: <a href="#Low-level" accesskey="u" rel="up">Low level</a> &nbsp; [<a href="#Indices" title="Index" rel="index">Index</a>]</p>
 </div>
@@ -594,9 +596,7 @@ s
 </pre></div>
 
 <hr>
-</div>
-<div class="section" id="Iteration">
-<div class="header">
+<span id="Iteration"></span><div class="header">
 <p>
 Next: <a href="#Slicing" accesskey="n" rel="next">Slicing</a>, Previous: <a href="#Writing-and-reading" accesskey="p" rel="prev">Writing and reading</a>, Up: <a href="#Low-level" accesskey="u" rel="up">Low level</a> &nbsp; [<a href="#Indices" title="Index" rel="index">Index</a>]</p>
 </div>
@@ -647,9 +647,7 @@ Next: <a href="#Slicing" accesskey="n" rel="next">Slicing</a>, Previous: <a href
 </pre></div>
 
 <hr>
-</div>
-<div class="section" id="Slicing">
-<div class="header">
+<span id="Slicing"></span><div class="header">
 <p>
 Next: <a href="#Reshaping" accesskey="n" rel="next">Reshaping</a>, Previous: <a href="#Iteration" accesskey="p" rel="prev">Iteration</a>, Up: <a href="#Low-level" accesskey="u" rel="up">Low level</a> &nbsp; [<a href="#Indices" title="Index" rel="index">Index</a>]</p>
 </div>
@@ -780,9 +778,7 @@ Next: <a href="#Reshaping" accesskey="n" rel="next">Reshaping</a>, Previous: <a 
 </pre></div>
 
 <hr>
-</div>
-<div class="section" id="Reshaping">
-<div class="header">
+<span id="Reshaping"></span><div class="header">
 <p>
 Next: <a href="#Concatenation" accesskey="n" rel="next">Concatenation</a>, Previous: <a href="#Slicing" accesskey="p" rel="prev">Slicing</a>, Up: <a href="#Low-level" accesskey="u" rel="up">Low level</a> &nbsp; [<a href="#Indices" title="Index" rel="index">Index</a>]</p>
 </div>
@@ -802,16 +798,14 @@ Next: <a href="#Concatenation" accesskey="n" rel="next">Concatenation</a>, Previ
 </pre><pre class="example">&rArr; (5 2 3 4)
 </pre><pre class="verbatim">(ra-dimensions (ra-ravel (ra-tile (ra-i 2 3 4) 0 5) 2))
 </pre><pre class="example">&rArr; (10 3 4)
-</pre><pre class="verbatim">(ra-dimensions (ra-reshape (ra-ravel (ra-tile (ra-i 2 3 4) 0 5) 2) 3 3))
+</pre><pre class="verbatim">(ra-dimensions (ra-reshape (ra-ravel (ra-tile (ra-i 2 3 4) 0 5) 2) 0 3 3))
 </pre><pre class="example">&rArr; (3 3 3 4)
 </pre></div>
 
 <p><code>ra-reshape</code> and <code>ra-tile</code> always reuse the root of the argument. On the other hand <code>ra-ravel</code> may not be able to — this is one of the reasons to have three different functions instead of only one. You can check in advance whether <code>ra-ravel</code> will reuse the root with the function <a href="#x_002dra_002dorder_002dc_003f"><code>ra-order-c?</code></a>.
 </p>
 <hr>
-</div>
-<div class="section" id="Concatenation">
-<div class="header">
+<span id="Concatenation"></span><div class="header">
 <p>
 Next: <a href="#Transposition" accesskey="n" rel="next">Transposition</a>, Previous: <a href="#Reshaping" accesskey="p" rel="prev">Reshaping</a>, Up: <a href="#Low-level" accesskey="u" rel="up">Low level</a> &nbsp; [<a href="#Indices" title="Index" rel="index">Index</a>]</p>
 </div>
@@ -899,7 +893,7 @@ Next: <a href="#Transposition" accesskey="n" rel="next">Transposition</a>, Previ
 </p>
 <div class="example">
 <pre class="verbatim">(ra-pcat #t 1 (make-ra 'a '(1 1) '(1 4))
-              (ra-reshape (make-ra 'b '(2 2) '(1 4)) '(1 1)))
+              (ra-reshape (make-ra 'b '(2 2) '(1 4)) 0 '(1 1)))
 </pre><pre class="example">&rArr; <code>#%2@1:1:8((a a a a b b b b))</code>
 </pre></div>
 
@@ -936,9 +930,7 @@ Next: <a href="#Transposition" accesskey="n" rel="next">Transposition</a>, Previ
 <p>Cf J append (,) stitch (,.).
 </p>
 <hr>
-</div>
-<div class="section" id="Transposition">
-<div class="header">
+<span id="Transposition"></span><div class="header">
 <p>
 Next: <a href="#Other-operations-on-arrays" accesskey="n" rel="next">Other operations on arrays</a>, Previous: <a href="#Concatenation" accesskey="p" rel="prev">Concatenation</a>, Up: <a href="#Low-level" accesskey="u" rel="up">Low level</a> &nbsp; [<a href="#Indices" title="Index" rel="index">Index</a>]</p>
 </div>
@@ -1025,9 +1017,7 @@ A
 
 
 <hr>
-</div>
-<div class="section" id="Other-operations-on-arrays">
-<div class="header">
+<span id="Other-operations-on-arrays"></span><div class="header">
 <p>
 Next: <a href="#Foreign-interface" accesskey="n" rel="next">Foreign interface</a>, Previous: <a href="#Transposition" accesskey="p" rel="prev">Transposition</a>, Up: <a href="#Low-level" accesskey="u" rel="up">Low level</a> &nbsp; [<a href="#Indices" title="Index" rel="index">Index</a>]</p>
 </div>
@@ -1035,9 +1025,7 @@ Next: <a href="#Foreign-interface" accesskey="n" rel="next">Foreign interface</a
 
 
 <hr>
-</div>
-<div class="section" id="Foreign-interface">
-<div class="header">
+<span id="Foreign-interface"></span><div class="header">
 <p>
 Next: <a href="#Compatibility-with-old-Guile-arrays" accesskey="n" rel="next">Compatibility with old Guile arrays</a>, Previous: <a href="#Other-operations-on-arrays" accesskey="p" rel="prev">Other operations on arrays</a>, Up: <a href="#Low-level" accesskey="u" rel="up">Low level</a> &nbsp; [<a href="#Indices" title="Index" rel="index">Index</a>]</p>
 </div>
@@ -1048,9 +1036,7 @@ Next: <a href="#Compatibility-with-old-Guile-arrays" accesskey="n" rel="next">Co
 <p>For example:
 </p>
 <hr>
-</div>
-<div class="section" id="Compatibility-with-old-Guile-arrays">
-<div class="header">
+<span id="Compatibility-with-old-Guile-arrays"></span><div class="header">
 <p>
 Previous: <a href="#Foreign-interface" accesskey="p" rel="prev">Foreign interface</a>, Up: <a href="#Low-level" accesskey="u" rel="up">Low level</a> &nbsp; [<a href="#Indices" title="Index" rel="index">Index</a>]</p>
 </div>
@@ -1090,7 +1076,7 @@ a
 </p>
 <div class="example">
 <pre class="verbatim">(define a (make-ra-root (vector 'a 'b 'c 'd 'e 'f 'g))) ; range is 0..6
-(define b (ra-reshape (ra-iota 4) '(2 5))) ; range is 2..5
+(define b (ra-reshape (ra-iota 4) 0 '(2 5))) ; range is 2..5
 (ra-copy! a b)
 </pre><pre class="example">&rArr; <code>Throw to key `mismatched-lens' with args `(7 4 at-dim 0)'.</code>
 </pre><pre class="verbatim">(ra-copy! (ra-clip a b) b)
@@ -1099,12 +1085,9 @@ a
 </pre></div>
 
 <hr>
-</div>
-</div>
-<div class="chapter" id="High-level">
-<div class="header">
+<span id="High-level"></span><div class="header">
 <p>
-Next: <a href="#Hazards" accesskey="n" rel="next">Hazards</a>, Previous: <a href="#Low-level" accesskey="p" rel="prev">Low level</a>, Up: <a href="#Top" accesskey="u" rel="up"><code>newra</code></a> &nbsp; [<a href="#Indices" title="Index" rel="index">Index</a>]</p>
+Next: <a href="#Hazards" accesskey="n" rel="next">Hazards</a>, Previous: <a href="#Low-level" accesskey="p" rel="prev">Low level</a>, Up: <a href="#Top" accesskey="u" rel="up">Top</a> &nbsp; [<a href="#Indices" title="Index" rel="index">Index</a>]</p>
 </div>
 <span id="High-level-1"></span><h2 class="chapter">3 High level</h2>
 
@@ -1118,47 +1101,45 @@ Next: <a href="#Hazards" accesskey="n" rel="next">Hazards</a>, Previous: <a href
 </li><li> handle scalar (non-array) arguments.
 </li></ul>
 
+<table class="menu" border="0" cellspacing="0">
+<tr><td align="left" valign="top">&bull; <a href="#Verbs" accesskey="1">Verbs</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">
+</td></tr>
+<tr><td align="left" valign="top">&bull; <a href="#Reductions" accesskey="2">Reductions</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">
+</td></tr>
+</table>
 
-<ul class="section-toc">
-<li><a href="#Verbs" accesskey="1">Verbs</a></li>
-<li><a href="#Reductions" accesskey="2">Reductions</a></li>
-</ul>
 <hr>
-<div class="section" id="Verbs">
-<div class="header">
+<span id="Verbs"></span><div class="header">
 <p>
 Next: <a href="#Reductions" accesskey="n" rel="next">Reductions</a>, Up: <a href="#High-level" accesskey="u" rel="up">High level</a> &nbsp; [<a href="#Indices" title="Index" rel="index">Index</a>]</p>
 </div>
 <span id="Verbs-1"></span><h3 class="section">3.1 Verbs</h3>
 
 <hr>
-</div>
-<div class="section" id="Reductions">
-<div class="header">
+<span id="Reductions"></span><div class="header">
 <p>
 Previous: <a href="#Verbs" accesskey="p" rel="prev">Verbs</a>, Up: <a href="#High-level" accesskey="u" rel="up">High level</a> &nbsp; [<a href="#Indices" title="Index" rel="index">Index</a>]</p>
 </div>
 <span id="Reductions-1"></span><h3 class="section">3.2 Reductions</h3>
 
 <hr>
-</div>
-</div>
-<div class="chapter" id="Hazards">
-<div class="header">
+<span id="Hazards"></span><div class="header">
 <p>
-Next: <a href="#Reference" accesskey="n" rel="next">Reference</a>, Previous: <a href="#High-level" accesskey="p" rel="prev">High level</a>, Up: <a href="#Top" accesskey="u" rel="up"><code>newra</code></a> &nbsp; [<a href="#Indices" title="Index" rel="index">Index</a>]</p>
+Next: <a href="#Reference" accesskey="n" rel="next">Reference</a>, Previous: <a href="#High-level" accesskey="p" rel="prev">High level</a>, Up: <a href="#Top" accesskey="u" rel="up">Top</a> &nbsp; [<a href="#Indices" title="Index" rel="index">Index</a>]</p>
 </div>
 <span id="Hazards-1"></span><h2 class="chapter">4 Hazards</h2>
 
+<table class="menu" border="0" cellspacing="0">
+<tr><td align="left" valign="top">&bull; <a href="#Differences-with_002e_002e_002e" accesskey="1">Differences with...</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">
+</td></tr>
+<tr><td align="left" valign="top">&bull; <a href="#Common-mistakes" accesskey="2">Common mistakes</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">
+</td></tr>
+<tr><td align="left" valign="top">&bull; <a href="#Performance-pitfalls" accesskey="3">Performance pitfalls</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">
+</td></tr>
+</table>
 
-<ul class="section-toc">
-<li><a href="#Differences-with_002e_002e_002e" accesskey="1">Differences with...</a></li>
-<li><a href="#Common-mistakes" accesskey="2">Common mistakes</a></li>
-<li><a href="#Performance-pitfalls" accesskey="3">Performance pitfalls</a></li>
-</ul>
 <hr>
-<div class="section" id="Differences-with_002e_002e_002e">
-<div class="header">
+<span id="Differences-with_002e_002e_002e"></span><div class="header">
 <p>
 Next: <a href="#Common-mistakes" accesskey="n" rel="next">Common mistakes</a>, Up: <a href="#Hazards" accesskey="u" rel="up">Hazards</a> &nbsp; [<a href="#Indices" title="Index" rel="index">Index</a>]</p>
 </div>
@@ -1206,36 +1187,29 @@ Next: <a href="#Common-mistakes" accesskey="n" rel="next">Common mistakes</a>, U
 </li></ul>
 
 <hr>
-</div>
-<div class="section" id="Common-mistakes">
-<div class="header">
+<span id="Common-mistakes"></span><div class="header">
 <p>
 Next: <a href="#Performance-pitfalls" accesskey="n" rel="next">Performance pitfalls</a>, Previous: <a href="#Differences-with_002e_002e_002e" accesskey="p" rel="prev">Differences with...</a>, Up: <a href="#Hazards" accesskey="u" rel="up">Hazards</a> &nbsp; [<a href="#Indices" title="Index" rel="index">Index</a>]</p>
 </div>
 <span id="Common-mistakes-1"></span><h3 class="section">4.2 Common mistakes</h3>
 
 <hr>
-</div>
-<div class="section" id="Performance-pitfalls">
-<div class="header">
+<span id="Performance-pitfalls"></span><div class="header">
 <p>
 Previous: <a href="#Common-mistakes" accesskey="p" rel="prev">Common mistakes</a>, Up: <a href="#Hazards" accesskey="u" rel="up">Hazards</a> &nbsp; [<a href="#Indices" title="Index" rel="index">Index</a>]</p>
 </div>
 <span id="Performance-pitfalls-1"></span><h3 class="section">4.3 Performance pitfalls</h3>
 
 <hr>
-</div>
-</div>
-<div class="chapter" id="Reference">
-<div class="header">
+<span id="Reference"></span><div class="header">
 <p>
-Next: <a href="#Sources" accesskey="n" rel="next">Sources</a>, Previous: <a href="#Hazards" accesskey="p" rel="prev">Hazards</a>, Up: <a href="#Top" accesskey="u" rel="up"><code>newra</code></a> &nbsp; [<a href="#Indices" title="Index" rel="index">Index</a>]</p>
+Next: <a href="#Sources" accesskey="n" rel="next">Sources</a>, Previous: <a href="#Hazards" accesskey="p" rel="prev">Hazards</a>, Up: <a href="#Top" accesskey="u" rel="up">Top</a> &nbsp; [<a href="#Indices" title="Index" rel="index">Index</a>]</p>
 </div>
 <span id="Reference-1"></span><h2 class="chapter">5 Reference</h2>
 
 <span id="index-array_002d_003era"></span>
-<span id="x_002darray_002d_003era"></span><dl class="def">
-<dt id="index-array_002d_003era-1"><span class="category">function<!-- /@w -->: </span><span><strong>array-&gt;ra</strong> <em>a</em><a href='#index-array_002d_003era-1' class='copiable-anchor'> &para;</a></span></dt>
+<span id="x_002darray_002d_003era"></span><dl>
+<dt id="index-array_002d_003era-1">function<!-- /@w -->: <strong>array-&gt;ra</strong> <em>a</em></dt>
 <dd>
 <p>Convert built-in Guile array <var>a</var> (anything that satisfies <code>array?</code>) into a (<code>newra)</code> array.
 </p>
@@ -1256,8 +1230,8 @@ a
 </dd></dl>
 
 <span id="index-c_002ddims"></span>
-<span id="x_002dc_002ddims"></span><dl class="def">
-<dt id="index-c_002ddims-1"><span class="category">function<!-- /@w -->: </span><span><strong>c-dims</strong> <em>bounds ...</em><a href='#index-c_002ddims-1' class='copiable-anchor'> &para;</a></span></dt>
+<span id="x_002dc_002ddims"></span><dl>
+<dt id="index-c_002ddims-1">function<!-- /@w -->: <strong>c-dims</strong> <em>bounds ...</em></dt>
 <dd>
 <span id="index-packed-array"></span>
 <p>Create dims for C-order array (packed elements, last dimension changing fastest).
@@ -1270,15 +1244,15 @@ a
 </dd></dl>
 
 <span id="index-ldots-1"></span>
-<span id="x_002dldots"></span><dl class="def">
-<dt id="index-ldots-2"><span class="category">function<!-- /@w -->: </span><span><strong>ldots</strong> <em>[n] ...</em><a href='#index-ldots-2' class='copiable-anchor'> &para;</a></span></dt>
+<span id="x_002dldots"></span><dl>
+<dt id="index-ldots-2">function<!-- /@w -->: <strong>ldots</strong> <em>[n] ...</em></dt>
 <dd>
 <p>Placeholder for <var>n</var> full axes, used as argument to <code>ra-from</code> or <code>ra-amend!</code>. Without <var>n</var>, expand to fill the rank of the argument <var>a</var> of <a href="#x_002dra_002dfrom"><code>ra-from</code></a> or <a href="#x_002dra_002damend_0021"><code>ra-amend!</code></a>.
 </p></dd></dl>
 
 <span id="index-make_002dra"></span>
-<span id="x_002dmake_002dra"></span><dl class="def">
-<dt id="index-make_002dra-1"><span class="category">function<!-- /@w -->: </span><span><strong>make-ra</strong> <em>val bounds ... &rArr; a</em><a href='#index-make_002dra-1' class='copiable-anchor'> &para;</a></span></dt>
+<span id="x_002dmake_002dra"></span><dl>
+<dt id="index-make_002dra-1">function<!-- /@w -->: <strong>make-ra</strong> <em>val bounds ... &rArr; a</em></dt>
 <dd>
 <p>Create an array of type <code>#t</code> with the given <var>bounds</var>, filled with <var>val</var>.
 </p>
@@ -1292,8 +1266,8 @@ a
 </dd></dl>
 
 <span id="index-make_002dra_002dnew"></span>
-<span id="x_002dmake_002dra_002dnew"></span><dl class="def">
-<dt id="index-make_002dra_002dnew-1"><span class="category">function<!-- /@w -->: </span><span><strong>make-ra-new</strong> <em>type value dims</em><a href='#index-make_002dra_002dnew-1' class='copiable-anchor'> &para;</a></span></dt>
+<span id="x_002dmake_002dra_002dnew"></span><dl>
+<dt id="index-make_002dra_002dnew-1">function<!-- /@w -->: <strong>make-ra-new</strong> <em>type value dims</em></dt>
 <dd><p>Create an array over a new root of the given <var>type</var> and the necessary size (according to <var>dims</var>), and fill it with <var>value</var>.
 </p><div class="example">
 <pre class="verbatim">(make-ra-new 'u8 0 (c-dims 3 2))
@@ -1302,8 +1276,8 @@ a
 </dd></dl>
 
 <span id="index-make_002dra_002droot"></span>
-<span id="x_002dmake_002dra_002droot"></span><dl class="def">
-<dt id="index-make_002dra_002droot-1"><span class="category">function<!-- /@w -->: </span><span><strong>make-ra-root</strong> <em>root [dims [zero]]</em><a href='#index-make_002dra_002droot-1' class='copiable-anchor'> &para;</a></span></dt>
+<span id="x_002dmake_002dra_002droot"></span><dl>
+<dt id="index-make_002dra_002droot-1">function<!-- /@w -->: <strong>make-ra-root</strong> <em>root [dims [zero]]</em></dt>
 <dd><p>Create an array over the given <var>root</var>.
 </p><div class="example">
 <pre class="verbatim">(make-ra-root (vector 1 2 3))
@@ -1322,8 +1296,8 @@ a
 </dd></dl>
 
 <span id="index-make_002dtyped_002dra"></span>
-<span id="x_002dmake_002dtyped_002dra"></span><dl class="def">
-<dt id="index-make_002dtyped_002dra-1"><span class="category">function<!-- /@w -->: </span><span><strong>make-typed-ra</strong> <em>type val bounds ... &rArr; a</em><a href='#index-make_002dtyped_002dra-1' class='copiable-anchor'> &para;</a></span></dt>
+<span id="x_002dmake_002dtyped_002dra"></span><dl>
+<dt id="index-make_002dtyped_002dra-1">function<!-- /@w -->: <strong>make-typed-ra</strong> <em>type val bounds ... &rArr; a</em></dt>
 <dd>
 <p>Same as <a href="#x_002dmake_002dra"><code>make-ra</code></a>, except that the result has the specified <var>type</var>.
 </p>
@@ -1333,8 +1307,8 @@ a
 
 <span id="index-intersection"></span>
 <span id="index-ra_002dclip"></span>
-<span id="x_002dra_002dclip"></span><dl class="def">
-<dt id="index-ra_002dclip-1"><span class="category">function<!-- /@w -->: </span><span><strong>ra-clip</strong> <em>a b &rArr; c</em><a href='#index-ra_002dclip-1' class='copiable-anchor'> &para;</a></span></dt>
+<span id="x_002dra_002dclip"></span><dl>
+<dt id="index-ra_002dclip-1">function<!-- /@w -->: <strong>ra-clip</strong> <em>a b &rArr; c</em></dt>
 <dd><p>Slice <var>a</var> to the intersection of the bounds of <var>a</var> and <var>b</var>. If <var>a</var> and <var>b</var> have different ranks, only the common prefix of <var>a</var> is sliced.
 </p>
 <div class="example">
@@ -1395,8 +1369,8 @@ a
 </p></dd></dl>
 
 <span id="index-ra_002ddimensions"></span>
-<span id="x_002dra_002ddimensions"></span><dl class="def">
-<dt id="index-ra_002ddimensions-1"><span class="category">function<!-- /@w -->: </span><span><strong>ra-dimensions</strong> <em>a</em><a href='#index-ra_002ddimensions-1' class='copiable-anchor'> &para;</a></span></dt>
+<span id="x_002dra_002ddimensions"></span><dl>
+<dt id="index-ra_002ddimensions-1">function<!-- /@w -->: <strong>ra-dimensions</strong> <em>a</em></dt>
 <dd>
 <p>Return the dimensions of <var>a</var> as a list, like <a href="#x_002dra_002dshape"><code>ra-shape</code></a>, but the dimensions that have lower bound zero are represented by their length alone, instead of a two-element list <code>(lo, hi)</code>. This is a convenience for the common case when lower bounds are zero.
 </p>
@@ -1412,9 +1386,9 @@ a
 </dd></dl>
 
 <span id="index-ra_002dformat"></span>
-<span id="x_002dra_002dformat"></span><dl class="def">
-<dt id="index-ra_002dformat-1"><span class="category">function<!-- /@w -->: </span><span><strong>ra-format</strong> <em>port ra #:fmt #:prefix?</em><a href='#index-ra_002dformat-1' class='copiable-anchor'> &para;</a></span></dt>
-<dt id="index-ra_002dformat-2"><span class="category">function<!-- /@w -->: </span><span><strong>ra-format</strong> <em>#f ra #:fmt #:prefix? &rArr; sc</em><a href='#index-ra_002dformat-2' class='copiable-anchor'> &para;</a></span></dt>
+<span id="x_002dra_002dformat"></span><dl>
+<dt id="index-ra_002dformat-1">function<!-- /@w -->: <strong>ra-format</strong> <em>port ra #:fmt #:prefix?</em></dt>
+<dt id="index-ra_002dformat-2">function<!-- /@w -->: <strong>ra-format</strong> <em>#f ra #:fmt #:prefix? &rArr; sc</em></dt>
 <dd>
 <p>Pretty print array <var>ra</var>. Each of the elements of <var>ra</var> is formatted using <code>(format #f fmt el)</code> from <a href="https://www.gnu.org/software/guile/manual/html_node/Formatted-Output.html"><code>(ice-9 format)</code></a>. <var>fmt</var> defauts to <code>&quot;~a&quot;</code>. If the element is itself an array, it is formatted using <code>ra-format</code> recursively.
 </p>
@@ -1522,8 +1496,8 @@ element
 </dd></dl>
 
 <span id="index-ra_002di"></span>
-<span id="x_002dra_002di"></span><dl class="def">
-<dt id="index-ra_002di-1"><span class="category">function<!-- /@w -->: </span><span><strong>ra-i</strong> <em>len ...</em><a href='#index-ra_002di-1' class='copiable-anchor'> &para;</a></span></dt>
+<span id="x_002dra_002di"></span><dl>
+<dt id="index-ra_002di-1">function<!-- /@w -->: <strong>ra-i</strong> <em>len ...</em></dt>
 <dd>
 <p>Create multidimensional index array with the given lengths. The root is of type <code>&lt;aseq&gt;</code>.
 </p>
@@ -1534,8 +1508,8 @@ element
 </dd></dl>
 
 <span id="index-ra_002diota"></span>
-<span id="x_002dra_002diota"></span><dl class="def">
-<dt id="index-ra_002diota-1"><span class="category">function<!-- /@w -->: </span><span><strong>ra-iota</strong> <em>[len [lo [step]]]</em><a href='#index-ra_002diota-1' class='copiable-anchor'> &para;</a></span></dt>
+<span id="x_002dra_002diota"></span><dl>
+<dt id="index-ra_002diota-1">function<!-- /@w -->: <strong>ra-iota</strong> <em>[len [lo [step]]]</em></dt>
 <dd>
 <p>Create rank-1 index array. The root is of type <code>&lt;aseq&gt;</code>.
 </p>
@@ -1546,8 +1520,8 @@ element
 </dd></dl>
 
 <span id="index-ra_002dpcat"></span>
-<span id="x_002dra_002dpcat"></span><dl class="def">
-<dt id="index-ra_002dpcat-1"><span class="category">function<!-- /@w -->: </span><span><strong>ra-pcat</strong> <em>type i a ...  &rArr; b</em><a href='#index-ra_002dpcat-1' class='copiable-anchor'> &para;</a></span></dt>
+<span id="x_002dra_002dpcat"></span><dl>
+<dt id="index-ra_002dpcat-1">function<!-- /@w -->: <strong>ra-pcat</strong> <em>type i a ...  &rArr; b</em></dt>
 <dd>
 <p>Concatenate arrays <var>a</var> ... along axis <var>i</var>. The arguments are prefix-matched and rank extended before concatenation. All axes must match, except possibly the concatenation axis.
 </p>
@@ -1564,8 +1538,8 @@ element
 
 <span id="index-print-prefix"></span>
 <span id="index-ra_002dprint_002dprefix"></span>
-<span id="x_002dra_002dprint_002dprefix"></span><dl class="def">
-<dt id="index-ra_002dprint_002dprefix-1"><span class="category">function<!-- /@w -->: </span><span><strong>ra-print-prefix</strong> <em>ra port #:dims?</em><a href='#index-ra_002dprint_002dprefix-1' class='copiable-anchor'> &para;</a></span></dt>
+<span id="x_002dra_002dprint_002dprefix"></span><dl>
+<dt id="index-ra_002dprint_002dprefix-1">function<!-- /@w -->: <strong>ra-print-prefix</strong> <em>ra port #:dims?</em></dt>
 <dd>
 <p>Return the print prefix for array <var>ra</var>. This is a string that details the type, rank, and (optionally) the dimensions of <var>ra</var>, and is part of the default read syntax for arrays. This is the same syntax as that of the <a href="https://www.gnu.org/software/guile/manual/html_node/Array-Syntax.html">the built in Guile arrays</a>, except that <var>dims?</var> defaults to true and <code>#%</code> is used instead of <code>#</code>.
 </p>
@@ -1586,8 +1560,8 @@ element
 </dd></dl>
 
 <span id="index-ra_002dravel"></span>
-<span id="x_002dra_002dravel"></span><dl class="def">
-<dt id="index-ra_002dravel-1"><span class="category">function<!-- /@w -->: </span><span><strong>ra-ravel</strong> <em>a [n [org]]</em><a href='#index-ra_002dravel-1' class='copiable-anchor'> &para;</a></span></dt>
+<span id="x_002dra_002dravel"></span><dl>
+<dt id="index-ra_002dravel-1">function<!-- /@w -->: <strong>ra-ravel</strong> <em>a [n [org]]</em></dt>
 <dd><p>Ravel axes [<var>org</var> ... <var>org+n</var>) of array <var>a</var> in C order. <var>n</var> defaults to the rank of <var>a</var> and <var>org</var> defaults to 0.
 </p>
 <p>For example:
@@ -1652,24 +1626,64 @@ element
 </dd></dl>
 
 <span id="index-ra_002dreshape"></span>
-<span id="x_002dra_002dreshape"></span><dl class="def">
-<dt id="index-ra_002dreshape-1"><span class="category">function<!-- /@w -->: </span><span><strong>ra-reshape</strong> <em>a bounds ... &rArr; b</em><a href='#index-ra_002dreshape-1' class='copiable-anchor'> &para;</a></span></dt>
-<dd><p>Reshape the first axis of array <var>a</var> to <var>bounds</var>.
+<span id="x_002dra_002dreshape"></span><dl>
+<dt id="index-ra_002dreshape-1">function<!-- /@w -->: <strong>ra-reshape</strong> <em>a k bounds ... &rArr; b</em></dt>
+<dd><p>Reshape axis <var>k</var> of array <var>a</var> to <var>bounds</var>.
 </p>
 <p>Each of the bounds may be an integer (a length) or a pair of integers (lower and upper bounds).
 </p><div class="example">
-<pre class="verbatim">(ra-reshape (ra-i 4 3) 2 2)
-</pre><pre class="example">&rArr; #%1d:2:2:3(((0 1 2) (3 4 5)) ((6 7 8) (9 10 11)))
+<pre class="verbatim">(define a (ra-i 4 3))
+(ra-format #t a)
+</pre><pre class="example">&rArr;
+</pre><pre class="verbatim">#%2d:4:3┐
+│0│ 1│ 2│
+├─┼──┼──┤
+│3│ 4│ 5│
+├─┼──┼──┤
+│6│ 7│ 8│
+├─┼──┼──┤
+│9│10│11│
+└─┴──┴──┘
+</pre><pre class="verbatim">(ra-format #t (ra-reshape a 0 2 2))
+</pre><pre class="example">&rArr;
+</pre><pre class="verbatim">#%3d:2:2:3─┬──║
+║0│1│2║6│ 7│ 8║
+║─┼─┼─║─┼──┼──║
+║3│4│5║9│10│11║
+║─┴─┴─║─┴──┴──║
 </pre></div>
 
 <span id="index-tally"></span>
 <p><code>ra-reshape</code> always returns a view of <var>a</var>. It is an error if such a view cannot be produced for the given arguments. In practice this means that the product of the lengths in <var>bounds</var> must not exceed the length of the first axis (the &lsquo;tally&rsquo;) of <var>a</var>. For example
 </p>
 <div class="example">
-<pre class="verbatim">(ra-reshape (ra-i 10 2) 2 3)
-</pre><pre class="example">&rArr; <code>#%3d:2:3:2(((0 1) (2 3) (4 5)) ((6 7) (8 9) (10 11)))</code>
-</pre><pre class="verbatim">(ra-reshape (ra-i 10 2) 4 3)
-</pre><pre class="example">&rArr; error, 4·3 &gt; 10
+<pre class="verbatim">(ra-reshape (ra-i 8 2) 0 2 3)
+</pre><pre class="example">&rArr; <code>#%3d:2:3:2(((0 1) (2 3) (4 5)) ((6 7) (8 9) (10 11))</code> ; ok, 8 can be reshaped into 2·3
+</pre><pre class="verbatim">(ra-reshape (ra-i 8 2) 0 4 3)
+</pre><pre class="example">&rArr; error ; 8 cannot be reshaped into 4·3
+</pre></div>
+
+<span id="index-bounds-1"></span>
+<p><code>ra-reshape</code> may be used to change either of the bounds of an axis, not only its length. For example
+</p>
+<div class="example">
+<pre class="verbatim">(ra-format #t (ra-i 2 3))
+</pre><pre class="example">&rArr;
+</pre><pre class="verbatim">#%2d:2:3
+│0│1│2│
+├─┼─┼─┤
+│3│4│5│
+└─┴─┴─┘
+</pre></div>
+
+<div class="example">
+<pre class="verbatim">(ra-format #t (ra-reshape (ra-i 2 3) 0 '(1 2)))
+</pre><pre class="example">&rArr;
+</pre><pre class="verbatim">#%2d@1:2:3
+│0│1│2│
+├─┼─┼─┤
+│3│4│5│
+└─┴─┴─┘
 </pre></div>
 
 <p>See also: <a href="#x_002dra_002dravel"><code>ra-ravel</code></a>, <a href="#x_002dra_002dtile"><code>ra-tile</code></a>, <a href="#Reshaping">Reshaping</a>.
@@ -1678,8 +1692,8 @@ element
 
 <span id="index-_005b_003f_005d_002c-reverse"></span>
 <span id="index-ra_002dreverse"></span>
-<span id="x_002dra_002dreverse"></span><dl class="def">
-<dt id="index-ra_002dreverse-1"><span class="category">function<!-- /@w -->: </span><span><strong>ra-reverse</strong> <em>a axes ... &rArr; b</em><a href='#index-ra_002dreverse-1' class='copiable-anchor'> &para;</a></span></dt>
+<span id="x_002dra_002dreverse"></span><dl>
+<dt id="index-ra_002dreverse-1">function<!-- /@w -->: <strong>ra-reverse</strong> <em>a axes ... &rArr; b</em></dt>
 <dd><p>Reverse the given <var>axes</var> of <var>a</var>.
 </p>
 <div class="example">
@@ -1696,8 +1710,8 @@ element
 <span id="index-_005b_003f_005d_002c-rotate"></span>
 <span id="index-_005b_003f_005d_002c-rowel"></span>
 <span id="index-ra_002drotate"></span>
-<span id="x_002dra_002drotate"></span><dl class="def">
-<dt id="index-ra_002drotate-1"><span class="category">function<!-- /@w -->: </span><span><strong>ra-rotate</strong> <em>n a &rArr; b</em><a href='#index-ra_002drotate-1' class='copiable-anchor'> &para;</a></span></dt>
+<span id="x_002dra_002drotate"></span><dl>
+<dt id="index-ra_002drotate-1">function<!-- /@w -->: <strong>ra-rotate</strong> <em>n a &rArr; b</em></dt>
 <dd><p>(FIXME: not implemented) Rotate the first axis of <var>a</var> toward the lower indices (‘to the left’) <var>n</var> times. <var>n</var> may be any integer. The result has the type of <var>a</var>, unless that type is <code>d</code>, in which case the result is of type <code>#t</code>.
 </p>
 <p>This function always returns a new array.
@@ -1714,8 +1728,8 @@ element
 
 <span id="index-rotate_0021"></span>
 <span id="index-ra_002drotate_0021"></span>
-<span id="x_002dra_002drotate_0021"></span><dl class="def">
-<dt id="index-ra_002drotate_0021-1"><span class="category">function<!-- /@w -->: </span><span><strong>ra-rotate!</strong> <em>n a &rArr; a</em><a href='#index-ra_002drotate_0021-1' class='copiable-anchor'> &para;</a></span></dt>
+<span id="x_002dra_002drotate_0021"></span><dl>
+<dt id="index-ra_002drotate_0021-1">function<!-- /@w -->: <strong>ra-rotate!</strong> <em>n a &rArr; a</em></dt>
 <dd><p>Rotate in place the first axis of <var>a</var> to the left <var>n</var> times. <var>n</var> may be any integer. <var>a</var> must be writable. This function returns <var>a</var>.
 </p>
 <p>Example:
@@ -1731,8 +1745,8 @@ a
 </dd></dl>
 
 <span id="index-ra_002dscat"></span>
-<span id="x_002dra_002dscat"></span><dl class="def">
-<dt id="index-ra_002dscat-1"><span class="category">function<!-- /@w -->: </span><span><strong>ra-scat</strong> <em>type i a ... &rArr; b</em><a href='#index-ra_002dscat-1' class='copiable-anchor'> &para;</a></span></dt>
+<span id="x_002dra_002dscat"></span><dl>
+<dt id="index-ra_002dscat-1">function<!-- /@w -->: <strong>ra-scat</strong> <em>type i a ... &rArr; b</em></dt>
 <dd>
 <p>Concatenate <var>i</var>-items of arrays <var>a</var> ... . The arguments are suffix-matched and rank extended before concatenation. All axes must match, except possibly the concatenation axis.
 </p>
@@ -1747,8 +1761,8 @@ a
 </dd></dl>
 
 <span id="index-ra_002dshape"></span>
-<span id="x_002dra_002dshape"></span><dl class="def">
-<dt id="index-ra_002dshape-1"><span class="category">function<!-- /@w -->: </span><span><strong>ra-shape</strong> <em>a &rArr; s</em><a href='#index-ra_002dshape-1' class='copiable-anchor'> &para;</a></span></dt>
+<span id="x_002dra_002dshape"></span><dl>
+<dt id="index-ra_002dshape-1">function<!-- /@w -->: <strong>ra-shape</strong> <em>a &rArr; s</em></dt>
 <dd>
 <p>Return the shape (a list of two-element lists, each containing the lower and upper bound of each axis) of array <var>a</var>.
 </p>
@@ -1762,9 +1776,9 @@ a
 </dd></dl>
 
 <span id="index-ra_002dtile"></span>
-<span id="x_002dra_002dtile"></span><dl class="def">
-<dt id="index-ra_002dtile-1"><span class="category">function<!-- /@w -->: </span><span><strong>ra-tile</strong> <em>a k bounds ... &rArr; b</em><a href='#index-ra_002dtile-1' class='copiable-anchor'> &para;</a></span></dt>
-<dd><p>Replicate array <var>a</var> by inserting axes of bounds <var>s</var> ... before axis <var>k</var>. If <var>t</var> is the shape of <var>ra</var>, the shape of the result will be
+<span id="x_002dra_002dtile"></span><dl>
+<dt id="index-ra_002dtile-1">function<!-- /@w -->: <strong>ra-tile</strong> <em>a k bounds ... &rArr; b</em></dt>
+<dd><p>Replicate array <var>a</var> by inserting axes of <var>bounds</var> ... before axis <var>k</var>. If <var>t</var> is the shape of <var>a</var>, the shape of the result will be
 </p>
 <div class="example">
 <pre class="verbatim">[t₀ ... tₖ₋₁ s₀ ... tₖ ...]
@@ -1828,8 +1842,8 @@ a
 </dd></dl>
 
 <span id="index-ra_002dtranspose"></span>
-<span id="x_002dra_002dtranspose"></span><dl class="def">
-<dt id="index-ra_002dtranspose-1"><span class="category">function<!-- /@w -->: </span><span><strong>ra-transpose</strong> <em>a axes ... &rArr; b</em><a href='#index-ra_002dtranspose-1' class='copiable-anchor'> &para;</a></span></dt>
+<span id="x_002dra_002dtranspose"></span><dl>
+<dt id="index-ra_002dtranspose-1">function<!-- /@w -->: <strong>ra-transpose</strong> <em>a axes ... &rArr; b</em></dt>
 <dd><p>Transpose each axis 0, 1, ... of <var>a</var> to matching destination <var>axes</var>.
 </p>
 <div class="example">
@@ -1844,8 +1858,8 @@ a
 </dd></dl>
 
 <span id="index-ra_002duntranspose"></span>
-<span id="x_002dra_002duntranspose"></span><dl class="def">
-<dt id="index-ra_002duntranspose-1"><span class="category">function<!-- /@w -->: </span><span><strong>ra-untranspose</strong> <em>a axes ... &rArr; b</em><a href='#index-ra_002duntranspose-1' class='copiable-anchor'> &para;</a></span></dt>
+<span id="x_002dra_002duntranspose"></span><dl>
+<dt id="index-ra_002duntranspose-1">function<!-- /@w -->: <strong>ra-untranspose</strong> <em>a axes ... &rArr; b</em></dt>
 <dd><p>Transpose <var>axes</var> of <var>a</var> to matching destination axes 0, 1, ...
 </p>
 <div class="example">
@@ -1867,8 +1881,8 @@ a
 </dd></dl>
 
 <span id="index-ra_002dindex_002dmap_0021"></span>
-<span id="x_002dra_002dindex_002dmap_0021"></span><dl class="def">
-<dt id="index-ra_002dindex_002dmap_0021-1"><span class="category">function<!-- /@w -->: </span><span><strong>ra-index-map!</strong> <em>a op &rArr; a</em><a href='#index-ra_002dindex_002dmap_0021-1' class='copiable-anchor'> &para;</a></span></dt>
+<span id="x_002dra_002dindex_002dmap_0021"></span><dl>
+<dt id="index-ra_002dindex_002dmap_0021-1">function<!-- /@w -->: <strong>ra-index-map!</strong> <em>a op &rArr; a</em></dt>
 <dd><p>Iterate over array <var>a</var> in unspecified order, assigning to each element the result of <code>(op i₀ ...)</code>, where <code>i₀ ...</code> are the indices of that element.
 </p>
 <p>For example:
@@ -1882,8 +1896,8 @@ a
 </dd></dl>
 
 <span id="index-ra_002dslice_002dfor_002deach"></span>
-<span id="x_002dra_002dslice_002dfor_002deach"></span><dl class="def">
-<dt id="index-ra_002dslice_002dfor_002deach-1"><span class="category">function<!-- /@w -->: </span><span><strong>ra-slice-for-each</strong> <em>k op a ...</em><a href='#index-ra_002dslice_002dfor_002deach-1' class='copiable-anchor'> &para;</a></span></dt>
+<span id="x_002dra_002dslice_002dfor_002deach"></span><dl>
+<dt id="index-ra_002dslice_002dfor_002deach-1">function<!-- /@w -->: <strong>ra-slice-for-each</strong> <em>k op a ...</em></dt>
 <dd><p>Iterate over the <var>k</var>-frames of arrays <var>a</var> ..., applying <var>op</var> to the respective slices. The arguments <var>a</var> ... must have matching dimensions over their <var>k</var>-frames.
 </p>
 <p>Note that it isn&rsquo;t necessary for arguments <var>a</var> to have rank ≥ <var>k</var>. Arguments with rank &lt; <var>k</var> are rank-extended and the corresponding arguments are 0-cells. For example:
@@ -1906,8 +1920,8 @@ a
 </dd></dl>
 
 <span id="index-ra_002dmap_0021"></span>
-<span id="x_002dra_002dmap_0021"></span><dl class="def">
-<dt id="index-ra_002dmap_0021-1"><span class="category">function<!-- /@w -->: </span><span><strong>ra-map!</strong> <em>dst op a ... &rArr; dst</em><a href='#index-ra_002dmap_0021-1' class='copiable-anchor'> &para;</a></span></dt>
+<span id="x_002dra_002dmap_0021"></span><dl>
+<dt id="index-ra_002dmap_0021-1">function<!-- /@w -->: <strong>ra-map!</strong> <em>dst op a ... &rArr; dst</em></dt>
 <dd><p>Iterate over arrays <var>dst</var> <var>a</var> ... applying <var>op</var> to the respective elements in <var>a</var>, and storing the result in the respective element of <var>dst</var>. The arguments must have matching dimensions and the type of <var>dst</var> must be compatible with the results of <var>op</var>.
 </p>
 <p>This is equivalent to
@@ -1919,8 +1933,8 @@ a
 </pre></dd></dl>
 
 <span id="index-ra_002dcopy_0021"></span>
-<span id="x_002dra_002dcopy_0021"></span><dl class="def">
-<dt id="index-ra_002dcopy_0021-1"><span class="category">function<!-- /@w -->: </span><span><strong>ra-copy!</strong> <em>dst src &rArr; dst</em><a href='#index-ra_002dcopy_0021-1' class='copiable-anchor'> &para;</a></span></dt>
+<span id="x_002dra_002dcopy_0021"></span><dl>
+<dt id="index-ra_002dcopy_0021-1">function<!-- /@w -->: <strong>ra-copy!</strong> <em>dst src &rArr; dst</em></dt>
 <dd><p>Copy <var>src</var> to <var>dst</var>. The arguments must have matching dimensions and be of compatible types.
 </p>
 <p>For valid arguments, this is equivalent to any one of
@@ -1931,29 +1945,29 @@ a
 </p></dd></dl>
 
 <span id="index-ra_002dcopy"></span>
-<span id="x_002dra_002dcopy"></span><dl class="def">
-<dt id="index-ra_002dcopy-1"><span class="category">function<!-- /@w -->: </span><span><strong>ra-copy</strong> <em>src &rArr; dst</em><a href='#index-ra_002dcopy-1' class='copiable-anchor'> &para;</a></span></dt>
-<dt id="index-ra_002dcopy-2"><span class="category">function<!-- /@w -->: </span><span><strong>ra-copy</strong> <em>type src &rArr; dst</em><a href='#index-ra_002dcopy-2' class='copiable-anchor'> &para;</a></span></dt>
+<span id="x_002dra_002dcopy"></span><dl>
+<dt id="index-ra_002dcopy-1">function<!-- /@w -->: <strong>ra-copy</strong> <em>src &rArr; dst</em></dt>
+<dt id="index-ra_002dcopy-2">function<!-- /@w -->: <strong>ra-copy</strong> <em>type src &rArr; dst</em></dt>
 <dd><p>Create a new array of type <var>type</var> and copy <var>src</var> into it. If <var>type</var> isn&rsquo;t given, use the type of <var>src</var>, unless that type is <code>d</code>, in which case the result is of type <code>#t</code>.
 </p>
 <p>See also <a href="#x_002dra_002dcopy_0021"><code>ra-copy!</code></a> <a href="#x_002dra_002damend_0021"><code>ra-amend!</code></a> <a href="#x_002dra_002dset_0021"><code>ra-set!</code></a>.
 </p></dd></dl>
 
 <span id="index-ra_002dswap_0021"></span>
-<span id="x_002dra_002dswap_0021"></span><dl class="def">
-<dt id="index-ra_002dswap_0021-1"><span class="category">function<!-- /@w -->: </span><span><strong>ra-swap!</strong> <em>a b</em><a href='#index-ra_002dswap_0021-1' class='copiable-anchor'> &para;</a></span></dt>
+<span id="x_002dra_002dswap_0021"></span><dl>
+<dt id="index-ra_002dswap_0021-1">function<!-- /@w -->: <strong>ra-swap!</strong> <em>a b</em></dt>
 <dd><p>Swap the contents of <var>a</var> and <var>b</var>. The swap is executed in unspecified order, so the effect on <var>a</var> and <var>b</var> is undefined if <var>a</var> and <var>b</var> share storage.
 </p></dd></dl>
 
 <span id="index-ra_002dswap_002din_002dorder_0021"></span>
-<span id="x_002dra_002dswap_002din_002dorder_0021"></span><dl class="def">
-<dt id="index-ra_002dswap_002din_002dorder_0021-1"><span class="category">function<!-- /@w -->: </span><span><strong>ra-swap-in-order!</strong> <em>a b</em><a href='#index-ra_002dswap_002din_002dorder_0021-1' class='copiable-anchor'> &para;</a></span></dt>
+<span id="x_002dra_002dswap_002din_002dorder_0021"></span><dl>
+<dt id="index-ra_002dswap_002din_002dorder_0021-1">function<!-- /@w -->: <strong>ra-swap-in-order!</strong> <em>a b</em></dt>
 <dd><p>Swap the contents of <var>a</var> and <var>b</var>. The swap is executed in row major order.
 </p></dd></dl>
 
 <span id="index-ra_002dfill_0021"></span>
-<span id="x_002dra_002dfill_0021"></span><dl class="def">
-<dt id="index-ra_002dfill_0021-1"><span class="category">function<!-- /@w -->: </span><span><strong>ra-fill!</strong> <em>dst value &rArr; dst</em><a href='#index-ra_002dfill_0021-1' class='copiable-anchor'> &para;</a></span></dt>
+<span id="x_002dra_002dfill_0021"></span><dl>
+<dt id="index-ra_002dfill_0021-1">function<!-- /@w -->: <strong>ra-fill!</strong> <em>dst value &rArr; dst</em></dt>
 <dd><p>Assign <var>value</var> to each element of <var>dst</var>. The arguments must be of compatible types.
 </p>
 <p>This is equivalent to any one of
@@ -1983,8 +1997,8 @@ a
 
 <span id="index-packed-array-2"></span>
 <span id="index-ra_002dorder_002dc_003f"></span>
-<span id="x_002dra_002dorder_002dc_003f"></span><dl class="def">
-<dt id="index-ra_002dorder_002dc_003f-1"><span class="category">function<!-- /@w -->: </span><span><strong>ra-order-c?</strong> <em>a [n]</em><a href='#index-ra_002dorder_002dc_003f-1' class='copiable-anchor'> &para;</a></span></dt>
+<span id="x_002dra_002dorder_002dc_003f"></span><dl>
+<dt id="index-ra_002dorder_002dc_003f-1">function<!-- /@w -->: <strong>ra-order-c?</strong> <em>a [n]</em></dt>
 <dd><p>Check whether the first <var>n</var> axes of <var>ra</var> are in C-order. By default, check that the whole array is in C-order, and additionally that the step on the last axis is 1 (i.e. the array is ‘packed’).
 </p>
 <p><code>(ra-order-c? a n)</code> implies <code>(eq? (ra-root a) (ra-root (<a href="#x_002dra_002dravel"><code>ra-ravel</code></a> a n)))</code>. Note that the stronger condition <code>(ra-order-c? a)</code> is not necessary for <code>(eq? (ra-root a) (ra-root (ra-ravel a)))</code> to hold.
@@ -1992,8 +2006,8 @@ a
 </dd></dl>
 
 <span id="index-ra_002dref"></span>
-<span id="x_002dra_002dref"></span><dl class="def">
-<dt id="index-ra_002dref-1"><span class="category">function<!-- /@w -->: </span><span><strong>ra-ref</strong> <em>a i ...</em><a href='#index-ra_002dref-1' class='copiable-anchor'> &para;</a></span></dt>
+<span id="x_002dra_002dref"></span><dl>
+<dt id="index-ra_002dref-1">function<!-- /@w -->: <strong>ra-ref</strong> <em>a i ...</em></dt>
 <dd>
 <p>Look up array element. It is an error if the number of <var>i ...</var> doesn&rsquo;t match the rank of <var>a</var>.
 </p>
@@ -2002,8 +2016,8 @@ a
 </dd></dl>
 
 <span id="index-ra_002dset_0021"></span>
-<span id="x_002dra_002dset_0021"></span><dl class="def">
-<dt id="index-ra_002dset_0021-1"><span class="category">function<!-- /@w -->: </span><span><strong>ra-set!</strong> <em>a o i ...</em><a href='#index-ra_002dset_0021-1' class='copiable-anchor'> &para;</a></span></dt>
+<span id="x_002dra_002dset_0021"></span><dl>
+<dt id="index-ra_002dset_0021-1">function<!-- /@w -->: <strong>ra-set!</strong> <em>a o i ...</em></dt>
 <dd>
 <p>Assign array element. It is an error if the number of <var>i ...</var> doesn&rsquo;t match the rank of <var>a</var>.
 </p>
@@ -2012,8 +2026,8 @@ a
 </dd></dl>
 
 <span id="index-ra_002dslice"></span>
-<span id="x_002dra_002dslice"></span><dl class="def">
-<dt id="index-ra_002dslice-1"><span class="category">function<!-- /@w -->: </span><span><strong>ra-slice</strong> <em>a i ...</em><a href='#index-ra_002dslice-1' class='copiable-anchor'> &para;</a></span></dt>
+<span id="x_002dra_002dslice"></span><dl>
+<dt id="index-ra_002dslice-1">function<!-- /@w -->: <strong>ra-slice</strong> <em>a i ...</em></dt>
 <dd>
 <p>Look up array cell. This function returns a view of <var>a</var> with rank <var>a</var>-card(<var>i ...</var>), even if that is 0.
 </p>
@@ -2023,8 +2037,8 @@ a
 </p></dd></dl>
 
 <span id="index-ra_002dcell"></span>
-<span id="x_002dra_002dcell"></span><dl class="def">
-<dt id="index-ra_002dcell-1"><span class="category">function<!-- /@w -->: </span><span><strong>ra-cell</strong> <em>a i ...</em><a href='#index-ra_002dcell-1' class='copiable-anchor'> &para;</a></span></dt>
+<span id="x_002dra_002dcell"></span><dl>
+<dt id="index-ra_002dcell-1">function<!-- /@w -->: <strong>ra-cell</strong> <em>a i ...</em></dt>
 <dd>
 <p>Look up array cell. If <var>k</var>=<var>a</var>-card(<var>i ...</var>) is zero, return the array element at <var>i ...</var>, like <a href="#x_002dra_002dref"><code>ra-ref</code></a>; else return a <var>k</var>-view of <var>a</var>, like <a href="#x_002dra_002dslice"><code>ra-slice</code></a>.
 </p>
@@ -2048,8 +2062,8 @@ a
 </dd></dl>
 
 <span id="index-ra_002dfrom"></span>
-<span id="x_002dra_002dfrom"></span><dl class="def">
-<dt id="index-ra_002dfrom-1"><span class="category">function<!-- /@w -->: </span><span><strong>ra-from</strong> <em>a i ... → b</em><a href='#index-ra_002dfrom-1' class='copiable-anchor'> &para;</a></span></dt>
+<span id="x_002dra_002dfrom"></span><dl>
+<dt id="index-ra_002dfrom-1">function<!-- /@w -->: <strong>ra-from</strong> <em>a i ... → b</em></dt>
 <dd>
 <p>Outer product slice of <var>a</var> by indices <var>i</var> ...
 </p>
@@ -2081,8 +2095,8 @@ that is
 </dd></dl>
 
 <span id="index-ra_002damend_0021"></span>
-<span id="x_002dra_002damend_0021"></span><dl class="def">
-<dt id="index-ra_002damend_0021-1"><span class="category">function<!-- /@w -->: </span><span><strong>ra-amend!</strong> <em>a c i ... → a</em><a href='#index-ra_002damend_0021-1' class='copiable-anchor'> &para;</a></span></dt>
+<span id="x_002dra_002damend_0021"></span><dl>
+<dt id="index-ra_002damend_0021-1">function<!-- /@w -->: <strong>ra-amend!</strong> <em>a c i ... → a</em></dt>
 <dd>
 <p>Copy <var>c</var> to the outer product slice of <var>a</var> by indices <var>i</var> ...
 </p>
@@ -2125,8 +2139,8 @@ indices that match those elements. <code>newra</code> will <em>not</em> check th
 
 
 <span id="index-ra_002d_003earray"></span>
-<span id="x_002dra_002d_003earray"></span><dl class="def">
-<dt id="index-ra_002d_003earray-1"><span class="category">function<!-- /@w -->: </span><span><strong>ra-&gt;array</strong> <em>a</em><a href='#index-ra_002d_003earray-1' class='copiable-anchor'> &para;</a></span></dt>
+<span id="x_002dra_002d_003earray"></span><dl>
+<dt id="index-ra_002d_003earray-1">function<!-- /@w -->: <strong>ra-&gt;array</strong> <em>a</em></dt>
 <dd>
 <p>Convert (<code>newra</code>) array <var>a</var> into built-in Guile array.
 </p>
@@ -2146,8 +2160,8 @@ indices that match those elements. <code>newra</code> will <em>not</em> check th
 </dd></dl>
 
 <span id="index-ra_002dsingletonize"></span>
-<span id="x_002dra_002dsingletonize"></span><dl class="def">
-<dt id="index-ra_002dsingletonize-1"><span class="category">function<!-- /@w -->: </span><span><strong>ra-singletonize</strong> <em>a</em><a href='#index-ra_002dsingletonize-1' class='copiable-anchor'> &para;</a></span></dt>
+<span id="x_002dra_002dsingletonize"></span><dl>
+<dt id="index-ra_002dsingletonize-1">function<!-- /@w -->: <strong>ra-singletonize</strong> <em>a</em></dt>
 <dd>
 <p>Return an ra with the same root and dimensions as <var>a</var>, except that infinite axes (axes with step 0 and length <code>#f</code>) have their length set to 1.
 </p>
@@ -2163,11 +2177,9 @@ indices that match those elements. <code>newra</code> will <em>not</em> check th
 </dd></dl>
 
 <hr>
-</div>
-<div class="chapter" id="Sources">
-<div class="header">
+<span id="Sources"></span><div class="header">
 <p>
-Next: <a href="#Indices" accesskey="n" rel="next">Indices</a>, Previous: <a href="#Reference" accesskey="p" rel="prev">Reference</a>, Up: <a href="#Top" accesskey="u" rel="up"><code>newra</code></a> &nbsp; [<a href="#Indices" title="Index" rel="index">Index</a>]</p>
+Next: <a href="#Indices" accesskey="n" rel="next">Indices</a>, Previous: <a href="#Reference" accesskey="p" rel="prev">Reference</a>, Up: <a href="#Top" accesskey="u" rel="up">Top</a> &nbsp; [<a href="#Indices" title="Index" rel="index">Index</a>]</p>
 </div>
 <span id="Sources-1"></span><h2 class="chapter">6 Sources</h2>
 
@@ -2215,11 +2227,9 @@ Next: <a href="#Indices" accesskey="n" rel="next">Indices</a>, Previous: <a href
 </table>
 
 <hr>
-</div>
-<div class="unnumbered" id="Indices">
-<div class="header">
+<span id="Indices"></span><div class="header">
 <p>
-Previous: <a href="#Sources" accesskey="p" rel="prev">Sources</a>, Up: <a href="#Top" accesskey="u" rel="up"><code>newra</code></a> &nbsp; [<a href="#Indices" title="Index" rel="index">Index</a>]</p>
+Previous: <a href="#Sources" accesskey="p" rel="prev">Sources</a>, Up: <a href="#Top" accesskey="u" rel="up">Top</a> &nbsp; [<a href="#Indices" title="Index" rel="index">Index</a>]</p>
 </div>
 <span id="Indices-1"></span><h2 class="unnumbered">Indices</h2>
 
@@ -2301,6 +2311,7 @@ Previous: <a href="#Sources" accesskey="p" rel="prev">Sources</a>, Up: <a href="
 <tr><td colspan="4"> <hr></td></tr>
 <tr><th id="Indices_cp_letter-B">B</th><td></td><td></td></tr>
 <tr><td></td><td valign="top"><a href="#index-bounds">bounds</a>:</td><td>&nbsp;</td><td valign="top"><a href="#Introduction">Introduction</a></td></tr>
+<tr><td></td><td valign="top"><a href="#index-bounds-1">bounds</a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
 <tr><td colspan="4"> <hr></td></tr>
 <tr><th id="Indices_cp_letter-C">C</th><td></td><td></td></tr>
 <tr><td></td><td valign="top"><a href="#index-c_002ddims"><code>c-dims</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
@@ -2452,32 +2463,31 @@ Previous: <a href="#Sources" accesskey="p" rel="prev">Sources</a>, Up: <a href="
 </td></tr></table>
 
 
-</div>
-</div>
 <div class="footnote">
 <hr>
 <h4 class="footnotes-heading">Footnotes</h4>
 
-<h5><a id="FOOT1" href="#DOCF1">(1)</a></h5>
+<h5><a id="FOOT1" href="#DOCF1">(1)</a></h3>
 <pre class="verbatim">(import (newra newra))
 (define element (lambda i (format #f &quot;A(~{~a~^, ~})&quot; i)))
 (define (ti k) (ra-transpose (ra-iota) k))
 (ra-format #t (ra-map! (make-ra #f 3 3)  element (ti 0) (ti 1)) #:prefix? #f)
 (ra-format #t (ra-map! (make-ra #f 2 '(2 5) '(-2 0))  element (ti 0) (ti 1) (ti 2)) #:prefix? #f)
 </pre>
-<h5><a id="FOOT2" href="#DOCF2">(2)</a></h5>
+<h5><a id="FOOT2" href="#DOCF2">(2)</a></h3>
 <p>Cf. <a href="https://en.wikipedia.org/wiki/Dope_vector"><em>dope vector</em></a></p>
-<h5><a id="FOOT3" href="#DOCF3">(3)</a></h5>
+<h5><a id="FOOT3" href="#DOCF3">(3)</a></h3>
 <p>Guile (before v1.8) used to offer dedicated operations to sum arrays, etc. but obviously that isn&rsquo;t any kind of solution.</p>
-<h5><a id="FOOT4" href="#DOCF4">(4)</a></h5>
+<h5><a id="FOOT4" href="#DOCF4">(4)</a></h3>
 <p>Except for <a href="#x_002dra_002dindex_002dmap_0021"><code>ra-index-map!</code></a>, which is provided out of compatibility with the older array system.</p>
-<h5><a id="FOOT5" href="#DOCF5">(5)</a></h5>
+<h5><a id="FOOT5" href="#DOCF5">(5)</a></h3>
 <p>An example of how using base indices other than 0 is generally worthless trouble, not least for the library author.</p>
-<h5><a id="FOOT6" href="#DOCF6">(6)</a></h5>
+<h5><a id="FOOT6" href="#DOCF6">(6)</a></h3>
 <p>I rejected this approach for <code>newra</code> because in my experience it results in errors going undetected much more often than it saves any work.</p>
-<h5><a id="FOOT7" href="#DOCF7">(7)</a></h5>
+<h5><a id="FOOT7" href="#DOCF7">(7)</a></h3>
 <p>Note that the ravel operation in <code>(ra-ravel (ra-copy ra))</code> is free, while it might not be in <code>(ra-copy (ra-ravel ra))</code>, so it is preferable, in principle, to copy first.</p>
 </div>
+<hr>
 
 
 

@@ -847,7 +847,7 @@ To match APL ρ, @code{newra} offers three separate functions.
 @end verbatim
 @result{} (10 3 4)
 @verbatim
-(ra-dimensions (ra-reshape (ra-ravel (ra-tile (ra-i 2 3 4) 0 5) 2) 3 3))
+(ra-dimensions (ra-reshape (ra-ravel (ra-tile (ra-i 2 3 4) 0 5) 2) 0 3 3))
 @end verbatim
 @result{} (3 3 3 4)
 @end example
@@ -962,7 +962,7 @@ Here @ref{x-ra-reshape,@code{ra-reshape}} is used to move axis 0 of the second a
 @example
 @verbatim
 (ra-pcat #t 1 (make-ra 'a '(1 1) '(1 4))
-              (ra-reshape (make-ra 'b '(2 2) '(1 4)) '(1 1)))
+              (ra-reshape (make-ra 'b '(2 2) '(1 4)) 0 '(1 1)))
 @end verbatim
 @result{} @code{#%2@@1:1:8((a a a a b b b b))}
 @end example
@@ -1189,7 +1189,7 @@ One important difference between the built-in array functions and @code{newra} i
 @example
 @verbatim
 (define a (make-ra-root (vector 'a 'b 'c 'd 'e 'f 'g))) ; range is 0..6
-(define b (ra-reshape (ra-iota 4) '(2 5))) ; range is 2..5
+(define b (ra-reshape (ra-iota 4) 0 '(2 5))) ; range is 2..5
 (ra-copy! a b)
 @end verbatim
 @result{} @code{Throw to key `mismatched-lens' with args `(7 4 at-dim 0)'.}
@@ -1809,15 +1809,38 @@ See also: @ref{x-ra-reshape,@code{ra-reshape}}, @ref{x-ra-tile,@code{ra-tile}}, 
 
 @cindex @code{ra-reshape}
 @anchor{x-ra-reshape}
-@deffn @w{function} ra-reshape a bounds ... @result{} b
-Reshape the first axis of array @var{a} to @var{bounds}.
+@deffn @w{function} ra-reshape a k bounds ... @result{} b
+Reshape axis @var{k} of array @var{a} to @var{bounds}.
 
 Each of the bounds may be an integer (a length) or a pair of integers (lower and upper bounds).
 @example
 @verbatim
-(ra-reshape (ra-i 4 3) 2 2)
+(define a (ra-i 4 3))
+(ra-format #t a)
 @end verbatim
-@result{} #%1d:2:2:3(((0 1 2) (3 4 5)) ((6 7 8) (9 10 11)))
+@result{}
+@verbatim
+#%2d:4:3┐
+│0│ 1│ 2│
+├─┼──┼──┤
+│3│ 4│ 5│
+├─┼──┼──┤
+│6│ 7│ 8│
+├─┼──┼──┤
+│9│10│11│
+└─┴──┴──┘
+@end verbatim
+@verbatim
+(ra-format #t (ra-reshape a 0 2 2))
+@end verbatim
+@result{}
+@verbatim
+#%3d:2:2:3─┬──║
+║0│1│2║6│ 7│ 8║
+║─┼─┼─║─┼──┼──║
+║3│4│5║9│10│11║
+║─┴─┴─║─┴──┴──║
+@end verbatim
 @end example
 
 @cindex tally
@@ -1825,13 +1848,44 @@ Each of the bounds may be an integer (a length) or a pair of integers (lower and
 
 @example
 @verbatim
-(ra-reshape (ra-i 10 2) 2 3)
+(ra-reshape (ra-i 8 2) 0 2 3)
 @end verbatim
-@result{} @code{#%3d:2:3:2(((0 1) (2 3) (4 5)) ((6 7) (8 9) (10 11)))}
+@result{} @code{#%3d:2:3:2(((0 1) (2 3) (4 5)) ((6 7) (8 9) (10 11))} ; ok, 8 can be reshaped into 2·3
 @verbatim
-(ra-reshape (ra-i 10 2) 4 3)
+(ra-reshape (ra-i 8 2) 0 4 3)
 @end verbatim
-@result{} error, 4·3 > 10
+@result{} error ; 8 cannot be reshaped into 4·3
+@end example
+
+@cindex bounds
+@code{ra-reshape} may be used to change either of the bounds of an axis, not only its length. For example
+
+@example
+@verbatim
+(ra-format #t (ra-i 2 3))
+@end verbatim
+@result {}
+@verbatim
+#%2d:2:3
+│0│1│2│
+├─┼─┼─┤
+│3│4│5│
+└─┴─┴─┘
+@end verbatim
+@end example
+
+@example
+@verbatim
+(ra-format #t (ra-reshape (ra-i 2 3) 0 '(1 2)))
+@end verbatim
+@result {}
+@verbatim
+#%2d@1:2:3
+│0│1│2│
+├─┼─┼─┤
+│3│4│5│
+└─┴─┴─┘
+@end verbatim
 @end example
 
 See also: @ref{x-ra-ravel,@code{ra-ravel}}, @ref{x-ra-tile,@code{ra-tile}}, @ref{Reshaping}.
@@ -1936,7 +1990,7 @@ See also: @ref{x-ra-dimensions,@code{ra-dimensions}}, @ref{x-make-ra,@code{make-
 @cindex @code{ra-tile}
 @anchor{x-ra-tile}
 @deffn @w{function} ra-tile a k bounds ... @result{} b
-Replicate array @var{a} by inserting axes of bounds @var{s} ... before axis @var{k}. If @var{t} is the shape of @var{ra}, the shape of the result will be
+Replicate array @var{a} by inserting axes of @var{bounds} ... before axis @var{k}. If @var{t} is the shape of @var{a}, the shape of the result will be
 
 @example
 @verbatim

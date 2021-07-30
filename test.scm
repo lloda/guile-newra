@@ -1031,29 +1031,33 @@
 ; ra-reshape
 ; -----------------------
 
-(define (test-reshape a shape check-shape)
-  (let* ((b (apply ra-reshape a shape)))
+(define (test-reshape k a shape check-shape)
+  (let* ((b (apply ra-reshape a k shape)))
     (test-assert (ra-equal? (ra-ravel a) (ra-ravel b)))
     (test-eq (ra-root a) (ra-root b))
     (test-equal check-shape (ra-shape b))))
 
-(test-reshape (ra-i 6)
+(test-reshape 0 (ra-i 4 4)
+              '(2 2) '((0 1) (0 1) (0 3)))
+(test-reshape 1 (ra-i 4 4)
+              '(2 2) '((0 3) (0 1) (0 1)))
+(test-reshape 0 (ra-i 6)
               '(2 3) '((0 1) (0 2)))
-(test-reshape (ra-i 6)
+(test-reshape 0 (ra-i 6)
               '((2 4) (3 4)) '((2 4) (3 4)))
-(test-reshape (ra-transpose (ra-i 3 2 4) 1 2 0)
+(test-reshape 0 (ra-transpose (ra-i 3 2 4) 1 2 0)
               '(2 2) '((0 1) (0 1) (0 2) (0 1)))
-(test-reshape (ra-from (make-ra-root (make-aseq) (c-dims '(4 9) '(1 4))) (ra-iota 4 5) (ra-iota 2 1))
+(test-reshape 0 (ra-from (make-ra-root (make-aseq) (c-dims '(4 9) '(1 4))) (ra-iota 4 5) (ra-iota 2 1))
               '((1 2) 2) '((1 2) (0 1) (0 1)))
-(test-reshape (ra-transpose (make-ra-root (list->vector (iota 18 1)) (c-dims '(1 3) '(4 9))) 1 0)
+(test-reshape 0 (ra-transpose (make-ra-root (list->vector (iota 18 1)) (c-dims '(1 3) '(4 9))) 1 0)
               '(2 3) '((0 1) (0 2) (1 3)))
-(test-reshape (ra-transpose (make-ra-root (make-aseq) (c-dims '(4 9) '(1 4))) 1 0)
+(test-reshape 0 (ra-transpose (make-ra-root (make-aseq) (c-dims '(4 9) '(1 4))) 1 0)
               '((1 2) 2) '((1 2) (0 1) (4 9)))
 
 ; reshape of inf length - but lo must be set
 
 (let* ((a (ra-iota #f 9))
-       (b (ra-reshape a '(2 3))))
+       (b (ra-reshape a 0 '(2 3))))
   (test-equal '((2 3)) (ra-shape b))
   (test-eq (ra-root a) (ra-root b))
   (test-equal 9 (ra-ref b 2))
@@ -1177,12 +1181,12 @@
 ; non-zero base indices on the concat axis
 
 (let* ((a0 (ra-i 2 4))
-       (a1 (ra-reshape a0 '(1 2)))
+       (a1 (ra-reshape a0 0 '(1 2)))
        (b (ra-i 1 4)))
   (test-assert (ra-equal? (ra-pcat #t 0 a0 b) (ra-pcat #t 0 a1 b))))
 
 (let* ((a0 (ra-i 4 2))
-       (a1 (ra-untranspose (ra-reshape (ra-transpose a0 1 0) '(1 2)) 1 0))
+       (a1 (ra-untranspose (ra-reshape (ra-transpose a0 1 0) 0 '(1 2)) 1 0))
        (b (ra-i 4 1)))
   (test-assert (ra-equal? (ra-scat #t 0 a0 b) (ra-scat #t 0 a1 b))))
 
