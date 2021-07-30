@@ -1,6 +1,6 @@
 ; -*- mode: scheme; coding: utf-8 -*-
 
-; (c) Daniel Llorens - 2016-2019
+; (c) Daniel Llorens - 2016-2019, 2021
 ; This library is free software; you can redistribute it and/or modify it under
 ; the terms of the GNU General Public License as published by the Free
 ; Software Foundation; either version 3 of the License, or (at your option) any
@@ -483,11 +483,10 @@
 
 (define (ra-for-each op . rx)
   "
-ra-for-each op rx ...
+Apply @var{op} to each tuple of elements from arrays @var{rx} ... All the
+@var{rx} must have matching shapes.
 
-Apply OP to each tuple of elements from ras RX ...
-
-See also: ra-map! ra-slice-for-each
+See also: ra-map! ra-slice-for-each ra-clip
 "
   (let-syntax
       ((%typed-fe
@@ -511,14 +510,13 @@ See also: ra-map! ra-slice-for-each
 
 (define (ra-map! ra op . rx)
   "
-ra-map! ra op rx ...
+Apply @var{op} to each tuple of elements from arrays @var{rx} ... and store the
+result in the matching position of array @var{ra}. All the @var{rx} ... must
+have matching shapes with @var{ra}.
 
-Apply OP to each tuple of elements from ras RX ... and store the result in
-the matching position of ra RA. All the RX ... must have the same shape as RA.
+Returns the updated array @var{ra}
 
-Returns the updated ra RA.
-
-See also: ra-for-each ra-copy! ra-fill!
+See also: ra-for-each ra-copy! ra-fill! ra-clip
 "
   (let-syntax
       ((%typed-map!
@@ -548,11 +546,10 @@ See also: ra-for-each ra-copy! ra-fill!
 
 (define (ra-fill! ra fill)
   "
-ra-fill! ra fill
+Fill array @var{ra} with value @var{fill}. @var{ra} must be of a type compatible
+with @var{fill}.
 
-Fill ra RA with value FILL. RA must be of a type compatible with FILL.
-
-This function returns the filled ra RA.
+This function returns the filled array @var{ra}.
 
 See also: ra-copy! ra-map!
 "
@@ -600,14 +597,12 @@ See also: ra-copy! ra-map!
 
 (define (ra-copy! ra rb)
   "
-ra-copy! ra rb
+Copy the contents of array @var{rb} into array @var{ra}. @var{ra} and @var{rb} must have matching
+shapes and be of compatible types.
 
-Copy the contents of ra RB into ra RA. RA and RB must have matching shapes and
-be of compatible types.
+This function returns the updated array @var{ra}.
 
-This function returns the updated ra RA.
-
-See also: ra-fill! ra-map!
+See also: ra-fill! ra-map! ra-clip
 "
 ; These only support step 1.
 ; Other options are bli_?copyv from BLIS or (contorted) ?axpy from CBLAS.

@@ -1,6 +1,6 @@
 ; -*- mode: scheme; coding: utf-8 -*-
 
-; (c) Daniel Llorens - 2018-2019
+; (c) Daniel Llorens - 2018-2019, 2021
 ; This library is free software; you can redistribute it and/or modify it under
 ; the terms of the GNU General Public License as published by the Free
 ; Software Foundation; either version 3 of the License, or (at your option) any
@@ -229,7 +229,7 @@ Reshape the first axis of @var{ra} into shape @var{s} ... The shape of the
 result @var{rb} will be @var{s} concatenated with the rest of the shape of
 @var{ra}. The total size of the new axes must fit in the first axis of @var{ra}.
 
-Each element of @var{s} is either a list of two integers @code{(lo hi)} or an
+Each of the @var{s} is either a list of two integers @code{(lo hi)} or an
 integer @code{len}.
 
 The result always shares the root of @var{ra}.
@@ -254,12 +254,13 @@ See also: ra-ravel ra-tile ra-transpose ra-from ra-order-c? c-dims make-ra-new
   "
 ra-tile ra s ... -> rb
 
-Replicate ra RA by the shape S ... The shape of RB will be S concatenated with
-the shape of RA.
+Replicate array @var{ra} by the shape @var{s} ... The shape of @var{rb} will be
+@var{s} concatenated with the shape of @var{ra}.
 
-Each element of S is either a list of two integers (LO HI) or an integer LEN.
+Each of the @var{s} is either a list of two integers @code{(lo hi)} or an
+integer @code{len}.
 
-The result always shares the root of RA.
+The result always shares the root of @var{ra}.
 
 See also: ra-ravel ra-reshape ra-transpose ra-from ra-tile-right ra-order-c? c-dims
 "
@@ -277,7 +278,8 @@ ra-tile-right ra s ... -> rb
 Replicate ra RA by the shape S ... The shape of RB will be the shape of RA
 concatenated with S.
 
-Each element of S is either a list of two integers (LO HI) or an integer LEN.
+Each of the @var{s} is either a list of two integers @code{(lo hi)} or an
+integer @code{len}.
 
 The result always shares the root of RA.
 

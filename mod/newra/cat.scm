@@ -29,8 +29,7 @@
 ; optimization
                        (if (zero? lo)
                          x
-; move index range from (lo hi) to (0 len). Note that (ra-from x (ldots i) #t) doesn't do that.
-; could use ra-reshape on axis i, FIXME make that easier.
+; move index range from (lo hi) to (0 len). Could also use ra-reshape on axis i.
                          (ra-from x (ldots i) (ra-iota len lo)))
                        (ldots i) (ra-iota len base))
             (+ base len)))

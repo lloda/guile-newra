@@ -3,7 +3,7 @@
 <!-- Created by GNU Texinfo 6.8, https://www.gnu.org/software/texinfo/ -->
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-<!-- newra (version 1, updated 2021 July 29)
+<!-- newra (version 1, updated 2021 July 30)
 
 (c) lloda 2017-2021
 
@@ -105,7 +105,7 @@ Next: <a href="#Introduction" accesskey="n" rel="next">Introduction</a> &nbsp; [
 </div>
 <span id="newra"></span><h1 class="top"><code>newra</code></h1>
 
-<p><code>newra</code> (version 1, updated 2021 July 29)
+<p><code>newra</code> (version 1, updated 2021 July 30)
 </p>
 <p>(c) lloda 2017&ndash;2021
 </p>
@@ -140,8 +140,29 @@ Next: <a href="#Low-level" accesskey="n" rel="next">Low level</a>, Previous: <a 
 </div>
 <span id="Introduction-1"></span><h2 class="chapter">1 Introduction</h2>
 
-<p>A multidimensional array is a container (or rather a container view) whose elements can be looked up using a multi-index (i₀, i₁, ...). Each of the indices i₀, i₁, ... has a constant range [l₀, h₀], [l₁, h₁], ... independent of the values of the other indices, so the array is ‘rectangular’. The number of indices in the multi-index is the <em>rank</em> of the array, and the list ([l₀ h₀] [l₁ h₁] ... [lᵣ₋₁ hᵣ₋₁]) is the <em>shape</em> of the array. We speak of a rank-<em class='math'>r</em> array or of an <em class='math'>r</em>-array.
+<span id="index-bounds"></span>
+<p>A multidimensional array is a container (or rather a container view) whose elements can be looked up using a multi-index (i₀, i₁, ...). Each of the indices i₀, i₁, ... has constant bounds [l₀, h₀], [l₁, h₁], ... independent of the values of the other indices, so the array is ‘rectangular’. The number of indices in the multi-index is the <em>rank</em> of the array, and the list ([l₀ h₀] [l₁ h₁] ... [lᵣ₋₁ hᵣ₋₁]) is the <em>shape</em> of the array. We speak of a rank-<em class='math'>r</em> array or of an <em class='math'>r</em>-array.
 </p>
+<p>This is a 2-array with bounds [0, 2] on both axes:
+</p><pre class="verbatim">┌───────┬───────┬───────┐
+│A(0, 0)│A(0, 1)│A(0, 2)│
+├───────┼───────┼───────┤
+│A(1, 0)│A(1, 1)│A(1, 2)│
+├───────┼───────┼───────┤
+│A(2, 0)│A(2, 1)│A(2, 2)│
+└───────┴───────┴───────┘
+</pre>
+<p>This is a 3-array with bounds [0, 1] on axis 0, [2, 5] on axis 1, bounds [-2, 0] on axis 2:<a id="DOCF1" href="#FOOT1"><sup>1</sup></a>
+</p><pre class="verbatim">║───────────┬───────────┬──────────║───────────┬───────────┬──────────║
+║A(0, 2, -2)│A(0, 2, -1)│A(0, 2, 0)║A(1, 2, -2)│A(1, 2, -1)│A(1, 2, 0)║
+║───────────┼───────────┼──────────║───────────┼───────────┼──────────║
+║A(0, 3, -2)│A(0, 3, -1)│A(0, 3, 0)║A(1, 3, -2)│A(1, 3, -1)│A(1, 3, 0)║
+║───────────┼───────────┼──────────║───────────┼───────────┼──────────║
+║A(0, 4, -2)│A(0, 4, -1)│A(0, 4, 0)║A(1, 4, -2)│A(1, 4, -1)│A(1, 4, 0)║
+║───────────┼───────────┼──────────║───────────┼───────────┼──────────║
+║A(0, 5, -2)│A(0, 5, -1)│A(0, 5, 0)║A(1, 5, -2)│A(1, 5, -1)│A(1, 5, 0)║
+║───────────┴───────────┴──────────║───────────┴───────────┴──────────║
+</pre>
 <p>Sometimes we deal with multidimensional <em>expressions</em> where the elements aren&rsquo;t stored anywhere, but are computed on demand when the expression is looked up. In this general sense, an ‘array’ is just a function of integers with a rectangular domain. Such an array would be immutable.
 </p>
 <p>Arrays (in the form of <em>matrices</em>, <em>vectors</em>, or <em>tensors</em>) are very common objects in math and programming, and it is very useful to be able to manipulate arrays as individual entities rather than as aggregates — that is one of the main purposes of <code>newra</code>.
@@ -194,7 +215,7 @@ Next: <a href="#The-pieces-of-an-array" accesskey="n" rel="next">The pieces of a
 <p>A(i₀, i₁, ...) = (storage-of-A) [(((i₀n₁ + i₁)n₂ + i₂)n₃ + ...)+iᵣ₋₁] = (storage-of-A) [o + s₀i₀ + s₁i₁ +  ...]
 </p></blockquote>
 
-<p>where the numbers (s₀, s₁, ...) are called the <em>steps</em><a id="DOCF1" href="#FOOT1"><sup>1</sup></a>. Note that the ‘linear’ or ‘raveled’ address [o + s₀i₀ + s₁i₁ +  ...] is an affine function of (i₀, i₁, ...). If we represent an array as a tuple
+<p>where the numbers (s₀, s₁, ...) are called the <em>steps</em><a id="DOCF2" href="#FOOT2"><sup>2</sup></a>. Note that the ‘linear’ or ‘raveled’ address [o + s₀i₀ + s₁i₁ +  ...] is an affine function of (i₀, i₁, ...). If we represent an array as a tuple
 </p>
 <blockquote>
 <p>A ≡ ((storage-of-A), o, (s₀, s₁, ...))
@@ -324,7 +345,7 @@ Previous: <a href="#The-pieces-of-an-array" accesskey="p" rel="prev">The pieces 
 </p>
 <p>First, the built-in library offers a single function to manipulate array dims, <code>make-shared-array</code>. Although this is a sufficient interface, it is excessively generic, and also very cumbersome and inefficient. The array dims cannot be manipulated directly from Scheme, so any alternative interface written in Scheme is forced to go through <code>make-shared-array</code>.
 </p>
-<p>Second, the C stubs create a barrier to optimization by the Scheme compiler. The main loop of an operation such as <code>(array-map! c + a b)</code> has to be implemented in C (for the reasons given above) and then it has to call back to Scheme on each iteration in order to apply <code>+</code>. Since the Scheme compiler doesn&rsquo;t have any special support for <code>array-map!</code>, it doesn&rsquo;t know what the types of the arguments are, etc. and those checks and dispatches are repeated over and over. <a id="DOCF2" href="#FOOT2"><sup>2</sup></a>
+<p>Second, the C stubs create a barrier to optimization by the Scheme compiler. The main loop of an operation such as <code>(array-map! c + a b)</code> has to be implemented in C (for the reasons given above) and then it has to call back to Scheme on each iteration in order to apply <code>+</code>. Since the Scheme compiler doesn&rsquo;t have any special support for <code>array-map!</code>, it doesn&rsquo;t know what the types of the arguments are, etc. and those checks and dispatches are repeated over and over. <a id="DOCF3" href="#FOOT3"><sup>3</sup></a>
 </p>
 <p>Third, the larger functions of the array interface, such as <code>array-map!</code>, etc. are not interruptible. This is especially inconvenient when operating on large arrays.
 </p>
@@ -543,17 +564,16 @@ s
 <p>The function <a href="#x_002dra_002dformat"><code>ra-format</code></a> can be used to pretty print arrays. This type of output cannot be read back, either.
 </p>
 <div class="example">
-<pre class="verbatim">(ra-format #t (list-&gt;ra 2 '((1 hello) (try 2) (never 3.14))))
+<pre class="verbatim">(ra-format #t (list-&gt;ra 2 '((1 hello) (&quot;try&quot; 2) (never 3.14))) #:fmt &quot;~s&quot;)
 </pre><pre class="example">&rArr;
-┌────┬─────┐
-│   1│hello│
-├────┼─────┤
-│ try│    2│
-├────┼─────┤
-│ever│ 3.14│
-└────┴─────┘
+#%2:3:2─────┐
+│    1│hello│
+├─────┼─────┤
+│&quot;try&quot;│    2│
+├─────┼─────┤
+│never│ 3.14│
+└─────┴─────┘
 </pre></div>
-
 
 <hr>
 </div>
@@ -571,7 +591,7 @@ Next: <a href="#Slicing" accesskey="n" rel="next">Slicing</a>, Previous: <a href
 </pre><pre class="example">&rArr; #%1:3(-1 -2 -3)
 </pre></div>
 
-<p>It is common to need the indices of the elements during array iteration. <code>newra</code> iteration operations do not keep track of those indices<a id="DOCF3" href="#FOOT3"><sup>3</sup></a> because that has a cost. You need to pass the indices you need as arguments, but it&rsquo;s easy to do so by using an infinite index vector together with <a href="#x_002dra_002dtranspose"><code>ra-transpose</code></a>.
+<p>It is common to need the indices of the elements during array iteration. <code>newra</code> iteration operations do not keep track of those indices<a id="DOCF4" href="#FOOT4"><sup>4</sup></a> because that has a cost. You need to pass the indices you need as arguments, but it&rsquo;s easy to do so by using an infinite index vector together with <a href="#x_002dra_002dtranspose"><code>ra-transpose</code></a>.
 </p>
 <div class="example">
 <pre class="verbatim">(define i0 (ra-iota))
@@ -859,7 +879,7 @@ Next: <a href="#Transposition" accesskey="n" rel="next">Transposition</a>, Previ
 </pre><pre class="example">&rArr; error ; axes 0 don't match
 </pre></div>
 
-<p>Here <a href="#x_002dra_002dreshape"><code>ra-reshape</code></a> is used to move axis 0 of the second argument into agreement.<a id="DOCF4" href="#FOOT4"><sup>4</sup></a>
+<p>Here <a href="#x_002dra_002dreshape"><code>ra-reshape</code></a> is used to move axis 0 of the second argument into agreement.<a id="DOCF5" href="#FOOT5"><sup>5</sup></a>
 </p>
 <div class="example">
 <pre class="verbatim">(ra-pcat #t 1 (make-ra 'a '(1 1) '(1 4))
@@ -964,8 +984,15 @@ A
 <p>This can be exploited to create ‘index placeholders’, e.g.
 </p><div class="example">
 <pre class="verbatim">(define (tensor-index i) (ra-transpose (ra-iota) i))
-(ra-for-each (compose display list) (make-ra #f 3 4) (tensor-index 0) (tensor-index 1))
-</pre><pre class="example">&rArr; <code>(#f 0 0)(#f 0 1)(#f 0 2)(#f 0 3)(#f 1 0)(#f 1 1)(#f 1 2)(#f 1 3)(#f 2 0)(#f 2 1)(#f 2 2)(#f 2 3)</code>
+(ra-format #t (ra-map! (make-ra #f 3 4) list (tensor-index 0) (tensor-index 1)))
+</pre><pre class="example">&rArr;
+</pre><pre class="verbatim">#%2:3:4─────┬─────┬─────┐
+│(0 0)│(0 1)│(0 2)│(0 3)│
+├─────┼─────┼─────┼─────┤
+│(1 0)│(1 1)│(1 2)│(1 3)│
+├─────┼─────┼─────┼─────┤
+│(2 0)│(2 1)│(2 2)│(2 3)│
+└─────┴─────┴─────┴─────┘
 </pre></div>
 
 <span id="index-_005b_003f_005d"></span>
@@ -1043,7 +1070,7 @@ a
 </pre><pre class="example">&rArr; <code>#%4d:1:2:1:3((((0 1 2)) ((3 4 5))))</code>
 </pre></div>
 
-<p>One important difference between the built-in array functions and <code>newra</code> is that bounds matching in <code>newra</code> is strict: finite bounds must be identical for axes to match, while for <code>array-map!</code>, <code>array-for-each</code>, <code>array-copy!</code>, etc. the iteration range is the intersection of the ranges of the arguments<a id="DOCF5" href="#FOOT5"><sup>5</sup></a>. <code>newra</code> provides <a href="#x_002dra_002dclip"><code>ra-clip</code></a> to match ranges easily.
+<p>One important difference between the built-in array functions and <code>newra</code> is that bounds matching in <code>newra</code> is strict: finite bounds must be identical for axes to match, while for <code>array-map!</code>, <code>array-for-each</code>, <code>array-copy!</code>, etc. the iteration range is the intersection of the ranges of the arguments<a id="DOCF6" href="#FOOT6"><sup>6</sup></a>. <code>newra</code> provides <a href="#x_002dra_002dclip"><code>ra-clip</code></a> to match ranges easily.
 </p>
 <div class="example">
 <pre class="verbatim">(define a (make-ra-root (vector 'a 'b 'c 'd 'e 'f 'g))) ; range is 0..6
@@ -1602,7 +1629,7 @@ element
 <p>To ravel other combinations of axes, use <a href="#Transposition">Transposition</a>.
 </p>
 <span id="index-packed-array-1"></span>
-<p>The full ravel of an array doesn&rsquo;t necessarily result in a rank-1 &lsquo;packed&rsquo; array, that is, one where the step is 1. If that is required, one can use <code>(ra-ravel (ra-copy ra))</code>, since <a href="#x_002dra_002dorder_002dc_003f"><code>ra-order-c?</code></a> is always true for the result of <code>ra-copy</code><a id="DOCF6" href="#FOOT6"><sup>6</sup></a> .
+<p>The full ravel of an array doesn&rsquo;t necessarily result in a rank-1 &lsquo;packed&rsquo; array, that is, one where the step is 1. If that is required, one can use <code>(ra-ravel (ra-copy ra))</code>, since <a href="#x_002dra_002dorder_002dc_003f"><code>ra-order-c?</code></a> is always true for the result of <code>ra-copy</code><a id="DOCF7" href="#FOOT7"><sup>7</sup></a> .
 </p>
 <p>See also: <a href="#x_002dra_002dreshape"><code>ra-reshape</code></a>, <a href="#x_002dra_002dtile"><code>ra-tile</code></a>, <a href="#Reshaping">Reshaping</a>.
 </p>
@@ -2165,6 +2192,8 @@ Previous: <a href="#Sources" accesskey="p" rel="prev">Sources</a>, Up: <a href="
 <br>
 <a class="summary-letter" href="#Indices_cp_letter-A"><b>A</b></a>
  &nbsp; 
+<a class="summary-letter" href="#Indices_cp_letter-B"><b>B</b></a>
+ &nbsp; 
 <a class="summary-letter" href="#Indices_cp_letter-C"><b>C</b></a>
  &nbsp; 
 <a class="summary-letter" href="#Indices_cp_letter-D"><b>D</b></a>
@@ -2221,6 +2250,9 @@ Previous: <a href="#Sources" accesskey="p" rel="prev">Sources</a>, Up: <a href="
 <tr><td></td><td valign="top"><a href="#index-APL">APL</a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reshaping">Reshaping</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-APL-1">APL</a>:</td><td>&nbsp;</td><td valign="top"><a href="#Differences-with_002e_002e_002e">Differences with...</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-array_002d_003era"><code>array-&gt;ra</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
+<tr><td colspan="4"> <hr></td></tr>
+<tr><th id="Indices_cp_letter-B">B</th><td></td><td></td></tr>
+<tr><td></td><td valign="top"><a href="#index-bounds">bounds</a>:</td><td>&nbsp;</td><td valign="top"><a href="#Introduction">Introduction</a></td></tr>
 <tr><td colspan="4"> <hr></td></tr>
 <tr><th id="Indices_cp_letter-C">C</th><td></td><td></td></tr>
 <tr><td></td><td valign="top"><a href="#index-c_002ddims"><code>c-dims</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
@@ -2342,6 +2374,8 @@ Previous: <a href="#Sources" accesskey="p" rel="prev">Sources</a>, Up: <a href="
 <br>
 <a class="summary-letter" href="#Indices_cp_letter-A"><b>A</b></a>
  &nbsp; 
+<a class="summary-letter" href="#Indices_cp_letter-B"><b>B</b></a>
+ &nbsp; 
 <a class="summary-letter" href="#Indices_cp_letter-C"><b>C</b></a>
  &nbsp; 
 <a class="summary-letter" href="#Indices_cp_letter-D"><b>D</b></a>
@@ -2378,16 +2412,23 @@ Previous: <a href="#Sources" accesskey="p" rel="prev">Sources</a>, Up: <a href="
 <h4 class="footnotes-heading">Footnotes</h4>
 
 <h5><a id="FOOT1" href="#DOCF1">(1)</a></h5>
-<p>Cf. <a href="https://en.wikipedia.org/wiki/Dope_vector"><em>dope vector</em></a></p>
+<pre class="verbatim">(import (newra newra))
+(define element (lambda i (format #f &quot;A(~{~a~^, ~})&quot; i)))
+(define (ti k) (ra-transpose (ra-iota) k))
+(ra-format #t (ra-map! (make-ra #f 3 3)  element (ti 0) (ti 1)) #:prefix? #f)
+(ra-format #t (ra-map! (make-ra #f 2 '(2 5) '(-2 0))  element (ti 0) (ti 1) (ti 2)) #:prefix? #f)
+</pre>
 <h5><a id="FOOT2" href="#DOCF2">(2)</a></h5>
-<p>Guile used to offer dedicated operations to sum arrays, etc. but obviously that isn&rsquo;t any kind of solution.</p>
+<p>Cf. <a href="https://en.wikipedia.org/wiki/Dope_vector"><em>dope vector</em></a></p>
 <h5><a id="FOOT3" href="#DOCF3">(3)</a></h5>
-<p>Except for <a href="#x_002dra_002dindex_002dmap_0021"><code>ra-index-map!</code></a>, which is provided out of compatibility with the older array system.</p>
+<p>Guile (before v1.8) used to offer dedicated operations to sum arrays, etc. but obviously that isn&rsquo;t any kind of solution.</p>
 <h5><a id="FOOT4" href="#DOCF4">(4)</a></h5>
-<p>An example of how using base indices other than 0 everywhere is generally worthless trouble, not least for the library author.</p>
+<p>Except for <a href="#x_002dra_002dindex_002dmap_0021"><code>ra-index-map!</code></a>, which is provided out of compatibility with the older array system.</p>
 <h5><a id="FOOT5" href="#DOCF5">(5)</a></h5>
-<p>I rejected this approach for <code>newra</code> because in my experience it results in errors going undetected much more often than it saves any work.</p>
+<p>An example of how using base indices other than 0 is generally worthless trouble, not least for the library author.</p>
 <h5><a id="FOOT6" href="#DOCF6">(6)</a></h5>
+<p>I rejected this approach for <code>newra</code> because in my experience it results in errors going undetected much more often than it saves any work.</p>
+<h5><a id="FOOT7" href="#DOCF7">(7)</a></h5>
 <p>Note that the ravel operation in <code>(ra-ravel (ra-copy ra))</code> is free, while it might not be in <code>(ra-copy (ra-ravel ra))</code>, so it is preferable, in principle, to copy first.</p>
 </div>
 

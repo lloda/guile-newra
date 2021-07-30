@@ -7,7 +7,7 @@
 @c last [ma112]
 
 @set VERSION 1
-@set UPDATED 2021 July 29
+@set UPDATED 2021 July 30
 
 @copying
 @code{newra} (version @value{VERSION}, updated @value{UPDATED})
@@ -70,7 +70,38 @@ This document uses ‘array’ to refer both to the old built-in array type and 
 @chapter Introduction
 @c ------------------------------------------------
 
-A multidimensional array is a container (or rather a container view) whose elements can be looked up using a multi-index (i₀, i₁, ...). Each of the indices i₀, i₁, ... has a constant range [l₀, h₀], [l₁, h₁], ... independent of the values of the other indices, so the array is ‘rectangular’. The number of indices in the multi-index is the @dfn{rank} of the array, and the list ([l₀ h₀] [l₁ h₁] ... [lᵣ₋₁ hᵣ₋₁]) is the @dfn{shape} of the array. We speak of a rank-@math{r} array or of an @math{r}-array.
+@cindex bounds
+A multidimensional array is a container (or rather a container view) whose elements can be looked up using a multi-index (i₀, i₁, ...). Each of the indices i₀, i₁, ... has constant bounds [l₀, h₀], [l₁, h₁], ... independent of the values of the other indices, so the array is ‘rectangular’. The number of indices in the multi-index is the @dfn{rank} of the array, and the list ([l₀ h₀] [l₁ h₁] ... [lᵣ₋₁ hᵣ₋₁]) is the @dfn{shape} of the array. We speak of a rank-@math{r} array or of an @math{r}-array.
+
+This is a 2-array with bounds [0, 2] on both axes:
+@verbatim
+┌───────┬───────┬───────┐
+│A(0, 0)│A(0, 1)│A(0, 2)│
+├───────┼───────┼───────┤
+│A(1, 0)│A(1, 1)│A(1, 2)│
+├───────┼───────┼───────┤
+│A(2, 0)│A(2, 1)│A(2, 2)│
+└───────┴───────┴───────┘
+@end verbatim
+
+This is a 3-array with bounds [0, 1] on axis 0, [2, 5] on axis 1, bounds [-2, 0] on axis 2:@footnote{@verbatim
+(import (newra newra))
+(define element (lambda i (format #f "A(~{~a~^, ~})" i)))
+(define (ti k) (ra-transpose (ra-iota) k))
+(ra-format #t (ra-map! (make-ra #f 3 3)  element (ti 0) (ti 1)) #:prefix? #f)
+(ra-format #t (ra-map! (make-ra #f 2 '(2 5) '(-2 0))  element (ti 0) (ti 1) (ti 2)) #:prefix? #f)
+@end verbatim}
+@verbatim
+║───────────┬───────────┬──────────║───────────┬───────────┬──────────║
+║A(0, 2, -2)│A(0, 2, -1)│A(0, 2, 0)║A(1, 2, -2)│A(1, 2, -1)│A(1, 2, 0)║
+║───────────┼───────────┼──────────║───────────┼───────────┼──────────║
+║A(0, 3, -2)│A(0, 3, -1)│A(0, 3, 0)║A(1, 3, -2)│A(1, 3, -1)│A(1, 3, 0)║
+║───────────┼───────────┼──────────║───────────┼───────────┼──────────║
+║A(0, 4, -2)│A(0, 4, -1)│A(0, 4, 0)║A(1, 4, -2)│A(1, 4, -1)│A(1, 4, 0)║
+║───────────┼───────────┼──────────║───────────┼───────────┼──────────║
+║A(0, 5, -2)│A(0, 5, -1)│A(0, 5, 0)║A(1, 5, -2)│A(1, 5, -1)│A(1, 5, 0)║
+║───────────┴───────────┴──────────║───────────┴───────────┴──────────║
+@end verbatim
 
 Sometimes we deal with multidimensional @emph{expressions} where the elements aren't stored anywhere, but are computed on demand when the expression is looked up. In this general sense, an ‘array’ is just a function of integers with a rectangular domain. Such an array would be immutable.
 
@@ -260,7 +291,7 @@ Built-in Guile arrays are implemented in C, as part of libguile. As a Guile type
 
 First, the built-in library offers a single function to manipulate array dims, @code{make-shared-array}. Although this is a sufficient interface, it is excessively generic, and also very cumbersome and inefficient. The array dims cannot be manipulated directly from Scheme, so any alternative interface written in Scheme is forced to go through @code{make-shared-array}.
 
-Second, the C stubs create a barrier to optimization by the Scheme compiler. The main loop of an operation such as @code{(array-map! c + a b)} has to be implemented in C (for the reasons given above) and then it has to call back to Scheme on each iteration in order to apply @code{+}. Since the Scheme compiler doesn't have any special support for @code{array-map!}, it doesn't know what the types of the arguments are, etc. and those checks and dispatches are repeated over and over. @footnote{Guile used to offer dedicated operations to sum arrays, etc. but obviously that isn't any kind of solution.}
+Second, the C stubs create a barrier to optimization by the Scheme compiler. The main loop of an operation such as @code{(array-map! c + a b)} has to be implemented in C (for the reasons given above) and then it has to call back to Scheme on each iteration in order to apply @code{+}. Since the Scheme compiler doesn't have any special support for @code{array-map!}, it doesn't know what the types of the arguments are, etc. and those checks and dispatches are repeated over and over. @footnote{Guile (before v1.8) used to offer dedicated operations to sum arrays, etc. but obviously that isn't any kind of solution.}
 
 Third, the larger functions of the array interface, such as @code{array-map!}, etc. are not interruptible. This is especially inconvenient when operating on large arrays.
 
@@ -509,18 +540,17 @@ The function @ref{x-ra-format, @code{ra-format}} can be used to pretty print arr
 
 @example
 @verbatim
-(ra-format #t (list->ra 2 '((1 hello) (try 2) (never 3.14))))
+(ra-format #t (list->ra 2 '((1 hello) ("try" 2) (never 3.14))) #:fmt "~s")
 @end verbatim
 @result{}
-┌────┬─────┐
-│   1│hello│
-├────┼─────┤
-│ try│    2│
-├────┼─────┤
-│ever│ 3.14│
-└────┴─────┘
+#%2:3:2─────┐
+│    1│hello│
+├─────┼─────┤
+│"try"│    2│
+├─────┼─────┤
+│never│ 3.14│
+└─────┴─────┘
 @end example
-
 
 @c ------------------------------------------------
 @node Iteration
@@ -1030,9 +1060,18 @@ This can be exploited to create ‘index placeholders’, e.g.
 @example
 @verbatim
 (define (tensor-index i) (ra-transpose (ra-iota) i))
-(ra-for-each (compose display list) (make-ra #f 3 4) (tensor-index 0) (tensor-index 1))
+(ra-format #t (ra-map! (make-ra #f 3 4) list (tensor-index 0) (tensor-index 1)))
 @end verbatim
-@result{} @code{(#f 0 0)(#f 0 1)(#f 0 2)(#f 0 3)(#f 1 0)(#f 1 1)(#f 1 2)(#f 1 3)(#f 2 0)(#f 2 1)(#f 2 2)(#f 2 3)}
+@result{}
+@verbatim
+#%2:3:4─────┬─────┬─────┐
+│(0 0)│(0 1)│(0 2)│(0 3)│
+├─────┼─────┼─────┼─────┤
+│(1 0)│(1 1)│(1 2)│(1 3)│
+├─────┼─────┼─────┼─────┤
+│(2 0)│(2 1)│(2 2)│(2 3)│
+└─────┴─────┴─────┴─────┘
+@end verbatim
 @end example
 
 @cindex ⍋

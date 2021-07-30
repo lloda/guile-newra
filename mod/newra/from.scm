@@ -1,6 +1,6 @@
 ; -*- mode: scheme; coding: utf-8 -*-
 
-; (c) Daniel Llorens - 2018-2019
+; (c) Daniel Llorens - 2018-2019, 2021
 ; This library is free software; you can redistribute it and/or modify it under
 ; the terms of the GNU General Public License as published by the Free
 ; Software Foundation; either version 3 of the License, or (at your option) any
@@ -20,6 +20,7 @@
 
 (import (srfi :1) (srfi :9) (srfi srfi-9 gnu) (srfi :26) (srfi :71)
         (newra base) (newra map) (newra lib) (ice-9 control) (ice-9 match)
+        (only (srfi :43) vector-copy)
         (only (rnrs base) vector-map vector-for-each))
 
 (define-immutable-record-type <ldots>
@@ -64,7 +65,7 @@
           (let ((jnext (+ j n)))
             (unless (<= jnext (%%ra-rank A))
               (throw 'ldots-n-at-j-too-large-for-rank n j (%%ra-rank A)))
-            (loopj jnext irest zero (cons (vector-clip (%%ra-dims A) j jnext) bdims))))
+            (loopj jnext irest zero (cons (vector-copy (%%ra-dims A) j jnext) bdims))))
          ((? ra? i)
           (let ((dimA (vector-ref (%%ra-dims A) j)))
             (let ((ri (%%ra-rank i)))

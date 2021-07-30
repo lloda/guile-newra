@@ -50,7 +50,7 @@ Help: [C-uc .] insert timestamp [C-cc] flip checkbox [C-uucc] partial flip check
   * [ ] ra-affine map that explicitly takes an [M×(N+1)] matrix
 
 * TODO misc array manipulation [0/1]
-  * [ ] mapping of indices (beyond ra-reshape/ra-from)
+  * [ ] mapping of indices (beyond ra-reshape/ra-from). Maybe just explain in manual?
 
 * TODO fundamental features [3/5]
   * [X] unsized index vectors
@@ -62,6 +62,12 @@ Help: [C-uc .] insert timestamp [C-cc] flip checkbox [C-uucc] partial flip check
     - [ ] rank conjunction
     - [ ] each (cf array-curry in srfi-179 or the old Guile array-enclose).
   * [ ] output types
+
+* TODO performance [2/6]
+  * [ ] u8 ra-fill! vs native (see bench.scm)
+  * [ ] f64 ra-copy! vs native (see bench.scm)
+  * [ ] ra-ref / ra-set! with 1 or 2 args vs built-in array-ref / array-set!
+  * [ ] ra->list / list->ra vs built-in array->list / list->array. Maybe those can be reused?
 
 * TODO friendlier undefined sizes [2/6]
   * [X] printing of 'd typed arrays

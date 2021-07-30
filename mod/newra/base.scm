@@ -34,7 +34,7 @@
 
 ; for internal (newra) use, don't re-export from (newra newra)
 
-(re-export vector-drop vector-fold* vector-fold vector-clip vector-append)
+(re-export vector-drop vector-fold* vector-fold vector-append)
 
 
 ; ----------------

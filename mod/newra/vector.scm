@@ -11,12 +11,13 @@
 ;;; Code:
 
 (define-module (newra vector)
-  #:export (vector-drop vector-fold* vector-fold vector-clip vector-append vector-take))
-
-(import (srfi :26)  (only (srfi :1) fold) (only (rnrs base) vector-for-each)
-        (only (srfi :43) vector-copy!))
-
-(re-export vector-for-each)
+  #:use-module (srfi srfi-26)
+  #:use-module ((srfi srfi-1) #:select (fold))
+  #:use-module ((rnrs base) #:select (vector-for-each))
+  #:use-module ((srfi srfi-43) #:select (vector-copy! vector-copy))
+  #:export (vector-drop vector-fold* vector-fold vector-append vector-take)
+  #:re-export (vector-for-each)
+  #:re-export-and-replace (vector-copy))
 
 (define vector-fold*
   (case-lambda
@@ -44,19 +45,13 @@
    ((kons knil . vs)
     (apply vector-fold* (vector-length (car vs)) 0 kons knil vs))))
 
-; avoid sharing, even when the result would be copy of the full vector
-; (e.g. ra-slice depends on this).
-
-(define (vector-clip v lo end)
-  (let ((w (make-vector (- end lo) *unspecified*)))
-    (vector-copy! w 0 v lo end)
-    w))
+; avoid sharing dim vectors, even when copying the full vector. For example, ra-slice depends on this.
 
 (define (vector-drop v n)
-  (vector-clip v n (vector-length v)))
+  (vector-copy v n (vector-length v)))
 
 (define (vector-take v n)
-  (vector-clip v 0 n))
+  (vector-copy v 0 n))
 
 (define (vector-append . a)
   (let ((b (make-vector (fold (lambda (a c) (+ (vector-length a) c)) 0 a))))

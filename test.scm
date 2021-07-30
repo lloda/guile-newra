@@ -28,7 +28,7 @@
   6 ((@ (newra vector) vector-fold) (lambda (a c) (+ c (car a))) 0 #((1) (2) (3))))
 
 (test-equal
-  #(2 3) ((@ (newra vector) vector-clip) #(1 2 3 4) 1 3))
+  #(2 3) ((@ (newra vector) vector-copy) #(1 2 3 4) 1 3))
 
 ; loop-fun from (newra test) FIXME may become ra-index-map!
 
