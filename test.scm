@@ -977,7 +977,7 @@
 (test-assert (ra-order-c? (ra-transpose (ra-i 1 2 3 4) 0 1 3 2) 1))
 (test-assert (not (ra-order-c? (ra-from (ra-i 1 2 3 4) #t #t #t (ra-iota 2 0 2))))) ; last step 1, packed
 (test-assert (ra-order-c? (ra-from (ra-i 1 2 3 4) #t #t #t (ra-iota 2 0 2)) 4))
-(test-assert (ra-order-c? (ra-tile (ra-i 1 2 3 4) 1)))
+(test-assert (ra-order-c? (ra-tile (ra-i 1 2 3 4) 0 1)))
 (test-assert (ra-order-c? (ra-transpose (ra-i 5 1 3 1 4) 0 3 2 1)))
 (test-assert (ra-order-c? (ra-transpose (ra-i 2 3 4 5) 1 0 2 3) 2 2))
 (test-assert (not (ra-order-c? (ra-transpose (ra-i 2 3 4 5) 1 0 2 3) 2 1)))
@@ -1065,7 +1065,7 @@
 ; -----------------------
 
 (define (test-tile a shape check-shape)
-  (let* ((b (apply ra-tile a shape)))
+  (let* ((b (apply ra-tile a 0 shape)))
     (ra-slice-for-each 2 (lambda (b) (test-assert (ra-equal? a b))) b)
     (test-assert (eq? (ra-root a) (ra-root b)))
     (test-equal check-shape (ra-shape b))))
@@ -1213,7 +1213,8 @@
 (let ((ra (ra-i 2 2 2 2 2 2 2 2)))
   (ra-format #t ra))
 
-(let ((ra (ra-tile-right (ra-set! (ra-copy #t (ra-i 7)) (make-ra-root #(hello world of ras) (c-dims 2 2)) 3) 1)))
+(let* ((ra (ra-set! (ra-copy #t (ra-i 7)) (make-ra-root #(hello world of ras) (c-dims 2 2)) 3))
+       (ra (ra-tile ra (ra-rank ra) 1)))
   (ra-format #t ra))
 
 ; example from srfi-164

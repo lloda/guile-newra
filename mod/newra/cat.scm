@@ -73,10 +73,10 @@ For example:
 (ra-pcat #t 0 (array->ra #(a b)) (ra-i 2 2)) => #%2((a a) (b b) (0 1) (2 3))
 @end verbatim
 
-See also: ra-scat ra-tile ra-tile-right
+See also: ra-scat ra-tile
 "
   (if (> 0 i)
-    (apply ra-pcat type 0 (map (cute apply ra-tile <> (make-list (max 0 (- i)) 1)) xx))
+    (apply ra-pcat type 0 (map (cute apply ra-tile <> 0 (make-list (max 0 (- i)) 1)) xx))
     (match xx
       (()
        (throw 'ra-pcat-missing-arguments))
@@ -126,10 +126,10 @@ For example:
 (ra-scat #t -1 (make-ra 'a) (array->ra #(x y z)))                  => #%2((a x) (a y) (a z))
 @end verbatim
 
-See also: ra-pcat ra-tile ra-tile-right
+See also: ra-pcat ra-tile
 "
   (if (> 0 i)
-    (apply ra-scat type 0 (map (cute apply ra-tile-right <> (make-list (max 0 (- i)) 1)) xx))
+    (apply ra-scat type 0 (map (lambda (x) (apply ra-tile x (ra-rank x) (make-list (max 0 (- i)) 1))) xx))
     (match xx
       (()
        (throw 'ra-scat-missing-arguments))
@@ -140,9 +140,10 @@ See also: ra-pcat ra-tile ra-tile-right
               (xx (map (lambda (x)
                          (let ((ext (append (make-list (- im (ra-rank xm)) 1)
                                             (take (ra-dimensions xm) (- (ra-rank xm) (ra-rank x))))))
-                           (apply ra-tile x (if (> (ra-rank x) i)
-                                              ext
-                                              (list-subst! ext ii 1)))))
+                           (apply ra-tile x 0
+                                  (if (> (ra-rank x) i)
+                                    ext
+                                    (list-subst! ext ii 1)))))
 
                     xx)))
          (apply plain-cat! ii

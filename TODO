@@ -7,6 +7,9 @@ Help: [C-uc .] insert timestamp [C-cc] flip checkbox [C-uucc] partial flip check
   * [ ] docstrings don't work for define-inlinable-case
   * [ ] zero lengths break ra-format
 
+* TODO documentation [0/1]
+  * [ ] actually explain rank extension / prefix matching in the manual
+
 * TODO compatibility with existing Guile arrays [8/9]
   * [X] ra-slice-for-each ra-map! ra-for-each ra-cell ra-ref ra-set!
   * [X] ra-transpose ra-reverse
@@ -32,7 +35,8 @@ Help: [C-uc .] insert timestamp [C-cc] flip checkbox [C-uucc] partial flip check
     - [X] (ra-ravel a [n])
     - [X] (ra-order-c? a [n [org]])
     - [X] (ra-ravel a [n [org]])
-  * [X] ra-tile
+  * [X] ra-tile [1/1]
+    - [X] accept arbitrary axis
   * [X] ra-cat (ra-pcat, ra-scat)
     - [X] implementation
     - [X] tests
@@ -40,6 +44,7 @@ Help: [C-uc .] insert timestamp [C-cc] flip checkbox [C-uucc] partial flip check
   * [-] ra-reshape [1/2]
     - [X] basic function
     - [ ] placeholder
+    - [ ] accept arbitrary axis
   * [X] ra-clip
   * [ ] ra-grade
   * [-] ra-rotate [1/2]

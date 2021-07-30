@@ -24,7 +24,7 @@
         (newra lib reshape))
 
 (re-export ra-reverse ra-transpose ra-untranspose ra-order-c?
-           ra-ravel ra-reshape ra-tile ra-tile-right
+           ra-ravel ra-reshape ra-tile
            ra-singletonize)
 
 

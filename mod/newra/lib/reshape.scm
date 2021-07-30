@@ -12,18 +12,21 @@
 
 (define-module (newra lib reshape)
   #:export (ra-reverse ra-transpose ra-untranspose ra-order-c?
-            ra-ravel ra-reshape ra-tile ra-tile-right
+            ra-ravel ra-reshape ra-tile
             ra-singletonize))
 
 (import (newra base) (newra map) (newra vector)
-        (ice-9 match) (ice-9 control)
-        (only (srfi :1) fold every any iota drop) (srfi :8) (srfi :26)
+        (ice-9 match) (ice-9 control) (srfi :8) (srfi :26)
+        (only (srfi :43) vector-copy!)
+        (only (srfi :1) fold every any iota drop)
         (only (rnrs base) vector-map vector-for-each))
 
-(define (ra-reverse a . k)
+(define (ra-reverse ra . k)
   "
-Reverse axes @var{k} ... of array @var{a}, 0 <= @var{k} < @code{(ra-rank
-@var{a})}. The result shares the root of @var{a}.
+Reverse axes @var{k} ... of array @var{ra}, 0 <= @var{k} < @code{(ra-rank
+@var{ra})}.
+
+The result shares the root of @var{ra}.
 
 Example:
 
@@ -34,11 +37,11 @@ Example:
 
 See also: ra-transpose make-ra-shared
 "
-  (let* ((a (ra-check a))
-         (ndims (vector-copy (%%ra-dims a))))
-    (let loop ((k k) (zero (%%ra-zero a)))
+  (let* ((ra (ra-check ra))
+         (ndims (vector-copy (%%ra-dims ra))))
+    (let loop ((k k) (zero (%%ra-zero ra)))
       (if (null? k)
-        (make-ra-root (%%ra-root a) ndims zero)
+        (make-ra-root (%%ra-root ra) ndims zero)
         (match (vector-ref ndims (car k))
           (($ <dim> len lo step)
            (vector-set! ndims (car k) (make-dim len lo (- step)))
@@ -59,6 +62,8 @@ undefined dimension and step 0.
 
 Axes of @var{ra} that aren't listed in @var{axes} are transposed to the end of
 @var{b}'s axes.
+
+The result shares the root of @var{ra}.
 
 See also: make-ra-root make-ra-new
 "
@@ -104,7 +109,9 @@ result @var{ra}. This is the inverse of (ra-transpose @var{ra} @var{axes} ...)
 @var{axes} must be a permutation of the list [0 ... (- (length @var{axes}) 1)]
 and not be longer than the rank of @var{rb}. Each axis k = (@var{axes} i) of
 @var{rb} is transposed to axis i = 0 ... (ra-rank @var{rb})-1 of @var{ra}. The
-result has the same rank and the same root as the argument.
+result has the same rank and the same root as @var{rb}.
+
+The result shares the root of @var{rb}.
 
 See also: ra-transpose ra-dims
 "
@@ -232,7 +239,7 @@ result @var{rb} will be @var{s} concatenated with the rest of the shape of
 Each of the @var{s} is either a list of two integers @code{(lo hi)} or an
 integer @code{len}.
 
-The result always shares the root of @var{ra}.
+The result shares the root of @var{ra}.
 
 See also: ra-ravel ra-tile ra-transpose ra-from ra-order-c? c-dims make-ra-new
 "
@@ -250,46 +257,32 @@ See also: ra-ravel ra-tile ra-transpose ra-from ra-order-c? c-dims make-ra-new
                        bdims
                        (+ (ra-zero ra) (- (ra-offset 0 sdims)) (* ilo istep))))))))
 
-(define (ra-tile ra . s)
+(define (ra-tile ra k . s)
   "
-ra-tile ra s ... -> rb
+Replicate array @var{ra} by inserting axes of bounds @var{s} ... before axis
+@var{k} of @var{ra}. If @var{t} is the shape of @var{ra}, the shape of the
+result will be
 
-Replicate array @var{ra} by the shape @var{s} ... The shape of @var{rb} will be
-@var{s} concatenated with the shape of @var{ra}.
+@example
+[t(0) ... t(k-1) s(0) ... t(k) ...]
+@end example
 
 Each of the @var{s} is either a list of two integers @code{(lo hi)} or an
 integer @code{len}.
 
-The result always shares the root of @var{ra}.
+The result shares the root of @var{ra}.
 
-See also: ra-ravel ra-reshape ra-transpose ra-from ra-tile-right ra-order-c? c-dims
+See also: ra-ravel ra-reshape ra-transpose ra-from ra-order-c? c-dims
 "
   (let ((ra (ra-check ra)))
     (make-ra-root (%%ra-root ra)
-                  (vector-append
-                   (vector-map (lambda (d) (make-dim (dim-len d) (dim-lo d) 0)) (apply c-dims s))
-                   (%%ra-dims ra))
-                  (%%ra-zero ra))))
-
-(define (ra-tile-right ra . s)
-  "
-ra-tile-right ra s ... -> rb
-
-Replicate ra RA by the shape S ... The shape of RB will be the shape of RA
-concatenated with S.
-
-Each of the @var{s} is either a list of two integers @code{(lo hi)} or an
-integer @code{len}.
-
-The result always shares the root of RA.
-
-See also: ra-ravel ra-reshape ra-transpose ra-from ra-tile ra-order-c? c-dims
-"
-  (let ((ra (ra-check ra)))
-    (make-ra-root (%%ra-root ra)
-                  (vector-append
-                   (%%ra-dims ra)
-                   (vector-map (lambda (d) (make-dim (dim-len d) (dim-lo d) 0)) (apply c-dims s)))
+                  (let* ((sdims (vector-map (lambda (d) (make-dim (dim-len d) (dim-lo d) 0)) (apply c-dims s)))
+                         (adims (%%ra-dims ra))
+                         (bdims (make-vector (+ (vector-length sdims) (vector-length adims)))))
+                    (vector-copy! bdims 0 adims 0 k)
+                    (vector-copy! bdims k sdims)
+                    (vector-copy! bdims (+ k (vector-length sdims)) adims k)
+                    bdims)
                   (%%ra-zero ra))))
 
 (define (ra-singletonize ra . s)

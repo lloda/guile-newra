@@ -84,13 +84,15 @@ This is a 2-array with bounds [0, 2] on both axes:
 └───────┴───────┴───────┘
 @end verbatim
 
-This is a 3-array with bounds [0, 1] on axis 0, [2, 5] on axis 1, bounds [-2, 0] on axis 2:@footnote{@verbatim
+This is a 3-array with bounds [0, 1] on axis 0, [2, 5] on axis 1, bounds [-2, 0] on axis 2:@footnote{
+@verbatim
 (import (newra newra))
 (define element (lambda i (format #f "A(~{~a~^, ~})" i)))
 (define (ti k) (ra-transpose (ra-iota) k))
 (ra-format #t (ra-map! (make-ra #f 3 3)  element (ti 0) (ti 1)) #:prefix? #f)
 (ra-format #t (ra-map! (make-ra #f 2 '(2 5) '(-2 0))  element (ti 0) (ti 1) (ti 2)) #:prefix? #f)
-@end verbatim}
+@end verbatim
+}
 @verbatim
 ║───────────┬───────────┬──────────║───────────┬───────────┬──────────║
 ║A(0, 2, -2)│A(0, 2, -1)│A(0, 2, 0)║A(1, 2, -2)│A(1, 2, -1)│A(1, 2, 0)║
@@ -125,7 +127,32 @@ The rest of this section discusses the motivation for @code{newra} in more detai
 
 @cindex cell
 @cindex frame
-Think of a matrix A, a 2-array with sizes (n₀, n₁) where the elements A(i₀, i₁) are numbers. If we consider the subarrays (rows) A(0, ...), A(1, ...), ..., A(n₀-1, ...) as individual elements, then we have a new view of A as a 1-array of size n₀ with those rows as elements. We say that the rows A(i₀)≡A(i₀, ...) are the 1-@dfn{cells} of A, and the numbers A(i₀, i₁) are 0-cells of A. For an array of arbitrary rank @math{r} the (@math{r}-1)-cells of A are called its @dfn{items}. The prefix of the shape (n₀, n₁, ... nₙ₋₁₋ₖ) that is not taken up by the k-cell is called the k-@dfn{frame}.
+Think of a matrix A, a 2-array with lengths (l₀, l₁) where the elements A(i₀, i₁) are numbers. If we consider the subarrays (rows) A(0, ...), A(1, ...), ..., A(l₀-1, ...) as individual elements, then we have a new view of A as a 1-array of size s₀ with those rows as elements. We say that the rows A(i₀)≡A(i₀, ...) are the 1-@dfn{cells} of A, and the numbers A(i₀, i₁) are 0-cells of A. For an array of arbitrary rank @math{r} the (@math{r}-1)-cells of A are called its @dfn{items}. The prefix of the shape (l₀, l₁, ... lₙ₋₁₋ₖ) that is not taken up by the k-cell is called the (r-k)-@dfn{frame}.
+
+@multitable @columnfractions .4 .1 .4
+@item
+@verbatim
+┌───────┬───────┬───────┐
+│A(0, 0)│A(0, 1)│A(0, 2)│
+├───────┼───────┼───────┤
+│A(1, 0)│A(1, 1)│A(1, 2)│
+├───────┼───────┼───────┤
+│A(2, 0)│A(2, 1)│A(2, 2)│
+└───────┴───────┴───────┘
+@end verbatim
+@tab
+≡
+@tab
+@verbatim
+────
+A(0)
+────
+A(1)
+────
+A(2)
+────
+@end verbatim
+@end multitable
 
 An obvious way to store an array in linearly addressed memory is to place its items one after another. So we would store a 3-array as
 
@@ -150,10 +177,10 @@ This way to lay out an array in memory is called @dfn{row-major order} or @dfn{C
 
 @anchor{x-steps}
 @quotation
-A(i₀, i₁, ...) = (storage-of-A) [(((i₀n₁ + i₁)n₂ + i₂)n₃ + ...)+iᵣ₋₁] = (storage-of-A) [o + s₀i₀ + s₁i₁ +  ...]
+A(i₀, i₁, ...) = (storage-of-A) [(((i₀n₁ + i₁)n₂ + i₂)n₃ + ...)+iᵣ₋₁] = (storage-of-A) [o + s₀·i₀ + s₁·i₁ +  ...]
 @end quotation
 
-where the numbers (s₀, s₁, ...) are called the @dfn{steps}@footnote{Cf. @url{https://en.wikipedia.org/wiki/Dope_vector, @dfn{dope vector}}}. Note that the ‘linear’ or ‘raveled’ address [o + s₀i₀ + s₁i₁ +  ...] is an affine function of (i₀, i₁, ...). If we represent an array as a tuple
+where the numbers (s₀, s₁, ...) are called the @dfn{steps}@footnote{Cf. @url{https://en.wikipedia.org/wiki/Dope_vector, @dfn{dope vector}}}. Note that the ‘linear’ or ‘raveled’ address [o + s₀·i₀ + s₁·i₁ +  ...] is an affine function of (i₀, i₁, ...). If we represent an array as a tuple
 
 @quotation
 A ≡ ((storage-of-A), o, (s₀, s₁, ...))
@@ -164,10 +191,10 @@ then any affine transformation of the indices can be achieved simply by modifyin
 A basic example is obtaining the i₀-th item of A:
 
 @quotation
-A(i₀) ≡ ((storage-of-A), o+s₀i₀, (s₁, ...))
+A(i₀) ≡ ((storage-of-A), o+s₀·i₀, (s₁, ...))
 @end quotation
 
-Note that we can iterate over these items by simply bumping the pointer o+s₀i₀. This means that iterating over (k>0)-cells doesn't have to cost any more than iterating over 0-cells (@ref{x-ra-slice-for-each,@code{ra-slice-for-each}}).
+Note that we can iterate over these items by simply bumping the pointer o+s₀·i₀. This means that iterating over (k>0)-cells doesn't have to cost any more than iterating over 0-cells (@ref{x-ra-slice-for-each,@code{ra-slice-for-each}}).
 
 @c ------------------------------------------------
 @node The pieces of an array
@@ -284,7 +311,7 @@ doesn't.
 @section Built-in Guile arrays
 @c ------------------------------------------------
 
-Dense multidimensional arrays work similarly in every language that offers them, and built-in Guile arrays are no different —they also have a root (@code{shared-array-root}), a zero (computable from @code{shared-array-offset} and @code{array-shape}), and a dim vector (@code{array-shape}, @code{shared-array-increments}). Functionally, they are entirely equivalent to the objects offered by @code{newra}. Why replace them, then?
+Dense multidimensional arrays work similarly in every language that offers them, and built-in Guile arrays are no different —they also have a root (@code{shared-array-root}), a zero (computable from @code{shared-array-offset} and @code{array-shape}), and a dim vector (@code{array-shape}, @code{shared-array-increments}). Functionally, they are entirely equivalent to the objects offered by @code{newra}. Why replace them?
 
 @cindex libguile
 Built-in Guile arrays are implemented in C, as part of libguile. As a Guile type they have their own low-level type tag, and all the basic array operations are C stubs, even the most basic functions such as @code{array-ref} or @code{array-rank}. Obtaining any of the components of the array requires calling into C. There are several problems with this.
@@ -461,11 +488,11 @@ These are treated especially when used in iteration, in that they match axes of 
 @example
 @verbatim
 (define A (make-ra-root #(1 2 3) (c-dims 3)))
-(ra-tile A 2 2)
+(ra-tile A 0 2 2)
 @end verbatim
 @result{} #%3d:2:2:3(((0 1 2) (0 1 2)) ((0 1 2) (0 1 2)))
 @verbatim
-(ra-dims (ra-tile A 2 2))
+(ra-dims (ra-tile A 0 2 2))
 @end verbatim
 @result{} #(#<<dim> len: 2 lo: 0 step: 0> #<<dim> len: 2 lo: 0 step: 0> #<<dim> len: 3 lo: 0 step: 1>)
 @end example
@@ -812,22 +839,20 @@ To match APL ρ, @code{newra} offers three separate functions.
 @end verbatim
 @result{} (2 3 4)
 @verbatim
-(ra-dimensions (ra-tile (ra-i 2 3 4) 5))
+(ra-dimensions (ra-tile (ra-i 2 3 4) 0 5))
 @end verbatim
 @result{} (5 2 3 4)
 @verbatim
-(ra-dimensions (ra-ravel (ra-tile (ra-i 2 3 4) 5) 2))
+(ra-dimensions (ra-ravel (ra-tile (ra-i 2 3 4) 0 5) 2))
 @end verbatim
 @result{} (10 3 4)
 @verbatim
-(ra-dimensions (ra-reshape (ra-ravel (ra-tile (ra-i 2 3 4) 5) 2) 3 3))
+(ra-dimensions (ra-reshape (ra-ravel (ra-tile (ra-i 2 3 4) 0 5) 2) 3 3))
 @end verbatim
 @result{} (3 3 3 4)
 @end example
 
 @code{ra-reshape} and @code{ra-tile} always reuse the root of the argument. On the other hand @code{ra-ravel} may not be able to — this is one of the reasons to have three different functions instead of only one. You can check in advance whether @code{ra-ravel} will reuse the root with the function @ref{x-ra-order-c?, @code{ra-order-c?}}.
-
-All three functions @code{ra-reshape}, @code{ra-ravel}, and @code{ra-tile} operate on prefix axes. To operate on other axes, use @ref{x-ra-transpose, @code{ra-transpose}}.
 
 @c ------------------------------------------------
 @node Concatenation
@@ -1910,39 +1935,85 @@ See also: @ref{x-ra-dimensions,@code{ra-dimensions}}, @ref{x-make-ra,@code{make-
 
 @cindex @code{ra-tile}
 @anchor{x-ra-tile}
-@deffn @w{function} ra-tile a bounds ... @result{} b
-Repeat array @var{a} by prepending axes with the given @var{bounds}.
+@deffn @w{function} ra-tile a k bounds ... @result{} b
+Replicate array @var{a} by inserting axes of bounds @var{s} ... before axis @var{k}. If @var{t} is the shape of @var{ra}, the shape of the result will be
 
-Each of the bounds may be an integer (a length) or a pair of integers (lower and upper bounds).
 @example
 @verbatim
-(ra-tile (ra-i 3) 2)
+[t₀ ... tₖ₋₁ s₀ ... tₖ ...]
 @end verbatim
-@result{} #%1d:2:3((0 1 2) (0 1 2))
+@end example
+
+Each of the bounds may be an integer (a length) or a pair of integers (lower and upper bounds).
+
+@example
+@verbatim
+(define a (ra-i 3 4))
+(ra-format #t a)
+@end verbatim
+@result{}
+@verbatim
+#%2d:3:4──┐
+│0│1│ 2│ 3│
+├─┼─┼──┼──┤
+│4│5│ 6│ 7│
+├─┼─┼──┼──┤
+│8│9│10│11│
+└─┴─┴──┴──┘
+@end verbatim
+@end example
+
+@example
+@verbatim
+(ra-format #t (ra-tile a 0 2))
+@end verbatim
+@result{}
+@verbatim
+#%3d:2:3:4║─┬─┬──┬──║
+║0│1│ 2│ 3║0│1│ 2│ 3║
+║─┼─┼──┼──║─┼─┼──┼──║
+║4│5│ 6│ 7║4│5│ 6│ 7║
+║─┼─┼──┼──║─┼─┼──┼──║
+║8│9│10│11║8│9│10│11║
+║─┴─┴──┴──║─┴─┴──┴──║
+@end verbatim
+@end example
+
+@example
+@verbatim
+(ra-format #t (ra-tile a 1 2))
+@end verbatim
+@result{}
+@verbatim
+#%3d:3:2:4┬─┬─┬─║─┬─┬──┬──║
+║0│1│2│3║4│5│6│7║8│9│10│11║
+║─┼─┼─┼─║─┼─┼─┼─║─┼─┼──┼──║
+║0│1│2│3║4│5│6│7║8│9│10│11║
+║─┴─┴─┴─║─┴─┴─┴─║─┴─┴──┴──║
+@end verbatim
+@end example
+
+@example
+@verbatim
+(ra-format #t (ra-tile a 2 2))
+@end verbatim
+@result{}
+@verbatim
+#%3d:3:4:2─┬──║
+║0│0║4│4║ 8│ 8║
+║─┼─║─┼─║──┼──║
+║1│1║5│5║ 9│ 9║
+║─┼─║─┼─║──┼──║
+║2│2║6│6║10│10║
+║─┼─║─┼─║──┼──║
+║3│3║7│7║11│11║
+║─┴─║─┴─║──┴──║
+@end verbatim
 @end example
 
 The tiled array shares the root of @var{a}.
 
-See also: @ref{x-ra-ravel,@code{ra-ravel}}, @ref{x-ra-reshape,@code{ra-reshape}}, @ref{x-ra-tile-right,@code{ra-tile-right}}, @ref{Reshaping}.
-
-@end deffn
-
-@cindex @code{ra-tile-right}
-@anchor{x-ra-tile-right}
-@deffn @w{function} ra-tile-right a bounds ... @result{} b
-Repeat array @var{a} by appending axes with the given @var{bounds}.
-
-Each of the bounds may be an integer (a length) or a pair of integers (lower and upper bounds).
-@example
-@verbatim
-(ra-tile-right (ra-i 3) 2)
-@end verbatim
-@result{} #%1d:3:2((0 0) (1 1) (2 2))
-@end example
-
-The tiled array shares the root of @var{a}.
-
-See also: @ref{x-ra-tile,@code{ra-tile}}, @ref{x-ra-ravel,@code{ra-ravel}}, @ref{x-ra-reshape,@code{ra-reshape}}.
+See also: @ref{x-ra-ravel,@code{ra-ravel}}, @ref{x-ra-reshape,@code{ra-reshape}}, @ref{Reshaping}.
 
 @end deffn
 
@@ -2271,7 +2342,7 @@ indices that match those elements. @code{newra} will @emph{not} check that each 
 
 @example
 @verbatim
-(ra-amend! a (array->ra #(6 7 8)) (ra-tile (array->ra #0(1)) 3))
+(ra-amend! a (array->ra #(6 7 8)) (ra-tile (array->ra #0(1)) 0 3))
 @end verbatim
 @result{} #%1:3(1 8 3) ; do not rely on 8 ending up there
 @end example
@@ -2322,7 +2393,7 @@ Return an ra with the same root and dimensions as @var{a}, except that infinite 
 @end verbatim
 @result{} (1 2 3)
 @verbatim
-(ra-dimensions (ra-singletonize (ra-tile (ra-i 2 3) 4)))
+(ra-dimensions (ra-singletonize (ra-tile (ra-i 2 3) 0 4)))
 @end verbatim
 @result{} (4 2 3) ; no change
 @end example

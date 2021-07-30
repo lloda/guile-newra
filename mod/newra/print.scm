@@ -97,7 +97,7 @@
                      (lambda (x)
                        (if (ra? x)
                          (ra-format #f x #:fmt fmt #:prefix? prefix?)
-                         (ra-tile (array->ra (format #f fmt x)) 1)))
+                         (ra-tile (array->ra (format #f fmt x)) 0 1)))
                      ra))
   (define-values (dim0 dim1)
     (let* ((q r (euclidean/ (ra-rank s) 2))
