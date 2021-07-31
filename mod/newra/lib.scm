@@ -210,7 +210,7 @@ See also: as-ra
               (ra-slice-for-each 1 (lambda (x) (set! l (cons (loop-rank x) l))) ra)
               l)))))))))
 
-; Similar to (@ (newra newra) ra-for-each-slice-1) - since we cannot unroll. It
+; Similar to (@ (newra) ra-for-each-slice-1) - since we cannot unroll. It
 ; might be cheaper to go Fortran order (building the index lists back to front);
 ; should try that. C order and set-cdr! is how oldra does it.
 ; This function is provided for compatibility with oldra; generally we shouldn't

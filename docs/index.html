@@ -191,7 +191,7 @@ Next: <a href="#The-pieces-of-an-array" accesskey="n" rel="next">The pieces of a
 </p>
 <span id="index-cell"></span>
 <span id="index-frame"></span>
-<p>Think of a matrix A, a 2-array with lengths (l₀, l₁) where the elements A(i₀, i₁) are numbers. If we consider the subarrays (rows) A(0, ...), A(1, ...), ..., A(l₀-1, ...) as individual elements, then we have a new view of A as a 1-array of size s₀ with those rows as elements. We say that the rows A(i₀)≡A(i₀, ...) are the 1-<em>cells</em> of A, and the numbers A(i₀, i₁) are 0-cells of A. For an array of arbitrary rank <em>r</em> the (<em>r</em>-1)-cells of A are called its <em>items</em>. The prefix of the shape (l₀, l₁, ... lₙ₋₁₋ₖ) that is not taken up by the k-cell is called the (r-k)-<em>frame</em>.
+<p>Think of a matrix A, a 2-array with lengths (l₀, l₁) where the elements A(i₀, i₁) are numbers. If we consider the subarrays (rows) A(0, ...), A(1, ...), ..., A(l₀-1, ...) as individual elements, then we have a new view of A as a 1-array of length l₀ with those rows as elements. We say that the rows A(i₀)≡A(i₀, ...) are the 1-<em>cells</em> of A, and the numbers A(i₀, i₁) are 0-cells of A. For an array of arbitrary rank <em>r</em> the (<em>r</em>-1)-cells of A are called its <em>items</em>. The prefix of the shape (l₀, l₁, ... lₙ₋₁₋ₖ) that is not taken up by the k-cell is called the (r-k)-<em>frame</em>.
 </p>
 <table>
 <tr><td width="40%"><pre class="verbatim">┌───────┬───────┬───────┐
@@ -230,7 +230,7 @@ A(2)
 </p></blockquote>
 
 <span id="index-order_002c-row_002dmajor"></span>
-<p>This way to lay out an array in memory is called <em>row-major order</em> or <em>C-order</em>, since it&rsquo;s the default order for built-in arrays in C. A row-major array A with sizes (n₀, n₁, ... nᵣ₋₁) can be looked up like this:
+<p>This way to lay out an array in memory is called <em>row-major order</em> or <em>C-order</em>, since it&rsquo;s the default order for built-in arrays in C. A row-major array A with lengths (n₀, n₁, ... nᵣ₋₁) can be looked up like this:
 </p>
 <span id="x_002dsteps"></span><blockquote>
 <p>A(i₀, i₁, ...) = (storage-of-A) [(((i₀n₁ + i₁)n₂ + i₂)n₃ + ...)+iᵣ₋₁] = (storage-of-A) [o + s₀·i₀ + s₁·i₁ +  ...]
@@ -1031,7 +1031,7 @@ Next: <a href="#Compatibility-with-old-Guile-arrays" accesskey="n" rel="next">Co
 </div>
 <span id="Foreign-interface-1"></span><h3 class="section">2.10 Foreign interface</h3>
 
-<p>One of the major reasons to use arrays instead of other Scheme data structures is that they let one pass a large amount of data through a C interface very efficiently. The data doesn&rsquo;t need to be copied — one only needs to pass a pointer to the data, plus the sizes and the steps in some order. C doesn&rsquo;t have a standard consolidated array type, so the particulars are variable. In any case, the required items can be obtained trivially from a <code>newra</code> array object.
+<p>One of the major reasons to use arrays instead of other Scheme data structures is that they let one pass a large amount of data through a C interface very efficiently. The data doesn&rsquo;t need to be copied — one only needs to pass a pointer to the data, plus the lengths and the steps in some order. C doesn&rsquo;t have a standard consolidated array type, so the particulars are variable. In any case, the required items can be obtained trivially from a <code>newra</code> array object.
 </p>
 <p>For example:
 </p>
@@ -1268,7 +1268,7 @@ a
 <span id="index-make_002dra_002dnew"></span>
 <span id="x_002dmake_002dra_002dnew"></span><dl>
 <dt id="index-make_002dra_002dnew-1">function<!-- /@w -->: <strong>make-ra-new</strong> <em>type value dims</em></dt>
-<dd><p>Create an array over a new root of the given <var>type</var> and the necessary size (according to <var>dims</var>), and fill it with <var>value</var>.
+<dd><p>Create an array over a new root of the given <var>type</var> and size (according to <var>dims</var>), and fill it with <var>value</var>.
 </p><div class="example">
 <pre class="verbatim">(make-ra-new 'u8 0 (c-dims 3 2))
 </pre><pre class="example">&rArr; #%2u8:3:2((0 0) (0 0) (0 0))
@@ -2468,7 +2468,7 @@ Previous: <a href="#Sources" accesskey="p" rel="prev">Sources</a>, Up: <a href="
 <h4 class="footnotes-heading">Footnotes</h4>
 
 <h5><a id="FOOT1" href="#DOCF1">(1)</a></h3>
-<pre class="verbatim">(import (newra newra))
+<pre class="verbatim">(import (newra))
 (define element (lambda i (format #f &quot;A(~{~a~^, ~})&quot; i)))
 (define (ti k) (ra-transpose (ra-iota) k))
 (ra-format #t (ra-map! (make-ra #f 3 3)  element (ti 0) (ti 1)) #:prefix? #f)

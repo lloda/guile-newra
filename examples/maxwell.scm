@@ -12,7 +12,7 @@
 ;; FIXME Redo with lazy ops.
 ;;; Code:
 
-(import (newra newra) (srfi :64) (ice-9 format)
+(import (newra) (srfi :64) (ice-9 format)
         (only (srfi :43) vector-swap!)
         (only (rnrs base) exact))
 

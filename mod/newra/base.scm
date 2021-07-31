@@ -19,7 +19,7 @@
             make-dim dim? dim-len dim-lo dim-hi dim-step c-dims
             ra-pos ra-offset
             ra-slice ra-cell ra-ref ra-set!
-; for internal (newra) use, don't re-export from (newra newra)
+; for internal (newra) use, don't re-export from (newra)
             bytevector-type-size
             define-inlinable-case
             <aseq> <dim> make-dim* dim-check
@@ -32,7 +32,7 @@
         (srfi srfi-4 gnu) (srfi :26) (srfi :2) (ice-9 match) (ice-9 control)
         (newra vector) (only (rnrs base) vector-for-each))
 
-; for internal (newra) use, don't re-export from (newra newra)
+; for internal (newra) use, don't re-export from (newra)
 
 (re-export vector-drop vector-fold* vector-fold vector-append)
 

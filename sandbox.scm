@@ -8,7 +8,7 @@
 
 ; Trying things.
 
-(import (newra newra) (newra tools) (newra base) (rnrs io ports)
+(import (newra) (newra tools) (newra base) (rnrs io ports)
         (srfi :8) (srfi :26) (ice-9 match) (srfi :1) (ice-9 format)
         (only (rnrs base) vector-map)
         (only (srfi :43) vector-copy! vector-fill!)
@@ -76,7 +76,7 @@ Then any shape op on arrays needs to be beatable on the args to avoid having to 
              (loop next (+ i 1)))))))))
 
 
-,m (newra newra)
+,m (newra)
 
 ; call macro with PARAM according to values OPT of TAG
 (define-syntax %tag-dispatch

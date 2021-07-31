@@ -17,7 +17,7 @@ Run the test or the benchmark with
 > $GUILE -L mod bench.scm
 ```
 
-To install the library just copy `mod/newra` somewhere in your Guile load path, and use it with `(import (newra newra))`. Examples of use are coming (check in `examples/`), but for the time being you have to read the source. Many functions have documentation. The manual is a work in progress ([lloda.github.io/guile-newra](https://lloda.github.io/guile-newra)).
+To install the library just copy `mod/newra` somewhere in your Guile load path, and use it with `(import (newra))`. Examples of use are coming (check in `examples/`), but for the time being you have to read the source. Many functions have documentation. The manual is a work in progress ([lloda.github.io/guile-newra](https://lloda.github.io/guile-newra)).
 
 
 ## Status

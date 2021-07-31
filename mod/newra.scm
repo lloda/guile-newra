@@ -10,7 +10,7 @@
 ;; Newra is a replacement for Guile's C-based arrays. This is the hub module.
 ;;; Code:
 
-(define-module (newra newra))
+(define-module (newra))
 
 (import (newra base) (newra map) (newra print) (newra read) (newra from)
         (newra cat) (newra lib))

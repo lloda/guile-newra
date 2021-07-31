@@ -86,7 +86,7 @@ This is a 2-array with bounds [0, 2] on both axes:
 
 This is a 3-array with bounds [0, 1] on axis 0, [2, 5] on axis 1, bounds [-2, 0] on axis 2:@footnote{
 @verbatim
-(import (newra newra))
+(import (newra))
 (define element (lambda i (format #f "A(~{~a~^, ~})" i)))
 (define (ti k) (ra-transpose (ra-iota) k))
 (ra-format #t (ra-map! (make-ra #f 3 3)  element (ti 0) (ti 1)) #:prefix? #f)
@@ -127,7 +127,7 @@ The rest of this section discusses the motivation for @code{newra} in more detai
 
 @cindex cell
 @cindex frame
-Think of a matrix A, a 2-array with lengths (l₀, l₁) where the elements A(i₀, i₁) are numbers. If we consider the subarrays (rows) A(0, ...), A(1, ...), ..., A(l₀-1, ...) as individual elements, then we have a new view of A as a 1-array of size s₀ with those rows as elements. We say that the rows A(i₀)≡A(i₀, ...) are the 1-@dfn{cells} of A, and the numbers A(i₀, i₁) are 0-cells of A. For an array of arbitrary rank @math{r} the (@math{r}-1)-cells of A are called its @dfn{items}. The prefix of the shape (l₀, l₁, ... lₙ₋₁₋ₖ) that is not taken up by the k-cell is called the (r-k)-@dfn{frame}.
+Think of a matrix A, a 2-array with lengths (l₀, l₁) where the elements A(i₀, i₁) are numbers. If we consider the subarrays (rows) A(0, ...), A(1, ...), ..., A(l₀-1, ...) as individual elements, then we have a new view of A as a 1-array of length l₀ with those rows as elements. We say that the rows A(i₀)≡A(i₀, ...) are the 1-@dfn{cells} of A, and the numbers A(i₀, i₁) are 0-cells of A. For an array of arbitrary rank @math{r} the (@math{r}-1)-cells of A are called its @dfn{items}. The prefix of the shape (l₀, l₁, ... lₙ₋₁₋ₖ) that is not taken up by the k-cell is called the (r-k)-@dfn{frame}.
 
 @multitable @columnfractions .4 .1 .4
 @item
@@ -173,7 +173,7 @@ A: [[A(0, 0): [A(0, 0, 0), A(0, 0, 1) ...], A(0, 1): [A(0, 1, 0), A(0, 1, 1) ...
 @end quotation
 
 @cindex order, row-major
-This way to lay out an array in memory is called @dfn{row-major order} or @dfn{C-order}, since it's the default order for built-in arrays in C. A row-major array A with sizes (n₀, n₁, ... nᵣ₋₁) can be looked up like this:
+This way to lay out an array in memory is called @dfn{row-major order} or @dfn{C-order}, since it's the default order for built-in arrays in C. A row-major array A with lengths (n₀, n₁, ... nᵣ₋₁) can be looked up like this:
 
 @anchor{x-steps}
 @quotation
@@ -1135,7 +1135,7 @@ The function @ref{x-ra-untranspose, @code{ra-untranspose}} takes its axis argume
 @section Foreign interface
 @c ------------------------------------------------
 
-One of the major reasons to use arrays instead of other Scheme data structures is that they let one pass a large amount of data through a C interface very efficiently. The data doesn't need to be copied — one only needs to pass a pointer to the data, plus the sizes and the steps in some order. C doesn't have a standard consolidated array type, so the particulars are variable. In any case, the required items can be obtained trivially from a @code{newra} array object.
+One of the major reasons to use arrays instead of other Scheme data structures is that they let one pass a large amount of data through a C interface very efficiently. The data doesn't need to be copied — one only needs to pass a pointer to the data, plus the lengths and the steps in some order. C doesn't have a standard consolidated array type, so the particulars are variable. In any case, the required items can be obtained trivially from a @code{newra} array object.
 
 For example:
 
@@ -1379,7 +1379,7 @@ See also: @ref{x-make-typed-ra,@code{make-typed-ra}}, @ref{x-make-ra-new,@code{r
 @cindex @code{make-ra-new}
 @anchor{x-make-ra-new}
 @deffn @w{function} make-ra-new type value dims
-Create an array over a new root of the given @var{type} and the necessary size (according to @var{dims}), and fill it with @var{value}.
+Create an array over a new root of the given @var{type} and size (according to @var{dims}), and fill it with @var{value}.
 @example
 @verbatim
 (make-ra-new 'u8 0 (c-dims 3 2))

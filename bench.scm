@@ -9,7 +9,7 @@
 
 ; Run with $GUILE -L mod -s bench.scm
 
-(import (newra newra) (newra tools) (newra test) (newra read) (ice-9 popen)
+(import (newra) (newra tools) (newra test) (newra read) (ice-9 popen)
         (only (newra print) ra-print) (ice-9 rdelim) (srfi :26) (srfi :8) (srfi :19)
         (only (srfi :1) fold iota) (rnrs bytevectors) (ice-9 match) (ice-9 format)
         (only (srfi :43) vector-copy!) (only (rnrs base) vector-map))
