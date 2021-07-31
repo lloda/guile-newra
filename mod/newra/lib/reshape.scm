@@ -235,8 +235,12 @@ ra-reshape ra k s ... -> rb
 Reshape axis @var{k} of @var{ra} into shape @var{s} ... Each of the @var{s} is
 either a list of two integers @code{(lo hi)} or an integer @code{len}.
 
-The total size of the new axes must fit in axis @var{k} of @var{ra}. The result
-has rank = rank(@var{ra})-1+card(@var{s}).
+The total size of the new axes must fit in axis @var{k} of @var{ra}. If @var{t}
+is the shape of @var{ra}, the shape of the result is
+
+@example
+[t(0) ... t(k-1) s(0) ... t(k+1) ...]
+@end example
 
 The result shares the root of @var{ra}.
 
@@ -250,14 +254,14 @@ See also: ra-ravel ra-tile ra-transpose ra-from ra-order-c? c-dims make-ra-new
         (throw 'bad-size-for-reshape ssize (ra-len ra))))
     (match (vector-ref (%%ra-dims ra) k)
       (($ <dim> ilen ilo istep)
-       (let ((sdims (vector-map (lambda (d) (make-dim (dim-len d) (dim-lo d) (* (dim-step d) istep))) sdims))
-             (adims (%%ra-dims ra)))
+       (let ((sdims (vector-map (lambda (d) (make-dim (dim-len d) (dim-lo d) (* (dim-step d) istep))) sdims)))
          (make-ra-root (%%ra-root ra)
-; FIXME do like in ra-tile and save the take/drop copies
-                       (vector-append
-                        (vector-take adims k)
-                        sdims
-                        (vector-drop adims (+ k 1)))
+                       (let* ((adims (%%ra-dims ra))
+                              (bdims (make-vector (+ (vector-length sdims) (vector-length adims) -1))))
+                         (vector-copy! bdims 0 adims 0 k)
+                         (vector-copy! bdims k sdims)
+                         (vector-copy! bdims (+ k (vector-length sdims)) adims (+ k 1))
+                         bdims)
                        (+ (ra-zero ra) (- (ra-offset 0 sdims)) (* ilo istep))))))))
 
 (define (ra-tile ra k . s)
@@ -290,9 +294,10 @@ See also: ra-ravel ra-reshape ra-transpose ra-from ra-order-c? c-dims
 
 (define (ra-singletonize ra . s)
   "
-ra-singletonize ra -> rb
+Set the lengths of any dead axes of @var{ra} (axes with step 0 and undefined
+length) to 1.
 
-Set the lengths of any dead axes of RA (axes with step 0) to 1.
+The result shares the root of @var{ra}.
 
 See also: ra-transpose
 "

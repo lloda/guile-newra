@@ -171,20 +171,22 @@ Next: <a href="#Low-level" accesskey="n" rel="next">Low level</a>, Previous: <a 
 <p>The rest of this section discusses the motivation for <code>newra</code> in more detail. To start using the library, please jump ahead to <a href="#Low-level">Low level</a>.
 </p>
 <table class="menu" border="0" cellspacing="0">
-<tr><td align="left" valign="top">&bull; <a href="#Rank-polymorphism-and-rank-extension" accesskey="1">Rank polymorphism and rank extension</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">
+<tr><td align="left" valign="top">&bull; <a href="#Rank-polymorphism" accesskey="1">Rank polymorphism</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">
 </td></tr>
-<tr><td align="left" valign="top">&bull; <a href="#The-pieces-of-an-array" accesskey="2">The pieces of an array</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">
+<tr><td align="left" valign="top">&bull; <a href="#Rank-extension" accesskey="2">Rank extension</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">
 </td></tr>
-<tr><td align="left" valign="top">&bull; <a href="#Built_002din-Guile-arrays" accesskey="3">Built-in Guile arrays</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">
+<tr><td align="left" valign="top">&bull; <a href="#The-pieces-of-an-array" accesskey="3">The pieces of an array</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">
+</td></tr>
+<tr><td align="left" valign="top">&bull; <a href="#Built_002din-Guile-arrays" accesskey="4">Built-in Guile arrays</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">
 </td></tr>
 </table>
 
 <hr>
-<span id="Rank-polymorphism-and-rank-extension"></span><div class="header">
+<span id="Rank-polymorphism"></span><div class="header">
 <p>
-Next: <a href="#The-pieces-of-an-array" accesskey="n" rel="next">The pieces of an array</a>, Up: <a href="#Introduction" accesskey="u" rel="up">Introduction</a> &nbsp; [<a href="#Indices" title="Index" rel="index">Index</a>]</p>
+Next: <a href="#Rank-extension" accesskey="n" rel="next">Rank extension</a>, Up: <a href="#Introduction" accesskey="u" rel="up">Introduction</a> &nbsp; [<a href="#Indices" title="Index" rel="index">Index</a>]</p>
 </div>
-<span id="Rank-polymorphism-and-rank-extension-1"></span><h3 class="section">1.1 Rank polymorphism and rank extension</h3>
+<span id="Rank-polymorphism-1"></span><h3 class="section">1.1 Rank polymorphism</h3>
 
 <span id="index-rank-polymorphism"></span>
 <p><em>Rank polymorphism</em> is the ability to treat an array of rank <em>r</em> as an array of lower rank where the elements are themselves arrays.
@@ -230,10 +232,10 @@ A(2)
 </p></blockquote>
 
 <span id="index-order_002c-row_002dmajor"></span>
-<p>This way to lay out an array in memory is called <em>row-major order</em> or <em>C-order</em>, since it&rsquo;s the default order for built-in arrays in C. A row-major array A with lengths (n₀, n₁, ... nᵣ₋₁) can be looked up like this:
+<p>This way to lay out an array in memory is called <em>row-major order</em> or <em>C-order</em>, since it&rsquo;s the default order for built-in arrays in C. A row-major array A with lengths (l₀, l₁, ... lᵣ₋₁) can be looked up like this:
 </p>
 <span id="x_002dsteps"></span><blockquote>
-<p>A(i₀, i₁, ...) = (storage-of-A) [(((i₀n₁ + i₁)n₂ + i₂)n₃ + ...)+iᵣ₋₁] = (storage-of-A) [o + s₀·i₀ + s₁·i₁ +  ...]
+<p>A(i₀, i₁, ...) = (storage-of-A) [(((i₀l₁ + i₁)l₂ + i₂)l₃ + ...)+iᵣ₋₁] = (storage-of-A) [o + s₀·i₀ + s₁·i₁ +  ...]
 </p></blockquote>
 
 <p>where the numbers (s₀, s₁, ...) are called the <em>steps</em><a id="DOCF2" href="#FOOT2"><sup>2</sup></a>. Note that the ‘linear’ or ‘raveled’ address [o + s₀·i₀ + s₁·i₁ +  ...] is an affine function of (i₀, i₁, ...). If we represent an array as a tuple
@@ -253,11 +255,86 @@ A(2)
 <p>Note that we can iterate over these items by simply bumping the pointer o+s₀·i₀. This means that iterating over (k&gt;0)-cells doesn&rsquo;t have to cost any more than iterating over 0-cells (<a href="#x_002dra_002dslice_002dfor_002deach"><code>ra-slice-for-each</code></a>).
 </p>
 <hr>
+<span id="Rank-extension"></span><div class="header">
+<p>
+Next: <a href="#The-pieces-of-an-array" accesskey="n" rel="next">The pieces of an array</a>, Previous: <a href="#Rank-polymorphism" accesskey="p" rel="prev">Rank polymorphism</a>, Up: <a href="#Introduction" accesskey="u" rel="up">Introduction</a> &nbsp; [<a href="#Indices" title="Index" rel="index">Index</a>]</p>
+</div>
+<span id="Rank-extension-1"></span><h3 class="section">1.2 Rank extension</h3>
+
+<p>Rank extension is the mechanism that allows <code>R+S</code> to be defined even when <code>R</code>, <code>S</code> may have different ranks. The idea is an interpolation of the following basic cases.
+</p>
+<p>Suppose first that <code>R</code> and <code>S</code> have the same rank. We require that the shapes be the same. Then the shape of <code>R+S</code> will be the same as the shape of either <code>R</code> or <code>S</code> and the elements of <code>R+S</code> will be
+</p>
+<blockquote>
+<p><code>(R+S)(i₀ i₁ ... i₍ᵣ₋₁₎) = R(i₀ i₁ ... i₍ᵣ₋₁₎) + S(i₀ i₁ ... i₍ᵣ₋₁₎)</code>
+</p></blockquote>
+
+<p>where <code>r</code> is the rank of <code>R</code>.
+</p>
+<p>Now suppose that <code>S</code> has rank 0. The shape of <code>R+S</code> is the same as the shape of <code>R</code> and the elements of <code>R+S</code> will be
+</p>
+<blockquote>
+<p><code>(R+S)(i₀ i₁ ... i₍ᵣ₋₁₎) = R(i₀ i₁ ... i₍ᵣ₋₁₎) + S()</code>.
+</p></blockquote>
+
+<p>The two rules above are supported by all primitive array languages. But suppose that <code>S</code> has rank <code>s</code>, where <code>0&lt;s&lt;r</code>. Looking at the expressions above, it seems natural to define <code>R+S</code> by
+</p>
+<blockquote>
+<p><code>(R+S)(i₀ i₁ ... i₍ₛ₋₁₎ ... i₍ᵣ₋₁₎) = R(i₀ i₁ ... i₍ₛ₋₁₎ ... i₍ᵣ₋₁₎) + S(i₀ i₁ ... i₍ₛ₋₁₎)</code>.
+</p></blockquote>
+
+<p>That is, after we run out of indices in <code>S</code>, we simply repeat the elements. We have aligned the shapes so:
+</p>
+<blockquote>
+<pre class="verbatim">[n₀ n₁ ... n₍ₛ₋₁₎ ... n₍ᵣ₋₁₎]
+[n₀ n₁ ... n₍ₛ₋₁₎]
+</pre></blockquote>
+
+<span id="index-shape-agreement_002c-prefix"></span>
+<span id="index-shape-agreement_002c-suffix"></span>
+<span id="index-Numpy"></span>
+<p>This rank extension rule is used by the J language [<a href="#Sources">J S</a>]
+ and is known as <em>prefix agreement</em>. The opposite rule of <em>suffix agreement</em> is used, for example, in Numpy [<a href="#Sources">num17</a>]
+.
+</p>
+<p>As you can verify, the prefix agreement rule is distributive. Therefore it can be applied to nested expressions or to expressions with any number of arguments. It is applied systematically throughout <code>newra</code>, even in assignments. For example,
+</p>
+<div class="example">
+<pre class="verbatim">(define a (make-ra-root #(3 5 9)))
+(define b (make-ra #f 3 2))
+(ra-copy! b a) ; copy each aᵢ on each bᵢ
+</pre><pre class="example">&rArr; <code>#%2:3:2((3 3) (5 5) (9 9))</code>
+</pre></div>
+
+<div class="example">
+<pre class="verbatim">(define a (make-ra 0 3))
+(define b (ra-reshape (ra-iota 6 1) 0 3 2))
+(ra-map! a + a b) ; sum the rows of b
+</pre><pre class="example">&rArr; <code>#%1:3(3 7 11)</code>
+</pre></div>
+
+<span id="index-Numpy-1"></span>
+<span id="index-broadcasting_002c-singleton_002c-newaxis"></span>
+<p>An weakness of prefix agreement is that the axes you want to match aren&rsquo;t always the prefix axes. Other array systems (e.g. [<a href="#Sources">num17</a>]
+) offer a feature similar to rank extension called ‘broadcasting’ that is a bit more flexible. For example an array of shape [A B 1 D] will match an array of shape [A B C D] for any value of C. The process of broadcasting consists in inserting so-called ‘singleton dimensions’ (axes with length one) to align the axes that one wishes to match. One may think of rank extension as a particular case of broadcasting where the singleton dimensions are added to the end of the shorter shapes automatically.
+</p>
+<p>A drawback of singleton broadcasting is that it muddles the distinction between a scalar and a vector of length 1. Sometimes, an axis of length 1 is no more than that, and if 2≠3 is a size error, it isn&rsquo;t obvious why 1≠2 shouldn&rsquo;t be. For this reason <code>newra</code>&rsquo;s support for explicit broadcasting is based on <a href="#x_002ddead_002daxes">dead axes</a>.
+</p>
+<div class="example">
+<pre class="verbatim">(define a (ra-i 5 3))
+(define b (make-ra 0 3))
+(let ((b1 (ra-transpose b 1))) ; align axis 0 of b with axis 1 of a
+  (ra-map! b1 + b1 a) ; sum the columns of a
+  b)
+</pre><pre class="example">&rArr; b = <code>#%1:5(30 35 40)</code>
+</pre></div>
+
+<hr>
 <span id="The-pieces-of-an-array"></span><div class="header">
 <p>
-Next: <a href="#Built_002din-Guile-arrays" accesskey="n" rel="next">Built-in Guile arrays</a>, Previous: <a href="#Rank-polymorphism-and-rank-extension" accesskey="p" rel="prev">Rank polymorphism and rank extension</a>, Up: <a href="#Introduction" accesskey="u" rel="up">Introduction</a> &nbsp; [<a href="#Indices" title="Index" rel="index">Index</a>]</p>
+Next: <a href="#Built_002din-Guile-arrays" accesskey="n" rel="next">Built-in Guile arrays</a>, Previous: <a href="#Rank-extension" accesskey="p" rel="prev">Rank extension</a>, Up: <a href="#Introduction" accesskey="u" rel="up">Introduction</a> &nbsp; [<a href="#Indices" title="Index" rel="index">Index</a>]</p>
 </div>
-<span id="The-pieces-of-an-array-1"></span><h3 class="section">1.2 The pieces of an array</h3>
+<span id="The-pieces-of-an-array-1"></span><h3 class="section">1.3 The pieces of an array</h3>
 
 <p>An <code>newra</code> array is an aggregate of the following pieces:
 </p>
@@ -353,7 +430,7 @@ Each dim consists of a length (<em>len</em>), a lower bound (<em>lo</em>), and a
 <p>
 Previous: <a href="#The-pieces-of-an-array" accesskey="p" rel="prev">The pieces of an array</a>, Up: <a href="#Introduction" accesskey="u" rel="up">Introduction</a> &nbsp; [<a href="#Indices" title="Index" rel="index">Index</a>]</p>
 </div>
-<span id="Built_002din-Guile-arrays-1"></span><h3 class="section">1.3 Built-in Guile arrays</h3>
+<span id="Built_002din-Guile-arrays-1"></span><h3 class="section">1.4 Built-in Guile arrays</h3>
 
 <p>Dense multidimensional arrays work similarly in every language that offers them, and built-in Guile arrays are no different —they also have a root (<code>shared-array-root</code>), a zero (computable from <code>shared-array-offset</code> and <code>array-shape</code>), and a dim vector (<code>array-shape</code>, <code>shared-array-increments</code>). Functionally, they are entirely equivalent to the objects offered by <code>newra</code>. Why replace them?
 </p>
@@ -631,7 +708,7 @@ Next: <a href="#Slicing" accesskey="n" rel="next">Slicing</a>, Previous: <a href
 </pre></div>
 
 <span id="index-prefix-matching"></span>
-<p>The iteration procedures in <code>newra</code> all perform rank extension of their arguments through prefix matching (see <a href="#Rank-polymorphism-and-rank-extension">Rank polymorphism and rank extension</a>). In the following example, the shapes of the arguments are (5 5), (5) and (<code>#f</code> 5), so the common prefixes (5), (5) and (<code>#f</code>) all match.
+<p>The iteration procedures in <code>newra</code> all perform rank extension of their arguments through prefix matching (see <a href="#Rank-extension">Rank extension</a>). In the following example, the shapes of the arguments are (5 5), (5) and (<code>#f</code> 5), so the common prefixes (5), (5) and (<code>#f</code>) all match.
 </p>
 <div class="example">
 <pre class="verbatim">(ra-map! (make-ra 5 5) * (ra-iota 5 1) (ra-transpose (ra-iota 5 1) 1))
@@ -687,7 +764,7 @@ Next: <a href="#Reshaping" accesskey="n" rel="next">Reshaping</a>, Previous: <a 
 </pre><pre class="example">&rArr; <code>x</code>
 </pre></div>
 
-<p><code>ra-cell</code> is a <a href="#Rank-polymorphism-and-rank-extension">rank-polymorphic</a> generalization of the basic element lookup function <a href="#x_002dra_002dref"><code>ra-ref</code></a>, which requires the full set of indices.
+<p><code>ra-cell</code> is a <a href="#Rank-polymorphism">rank-polymorphic</a> generalization of the basic element lookup function <a href="#x_002dra_002dref"><code>ra-ref</code></a>, which requires the full set of indices.
 </p>
 <div class="example">
 <pre class="verbatim">(ra-ref a 0 1 0) ; same as ra-cell
@@ -726,7 +803,7 @@ Next: <a href="#Reshaping" accesskey="n" rel="next">Reshaping</a>, Previous: <a 
 </pre><pre class="example">&rArr; <code>#%2:2:2((c a) (f d))</code>
 </pre></div>
 
-<p>One may give fewer <code>i</code> than the rank of <code>a</code>. The missing arguments are taken as <code>#t</code> (see <a href="#Rank-polymorphism-and-rank-extension">Rank polymorphism and rank extension</a>).
+<p>One may give fewer <code>i</code> than the rank of <code>a</code>. The missing arguments are taken as <code>#t</code> (see <a href="#Rank-extension">Rank extension</a>).
 </p>
 <div class="example">
 <pre class="verbatim">(ra-from a 0) ; row 0, same as (ra-from a 0 #t)
@@ -847,11 +924,11 @@ Next: <a href="#Transposition" accesskey="n" rel="next">Transposition</a>, Previ
       (s₀)
 </pre></div>
 
-<p>and suffix-matched
+<p>and suffix-matched (s₀ and r₂ must match)
 </p>
 <div class="example">
 <pre class="verbatim">(r₀ |r₁| r₂)
-(r₀ | 1| s₀)
+(r₀ | 1| r₂)
 </pre></div>
 
 <p>for a result
@@ -988,8 +1065,37 @@ A
 
 <p>In particular, <code>(ra-transpose A)</code> is equivalent to <code>(ra-transpose A 0 1 ... (- (ra-rank A) 1))</code> (which is of course the same array as <code>A</code>).
 </p>
+<span id="index-outer-product"></span>
+<p>This ability of <code>ra-transpose</code> can be exploited to compute &lsquo;outer products&rsquo;. In the following example the shape <code>[2 2]</code> of <code>A</code> matches with the two leading dead axes of <code>(ra-transpose B 2)</code>:
+</p>
+<div class="example">
+<pre class="verbatim">                 A : [2 2]
+(ra-transpose B 2) : [f f 2 2]
+</pre></div>
+
+<span id="index-prefix-matching-1"></span>
+<p>The trailing axes then match with <code>A</code> through through <a href="#Rank-extension">prefix matching</a>.
+</p>
+<div class="example">
+<pre class="verbatim">(define A (list-&gt;ra 2 '((a b) (c d))))
+(define B (ra-i 2 2))
+(ra-format #t (ra-map! (make-ra #f 2 2 2 2)
+                (lambda i (format #f &quot;~{~a~}&quot; i))
+                A (ra-transpose B 2)))
+</pre><pre class="example">&rArr;
+</pre><pre class="verbatim">#%4:2:2:2:2═╗
+║a0│a1║b0│b1║
+║──┼──║──┼──║
+║a2│a3║b2│b3║
+╠═════╬═════╣
+║c0│c1║d0│d1║
+║──┼──║──┼──║
+║c2│c3║d2│d3║
+╚═════╩═════╝
+</pre></div>
+
 <span id="index-index-placeholder"></span>
-<p>This can be exploited to create ‘index placeholders’, e.g.
+<p>Another use is the creation of ‘index placeholders’, e.g.
 </p><div class="example">
 <pre class="verbatim">(define (tensor-index i) (ra-transpose (ra-iota) i))
 (ra-format #t (ra-map! (make-ra #f 3 4) list (tensor-index 0) (tensor-index 1)))
@@ -1372,7 +1478,7 @@ a
 <span id="x_002dra_002ddimensions"></span><dl>
 <dt id="index-ra_002ddimensions-1">function<!-- /@w -->: <strong>ra-dimensions</strong> <em>a</em></dt>
 <dd>
-<p>Return the dimensions of <var>a</var> as a list, like <a href="#x_002dra_002dshape"><code>ra-shape</code></a>, but the dimensions that have lower bound zero are represented by their length alone, instead of a two-element list <code>(lo, hi)</code>. This is a convenience for the common case when lower bounds are zero.
+<p>Return the dimensions of <var>a</var> as a list, like <a href="#x_002dra_002dshape"><code>ra-shape</code></a>, but the dimensions that have lower bound zero are represented by their length alone, instead of a two-element list <code>(lo hi)</code>. This is a convenience for the common case when lower bounds are zero.
 </p>
 <div class="example">
 <pre class="verbatim">(ra-dimensions (make-ra 0 '(2 3) 4))
@@ -2312,10 +2418,11 @@ Previous: <a href="#Sources" accesskey="p" rel="prev">Sources</a>, Up: <a href="
 <tr><th id="Indices_cp_letter-B">B</th><td></td><td></td></tr>
 <tr><td></td><td valign="top"><a href="#index-bounds">bounds</a>:</td><td>&nbsp;</td><td valign="top"><a href="#Introduction">Introduction</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-bounds-1">bounds</a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
+<tr><td></td><td valign="top"><a href="#index-broadcasting_002c-singleton_002c-newaxis">broadcasting, singleton, newaxis</a>:</td><td>&nbsp;</td><td valign="top"><a href="#Rank-extension">Rank extension</a></td></tr>
 <tr><td colspan="4"> <hr></td></tr>
 <tr><th id="Indices_cp_letter-C">C</th><td></td><td></td></tr>
 <tr><td></td><td valign="top"><a href="#index-c_002ddims"><code>c-dims</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
-<tr><td></td><td valign="top"><a href="#index-cell">cell</a>:</td><td>&nbsp;</td><td valign="top"><a href="#Rank-polymorphism-and-rank-extension">Rank polymorphism and rank extension</a></td></tr>
+<tr><td></td><td valign="top"><a href="#index-cell">cell</a>:</td><td>&nbsp;</td><td valign="top"><a href="#Rank-polymorphism">Rank polymorphism</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-concatenation">concatenation</a>:</td><td>&nbsp;</td><td valign="top"><a href="#Concatenation">Concatenation</a></td></tr>
 <tr><td colspan="4"> <hr></td></tr>
 <tr><th id="Indices_cp_letter-D">D</th><td></td><td></td></tr>
@@ -2325,7 +2432,7 @@ Previous: <a href="#Sources" accesskey="p" rel="prev">Sources</a>, Up: <a href="
 <tr><td colspan="4"> <hr></td></tr>
 <tr><th id="Indices_cp_letter-F">F</th><td></td><td></td></tr>
 <tr><td></td><td valign="top"><a href="#index-Fortran">Fortran</a>:</td><td>&nbsp;</td><td valign="top"><a href="#Differences-with_002e_002e_002e">Differences with...</a></td></tr>
-<tr><td></td><td valign="top"><a href="#index-frame">frame</a>:</td><td>&nbsp;</td><td valign="top"><a href="#Rank-polymorphism-and-rank-extension">Rank polymorphism and rank extension</a></td></tr>
+<tr><td></td><td valign="top"><a href="#index-frame">frame</a>:</td><td>&nbsp;</td><td valign="top"><a href="#Rank-polymorphism">Rank polymorphism</a></td></tr>
 <tr><td colspan="4"> <hr></td></tr>
 <tr><th id="Indices_cp_letter-G">G</th><td></td><td></td></tr>
 <tr><td></td><td valign="top"><a href="#index-grade">grade</a>:</td><td>&nbsp;</td><td valign="top"><a href="#Transposition">Transposition</a></td></tr>
@@ -2350,17 +2457,21 @@ Previous: <a href="#Sources" accesskey="p" rel="prev">Sources</a>, Up: <a href="
 <tr><td colspan="4"> <hr></td></tr>
 <tr><th id="Indices_cp_letter-N">N</th><td></td><td></td></tr>
 <tr><td></td><td valign="top"><a href="#index-new-array">new array</a>:</td><td>&nbsp;</td><td valign="top"><a href="#The-pieces-of-an-array">The pieces of an array</a></td></tr>
+<tr><td></td><td valign="top"><a href="#index-Numpy">Numpy</a>:</td><td>&nbsp;</td><td valign="top"><a href="#Rank-extension">Rank extension</a></td></tr>
+<tr><td></td><td valign="top"><a href="#index-Numpy-1">Numpy</a>:</td><td>&nbsp;</td><td valign="top"><a href="#Rank-extension">Rank extension</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-NumPy">NumPy</a>:</td><td>&nbsp;</td><td valign="top"><a href="#Differences-with_002e_002e_002e">Differences with...</a></td></tr>
 <tr><td colspan="4"> <hr></td></tr>
 <tr><th id="Indices_cp_letter-O">O</th><td></td><td></td></tr>
 <tr><td></td><td valign="top"><a href="#index-Octave">Octave</a>:</td><td>&nbsp;</td><td valign="top"><a href="#Differences-with_002e_002e_002e">Differences with...</a></td></tr>
-<tr><td></td><td valign="top"><a href="#index-order_002c-row_002dmajor">order, row-major</a>:</td><td>&nbsp;</td><td valign="top"><a href="#Rank-polymorphism-and-rank-extension">Rank polymorphism and rank extension</a></td></tr>
+<tr><td></td><td valign="top"><a href="#index-order_002c-row_002dmajor">order, row-major</a>:</td><td>&nbsp;</td><td valign="top"><a href="#Rank-polymorphism">Rank polymorphism</a></td></tr>
+<tr><td></td><td valign="top"><a href="#index-outer-product">outer product</a>:</td><td>&nbsp;</td><td valign="top"><a href="#Transposition">Transposition</a></td></tr>
 <tr><td colspan="4"> <hr></td></tr>
 <tr><th id="Indices_cp_letter-P">P</th><td></td><td></td></tr>
 <tr><td></td><td valign="top"><a href="#index-packed-array">packed array</a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-packed-array-1">packed array</a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-packed-array-2">packed array</a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-prefix-matching">prefix matching</a>:</td><td>&nbsp;</td><td valign="top"><a href="#Iteration">Iteration</a></td></tr>
+<tr><td></td><td valign="top"><a href="#index-prefix-matching-1">prefix matching</a>:</td><td>&nbsp;</td><td valign="top"><a href="#Transposition">Transposition</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-prefix-slice">prefix slice</a>:</td><td>&nbsp;</td><td valign="top"><a href="#Creating-and-accessing-arrays">Creating and accessing arrays</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-prefix-slice-1">prefix slice</a>:</td><td>&nbsp;</td><td valign="top"><a href="#Slicing">Slicing</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-print-prefix"><code>print prefix</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
@@ -2402,11 +2513,13 @@ Previous: <a href="#Sources" accesskey="p" rel="prev">Sources</a>, Up: <a href="
 <tr><td></td><td valign="top"><a href="#index-ra_002dtranspose"><code>ra-transpose</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-ra_002duntranspose"><code>ra-untranspose</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-rank">rank</a>:</td><td>&nbsp;</td><td valign="top"><a href="#The-pieces-of-an-array">The pieces of an array</a></td></tr>
-<tr><td></td><td valign="top"><a href="#index-rank-polymorphism">rank polymorphism</a>:</td><td>&nbsp;</td><td valign="top"><a href="#Rank-polymorphism-and-rank-extension">Rank polymorphism and rank extension</a></td></tr>
+<tr><td></td><td valign="top"><a href="#index-rank-polymorphism">rank polymorphism</a>:</td><td>&nbsp;</td><td valign="top"><a href="#Rank-polymorphism">Rank polymorphism</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-root-vector">root vector</a>:</td><td>&nbsp;</td><td valign="top"><a href="#The-pieces-of-an-array">The pieces of an array</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-rotate_0021">rotate!</a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
 <tr><td colspan="4"> <hr></td></tr>
 <tr><th id="Indices_cp_letter-S">S</th><td></td><td></td></tr>
+<tr><td></td><td valign="top"><a href="#index-shape-agreement_002c-prefix">shape agreement, prefix</a>:</td><td>&nbsp;</td><td valign="top"><a href="#Rank-extension">Rank extension</a></td></tr>
+<tr><td></td><td valign="top"><a href="#index-shape-agreement_002c-suffix">shape agreement, suffix</a>:</td><td>&nbsp;</td><td valign="top"><a href="#Rank-extension">Rank extension</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-shared-root">shared root</a>:</td><td>&nbsp;</td><td valign="top"><a href="#The-pieces-of-an-array">The pieces of an array</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-singleton-axis">singleton axis</a>:</td><td>&nbsp;</td><td valign="top"><a href="#Special-arrays">Special arrays</a></td></tr>
 <tr><td colspan="4"> <hr></td></tr>

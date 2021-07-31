@@ -62,6 +62,7 @@ Help: [C-uc .] insert timestamp [C-cc] flip checkbox [C-uucc] partial flip check
   * [X] tensor indices
   * [X] broadcasting
   * [ ] ways to control iteration (dim loop order, direction, etc.)
+  * [ ] a solution for (ra-amend! dst (RA-MAP OP (ra-from dst i ...)) i ...)
   * [ ] drag-along facility / lazy ops
     - [ ] verbs
     - [ ] rank conjunction
