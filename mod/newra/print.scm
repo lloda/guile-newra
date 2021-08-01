@@ -190,4 +190,5 @@
     (sc-print scc port)
     scc))
 
-(struct-set! (@ (newra base) <ra-vtable>) vtable-index-printer ra-print)
+(struct-set! (@ (newra base) <ra-vtable>) vtable-index-printer
+             (lambda (ra o) ((or (*ra-print*) ra-print) ra o)))

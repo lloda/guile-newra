@@ -563,7 +563,7 @@ Next: <a href="#Writing-and-reading" accesskey="n" rel="next">Writing and readin
 </p>
 <span id="index-make_002daseq"></span>
 <span id="x_002dnone"></span><dl>
-<dt id="index-make_002daseq-1">function<!-- /@w -->: <strong>make-aseq</strong> <em>[org [inc]]</em></dt>
+<dt id="index-make_002daseq-1">Function<!-- /@w -->: <strong>make-aseq</strong> <em>[org [inc]]</em></dt>
 <dd>
 <p>Create an arithmetic sequence [<code>org, org+inc, org+2·inc, ...</code>]. The default values of <code>org</code> and <code>inc</code> are respectively 0 and 1. For example:
 </p>
@@ -674,6 +674,29 @@ s
 └─────┴─────┘
 </pre></div>
 
+<p>The writing mode can be configured with the following parameter, available from <code>(newra print)</code>.
+</p>
+<span id="index-_002ara_002dprint_002a"></span>
+<span id="x_002dstar_002dra_002dprint_002dstar"></span><dl>
+<dt id="index-_002ara_002dprint_002a-1">Parameter<!-- /@w -->: <strong>*ra-print*</strong> <em>(lambda (array port) ...)</em></dt>
+</dl>
+
+<p>For example
+</p><pre class="verbatim">(*ra-print* (lambda (ra o) (ra-print ra o #:dims? #f)))
+(ra-i 2 3)
+</pre><p>&rArr;
+</p><pre class="verbatim">$1 = #%2d((0 1 2) (3 4 5))
+</pre>
+<pre class="verbatim">(*ra-print* (lambda (ra o) (newline o) (ra-format ra o)))
+(ra-i 2 3)
+</pre><p>&rArr;
+</p><pre class="verbatim">$1 =
+#%2d:2:3
+│0│1│2│
+├─┼─┼─┤
+│3│4│5│
+└─┴─┴─┘
+</pre>
 <hr>
 <span id="Iteration"></span><div class="header">
 <p>
@@ -1320,7 +1343,7 @@ Next: <a href="#Sources" accesskey="n" rel="next">Sources</a>, Previous: <a href
 
 <span id="index-array_002d_003era"></span>
 <span id="x_002darray_002d_003era"></span><dl>
-<dt id="index-array_002d_003era-1">function<!-- /@w -->: <strong>array-&gt;ra</strong> <em>a</em></dt>
+<dt id="index-array_002d_003era-1">Function<!-- /@w -->: <strong>array-&gt;ra</strong> <em>a</em></dt>
 <dd>
 <p>Convert built-in Guile array <var>a</var> (anything that satisfies <code>array?</code>) into a (<code>newra)</code> array.
 </p>
@@ -1342,7 +1365,7 @@ a
 
 <span id="index-c_002ddims"></span>
 <span id="x_002dc_002ddims"></span><dl>
-<dt id="index-c_002ddims-1">function<!-- /@w -->: <strong>c-dims</strong> <em>bounds ...</em></dt>
+<dt id="index-c_002ddims-1">Function<!-- /@w -->: <strong>c-dims</strong> <em>bounds ...</em></dt>
 <dd>
 <span id="index-packed-array"></span>
 <p>Create dims for C-order array (packed elements, last dimension changing fastest).
@@ -1356,14 +1379,14 @@ a
 
 <span id="index-ldots-1"></span>
 <span id="x_002dldots"></span><dl>
-<dt id="index-ldots-2">function<!-- /@w -->: <strong>ldots</strong> <em>[n] ...</em></dt>
+<dt id="index-ldots-2">Function<!-- /@w -->: <strong>ldots</strong> <em>[n] ...</em></dt>
 <dd>
 <p>Placeholder for <var>n</var> full axes, used as argument to <code>ra-from</code> or <code>ra-amend!</code>. Without <var>n</var>, expand to fill the rank of the argument <var>a</var> of <a href="#x_002dra_002dfrom"><code>ra-from</code></a> or <a href="#x_002dra_002damend_0021"><code>ra-amend!</code></a>.
 </p></dd></dl>
 
 <span id="index-make_002dra"></span>
 <span id="x_002dmake_002dra"></span><dl>
-<dt id="index-make_002dra-1">function<!-- /@w -->: <strong>make-ra</strong> <em>val bounds ... &rArr; a</em></dt>
+<dt id="index-make_002dra-1">Function<!-- /@w -->: <strong>make-ra</strong> <em>val bounds ... &rArr; a</em></dt>
 <dd>
 <p>Create an array of type <code>#t</code> with the given <var>bounds</var>, filled with <var>val</var>.
 </p>
@@ -1378,7 +1401,7 @@ a
 
 <span id="index-make_002dra_002dnew"></span>
 <span id="x_002dmake_002dra_002dnew"></span><dl>
-<dt id="index-make_002dra_002dnew-1">function<!-- /@w -->: <strong>make-ra-new</strong> <em>type value dims</em></dt>
+<dt id="index-make_002dra_002dnew-1">Function<!-- /@w -->: <strong>make-ra-new</strong> <em>type value dims</em></dt>
 <dd><p>Create an array over a new root of the given <var>type</var> and size (according to <var>dims</var>), and fill it with <var>value</var>.
 </p><div class="example">
 <pre class="verbatim">(make-ra-new 'u8 0 (c-dims 3 2))
@@ -1388,7 +1411,7 @@ a
 
 <span id="index-make_002dra_002droot"></span>
 <span id="x_002dmake_002dra_002droot"></span><dl>
-<dt id="index-make_002dra_002droot-1">function<!-- /@w -->: <strong>make-ra-root</strong> <em>root [dims [zero]]</em></dt>
+<dt id="index-make_002dra_002droot-1">Function<!-- /@w -->: <strong>make-ra-root</strong> <em>root [dims [zero]]</em></dt>
 <dd><p>Create an array over the given <var>root</var>.
 </p><div class="example">
 <pre class="verbatim">(make-ra-root (vector 1 2 3))
@@ -1408,7 +1431,7 @@ a
 
 <span id="index-make_002dtyped_002dra"></span>
 <span id="x_002dmake_002dtyped_002dra"></span><dl>
-<dt id="index-make_002dtyped_002dra-1">function<!-- /@w -->: <strong>make-typed-ra</strong> <em>type val bounds ... &rArr; a</em></dt>
+<dt id="index-make_002dtyped_002dra-1">Function<!-- /@w -->: <strong>make-typed-ra</strong> <em>type val bounds ... &rArr; a</em></dt>
 <dd>
 <p>Same as <a href="#x_002dmake_002dra"><code>make-ra</code></a>, except that the result has the specified <var>type</var>.
 </p>
@@ -1419,7 +1442,7 @@ a
 <span id="index-intersection"></span>
 <span id="index-ra_002dclip"></span>
 <span id="x_002dra_002dclip"></span><dl>
-<dt id="index-ra_002dclip-1">function<!-- /@w -->: <strong>ra-clip</strong> <em>a b &rArr; c</em></dt>
+<dt id="index-ra_002dclip-1">Function<!-- /@w -->: <strong>ra-clip</strong> <em>a b &rArr; c</em></dt>
 <dd><p>Slice <var>a</var> to the intersection of the bounds of <var>a</var> and <var>b</var>. If <var>a</var> and <var>b</var> have different ranks, only the common prefix of <var>a</var> is sliced.
 </p>
 <div class="example">
@@ -1481,7 +1504,7 @@ a
 
 <span id="index-ra_002ddimensions"></span>
 <span id="x_002dra_002ddimensions"></span><dl>
-<dt id="index-ra_002ddimensions-1">function<!-- /@w -->: <strong>ra-dimensions</strong> <em>a</em></dt>
+<dt id="index-ra_002ddimensions-1">Function<!-- /@w -->: <strong>ra-dimensions</strong> <em>a</em></dt>
 <dd>
 <p>Return the dimensions of <var>a</var> as a list, like <a href="#x_002dra_002dshape"><code>ra-shape</code></a>, but the dimensions that have lower bound zero are represented by their length alone, instead of a two-element list <code>(lo hi)</code>. This is a convenience for the common case when lower bounds are zero.
 </p>
@@ -1498,8 +1521,8 @@ a
 
 <span id="index-ra_002dformat"></span>
 <span id="x_002dra_002dformat"></span><dl>
-<dt id="index-ra_002dformat-1">function<!-- /@w -->: <strong>ra-format</strong> <em>ra port #:fmt #:prefix?</em></dt>
-<dt id="index-ra_002dformat-2">function<!-- /@w -->: <strong>ra-format</strong> <em>ra #f #:fmt #:prefix? &rArr; sc</em></dt>
+<dt id="index-ra_002dformat-1">Function<!-- /@w -->: <strong>ra-format</strong> <em>ra port #:fmt #:prefix?</em></dt>
+<dt id="index-ra_002dformat-2">Function<!-- /@w -->: <strong>ra-format</strong> <em>ra #f #:fmt #:prefix? &rArr; sc</em></dt>
 <dd>
 <p>Pretty print array <var>ra</var>. Each of the elements of <var>ra</var> is formatted using <code>(format #f fmt el)</code> from <a href="https://www.gnu.org/software/guile/manual/html_node/Formatted-Output.html"><code>(ice-9 format)</code></a>. <var>fmt</var> defauts to <code>&quot;~a&quot;</code>. If the element is itself an array, it is formatted using <code>ra-format</code> recursively.
 </p>
@@ -1608,7 +1631,7 @@ element
 
 <span id="index-ra_002di"></span>
 <span id="x_002dra_002di"></span><dl>
-<dt id="index-ra_002di-1">function<!-- /@w -->: <strong>ra-i</strong> <em>len ...</em></dt>
+<dt id="index-ra_002di-1">Function<!-- /@w -->: <strong>ra-i</strong> <em>len ...</em></dt>
 <dd>
 <p>Create multidimensional index array with the given lengths. The root is of type <code>&lt;aseq&gt;</code>.
 </p>
@@ -1620,7 +1643,7 @@ element
 
 <span id="index-ra_002diota"></span>
 <span id="x_002dra_002diota"></span><dl>
-<dt id="index-ra_002diota-1">function<!-- /@w -->: <strong>ra-iota</strong> <em>[len [lo [step]]]</em></dt>
+<dt id="index-ra_002diota-1">Function<!-- /@w -->: <strong>ra-iota</strong> <em>[len [lo [step]]]</em></dt>
 <dd>
 <p>Create rank-1 index array. The root is of type <code>&lt;aseq&gt;</code>.
 </p>
@@ -1632,7 +1655,7 @@ element
 
 <span id="index-ra_002dcat"></span>
 <span id="x_002dra_002dcat"></span><dl>
-<dt id="index-ra_002dcat-1">function<!-- /@w -->: <strong>ra-cat</strong> <em>type i a ...  &rArr; b</em></dt>
+<dt id="index-ra_002dcat-1">Function<!-- /@w -->: <strong>ra-cat</strong> <em>type i a ...  &rArr; b</em></dt>
 <dd>
 <p>Concatenate arrays <var>a</var> ... along axis <var>i</var>. The arguments are prefix-matched and rank extended before concatenation. All axes must match, except possibly the concatenation axis.
 </p>
@@ -1650,7 +1673,7 @@ element
 <span id="index-print-prefix"></span>
 <span id="index-ra_002dprint_002dprefix"></span>
 <span id="x_002dra_002dprint_002dprefix"></span><dl>
-<dt id="index-ra_002dprint_002dprefix-1">function<!-- /@w -->: <strong>ra-print-prefix</strong> <em>ra port #:dims?</em></dt>
+<dt id="index-ra_002dprint_002dprefix-1">Function<!-- /@w -->: <strong>ra-print-prefix</strong> <em>ra port #:dims?</em></dt>
 <dd>
 <p>Return the print prefix for array <var>ra</var>. This is a string that details the type, rank, and (optionally) the dimensions of <var>ra</var>, and is part of the default read syntax for arrays. This is the same syntax as that of the <a href="https://www.gnu.org/software/guile/manual/html_node/Array-Syntax.html">the built in Guile arrays</a>, except that <var>dims?</var> defaults to true and <code>#%</code> is used instead of <code>#</code>.
 </p>
@@ -1672,7 +1695,7 @@ element
 
 <span id="index-ra_002dravel"></span>
 <span id="x_002dra_002dravel"></span><dl>
-<dt id="index-ra_002dravel-1">function<!-- /@w -->: <strong>ra-ravel</strong> <em>a [n [org]]</em></dt>
+<dt id="index-ra_002dravel-1">Function<!-- /@w -->: <strong>ra-ravel</strong> <em>a [n [org]]</em></dt>
 <dd><p>Ravel axes [<var>org</var> ... <var>org</var>+<var>n</var>) of array <var>a</var> in C order. <var>n</var> defaults to the rank of <var>a</var> and <var>org</var> defaults to 0.
 </p>
 <p>For example:
@@ -1738,7 +1761,7 @@ element
 
 <span id="index-ra_002dreshape"></span>
 <span id="x_002dra_002dreshape"></span><dl>
-<dt id="index-ra_002dreshape-1">function<!-- /@w -->: <strong>ra-reshape</strong> <em>a k bounds ... &rArr; b</em></dt>
+<dt id="index-ra_002dreshape-1">Function<!-- /@w -->: <strong>ra-reshape</strong> <em>a k bounds ... &rArr; b</em></dt>
 <dd><p>Reshape axis <var>k</var> of array <var>a</var> to <var>bounds</var>.
 </p>
 <p>Each of the bounds may be an integer (a length) or a pair of integers (lower and upper bounds).
@@ -1803,7 +1826,7 @@ element
 <span id="index-_005b_003f_005d_002c-reverse"></span>
 <span id="index-ra_002dreverse"></span>
 <span id="x_002dra_002dreverse"></span><dl>
-<dt id="index-ra_002dreverse-1">function<!-- /@w -->: <strong>ra-reverse</strong> <em>a axes ... &rArr; b</em></dt>
+<dt id="index-ra_002dreverse-1">Function<!-- /@w -->: <strong>ra-reverse</strong> <em>a axes ... &rArr; b</em></dt>
 <dd><p>Reverse the given <var>axes</var> of <var>a</var>.
 </p>
 <div class="example">
@@ -1821,7 +1844,7 @@ element
 <span id="index-_005b_003f_005d_002c-rowel"></span>
 <span id="index-ra_002drotate"></span>
 <span id="x_002dra_002drotate"></span><dl>
-<dt id="index-ra_002drotate-1">function<!-- /@w -->: <strong>ra-rotate</strong> <em>n a &rArr; b</em></dt>
+<dt id="index-ra_002drotate-1">Function<!-- /@w -->: <strong>ra-rotate</strong> <em>n a &rArr; b</em></dt>
 <dd><p>(FIXME: not implemented) Rotate the first axis of <var>a</var> toward the lower indices (‘to the left’) <var>n</var> times. <var>n</var> may be any integer. The result has the type of <var>a</var>, unless that type is <code>d</code>, in which case the result is of type <code>#t</code>.
 </p>
 <p>This function always returns a new array.
@@ -1839,7 +1862,7 @@ element
 <span id="index-rotate_0021"></span>
 <span id="index-ra_002drotate_0021"></span>
 <span id="x_002dra_002drotate_0021"></span><dl>
-<dt id="index-ra_002drotate_0021-1">function<!-- /@w -->: <strong>ra-rotate!</strong> <em>n a &rArr; a</em></dt>
+<dt id="index-ra_002drotate_0021-1">Function<!-- /@w -->: <strong>ra-rotate!</strong> <em>n a &rArr; a</em></dt>
 <dd><p>Rotate in place the first axis of <var>a</var> to the left <var>n</var> times. <var>n</var> may be any integer. <var>a</var> must be writable. This function returns <var>a</var>.
 </p>
 <p>Example:
@@ -1856,7 +1879,7 @@ a
 
 <span id="index-ra_002dscat"></span>
 <span id="x_002dra_002dscat"></span><dl>
-<dt id="index-ra_002dscat-1">function<!-- /@w -->: <strong>ra-scat</strong> <em>type i a ... &rArr; b</em></dt>
+<dt id="index-ra_002dscat-1">Function<!-- /@w -->: <strong>ra-scat</strong> <em>type i a ... &rArr; b</em></dt>
 <dd>
 <p>Concatenate <var>i</var>-items of arrays <var>a</var> ... . The arguments are suffix-matched and rank extended before concatenation. All axes must match, except possibly the concatenation axis.
 </p>
@@ -1872,7 +1895,7 @@ a
 
 <span id="index-ra_002dshape"></span>
 <span id="x_002dra_002dshape"></span><dl>
-<dt id="index-ra_002dshape-1">function<!-- /@w -->: <strong>ra-shape</strong> <em>a &rArr; s</em></dt>
+<dt id="index-ra_002dshape-1">Function<!-- /@w -->: <strong>ra-shape</strong> <em>a &rArr; s</em></dt>
 <dd>
 <p>Return the shape (a list of two-element lists, each containing the lower and upper bound of each axis) of array <var>a</var>.
 </p>
@@ -1887,7 +1910,7 @@ a
 
 <span id="index-ra_002dtile"></span>
 <span id="x_002dra_002dtile"></span><dl>
-<dt id="index-ra_002dtile-1">function<!-- /@w -->: <strong>ra-tile</strong> <em>a k bounds ... &rArr; b</em></dt>
+<dt id="index-ra_002dtile-1">Function<!-- /@w -->: <strong>ra-tile</strong> <em>a k bounds ... &rArr; b</em></dt>
 <dd><p>Replicate array <var>a</var> by inserting axes of <var>bounds</var> ... before axis <var>k</var>. If <var>t</var> is the shape of <var>a</var>, the shape of the result will be
 </p>
 <div class="example">
@@ -1953,7 +1976,7 @@ a
 
 <span id="index-ra_002dtranspose"></span>
 <span id="x_002dra_002dtranspose"></span><dl>
-<dt id="index-ra_002dtranspose-1">function<!-- /@w -->: <strong>ra-transpose</strong> <em>a axes ... &rArr; b</em></dt>
+<dt id="index-ra_002dtranspose-1">Function<!-- /@w -->: <strong>ra-transpose</strong> <em>a axes ... &rArr; b</em></dt>
 <dd><p>Transpose each axis 0, 1, ... of <var>a</var> to matching destination <var>axes</var>.
 </p>
 <div class="example">
@@ -1969,7 +1992,7 @@ a
 
 <span id="index-ra_002duntranspose"></span>
 <span id="x_002dra_002duntranspose"></span><dl>
-<dt id="index-ra_002duntranspose-1">function<!-- /@w -->: <strong>ra-untranspose</strong> <em>a axes ... &rArr; b</em></dt>
+<dt id="index-ra_002duntranspose-1">Function<!-- /@w -->: <strong>ra-untranspose</strong> <em>a axes ... &rArr; b</em></dt>
 <dd><p>Transpose <var>axes</var> of <var>a</var> to matching destination axes 0, 1, ...
 </p>
 <div class="example">
@@ -1992,7 +2015,7 @@ a
 
 <span id="index-ra_002dindex_002dmap_0021"></span>
 <span id="x_002dra_002dindex_002dmap_0021"></span><dl>
-<dt id="index-ra_002dindex_002dmap_0021-1">function<!-- /@w -->: <strong>ra-index-map!</strong> <em>a op &rArr; a</em></dt>
+<dt id="index-ra_002dindex_002dmap_0021-1">Function<!-- /@w -->: <strong>ra-index-map!</strong> <em>a op &rArr; a</em></dt>
 <dd><p>Iterate over array <var>a</var> in unspecified order, assigning to each element the result of <code>(op i₀ ...)</code>, where <code>i₀ ...</code> are the indices of that element.
 </p>
 <p>For example:
@@ -2007,7 +2030,7 @@ a
 
 <span id="index-ra_002dslice_002dfor_002deach"></span>
 <span id="x_002dra_002dslice_002dfor_002deach"></span><dl>
-<dt id="index-ra_002dslice_002dfor_002deach-1">function<!-- /@w -->: <strong>ra-slice-for-each</strong> <em>k op a ...</em></dt>
+<dt id="index-ra_002dslice_002dfor_002deach-1">Function<!-- /@w -->: <strong>ra-slice-for-each</strong> <em>k op a ...</em></dt>
 <dd><p>Iterate over the <var>k</var>-frames of arrays <var>a</var> ..., applying <var>op</var> to the respective slices. The arguments <var>a</var> ... must have matching dimensions over their <var>k</var>-frames.
 </p>
 <p>Note that it isn&rsquo;t necessary for arguments <var>a</var> to have rank ≥ <var>k</var>. Arguments with rank &lt; <var>k</var> are rank-extended and the corresponding arguments are 0-cells. For example:
@@ -2031,7 +2054,7 @@ a
 
 <span id="index-ra_002dmap_0021"></span>
 <span id="x_002dra_002dmap_0021"></span><dl>
-<dt id="index-ra_002dmap_0021-1">function<!-- /@w -->: <strong>ra-map!</strong> <em>dst op a ... &rArr; dst</em></dt>
+<dt id="index-ra_002dmap_0021-1">Function<!-- /@w -->: <strong>ra-map!</strong> <em>dst op a ... &rArr; dst</em></dt>
 <dd><p>Iterate over arrays <var>dst</var> <var>a</var> ... applying <var>op</var> to the respective elements in <var>a</var>, and storing the result in the respective element of <var>dst</var>. The arguments must have matching dimensions and the type of <var>dst</var> must be compatible with the results of <var>op</var>.
 </p>
 <p>This is equivalent to
@@ -2044,7 +2067,7 @@ a
 
 <span id="index-ra_002dcopy_0021"></span>
 <span id="x_002dra_002dcopy_0021"></span><dl>
-<dt id="index-ra_002dcopy_0021-1">function<!-- /@w -->: <strong>ra-copy!</strong> <em>dst src &rArr; dst</em></dt>
+<dt id="index-ra_002dcopy_0021-1">Function<!-- /@w -->: <strong>ra-copy!</strong> <em>dst src &rArr; dst</em></dt>
 <dd><p>Copy <var>src</var> to <var>dst</var>. The arguments must have matching dimensions and be of compatible types.
 </p>
 <p>For valid arguments, this is equivalent to any one of
@@ -2056,8 +2079,8 @@ a
 
 <span id="index-ra_002dcopy"></span>
 <span id="x_002dra_002dcopy"></span><dl>
-<dt id="index-ra_002dcopy-1">function<!-- /@w -->: <strong>ra-copy</strong> <em>src &rArr; dst</em></dt>
-<dt id="index-ra_002dcopy-2">function<!-- /@w -->: <strong>ra-copy</strong> <em>type src &rArr; dst</em></dt>
+<dt id="index-ra_002dcopy-1">Function<!-- /@w -->: <strong>ra-copy</strong> <em>src &rArr; dst</em></dt>
+<dt id="index-ra_002dcopy-2">Function<!-- /@w -->: <strong>ra-copy</strong> <em>type src &rArr; dst</em></dt>
 <dd><p>Create a new array of type <var>type</var> and copy <var>src</var> into it. If <var>type</var> isn&rsquo;t given, use the type of <var>src</var>, unless that type is <code>d</code>, in which case the result is of type <code>#t</code>.
 </p>
 <p>See also <a href="#x_002dra_002dcopy_0021"><code>ra-copy!</code></a> <a href="#x_002dra_002damend_0021"><code>ra-amend!</code></a> <a href="#x_002dra_002dset_0021"><code>ra-set!</code></a>.
@@ -2065,19 +2088,19 @@ a
 
 <span id="index-ra_002dswap_0021"></span>
 <span id="x_002dra_002dswap_0021"></span><dl>
-<dt id="index-ra_002dswap_0021-1">function<!-- /@w -->: <strong>ra-swap!</strong> <em>a b</em></dt>
+<dt id="index-ra_002dswap_0021-1">Function<!-- /@w -->: <strong>ra-swap!</strong> <em>a b</em></dt>
 <dd><p>Swap the contents of <var>a</var> and <var>b</var>. The swap is executed in unspecified order, so the effect on <var>a</var> and <var>b</var> is undefined if <var>a</var> and <var>b</var> share storage.
 </p></dd></dl>
 
 <span id="index-ra_002dswap_002din_002dorder_0021"></span>
 <span id="x_002dra_002dswap_002din_002dorder_0021"></span><dl>
-<dt id="index-ra_002dswap_002din_002dorder_0021-1">function<!-- /@w -->: <strong>ra-swap-in-order!</strong> <em>a b</em></dt>
+<dt id="index-ra_002dswap_002din_002dorder_0021-1">Function<!-- /@w -->: <strong>ra-swap-in-order!</strong> <em>a b</em></dt>
 <dd><p>Swap the contents of <var>a</var> and <var>b</var>. The swap is executed in row major order.
 </p></dd></dl>
 
 <span id="index-ra_002dfill_0021"></span>
 <span id="x_002dra_002dfill_0021"></span><dl>
-<dt id="index-ra_002dfill_0021-1">function<!-- /@w -->: <strong>ra-fill!</strong> <em>dst value &rArr; dst</em></dt>
+<dt id="index-ra_002dfill_0021-1">Function<!-- /@w -->: <strong>ra-fill!</strong> <em>dst value &rArr; dst</em></dt>
 <dd><p>Assign <var>value</var> to each element of <var>dst</var>. The arguments must be of compatible types.
 </p>
 <p>This is equivalent to any one of
@@ -2108,7 +2131,7 @@ a
 <span id="index-packed-array-2"></span>
 <span id="index-ra_002dorder_002dc_003f"></span>
 <span id="x_002dra_002dorder_002dc_003f"></span><dl>
-<dt id="index-ra_002dorder_002dc_003f-1">function<!-- /@w -->: <strong>ra-order-c?</strong> <em>a [n [org]]</em></dt>
+<dt id="index-ra_002dorder_002dc_003f-1">Function<!-- /@w -->: <strong>ra-order-c?</strong> <em>a [n [org]]</em></dt>
 <dd><p>Check whether axes [<var>org</var> ... <var>org</var>+<var>n</var>] of <var>ra</var> are in C-order. By default, check that the whole array is in C-order, and additionally that the step on the last axis is 1 (i.e. the array is ‘packed’).
 </p>
 <p><code>(ra-order-c? a n org)</code> implies <code>(eq? (ra-root a) (ra-root (<a href="#x_002dra_002dravel"><code>ra-ravel</code></a> a n org)))</code>. Note that the stronger condition <code>(ra-order-c? a)</code> is not necessary for <code>(eq? (ra-root a) (ra-root (ra-ravel a)))</code> to hold.
@@ -2117,7 +2140,7 @@ a
 
 <span id="index-ra_002dref"></span>
 <span id="x_002dra_002dref"></span><dl>
-<dt id="index-ra_002dref-1">function<!-- /@w -->: <strong>ra-ref</strong> <em>a i ...</em></dt>
+<dt id="index-ra_002dref-1">Function<!-- /@w -->: <strong>ra-ref</strong> <em>a i ...</em></dt>
 <dd>
 <p>Look up array element. It is an error if the number of <var>i ...</var> doesn&rsquo;t match the rank of <var>a</var>.
 </p>
@@ -2127,7 +2150,7 @@ a
 
 <span id="index-ra_002dset_0021"></span>
 <span id="x_002dra_002dset_0021"></span><dl>
-<dt id="index-ra_002dset_0021-1">function<!-- /@w -->: <strong>ra-set!</strong> <em>a o i ...</em></dt>
+<dt id="index-ra_002dset_0021-1">Function<!-- /@w -->: <strong>ra-set!</strong> <em>a o i ...</em></dt>
 <dd>
 <p>Assign array element. It is an error if the number of <var>i ...</var> doesn&rsquo;t match the rank of <var>a</var>.
 </p>
@@ -2137,7 +2160,7 @@ a
 
 <span id="index-ra_002dslice"></span>
 <span id="x_002dra_002dslice"></span><dl>
-<dt id="index-ra_002dslice-1">function<!-- /@w -->: <strong>ra-slice</strong> <em>a i ...</em></dt>
+<dt id="index-ra_002dslice-1">Function<!-- /@w -->: <strong>ra-slice</strong> <em>a i ...</em></dt>
 <dd>
 <p>Look up array cell. This function returns a view of <var>a</var> with rank <var>a</var>-card(<var>i ...</var>), even if that is 0.
 </p>
@@ -2148,7 +2171,7 @@ a
 
 <span id="index-ra_002dcell"></span>
 <span id="x_002dra_002dcell"></span><dl>
-<dt id="index-ra_002dcell-1">function<!-- /@w -->: <strong>ra-cell</strong> <em>a i ...</em></dt>
+<dt id="index-ra_002dcell-1">Function<!-- /@w -->: <strong>ra-cell</strong> <em>a i ...</em></dt>
 <dd>
 <p>Look up array cell. If <var>k</var>=<var>a</var>-card(<var>i ...</var>) is zero, return the array element at <var>i ...</var>, like <a href="#x_002dra_002dref"><code>ra-ref</code></a>; else return a <var>k</var>-view of <var>a</var>, like <a href="#x_002dra_002dslice"><code>ra-slice</code></a>.
 </p>
@@ -2173,7 +2196,7 @@ a
 
 <span id="index-ra_002dfrom"></span>
 <span id="x_002dra_002dfrom"></span><dl>
-<dt id="index-ra_002dfrom-1">function<!-- /@w -->: <strong>ra-from</strong> <em>a i ... → b</em></dt>
+<dt id="index-ra_002dfrom-1">Function<!-- /@w -->: <strong>ra-from</strong> <em>a i ... → b</em></dt>
 <dd>
 <p>Outer product slice of <var>a</var> by indices <var>i</var> ...
 </p>
@@ -2206,7 +2229,7 @@ that is
 
 <span id="index-ra_002damend_0021"></span>
 <span id="x_002dra_002damend_0021"></span><dl>
-<dt id="index-ra_002damend_0021-1">function<!-- /@w -->: <strong>ra-amend!</strong> <em>a c i ... → a</em></dt>
+<dt id="index-ra_002damend_0021-1">Function<!-- /@w -->: <strong>ra-amend!</strong> <em>a c i ... → a</em></dt>
 <dd>
 <p>Copy <var>c</var> to the outer product slice of <var>a</var> by indices <var>i</var> ...
 </p>
@@ -2250,7 +2273,7 @@ indices that match those elements. <code>newra</code> will <em>not</em> check th
 
 <span id="index-ra_002d_003earray"></span>
 <span id="x_002dra_002d_003earray"></span><dl>
-<dt id="index-ra_002d_003earray-1">function<!-- /@w -->: <strong>ra-&gt;array</strong> <em>a</em></dt>
+<dt id="index-ra_002d_003earray-1">Function<!-- /@w -->: <strong>ra-&gt;array</strong> <em>a</em></dt>
 <dd>
 <p>Convert (<code>newra</code>) array <var>a</var> into built-in Guile array.
 </p>
@@ -2271,7 +2294,7 @@ indices that match those elements. <code>newra</code> will <em>not</em> check th
 
 <span id="index-ra_002dsingletonize"></span>
 <span id="x_002dra_002dsingletonize"></span><dl>
-<dt id="index-ra_002dsingletonize-1">function<!-- /@w -->: <strong>ra-singletonize</strong> <em>a</em></dt>
+<dt id="index-ra_002dsingletonize-1">Function<!-- /@w -->: <strong>ra-singletonize</strong> <em>a</em></dt>
 <dd>
 <p>Return an ra with the same root and dimensions as <var>a</var>, except that dead axes (axes with step 0 and undefined length) have their length set to 1.
 </p>
@@ -2343,19 +2366,21 @@ Previous: <a href="#Sources" accesskey="p" rel="prev">Sources</a>, Up: <a href="
 </div>
 <span id="Indices-1"></span><h2 class="unnumbered">Indices</h2>
 
-<table><tr><th valign="top">Jump to: &nbsp; </th><td><a class="summary-letter" href="#Indices_cp_symbol-1"><b>,</b></a>
+<table><tr><th valign="top">Jump to: &nbsp; </th><td><a class="summary-letter" href="#Indices_cp_symbol-1"><b>*</b></a>
  &nbsp; 
-<a class="summary-letter" href="#Indices_cp_symbol-2"><b>{</b></a>
+<a class="summary-letter" href="#Indices_cp_symbol-2"><b>,</b></a>
  &nbsp; 
-<a class="summary-letter" href="#Indices_cp_symbol-3"><b>⊖</b></a>
+<a class="summary-letter" href="#Indices_cp_symbol-3"><b>{</b></a>
  &nbsp; 
-<a class="summary-letter" href="#Indices_cp_symbol-4"><b>⌽</b></a>
+<a class="summary-letter" href="#Indices_cp_symbol-4"><b>⊖</b></a>
  &nbsp; 
-<a class="summary-letter" href="#Indices_cp_symbol-5"><b>⍉</b></a>
+<a class="summary-letter" href="#Indices_cp_symbol-5"><b>⌽</b></a>
  &nbsp; 
-<a class="summary-letter" href="#Indices_cp_symbol-6"><b>⍋</b></a>
+<a class="summary-letter" href="#Indices_cp_symbol-6"><b>⍉</b></a>
  &nbsp; 
-<a class="summary-letter" href="#Indices_cp_symbol-7"><b>⍴</b></a>
+<a class="summary-letter" href="#Indices_cp_symbol-7"><b>⍋</b></a>
+ &nbsp; 
+<a class="summary-letter" href="#Indices_cp_symbol-8"><b>⍴</b></a>
  &nbsp; 
 <br>
 <a class="summary-letter" href="#Indices_cp_letter-A"><b>A</b></a>
@@ -2392,26 +2417,29 @@ Previous: <a href="#Sources" accesskey="p" rel="prev">Sources</a>, Up: <a href="
 <table class="index-cp" border="0">
 <tr><td></td><th align="left">Index Entry</th><td>&nbsp;</td><th align="left"> Section</th></tr>
 <tr><td colspan="4"> <hr></td></tr>
-<tr><th id="Indices_cp_symbol-1">,</th><td></td><td></td></tr>
+<tr><th id="Indices_cp_symbol-1">*</th><td></td><td></td></tr>
+<tr><td></td><td valign="top"><a href="#index-_002ara_002dprint_002a"><code>*ra-print*</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Writing-and-reading">Writing and reading</a></td></tr>
+<tr><td colspan="4"> <hr></td></tr>
+<tr><th id="Indices_cp_symbol-2">,</th><td></td><td></td></tr>
 <tr><td></td><td valign="top"><a href="#index-_002c_002c-ravel"><code>,</code>, ravel</a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reshaping">Reshaping</a></td></tr>
 <tr><td colspan="4"> <hr></td></tr>
-<tr><th id="Indices_cp_symbol-2">{</th><td></td><td></td></tr>
+<tr><th id="Indices_cp_symbol-3">{</th><td></td><td></td></tr>
 <tr><td></td><td valign="top"><a href="#index-_007b_002c-from"><code>{</code>, from</a>:</td><td>&nbsp;</td><td valign="top"><a href="#Slicing">Slicing</a></td></tr>
 <tr><td colspan="4"> <hr></td></tr>
-<tr><th id="Indices_cp_symbol-3">⊖</th><td></td><td></td></tr>
+<tr><th id="Indices_cp_symbol-4">⊖</th><td></td><td></td></tr>
 <tr><td></td><td valign="top"><a href="#index-_005b_003f_005d_002c-rowel"><code>⊖</code>, rowel</a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
 <tr><td colspan="4"> <hr></td></tr>
-<tr><th id="Indices_cp_symbol-4">⌽</th><td></td><td></td></tr>
+<tr><th id="Indices_cp_symbol-5">⌽</th><td></td><td></td></tr>
 <tr><td></td><td valign="top"><a href="#index-_005b_003f_005d_002c-reverse"><code>⌽</code>, reverse</a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-_005b_003f_005d_002c-rotate"><code>⌽</code>, rotate</a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
 <tr><td colspan="4"> <hr></td></tr>
-<tr><th id="Indices_cp_symbol-5">⍉</th><td></td><td></td></tr>
+<tr><th id="Indices_cp_symbol-6">⍉</th><td></td><td></td></tr>
 <tr><td></td><td valign="top"><a href="#index-_005b_003f_005d_002c-transpose"><code>⍉</code>, transpose</a>:</td><td>&nbsp;</td><td valign="top"><a href="#Transposition">Transposition</a></td></tr>
 <tr><td colspan="4"> <hr></td></tr>
-<tr><th id="Indices_cp_symbol-6">⍋</th><td></td><td></td></tr>
+<tr><th id="Indices_cp_symbol-7">⍋</th><td></td><td></td></tr>
 <tr><td></td><td valign="top"><a href="#index-_005b_003f_005d">⍋</a>:</td><td>&nbsp;</td><td valign="top"><a href="#Transposition">Transposition</a></td></tr>
 <tr><td colspan="4"> <hr></td></tr>
-<tr><th id="Indices_cp_symbol-7">⍴</th><td></td><td></td></tr>
+<tr><th id="Indices_cp_symbol-8">⍴</th><td></td><td></td></tr>
 <tr><td></td><td valign="top"><a href="#index-_005b_003f_005d_002c-reshape"><code>⍴</code>, reshape</a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reshaping">Reshaping</a></td></tr>
 <tr><td colspan="4"> <hr></td></tr>
 <tr><th id="Indices_cp_letter-A">A</th><td></td><td></td></tr>
@@ -2531,19 +2559,21 @@ Previous: <a href="#Sources" accesskey="p" rel="prev">Sources</a>, Up: <a href="
 <tr><td></td><td valign="top"><a href="#index-transpose">transpose</a>:</td><td>&nbsp;</td><td valign="top"><a href="#Transposition">Transposition</a></td></tr>
 <tr><td colspan="4"> <hr></td></tr>
 </table>
-<table><tr><th valign="top">Jump to: &nbsp; </th><td><a class="summary-letter" href="#Indices_cp_symbol-1"><b>,</b></a>
+<table><tr><th valign="top">Jump to: &nbsp; </th><td><a class="summary-letter" href="#Indices_cp_symbol-1"><b>*</b></a>
  &nbsp; 
-<a class="summary-letter" href="#Indices_cp_symbol-2"><b>{</b></a>
+<a class="summary-letter" href="#Indices_cp_symbol-2"><b>,</b></a>
  &nbsp; 
-<a class="summary-letter" href="#Indices_cp_symbol-3"><b>⊖</b></a>
+<a class="summary-letter" href="#Indices_cp_symbol-3"><b>{</b></a>
  &nbsp; 
-<a class="summary-letter" href="#Indices_cp_symbol-4"><b>⌽</b></a>
+<a class="summary-letter" href="#Indices_cp_symbol-4"><b>⊖</b></a>
  &nbsp; 
-<a class="summary-letter" href="#Indices_cp_symbol-5"><b>⍉</b></a>
+<a class="summary-letter" href="#Indices_cp_symbol-5"><b>⌽</b></a>
  &nbsp; 
-<a class="summary-letter" href="#Indices_cp_symbol-6"><b>⍋</b></a>
+<a class="summary-letter" href="#Indices_cp_symbol-6"><b>⍉</b></a>
  &nbsp; 
-<a class="summary-letter" href="#Indices_cp_symbol-7"><b>⍴</b></a>
+<a class="summary-letter" href="#Indices_cp_symbol-7"><b>⍋</b></a>
+ &nbsp; 
+<a class="summary-letter" href="#Indices_cp_symbol-8"><b>⍴</b></a>
  &nbsp; 
 <br>
 <a class="summary-letter" href="#Indices_cp_letter-A"><b>A</b></a>

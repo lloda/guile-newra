@@ -83,7 +83,7 @@ Help: [C-uc .] insert timestamp [C-cc] flip checkbox [C-uucc] partial flip check
   * [ ] reading of arrays with inf axes
   * [ ] reading of arrays with dead axes
 
-* TODO quality of life [2/10]
+* TODO quality of life [1/9]
   * [X] rank-1 (or higher!) cases in the unrolled section (e.g. bytevector-copy!, bytevector-fill!).
   * [ ] rank-1 (or higher!) cases for generating functions (e.g. array->list).
   * [ ] the reverse of ra-singletonize, find a good name (see 'differences with numpy' in the doc).
@@ -91,11 +91,11 @@ Help: [C-uc .] insert timestamp [C-cc] flip checkbox [C-uucc] partial flip check
   * [ ] refactor macros
   * [ ] bench tracking
   * [ ] move struct defs to (newra types)
-  * [ ] parameters to control print format (eg print sizes/strides, truncate...)
+  * [-] parameters to control print format (eg print sizes/strides, truncate...)
     - [ ] CL/SRFI-163 style rank-0 (e.g. '#0 x' instead of '#0(x)').
-    - [ ] print sizes in prefix
-    - [ ] pretty-print
-  * [X] pretty printer
+    - [X] print sizes in prefix
+    - [X] pretty-print
+  * [-] pretty printer
     - [X] basic ra-format
     - [ ] compact mode
     - [ ] auto truncation
