@@ -563,7 +563,12 @@ These are treated especially when used in iteration, in that they match axes of 
 
 @cindex dead axes
 @anchor{x-dead-axes}
-@code{newra} also supports `dead axes', which are simply axes whose step is 0. These axes can have any length although effectively only one position (the lower bound, by default 0) is ever accessed. Some functions work purely by creating dead axes.
+@code{newra} also supports `dead axes', which are axes with step 0 and undefined length. These axes can match axes of any length and can exist on arrays of any type, not only on arrays of type @code{d}, because effectively only one position (the lower bound) is ever accessed.
+
+@cindex singleton axis
+Dead axes operate essentially as ‘singleton axes’ do in other array languages. The main diference is that the ability to match any finite length is explicit; an axis with length 1 will still fail to match an axis with length 2 (say).
+
+Some functions work by creating axes with step 0, usually with defined lengths.
 
 @example
 @verbatim
@@ -576,9 +581,6 @@ These are treated especially when used in iteration, in that they match axes of 
 @end verbatim
 @result{} #(#<<dim> len: 2 lo: 0 step: 0> #<<dim> len: 2 lo: 0 step: 0> #<<dim> len: 3 lo: 0 step: 1>)
 @end example
-
-@cindex singleton axis
-When an axis has 0 step and infinite length, it operates essentially as ‘singleton axes’ operate in other array languages. The main diference is that the ability to match any finite length is explicit; an axis with length 1 will still fail to match an axis with length 2 (say).
 
 @c ------------------------------------------------
 @node Writing and reading
@@ -601,7 +603,7 @@ The read syntax for arrays is @url{https://www.gnu.org/software/guile/manual/htm
 @result{} @code{#%1:3(2 2 2)}
 @end example
 
-Dead axes print as @code{d}. This cannot be read back.
+Dead axes print as @code{d}, and infinite (not dead) axes print as @code{f}. These cannot be read back.
 
 @example
 @verbatim
@@ -610,7 +612,7 @@ Dead axes print as @code{d}. This cannot be read back.
 @result{} @code{#%2:d:3((0 1 2))}
 @end example
 
-Likewise, arrays with root of type @code{d} cannot be read back either.
+Arrays with root of type @code{d} cannot be read back either.
 
 @example
 @verbatim
@@ -795,7 +797,7 @@ Both @code{ra-cell} and @code{ra-slice} (and @code{ra-ref}) take scalar indices 
 @end verbatim
 @end quotation
 
-Each of the @code{i₀...} is either 1. an integer; 2. an array of integers; 3. the special value #t. Integer arguments contain indices into the respective axis of @code{a}. @code{#t} for @code{iₖ} is a shortcut for @code{(let ((d (vector-ref (ra-dims a) k))) (ra-iota (dim-len d) (dim-lo d)))}, or in human speech ‘the whole of axis @code{k}’. The result @code{b} has rank equal to the sum of all the ranks of the @code{i₀...}, and is defined as
+Each of the @code{i₀...} is either 1. an integer; 2. an array of integers; 3. the special value @code{#t}. Integer arguments contain indices into the respective axis of @code{a}. @code{#t} for @code{iₖ} is a shortcut for ‘the whole of axis @code{k}’@footnote{Note that this is not the same as @code{(let ((d (vector-ref (ra-dims a) k))) (ra-iota (dim-len d) (dim-lo d)))}, because the lower bound of @code{(ra-iota ...)} (@emph{not} its content) is 0, not @code{(dim-lo d)}, so the corresponding lower bound on the result array would also be 0, while @code{#t} preserves the lower bound of @code{a}.}. The result @code{b} has rank equal to the sum of all the ranks of the @code{i₀...}, and is defined as
 
 @quotation
 @verbatim
@@ -830,7 +832,7 @@ If all of the @code{i...} are integers or arrays of type @code{d} (such as those
 @result{} @code{#%2:2:2((c a) (f d))}
 @end example
 
-One may give fewer @code{i} than the rank of @code{a}. The missing arguments are taken as @code{#t} (see @ref{Rank extension}).
+One may give fewer @code{i} than the rank of @code{a}. The missing arguments are taken as @code{#t} (see @ref{Rank polymorphism}).
 
 @example
 @verbatim
@@ -911,7 +913,7 @@ a
 @cindex @code{⍴}, reshape
 To match APL ρ, @code{newra} offers three separate functions.
 
-@ref{x-ra-reshape, @code{ra-reshape}} and @ref{x-ra-ravel, @code{ra-ravel}} are in a way the inverse of each other, and neither is able to increase the size of the array. For that purpose @ref{x-ra-tile, @code{ra-tile}} is provided.
+@ref{x-ra-reshape, @code{ra-reshape}} and @ref{x-ra-ravel, @code{ra-ravel}} are in a way the inverse of each other. @code{ra-reshape} makes an axis into (potentially) many, while @code{ra-ravel} collapses a block of axes into a single axis. Neither is able to increase the size of the array (although @code{ra-reshape} can @emph{reduce} it). For that purpose @ref{x-ra-tile, @code{ra-tile}} is provided.
 
 @example
 @verbatim
@@ -919,20 +921,23 @@ To match APL ρ, @code{newra} offers three separate functions.
 @end verbatim
 @result{} (2 3 4)
 @verbatim
+; insert new axis of size 5 before axis 0
 (ra-dimensions (ra-tile (ra-i 2 3 4) 0 5))
 @end verbatim
 @result{} (5 2 3 4)
 @verbatim
+; collapse axes 0 and 1
 (ra-dimensions (ra-ravel (ra-tile (ra-i 2 3 4) 0 5) 2))
 @end verbatim
 @result{} (10 3 4)
 @verbatim
+; reshape axis 0 into two axes with shape [3 3]
 (ra-dimensions (ra-reshape (ra-ravel (ra-tile (ra-i 2 3 4) 0 5) 2) 0 3 3))
 @end verbatim
 @result{} (3 3 3 4)
 @end example
 
-@code{ra-reshape} and @code{ra-tile} always reuse the root of the argument. On the other hand @code{ra-ravel} may not be able to — this is one of the reasons to have three different functions instead of only one. You can check in advance whether @code{ra-ravel} will reuse the root with the function @ref{x-ra-order-c?, @code{ra-order-c?}}.
+@code{ra-reshape} and @code{ra-tile} always reuse the root of the argument. On the other hand @code{ra-ravel} may not be able to, depending on the storage order of the array — this is one of the reasons to have three different functions instead of only one. You can check in advance whether @code{ra-ravel} will reuse the root with the function @ref{x-ra-order-c?, @code{ra-order-c?}}.
 
 @c ------------------------------------------------
 @node Concatenation
@@ -1037,7 +1042,7 @@ In particular, it is not enough for the lengths to be the same; both bounds must
 @result{} error ; axes 0 don't match
 @end example
 
-Here @ref{x-ra-reshape,@code{ra-reshape}} is used to move axis 0 of the second argument into agreement.@footnote{An example of how using base indices other than 0 is generally worthless trouble, not least for the library author.}
+Here @ref{x-ra-reshape,@code{ra-reshape}} is used to move axis 0 of the second argument into agreement.@footnote{An example of how using lower bounds other than 0 is generally worthless trouble, not least for the library author.}
 
 @example
 @verbatim
@@ -1379,7 +1384,7 @@ Differences with built-in Guile arrays:
 @cindex APL
 Differences with APL:
 @itemize
-@item The default base index in @code{newra} is 0, as in @code{⎕io←0}. The base index isn't global, but it may be different per axis.
+@item The default lower bound (base index) in @code{newra} is 0, as in @code{⎕io←0}. The lower bound isn't global, but it may be different per axis.
 @item @code{newra} arrays of size 1 are not equivalent to scalars and always retain their rank. For example, @code{(make-ra 99)}, @code{(make-ra 99 1)} and @code{(make-ra 99 1 1)} are all different from each other and from the scalar @code{99}, while in APL @code{99}, @code{(1 ⍴ 99)}, and @code{(1 1 ⍴ 99)} are all the same thing.
 @item When a function takes multiple arguments, the meaning with multiple arguments is an extension of the meaning with a single argument. This contrasts with APL where the monadic and dyadic versions of a verb usually have a related but independent definition. For example @code{(ra-transpose a)}≡@code{(ra-transpose a 0)}≡@code{(ra-transpose a 0 1)}, but (assuming @code{a} is of rank 2) @code{⍉a}≡@code{2 1⍉a}. Please check the documentation for each function.
 @end itemize
@@ -1387,7 +1392,7 @@ Differences with APL:
 @cindex Fortran
 Differences with Fortran:
 @itemize
-@item The default base index in @code{newra} is 0, not 1. Like in Fortran, the base index may be different for each axis of each array.
+@item The default lower bound (base index) in @code{newra} is 0, not 1. Like in Fortran, the lower bound may be different for each axis of each array.
 @item Unlike Fortran, the default element order in arrays is row-major, or ‘last index changes fastest’. It's possible to define and manipulate arrays in any other order, including Fortran's default. However, some functions (such as @code{ra-ravel}) only support row-major order.
 @item @code{newra} uses prefix matching for rank extension on arguments on any rank, while Fortran only performs rank extension on scalar arguments.
 @end itemize
@@ -1404,7 +1409,7 @@ Differences with NumPy:
 @cindex Matlab
 Differences with Octave:
 @itemize
-@item The default base index in @code{newra} is 0, not 1. It's possible to have base indices be 1 on particular arrays (or particular axes of an array), but not globally.
+@item The default lower bound (base index) in @code{newra} is 0, not 1. Lower bounds may be 1 on a particular array (or particular axes of an array), but not globally.
 @item In Octave, any array of rank ≤ 2 is implicity a matrix (an array of rank 2). This isn't true in @code{newra}, so, for example, an array of rank 1 isn't equivalent to an array of rank 2 with a single row (a ‘row vector’).
 @item Unlike Octave, the default element order in arrays is row-major, or ‘last index changes fastest’. It's possible to define and manipulate arrays in any other order, including Octave's default. However, some functions (such as @code{ra-ravel}) only support row-major order.
 @item @code{newra} uses prefix matching for rank extension on arguments on any rank, while Octave only performs rank extension on scalar arguments.
@@ -1802,7 +1807,7 @@ Create rank-1 index array. The root is of type @code{<aseq>}.
 
 Concatenate arrays @var{a} ... along axis @var{i}. The arguments are prefix-matched and rank extended before concatenation. All axes must match, except possibly the concatenation axis.
 
-This function always produces a new array, of the type given. If @var{type} is @code{#f} then the type of the first @var{a} is used. The base indices of the result are all zero; the arguments are concatenated in the given order and their base indices in the concatenation axis are ignored.
+This function always produces a new array, of the type given. If @var{type} is @code{#f} then the type of the first @var{a} is used. The lower bound in the concatenation axis of the result is 0; the lower bounds of the arguments in the concatenation axis are ignored.
 
 @example
 @verbatim
@@ -1958,8 +1963,7 @@ Each of the bounds may be an integer (a length) or a pair of integers (lower and
 @end verbatim
 @end example
 
-@cindex tally
-@code{ra-reshape} always returns a view of @var{a}. It is an error if such a view cannot be produced for the given arguments. In practice this means that the product of the lengths in @var{bounds} must not exceed the length of the first axis (the `tally') of @var{a}. For example
+@code{ra-reshape} always returns a view of @var{a}. It is an error if such a view cannot be produced for the given arguments. In practice this means that the product of the lengths in @var{bounds} must not exceed the length of axis @var{k} of @var{a}. For example
 
 @example
 @verbatim
@@ -2073,7 +2077,7 @@ See also: @ref{x-ra-rotate,@code{ra-rotate}}, @ref{x-ra-reverse,@code{ra-reverse
 
 Concatenate @var{i}-items of arrays @var{a} ... . The arguments are suffix-matched and rank extended before concatenation. All axes must match, except possibly the concatenation axis.
 
-This function always produces a new array, of the type given. If @var{type} is @code{#f} then the type of the first @var{a} is used. The base indices of the result are all zero; the arguments are concatenated in the given order and their base indices in the concatenation axis are ignored.
+This function always produces a new array, of the type given. If @var{type} is @code{#f} then the type of the first @var{a} is used. The lower bound in the concatenation axes of the result is 0; the lower bounds of the arguments in the concatenation axis are ignored.
 
 See also: @ref{x-ra-pcat,@code{ra-pcat}}, @ref{x-ra-tile,@code{ra-tile}}, @ref{Concatenation}.
 

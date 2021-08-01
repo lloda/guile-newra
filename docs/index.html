@@ -594,7 +594,12 @@ Next: <a href="#Writing-and-reading" accesskey="n" rel="next">Writing and readin
 </pre></div>
 
 <span id="index-dead-axes"></span>
-<span id="x_002ddead_002daxes"></span><p><code>newra</code> also supports &lsquo;dead axes&rsquo;, which are simply axes whose step is 0. These axes can have any length although effectively only one position (the lower bound, by default 0) is ever accessed. Some functions work purely by creating dead axes.
+<span id="x_002ddead_002daxes"></span><p><code>newra</code> also supports &lsquo;dead axes&rsquo;, which are axes with step 0 and undefined length. These axes can match axes of any length and can exist on arrays of any type, not only on arrays of type <code>d</code>, because effectively only one position (the lower bound) is ever accessed.
+</p>
+<span id="index-singleton-axis"></span>
+<p>Dead axes operate essentially as ‘singleton axes’ do in other array languages. The main diference is that the ability to match any finite length is explicit; an axis with length 1 will still fail to match an axis with length 2 (say).
+</p>
+<p>Some functions work by creating axes with step 0, usually with defined lengths.
 </p>
 <div class="example">
 <pre class="verbatim">(define A (make-ra-root #(1 2 3) (c-dims 3)))
@@ -604,9 +609,6 @@ Next: <a href="#Writing-and-reading" accesskey="n" rel="next">Writing and readin
 </pre><pre class="example">&rArr; #(#&lt;&lt;dim&gt; len: 2 lo: 0 step: 0&gt; #&lt;&lt;dim&gt; len: 2 lo: 0 step: 0&gt; #&lt;&lt;dim&gt; len: 3 lo: 0 step: 1&gt;)
 </pre></div>
 
-<span id="index-singleton-axis"></span>
-<p>When an axis has 0 step and infinite length, it operates essentially as ‘singleton axes’ operate in other array languages. The main diference is that the ability to match any finite length is explicit; an axis with length 1 will still fail to match an axis with length 2 (say).
-</p>
 <hr>
 <span id="Writing-and-reading"></span><div class="header">
 <p>
@@ -626,14 +628,14 @@ Next: <a href="#Iteration" accesskey="n" rel="next">Iteration</a>, Previous: <a 
 </pre><pre class="example">&rArr; <code>#%1:3(2 2 2)</code>
 </pre></div>
 
-<p>Dead axes print as <code>d</code>. This cannot be read back.
+<p>Dead axes print as <code>d</code>, and infinite (not dead) axes print as <code>f</code>. These cannot be read back.
 </p>
 <div class="example">
 <pre class="verbatim">(display (ra-transpose (ra-copy (ra-iota 3)) 1))
 </pre><pre class="example">&rArr; <code>#%2:d:3((0 1 2))</code>
 </pre></div>
 
-<p>Likewise, arrays with root of type <code>d</code> cannot be read back either.
+<p>Arrays with root of type <code>d</code> cannot be read back either.
 </p>
 <div class="example">
 <pre class="verbatim">(define s (format #f &quot;~a&quot; (ra-i 2 3)))
@@ -780,7 +782,7 @@ Next: <a href="#Reshaping" accesskey="n" rel="next">Reshaping</a>, Previous: <a 
 <pre class="verbatim">(ra-from a i₀ ...) ⇒ b
 </pre></blockquote>
 
-<p>Each of the <code>i₀...</code> is either 1. an integer; 2. an array of integers; 3. the special value #t. Integer arguments contain indices into the respective axis of <code>a</code>. <code>#t</code> for <code>iₖ</code> is a shortcut for <code>(let ((d (vector-ref (ra-dims a) k))) (ra-iota (dim-len d) (dim-lo d)))</code>, or in human speech ‘the whole of axis <code>k</code>’. The result <code>b</code> has rank equal to the sum of all the ranks of the <code>i₀...</code>, and is defined as
+<p>Each of the <code>i₀...</code> is either 1. an integer; 2. an array of integers; 3. the special value <code>#t</code>. Integer arguments contain indices into the respective axis of <code>a</code>. <code>#t</code> for <code>iₖ</code> is a shortcut for ‘the whole of axis <code>k</code>’<a id="DOCF5" href="#FOOT5"><sup>5</sup></a>. The result <code>b</code> has rank equal to the sum of all the ranks of the <code>i₀...</code>, and is defined as
 </p>
 <blockquote>
 <pre class="verbatim">(ra-ref b j₀ ...) = (ra-ref a (ra-ref i₀ j₀ ...) ...)
@@ -803,7 +805,7 @@ Next: <a href="#Reshaping" accesskey="n" rel="next">Reshaping</a>, Previous: <a 
 </pre><pre class="example">&rArr; <code>#%2:2:2((c a) (f d))</code>
 </pre></div>
 
-<p>One may give fewer <code>i</code> than the rank of <code>a</code>. The missing arguments are taken as <code>#t</code> (see <a href="#Rank-extension">Rank extension</a>).
+<p>One may give fewer <code>i</code> than the rank of <code>a</code>. The missing arguments are taken as <code>#t</code> (see <a href="#Rank-polymorphism">Rank polymorphism</a>).
 </p>
 <div class="example">
 <pre class="verbatim">(ra-from a 0) ; row 0, same as (ra-from a 0 #t)
@@ -866,20 +868,23 @@ Next: <a href="#Concatenation" accesskey="n" rel="next">Concatenation</a>, Previ
 <span id="index-_005b_003f_005d_002c-reshape"></span>
 <p>To match APL ρ, <code>newra</code> offers three separate functions.
 </p>
-<p><a href="#x_002dra_002dreshape"><code>ra-reshape</code></a> and <a href="#x_002dra_002dravel"><code>ra-ravel</code></a> are in a way the inverse of each other, and neither is able to increase the size of the array. For that purpose <a href="#x_002dra_002dtile"><code>ra-tile</code></a> is provided.
+<p><a href="#x_002dra_002dreshape"><code>ra-reshape</code></a> and <a href="#x_002dra_002dravel"><code>ra-ravel</code></a> are in a way the inverse of each other. <code>ra-reshape</code> makes an axis into (potentially) many, while <code>ra-ravel</code> collapses a block of axes into a single axis. Neither is able to increase the size of the array (although <code>ra-reshape</code> can <em>reduce</em> it). For that purpose <a href="#x_002dra_002dtile"><code>ra-tile</code></a> is provided.
 </p>
 <div class="example">
 <pre class="verbatim">(ra-dimensions (ra-i 2 3 4))
 </pre><pre class="example">&rArr; (2 3 4)
-</pre><pre class="verbatim">(ra-dimensions (ra-tile (ra-i 2 3 4) 0 5))
+</pre><pre class="verbatim">; insert new axis of size 5 before axis 0
+(ra-dimensions (ra-tile (ra-i 2 3 4) 0 5))
 </pre><pre class="example">&rArr; (5 2 3 4)
-</pre><pre class="verbatim">(ra-dimensions (ra-ravel (ra-tile (ra-i 2 3 4) 0 5) 2))
+</pre><pre class="verbatim">; collapse axes 0 and 1
+(ra-dimensions (ra-ravel (ra-tile (ra-i 2 3 4) 0 5) 2))
 </pre><pre class="example">&rArr; (10 3 4)
-</pre><pre class="verbatim">(ra-dimensions (ra-reshape (ra-ravel (ra-tile (ra-i 2 3 4) 0 5) 2) 0 3 3))
+</pre><pre class="verbatim">; reshape axis 0 into two axes with shape [3 3]
+(ra-dimensions (ra-reshape (ra-ravel (ra-tile (ra-i 2 3 4) 0 5) 2) 0 3 3))
 </pre><pre class="example">&rArr; (3 3 3 4)
 </pre></div>
 
-<p><code>ra-reshape</code> and <code>ra-tile</code> always reuse the root of the argument. On the other hand <code>ra-ravel</code> may not be able to — this is one of the reasons to have three different functions instead of only one. You can check in advance whether <code>ra-ravel</code> will reuse the root with the function <a href="#x_002dra_002dorder_002dc_003f"><code>ra-order-c?</code></a>.
+<p><code>ra-reshape</code> and <code>ra-tile</code> always reuse the root of the argument. On the other hand <code>ra-ravel</code> may not be able to, depending on the storage order of the array — this is one of the reasons to have three different functions instead of only one. You can check in advance whether <code>ra-ravel</code> will reuse the root with the function <a href="#x_002dra_002dorder_002dc_003f"><code>ra-order-c?</code></a>.
 </p>
 <hr>
 <span id="Concatenation"></span><div class="header">
@@ -966,7 +971,7 @@ Next: <a href="#Transposition" accesskey="n" rel="next">Transposition</a>, Previ
 </pre><pre class="example">&rArr; error ; axes 0 don't match
 </pre></div>
 
-<p>Here <a href="#x_002dra_002dreshape"><code>ra-reshape</code></a> is used to move axis 0 of the second argument into agreement.<a id="DOCF5" href="#FOOT5"><sup>5</sup></a>
+<p>Here <a href="#x_002dra_002dreshape"><code>ra-reshape</code></a> is used to move axis 0 of the second argument into agreement.<a id="DOCF6" href="#FOOT6"><sup>6</sup></a>
 </p>
 <div class="example">
 <pre class="verbatim">(ra-pcat #t 1 (make-ra 'a '(1 1) '(1 4))
@@ -1178,7 +1183,7 @@ a
 </pre><pre class="example">&rArr; <code>#%4d:1:2:1:3((((0 1 2)) ((3 4 5))))</code>
 </pre></div>
 
-<p>One important difference between the built-in array functions and <code>newra</code> is that bounds matching in <code>newra</code> is strict: finite bounds must be identical for axes to match, while for <code>array-map!</code>, <code>array-for-each</code>, <code>array-copy!</code>, etc. the iteration range is the intersection of the ranges of the arguments<a id="DOCF6" href="#FOOT6"><sup>6</sup></a>. <code>newra</code> provides <a href="#x_002dra_002dclip"><code>ra-clip</code></a> to match ranges easily.
+<p>One important difference between the built-in array functions and <code>newra</code> is that bounds matching in <code>newra</code> is strict: finite bounds must be identical for axes to match, while for <code>array-map!</code>, <code>array-for-each</code>, <code>array-copy!</code>, etc. the iteration range is the intersection of the ranges of the arguments<a id="DOCF7" href="#FOOT7"><sup>7</sup></a>. <code>newra</code> provides <a href="#x_002dra_002dclip"><code>ra-clip</code></a> to match ranges easily.
 </p>
 <div class="example">
 <pre class="verbatim">(define a (make-ra-root (vector 'a 'b 'c 'd 'e 'f 'g))) ; range is 0..6
@@ -1261,7 +1266,7 @@ Next: <a href="#Common-mistakes" accesskey="n" rel="next">Common mistakes</a>, U
 <span id="index-APL-1"></span>
 <p>Differences with APL:
 </p><ul>
-<li> The default base index in <code>newra</code> is 0, as in <code>⎕io←0</code>. The base index isn&rsquo;t global, but it may be different per axis.
+<li> The default lower bound (base index) in <code>newra</code> is 0, as in <code>⎕io←0</code>. The lower bound isn&rsquo;t global, but it may be different per axis.
 </li><li> <code>newra</code> arrays of size 1 are not equivalent to scalars and always retain their rank. For example, <code>(make-ra 99)</code>, <code>(make-ra 99 1)</code> and <code>(make-ra 99 1 1)</code> are all different from each other and from the scalar <code>99</code>, while in APL <code>99</code>, <code>(1 ⍴ 99)</code>, and <code>(1 1 ⍴ 99)</code> are all the same thing.
 </li><li> When a function takes multiple arguments, the meaning with multiple arguments is an extension of the meaning with a single argument. This contrasts with APL where the monadic and dyadic versions of a verb usually have a related but independent definition. For example <code>(ra-transpose a)</code>≡<code>(ra-transpose a 0)</code>≡<code>(ra-transpose a 0 1)</code>, but (assuming <code>a</code> is of rank 2) <code>⍉a</code>≡<code>2 1⍉a</code>. Please check the documentation for each function.
 </li></ul>
@@ -1269,7 +1274,7 @@ Next: <a href="#Common-mistakes" accesskey="n" rel="next">Common mistakes</a>, U
 <span id="index-Fortran"></span>
 <p>Differences with Fortran:
 </p><ul>
-<li> The default base index in <code>newra</code> is 0, not 1. Like in Fortran, the base index may be different for each axis of each array.
+<li> The default lower bound (base index) in <code>newra</code> is 0, not 1. Like in Fortran, the lower bound may be different for each axis of each array.
 </li><li> Unlike Fortran, the default element order in arrays is row-major, or ‘last index changes fastest’. It&rsquo;s possible to define and manipulate arrays in any other order, including Fortran&rsquo;s default. However, some functions (such as <code>ra-ravel</code>) only support row-major order.
 </li><li> <code>newra</code> uses prefix matching for rank extension on arguments on any rank, while Fortran only performs rank extension on scalar arguments.
 </li></ul>
@@ -1286,7 +1291,7 @@ Next: <a href="#Common-mistakes" accesskey="n" rel="next">Common mistakes</a>, U
 <span id="index-Matlab"></span>
 <p>Differences with Octave:
 </p><ul>
-<li> The default base index in <code>newra</code> is 0, not 1. It&rsquo;s possible to have base indices be 1 on particular arrays (or particular axes of an array), but not globally.
+<li> The default lower bound (base index) in <code>newra</code> is 0, not 1. Lower bounds may be 1 on a particular array (or particular axes of an array), but not globally.
 </li><li> In Octave, any array of rank ≤ 2 is implicity a matrix (an array of rank 2). This isn&rsquo;t true in <code>newra</code>, so, for example, an array of rank 1 isn&rsquo;t equivalent to an array of rank 2 with a single row (a ‘row vector’).
 </li><li> Unlike Octave, the default element order in arrays is row-major, or ‘last index changes fastest’. It&rsquo;s possible to define and manipulate arrays in any other order, including Octave&rsquo;s default. However, some functions (such as <code>ra-ravel</code>) only support row-major order.
 </li><li> <code>newra</code> uses prefix matching for rank extension on arguments on any rank, while Octave only performs rank extension on scalar arguments.
@@ -1631,7 +1636,7 @@ element
 <dd>
 <p>Concatenate arrays <var>a</var> ... along axis <var>i</var>. The arguments are prefix-matched and rank extended before concatenation. All axes must match, except possibly the concatenation axis.
 </p>
-<p>This function always produces a new array, of the type given. If <var>type</var> is <code>#f</code> then the type of the first <var>a</var> is used. The base indices of the result are all zero; the arguments are concatenated in the given order and their base indices in the concatenation axis are ignored.
+<p>This function always produces a new array, of the type given. If <var>type</var> is <code>#f</code> then the type of the first <var>a</var> is used. The lower bound in the concatenation axis of the result is 0; the lower bounds of the arguments in the concatenation axis are ignored.
 </p>
 <div class="example">
 <pre class="verbatim">(ra-pcat #f 1 #%1(a b) #%2((0 1) (2 3)))
@@ -1725,7 +1730,7 @@ element
 <p>To ravel other combinations of axes, use <a href="#Transposition">Transposition</a>.
 </p>
 <span id="index-packed-array-1"></span>
-<p>The full ravel of an array doesn&rsquo;t necessarily result in a rank-1 &lsquo;packed&rsquo; array, that is, one where the step is 1. If that is required, one can use <code>(ra-ravel (ra-copy ra))</code>, since <a href="#x_002dra_002dorder_002dc_003f"><code>ra-order-c?</code></a> is always true for the result of <code>ra-copy</code><a id="DOCF7" href="#FOOT7"><sup>7</sup></a> .
+<p>The full ravel of an array doesn&rsquo;t necessarily result in a rank-1 &lsquo;packed&rsquo; array, that is, one where the step is 1. If that is required, one can use <code>(ra-ravel (ra-copy ra))</code>, since <a href="#x_002dra_002dorder_002dc_003f"><code>ra-order-c?</code></a> is always true for the result of <code>ra-copy</code><a id="DOCF8" href="#FOOT8"><sup>8</sup></a> .
 </p>
 <p>See also: <a href="#x_002dra_002dreshape"><code>ra-reshape</code></a>, <a href="#x_002dra_002dtile"><code>ra-tile</code></a>, <a href="#Reshaping">Reshaping</a>.
 </p>
@@ -1759,8 +1764,7 @@ element
 ║─┴─┴─║─┴──┴──║
 </pre></div>
 
-<span id="index-tally"></span>
-<p><code>ra-reshape</code> always returns a view of <var>a</var>. It is an error if such a view cannot be produced for the given arguments. In practice this means that the product of the lengths in <var>bounds</var> must not exceed the length of the first axis (the &lsquo;tally&rsquo;) of <var>a</var>. For example
+<p><code>ra-reshape</code> always returns a view of <var>a</var>. It is an error if such a view cannot be produced for the given arguments. In practice this means that the product of the lengths in <var>bounds</var> must not exceed the length of axis <var>k</var> of <var>a</var>. For example
 </p>
 <div class="example">
 <pre class="verbatim">(ra-reshape (ra-i 8 2) 0 2 3)
@@ -1856,7 +1860,7 @@ a
 <dd>
 <p>Concatenate <var>i</var>-items of arrays <var>a</var> ... . The arguments are suffix-matched and rank extended before concatenation. All axes must match, except possibly the concatenation axis.
 </p>
-<p>This function always produces a new array, of the type given. If <var>type</var> is <code>#f</code> then the type of the first <var>a</var> is used. The base indices of the result are all zero; the arguments are concatenated in the given order and their base indices in the concatenation axis are ignored.
+<p>This function always produces a new array, of the type given. If <var>type</var> is <code>#f</code> then the type of the first <var>a</var> is used. The lower bound in the concatenation axes of the result is 0; the lower bounds of the arguments in the concatenation axis are ignored.
 </p>
 <p>See also: <a href="#x_002dra_002dpcat"><code>ra-pcat</code></a>, <a href="#x_002dra_002dtile"><code>ra-tile</code></a>, <a href="#Concatenation">Concatenation</a>.
 </p>
@@ -2524,7 +2528,6 @@ Previous: <a href="#Sources" accesskey="p" rel="prev">Sources</a>, Up: <a href="
 <tr><td></td><td valign="top"><a href="#index-singleton-axis">singleton axis</a>:</td><td>&nbsp;</td><td valign="top"><a href="#Special-arrays">Special arrays</a></td></tr>
 <tr><td colspan="4"> <hr></td></tr>
 <tr><th id="Indices_cp_letter-T">T</th><td></td><td></td></tr>
-<tr><td></td><td valign="top"><a href="#index-tally">tally</a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-transpose">transpose</a>:</td><td>&nbsp;</td><td valign="top"><a href="#Transposition">Transposition</a></td></tr>
 <tr><td colspan="4"> <hr></td></tr>
 </table>
@@ -2594,10 +2597,12 @@ Previous: <a href="#Sources" accesskey="p" rel="prev">Sources</a>, Up: <a href="
 <h5><a id="FOOT4" href="#DOCF4">(4)</a></h3>
 <p>Except for <a href="#x_002dra_002dindex_002dmap_0021"><code>ra-index-map!</code></a>, which is provided out of compatibility with the older array system.</p>
 <h5><a id="FOOT5" href="#DOCF5">(5)</a></h3>
-<p>An example of how using base indices other than 0 is generally worthless trouble, not least for the library author.</p>
+<p>Note that this is not the same as <code>(let ((d (vector-ref (ra-dims a) k))) (ra-iota (dim-len d) (dim-lo d)))</code>, because the lower bound of <code>(ra-iota ...)</code> (<em>not</em> its content) is 0, not <code>(dim-lo d)</code>, so the corresponding lower bound on the result array would also be 0, while <code>#t</code> preserves the lower bound of <code>a</code>.</p>
 <h5><a id="FOOT6" href="#DOCF6">(6)</a></h3>
-<p>I rejected this approach for <code>newra</code> because in my experience it results in errors going undetected much more often than it saves any work.</p>
+<p>An example of how using lower bounds other than 0 is generally worthless trouble, not least for the library author.</p>
 <h5><a id="FOOT7" href="#DOCF7">(7)</a></h3>
+<p>I rejected this approach for <code>newra</code> because in my experience it results in errors going undetected much more often than it saves any work.</p>
+<h5><a id="FOOT8" href="#DOCF8">(8)</a></h3>
 <p>Note that the ravel operation in <code>(ra-ravel (ra-copy ra))</code> is free, while it might not be in <code>(ra-copy (ra-ravel ra))</code>, so it is preferable, in principle, to copy first.</p>
 </div>
 <hr>
