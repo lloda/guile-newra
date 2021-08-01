@@ -663,7 +663,7 @@ s
 <p>The function <a href="#x_002dra_002dformat"><code>ra-format</code></a> can be used to pretty print arrays. This type of output cannot be read back, either.
 </p>
 <div class="example">
-<pre class="verbatim">(ra-format #t (list-&gt;ra 2 '((1 hello) (&quot;try&quot; 2) (never 3.14))) #:fmt &quot;~s&quot;)
+<pre class="verbatim">(ra-format (list-&gt;ra 2 '((1 hello) (&quot;try&quot; 2) (never 3.14))) #:fmt &quot;~s&quot;)
 </pre><pre class="example">&rArr;
 #%2:3:2─────┐
 │    1│hello│
@@ -1084,9 +1084,9 @@ A
 <div class="example">
 <pre class="verbatim">(define A (list-&gt;ra 2 '((a b) (c d))))
 (define B (ra-i 2 2))
-(ra-format #t (ra-map! (make-ra #f 2 2 2 2)
-                (lambda i (format #f &quot;~{~a~}&quot; i))
-                A (ra-transpose B 2)))
+(ra-format (ra-map! (make-ra #f 2 2 2 2)
+             (lambda i (format #f &quot;~{~a~}&quot; i))
+             A (ra-transpose B 2)))
 </pre><pre class="example">&rArr;
 </pre><pre class="verbatim">#%4:2:2:2:2═╗
 ║a0│a1║b0│b1║
@@ -1103,7 +1103,7 @@ A
 <p>Another use is the creation of ‘index placeholders’, e.g.
 </p><div class="example">
 <pre class="verbatim">(define (tensor-index i) (ra-transpose (ra-iota) i))
-(ra-format #t (ra-map! (make-ra #f 3 4) list (tensor-index 0) (tensor-index 1)))
+(ra-format (ra-map! (make-ra #f 3 4) list (tensor-index 0) (tensor-index 1)))
 </pre><pre class="example">&rArr;
 </pre><pre class="verbatim">#%2:3:4─────┬─────┬─────┐
 │(0 0)│(0 1)│(0 2)│(0 3)│
@@ -1429,7 +1429,7 @@ a
 (ra-fill! (ra-clip a b) &quot; x &quot;)
 (ra-copy! (ra-clip f b) (ra-clip b f))
 (ra-copy! (ra-clip f a) (ra-clip a f))
-(ra-format #t f)
+(ra-format f)
 </pre><pre class="example">&rArr;
 </pre><pre class="verbatim">#%2@-4:9@-5:9───┬───┬───┬───┬───┬───┐
 │   │   │   │   │   │   │   │   │   │
@@ -1451,7 +1451,7 @@ a
 │   │   │   │   │   │   │   │   │   │
 └───┴───┴───┴───┴───┴───┴───┴───┴───┘
 </pre><pre class="verbatim">(ra-fill! (ra-clip f (ra-clip a b)) &quot; █ &quot;)
-(ra-format #t f)
+(ra-format f)
 </pre><pre class="example">&rArr;
 </pre><pre class="verbatim">#%2@-4:9@-5:9───┬───┬───┬───┬───┬───┐
 │   │   │   │   │   │   │   │   │   │
@@ -1498,8 +1498,8 @@ a
 
 <span id="index-ra_002dformat"></span>
 <span id="x_002dra_002dformat"></span><dl>
-<dt id="index-ra_002dformat-1">function<!-- /@w -->: <strong>ra-format</strong> <em>port ra #:fmt #:prefix?</em></dt>
-<dt id="index-ra_002dformat-2">function<!-- /@w -->: <strong>ra-format</strong> <em>#f ra #:fmt #:prefix? &rArr; sc</em></dt>
+<dt id="index-ra_002dformat-1">function<!-- /@w -->: <strong>ra-format</strong> <em>ra port #:fmt #:prefix?</em></dt>
+<dt id="index-ra_002dformat-2">function<!-- /@w -->: <strong>ra-format</strong> <em>ra #f #:fmt #:prefix? &rArr; sc</em></dt>
 <dd>
 <p>Pretty print array <var>ra</var>. Each of the elements of <var>ra</var> is formatted using <code>(format #f fmt el)</code> from <a href="https://www.gnu.org/software/guile/manual/html_node/Formatted-Output.html"><code>(ice-9 format)</code></a>. <var>fmt</var> defauts to <code>&quot;~a&quot;</code>. If the element is itself an array, it is formatted using <code>ra-format</code> recursively.
 </p>
@@ -1511,7 +1511,7 @@ a
 </p>
 <p>A 0-array:
 </p><div class="example">
-<pre class="verbatim">(ra-format #t (make-ra 'element))
+<pre class="verbatim">(ra-format (make-ra 'element))
 </pre><pre class="example">&rArr;
 </pre><pre class="verbatim">#%0
 element
@@ -1519,7 +1519,7 @@ element
 
 <p>A 1-array:
 </p><div class="example">
-<pre class="verbatim">(ra-format #t (ra-i 4))
+<pre class="verbatim">(ra-format (ra-i 4))
 </pre><pre class="example">&rArr;
 </pre><pre class="verbatim">#%1d:4
 │0│1│2│3│
@@ -1527,7 +1527,7 @@ element
 
 <p>Compare with the 2-array
 </p><div class="example">
-<pre class="verbatim">(ra-format #t (ra-i 1 4))
+<pre class="verbatim">(ra-format (ra-i 1 4))
 </pre><pre class="example">&rArr;
 </pre><pre class="verbatim">#%2d:1:4┐
 │0│1│2│3│
@@ -1536,7 +1536,7 @@ element
 
 <p>Another 2-array:
 </p><div class="example">
-<pre class="verbatim">(ra-format #t (ra-i 3 4) #:prefix? #f)
+<pre class="verbatim">(ra-format (ra-i 3 4) #:prefix? #f)
 </pre><pre class="example">&rArr;
 </pre><pre class="verbatim">┌─┬─┬──┬──┐
 │0│1│ 2│ 3│
@@ -1549,7 +1549,7 @@ element
 
 <p>A 5-array:
 </p><div class="example">
-<pre class="verbatim">(ra-format #t (ra-i 2 2 3 2 4) #:prefix? #f)
+<pre class="verbatim">(ra-format (ra-i 2 2 3 2 4) #:prefix? #f)
 </pre><pre class="example">&rArr;
 </pre><pre class="verbatim">┃═══════════╦═══════════╦═══════════┃═══════════╦═══════════╦═══════════┃
 ┃ 0│ 1│ 2│ 3║ 8│ 9│10│11║16│17│18│19┃48│49│50│51║56│57│58│59║64│65│66│67┃
@@ -1566,9 +1566,9 @@ element
 ):
 </p>
 <div class="example">
-<pre class="verbatim">(ra-format #t (call-with-input-string &quot;#%2@1:2@1:3((#%2((1 2) (3 4)) 9 #%2((3 4) (5 6)))
-                                       (#%(42 43) #%2((8 7 6)) #%2((90 91) (100 101))))))&quot;
-                                      read))
+<pre class="verbatim">(ra-format (call-with-input-string &quot;#%2@1:2@1:3((#%2((1 2) (3 4)) 9 #%2((3 4) (5 6)))
+                                    (#%(42 43) #%2((8 7 6)) #%2((90 91) (100 101))))))&quot;
+                                   read))
 </pre><pre class="example">&rArr;
 </pre><pre class="verbatim">#%2@1:2@1:3─────┬─────────┐
 │#%2:2:2│      9│  #%2:2:2│
@@ -1587,7 +1587,7 @@ element
 
 <p>Looking at the return value when <var>port</var> is <code>#f</code>:
 </p><div class="example">
-<pre class="verbatim">(ra-format #t (ra-format #f (ra-i 2 3) #:prefix? #f) #:prefix? #f)
+<pre class="verbatim">(ra-format (ra-format (ra-i 2 3) #f #:prefix? #f) #:prefix? #f)
 </pre><pre class="example">&rArr;
 </pre><pre class="verbatim">┌─┬─┬─┬─┬─┬─┬─┐
 │┌│─│┬│─│┬│─│┐│
@@ -1684,7 +1684,7 @@ element
 <p>Consider this 3-array:
 </p>
 <div class="example">
-<pre class="verbatim">(ra-format #t (ra-i 2 3 4))
+<pre class="verbatim">(ra-format (ra-i 2 3 4))
 </pre><pre class="example">&rArr;
 </pre><pre class="verbatim">#%3d:2:3:4║──┬──┬──┬──║
 ║0│1│ 2│ 3║12│13│14│15║
@@ -1698,7 +1698,7 @@ element
 <p>Ravel axes 0..1:
 </p>
 <div class="example">
-<pre class="verbatim">(ra-format #t (ra-ravel (ra-i 2 3 4) 2)) ; or (ra-ravel ... 2 0)
+<pre class="verbatim">(ra-format (ra-ravel (ra-i 2 3 4) 2)) ; or (ra-ravel ... 2 0)
 </pre><pre class="example">&rArr;
 </pre><pre class="verbatim">#%2d:6:4─┬──┐
 │ 0│ 1│ 2│ 3│
@@ -1718,7 +1718,7 @@ element
 <p>Ravel axes 1..2:
 </p>
 <div class="example">
-<pre class="verbatim">(ra-format #t (ra-ravel (ra-i 2 3 4) 2 1))
+<pre class="verbatim">(ra-format (ra-ravel (ra-i 2 3 4) 2 1))
 </pre><pre class="example">&rArr;
 </pre><pre class="verbatim"></pre><pre class="example">#%2d:2:12┬──┬──┬──┬──┬──┬──┬──┬──┬──┐
 │ 0│ 1│ 2│ 3│ 4│ 5│ 6│ 7│ 8│ 9│10│11│
@@ -1744,7 +1744,7 @@ element
 <p>Each of the bounds may be an integer (a length) or a pair of integers (lower and upper bounds).
 </p><div class="example">
 <pre class="verbatim">(define a (ra-i 4 3))
-(ra-format #t a)
+(ra-format a)
 </pre><pre class="example">&rArr;
 </pre><pre class="verbatim">#%2d:4:3┐
 │0│ 1│ 2│
@@ -1755,7 +1755,7 @@ element
 ├─┼──┼──┤
 │9│10│11│
 └─┴──┴──┘
-</pre><pre class="verbatim">(ra-format #t (ra-reshape a 0 2 2))
+</pre><pre class="verbatim">(ra-format (ra-reshape a 0 2 2))
 </pre><pre class="example">&rArr;
 </pre><pre class="verbatim">#%3d:2:2:3─┬──║
 ║0│1│2║6│ 7│ 8║
@@ -1777,7 +1777,7 @@ element
 <p><code>ra-reshape</code> may be used to change either of the bounds of an axis, not only its length. For example
 </p>
 <div class="example">
-<pre class="verbatim">(ra-format #t (ra-i 2 3))
+<pre class="verbatim">(ra-format (ra-i 2 3))
 </pre><pre class="example">&rArr;
 </pre><pre class="verbatim">#%2d:2:3
 │0│1│2│
@@ -1787,7 +1787,7 @@ element
 </pre></div>
 
 <div class="example">
-<pre class="verbatim">(ra-format #t (ra-reshape (ra-i 2 3) 0 '(1 2)))
+<pre class="verbatim">(ra-format (ra-reshape (ra-i 2 3) 0 '(1 2)))
 </pre><pre class="example">&rArr;
 </pre><pre class="verbatim">#%2d@1:2:3
 │0│1│2│
@@ -1898,7 +1898,7 @@ a
 </p>
 <div class="example">
 <pre class="verbatim">(define a (ra-i 3 4))
-(ra-format #t a)
+(ra-format a)
 </pre><pre class="example">&rArr;
 </pre><pre class="verbatim">#%2d:3:4──┐
 │0│1│ 2│ 3│
@@ -1910,7 +1910,7 @@ a
 </pre></div>
 
 <div class="example">
-<pre class="verbatim">(ra-format #t (ra-tile a 0 2))
+<pre class="verbatim">(ra-format (ra-tile a 0 2))
 </pre><pre class="example">&rArr;
 </pre><pre class="verbatim">#%3d:2:3:4║─┬─┬──┬──║
 ║0│1│ 2│ 3║0│1│ 2│ 3║
@@ -1922,7 +1922,7 @@ a
 </pre></div>
 
 <div class="example">
-<pre class="verbatim">(ra-format #t (ra-tile a 1 2))
+<pre class="verbatim">(ra-format (ra-tile a 1 2))
 </pre><pre class="example">&rArr;
 </pre><pre class="verbatim">#%3d:3:2:4┬─┬─┬─║─┬─┬──┬──║
 ║0│1│2│3║4│5│6│7║8│9│10│11║
@@ -1932,7 +1932,7 @@ a
 </pre></div>
 
 <div class="example">
-<pre class="verbatim">(ra-format #t (ra-tile a 2 2))
+<pre class="verbatim">(ra-format (ra-tile a 2 2))
 </pre><pre class="example">&rArr;
 </pre><pre class="verbatim">#%3d:3:4:2─┬──║
 ║0│0║4│4║ 8│ 8║
@@ -2587,8 +2587,8 @@ Previous: <a href="#Sources" accesskey="p" rel="prev">Sources</a>, Up: <a href="
 <pre class="verbatim">(import (newra))
 (define element (lambda i (format #f &quot;A(~{~a~^, ~})&quot; i)))
 (define (ti k) (ra-transpose (ra-iota) k))
-(ra-format #t (ra-map! (make-ra #f 3 3)  element (ti 0) (ti 1)) #:prefix? #f)
-(ra-format #t (ra-map! (make-ra #f 2 '(2 5) '(-2 0))  element (ti 0) (ti 1) (ti 2)) #:prefix? #f)
+(ra-format (ra-map! (make-ra #f 3 3)  element (ti 0) (ti 1)) #:prefix? #f)
+(ra-format (ra-map! (make-ra #f 2 '(2 5) '(-2 0))  element (ti 0) (ti 1) (ti 2)) #:prefix? #f)
 </pre>
 <h5><a id="FOOT2" href="#DOCF2">(2)</a></h3>
 <p>Cf. <a href="https://en.wikipedia.org/wiki/Dope_vector"><em>dope vector</em></a></p>

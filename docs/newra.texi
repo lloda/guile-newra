@@ -89,8 +89,8 @@ This is a 3-array with bounds [0, 1] on axis 0, [2, 5] on axis 1, bounds [-2, 0]
 (import (newra))
 (define element (lambda i (format #f "A(~{~a~^, ~})" i)))
 (define (ti k) (ra-transpose (ra-iota) k))
-(ra-format #t (ra-map! (make-ra #f 3 3)  element (ti 0) (ti 1)) #:prefix? #f)
-(ra-format #t (ra-map! (make-ra #f 2 '(2 5) '(-2 0))  element (ti 0) (ti 1) (ti 2)) #:prefix? #f)
+(ra-format (ra-map! (make-ra #f 3 3)  element (ti 0) (ti 1)) #:prefix? #f)
+(ra-format (ra-map! (make-ra #f 2 '(2 5) '(-2 0))  element (ti 0) (ti 1) (ti 2)) #:prefix? #f)
 @end verbatim
 }
 @verbatim
@@ -649,7 +649,7 @@ The function @ref{x-ra-format, @code{ra-format}} can be used to pretty print arr
 
 @example
 @verbatim
-(ra-format #t (list->ra 2 '((1 hello) ("try" 2) (never 3.14))) #:fmt "~s")
+(ra-format (list->ra 2 '((1 hello) ("try" 2) (never 3.14))) #:fmt "~s")
 @end verbatim
 @result{}
 #%2:3:2─────┐
@@ -1182,9 +1182,9 @@ The trailing axes then match with @code{A} through through @ref{Rank extension,p
 @verbatim
 (define A (list->ra 2 '((a b) (c d))))
 (define B (ra-i 2 2))
-(ra-format #t (ra-map! (make-ra #f 2 2 2 2)
-                (lambda i (format #f "~{~a~}" i))
-                A (ra-transpose B 2)))
+(ra-format (ra-map! (make-ra #f 2 2 2 2)
+             (lambda i (format #f "~{~a~}" i))
+             A (ra-transpose B 2)))
 @end verbatim
 @result{}
 @verbatim
@@ -1205,7 +1205,7 @@ Another use is the creation of ‘index placeholders’, e.g.
 @example
 @verbatim
 (define (tensor-index i) (ra-transpose (ra-iota) i))
-(ra-format #t (ra-map! (make-ra #f 3 4) list (tensor-index 0) (tensor-index 1)))
+(ra-format (ra-map! (make-ra #f 3 4) list (tensor-index 0) (tensor-index 1)))
 @end verbatim
 @result{}
 @verbatim
@@ -1558,7 +1558,7 @@ Slice @var{a} to the intersection of the bounds of @var{a} and @var{b}. If @var{
 (ra-fill! (ra-clip a b) " x ")
 (ra-copy! (ra-clip f b) (ra-clip b f))
 (ra-copy! (ra-clip f a) (ra-clip a f))
-(ra-format #t f)
+(ra-format f)
 @end verbatim
 @result{}
 @verbatim
@@ -1584,7 +1584,7 @@ Slice @var{a} to the intersection of the bounds of @var{a} and @var{b}. If @var{
 @end verbatim
 @verbatim
 (ra-fill! (ra-clip f (ra-clip a b)) " █ ")
-(ra-format #t f)
+(ra-format f)
 @end verbatim
 @result{}
 @verbatim
@@ -1638,8 +1638,8 @@ See also: @ref{x-ra-shape,@code{ra-shape}}, @ref{x-make-ra,@code{make-ra}}.
 
 @cindex @code{ra-format}
 @anchor{x-ra-format}
-@deffn @w{function} ra-format port ra #:fmt #:prefix?
-@deffnx @w{function} ra-format #f ra #:fmt #:prefix? @result{} sc
+@deffn @w{function} ra-format ra port #:fmt #:prefix?
+@deffnx @w{function} ra-format ra #f #:fmt #:prefix? @result{} sc
 
 Pretty print array @var{ra}. Each of the elements of @var{ra} is formatted using @code{(format #f fmt el)} from @url{https://www.gnu.org/software/guile/manual/html_node/Formatted-Output.html,@code{(ice-9 format)}}. @var{fmt} defauts to @code{"~a"}. If the element is itself an array, it is formatted using @code{ra-format} recursively.
 
@@ -1652,7 +1652,7 @@ This function handles arrays of rank up to 8. The even dimensions (counting from
 A 0-array:
 @example
 @verbatim
-(ra-format #t (make-ra 'element))
+(ra-format (make-ra 'element))
 @end verbatim
 @result{}
 @verbatim
@@ -1664,7 +1664,7 @@ element
 A 1-array:
 @example
 @verbatim
-(ra-format #t (ra-i 4))
+(ra-format (ra-i 4))
 @end verbatim
 @result{}
 @verbatim
@@ -1676,7 +1676,7 @@ A 1-array:
 Compare with the 2-array
 @example
 @verbatim
-(ra-format #t (ra-i 1 4))
+(ra-format (ra-i 1 4))
 @end verbatim
 @result{}
 @verbatim
@@ -1689,7 +1689,7 @@ Compare with the 2-array
 Another 2-array:
 @example
 @verbatim
-(ra-format #t (ra-i 3 4) #:prefix? #f)
+(ra-format (ra-i 3 4) #:prefix? #f)
 @end verbatim
 @result{}
 @verbatim
@@ -1706,7 +1706,7 @@ Another 2-array:
 A 5-array:
 @example
 @verbatim
-(ra-format #t (ra-i 2 2 3 2 4) #:prefix? #f)
+(ra-format (ra-i 2 2 3 2 4) #:prefix? #f)
 @end verbatim
 @result{}
 @verbatim
@@ -1726,9 +1726,9 @@ A nested array (example from @mybibcite{SRFI-163}):
 
 @example
 @verbatim
-(ra-format #t (call-with-input-string "#%2@1:2@1:3((#%2((1 2) (3 4)) 9 #%2((3 4) (5 6)))
-                                       (#%(42 43) #%2((8 7 6)) #%2((90 91) (100 101))))))"
-                                      read))
+(ra-format (call-with-input-string "#%2@1:2@1:3((#%2((1 2) (3 4)) 9 #%2((3 4) (5 6)))
+                                    (#%(42 43) #%2((8 7 6)) #%2((90 91) (100 101))))))"
+                                   read))
 @end verbatim
 @result{}
 @verbatim
@@ -1751,7 +1751,7 @@ A nested array (example from @mybibcite{SRFI-163}):
 Looking at the return value when @var{port} is @code{#f}:
 @example
 @verbatim
-(ra-format #t (ra-format #f (ra-i 2 3) #:prefix? #f) #:prefix? #f)
+(ra-format (ra-format (ra-i 2 3) #f #:prefix? #f) #:prefix? #f)
 @end verbatim
 @result{}
 @verbatim
@@ -1864,7 +1864,7 @@ Consider this 3-array:
 
 @example
 @verbatim
-(ra-format #t (ra-i 2 3 4))
+(ra-format (ra-i 2 3 4))
 @end verbatim
 @result{}
 @verbatim
@@ -1882,7 +1882,7 @@ Ravel axes 0..1:
 
 @example
 @verbatim
-(ra-format #t (ra-ravel (ra-i 2 3 4) 2)) ; or (ra-ravel ... 2 0)
+(ra-format (ra-ravel (ra-i 2 3 4) 2)) ; or (ra-ravel ... 2 0)
 @end verbatim
 @result{}
 @verbatim
@@ -1906,7 +1906,7 @@ Ravel axes 1..2:
 
 @example
 @verbatim
-(ra-format #t (ra-ravel (ra-i 2 3 4) 2 1))
+(ra-format (ra-ravel (ra-i 2 3 4) 2 1))
 @end verbatim
 @result{}
 @verbatim
@@ -1936,7 +1936,7 @@ Each of the bounds may be an integer (a length) or a pair of integers (lower and
 @example
 @verbatim
 (define a (ra-i 4 3))
-(ra-format #t a)
+(ra-format a)
 @end verbatim
 @result{}
 @verbatim
@@ -1951,7 +1951,7 @@ Each of the bounds may be an integer (a length) or a pair of integers (lower and
 └─┴──┴──┘
 @end verbatim
 @verbatim
-(ra-format #t (ra-reshape a 0 2 2))
+(ra-format (ra-reshape a 0 2 2))
 @end verbatim
 @result{}
 @verbatim
@@ -1981,7 +1981,7 @@ Each of the bounds may be an integer (a length) or a pair of integers (lower and
 
 @example
 @verbatim
-(ra-format #t (ra-i 2 3))
+(ra-format (ra-i 2 3))
 @end verbatim
 @result {}
 @verbatim
@@ -1995,7 +1995,7 @@ Each of the bounds may be an integer (a length) or a pair of integers (lower and
 
 @example
 @verbatim
-(ra-format #t (ra-reshape (ra-i 2 3) 0 '(1 2)))
+(ra-format (ra-reshape (ra-i 2 3) 0 '(1 2)))
 @end verbatim
 @result {}
 @verbatim
@@ -2122,7 +2122,7 @@ Each of the bounds may be an integer (a length) or a pair of integers (lower and
 @example
 @verbatim
 (define a (ra-i 3 4))
-(ra-format #t a)
+(ra-format a)
 @end verbatim
 @result{}
 @verbatim
@@ -2138,7 +2138,7 @@ Each of the bounds may be an integer (a length) or a pair of integers (lower and
 
 @example
 @verbatim
-(ra-format #t (ra-tile a 0 2))
+(ra-format (ra-tile a 0 2))
 @end verbatim
 @result{}
 @verbatim
@@ -2154,7 +2154,7 @@ Each of the bounds may be an integer (a length) or a pair of integers (lower and
 
 @example
 @verbatim
-(ra-format #t (ra-tile a 1 2))
+(ra-format (ra-tile a 1 2))
 @end verbatim
 @result{}
 @verbatim
@@ -2168,7 +2168,7 @@ Each of the bounds may be an integer (a length) or a pair of integers (lower and
 
 @example
 @verbatim
-(ra-format #t (ra-tile a 2 2))
+(ra-format (ra-tile a 2 2))
 @end verbatim
 @result{}
 @verbatim

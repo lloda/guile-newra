@@ -13,11 +13,13 @@
 ;;; Code:
 
 (define-module (newra print)
-  #:export (ra-print-prefix ra-print ra-format))
+  #:export (ra-print-prefix ra-print ra-format *ra-print*))
 
 (import (rnrs io ports) (rnrs base) (srfi :1) (srfi :4 gnu) (srfi :26) (srfi :71)
         (ice-9 match) (newra base) (newra map)
         (newra cat) (newra from) (newra lib))
+
+(define *ra-print* (make-parameter #f))
 
 ; FIXME still need to extend (truncated-print).
 
@@ -91,12 +93,12 @@
 
 (define arts (make-ra-root (vector "│─┌┐└┘├┤┬┴┼" "║═╔╗╚╝╠╣╦╩╬" "┃━┏┓┗┛┣┫┳┻╋" "████████████")))
 
-(define* (ra-format port ra #:key (fmt "~a") (prefix? #t))
+(define* (ra-format ra #:optional (port #t) #:key (fmt "~a") (prefix? #t))
 ; size the cells
   (define s (ra-map! (apply make-ra #f (ra-dimensions ra))
                      (lambda (x)
                        (if (ra? x)
-                         (ra-format #f x #:fmt fmt #:prefix? prefix?)
+                         (ra-format x #f #:fmt fmt #:prefix? prefix?)
                          (ra-tile (array->ra (format #f fmt x)) 0 1)))
                      ra))
   (define-values (dim0 dim1)

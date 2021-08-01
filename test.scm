@@ -1206,20 +1206,20 @@
 
 (let* ((ra (ra-i 1 8 9 3))
        (ra (ra-map! (ra-copy #t ra) sqrt ra)))
-  (ra-format #t ra #:fmt "~4,2f"))
+  (ra-format ra #:fmt "~4,2f"))
 
 (let ((ra (ra-set! (ra-set! (ra-copy #t (ra-i 3 4 3))
                             (ra-i 2 3) 1 2 1)
                    (make-ra-root #(hello world of ras) (c-dims 2 2))
                    2 1 2)))
-  (ra-format #t ra #:fmt "~a"))
+  (ra-format ra #:fmt "~a"))
 
 (let ((ra (ra-i 2 2 2 2 2 2 2 2)))
-  (ra-format #t ra))
+  (ra-format ra))
 
 (let* ((ra (ra-set! (ra-copy #t (ra-i 7)) (make-ra-root #(hello world of ras) (c-dims 2 2)) 3))
        (ra (ra-tile ra (ra-rank ra) 1)))
-  (ra-format #t ra))
+  (ra-format ra))
 
 ; example from srfi-164
 (let* ((arr
@@ -1227,13 +1227,13 @@
                   (#(42 43) #2((8 7 6)) #2((90 91) (100 101)))))
        (ra (array->ra arr))
        (ra (ra-map! (ra-copy ra) (lambda (x) (if (array? x) (array->ra x) x)) ra)))
-  (ra-format #t ra #:prefix? #t))
+  (ra-format ra #:prefix? #t))
 
 (let ((ra (array->ra #2@1:2@1:3((1 2 3) (4 5 6)))))
-  (ra-format #t ra))
+  (ra-format ra))
 
 (let ((ra (make-ra 'zero)))
-  (ra-format #t ra))
+  (ra-format ra))
 
 
 ; -----------------------
