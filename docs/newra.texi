@@ -1850,7 +1850,7 @@ See also: @ref{x-ra-format,@code{ra-format}}, @ref{Writing and reading}.
 @cindex @code{ra-ravel}
 @anchor{x-ra-ravel}
 @deffn @w{function} ra-ravel a [n [org]]
-Ravel axes [@var{org} ... @var{org+n}) of array @var{a} in C order. @var{n} defaults to the rank of @var{a} and @var{org} defaults to 0.
+Ravel axes [@var{org} ... @var{org}+@var{n}) of array @var{a} in C order. @var{n} defaults to the rank of @var{a} and @var{org} defaults to 0.
 
 For example:
 @example
@@ -2373,10 +2373,10 @@ See also: @ref{x-ra-set!,@code{ra-set!}}, @ref{x-ra-copy!,@code{ra-copy!}}, @ref
 @cindex packed array
 @cindex @code{ra-order-c?}
 @anchor{x-ra-order-c?}
-@deffn @w{function} ra-order-c? a [n]
-Check whether the first @var{n} axes of @var{ra} are in C-order. By default, check that the whole array is in C-order, and additionally that the step on the last axis is 1 (i.e. the array is ‘packed’).
+@deffn @w{function} ra-order-c? a [n [org]]
+Check whether axes [@var{org} ... @var{org}+@var{n}] of @var{ra} are in C-order. By default, check that the whole array is in C-order, and additionally that the step on the last axis is 1 (i.e. the array is ‘packed’).
 
-@code{(ra-order-c? a n)} implies @code{(eq? (ra-root a) (ra-root (@ref{x-ra-ravel, @code{ra-ravel}} a n)))}. Note that the stronger condition @code{(ra-order-c? a)} is not necessary for @code{(eq? (ra-root a) (ra-root (ra-ravel a)))} to hold.
+@code{(ra-order-c? a n org)} implies @code{(eq? (ra-root a) (ra-root (@ref{x-ra-ravel, @code{ra-ravel}} a n org)))}. Note that the stronger condition @code{(ra-order-c? a)} is not necessary for @code{(eq? (ra-root a) (ra-root (ra-ravel a)))} to hold.
 
 @end deffn
 
@@ -2554,7 +2554,7 @@ See also: @ref{x-array->ra,@code{array->ra}}, @ref{x-ra-singletonize,@code{ra-si
 @anchor{x-ra-singletonize}
 @deffn @w{function} ra-singletonize a
 
-Return an ra with the same root and dimensions as @var{a}, except that infinite axes (axes with step 0 and length @code{#f}) have their length set to 1.
+Return an ra with the same root and dimensions as @var{a}, except that dead axes (axes with step 0 and undefined length) have their length set to 1.
 
 @example
 @verbatim

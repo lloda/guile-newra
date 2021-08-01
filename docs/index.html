@@ -1673,7 +1673,7 @@ element
 <span id="index-ra_002dravel"></span>
 <span id="x_002dra_002dravel"></span><dl>
 <dt id="index-ra_002dravel-1">function<!-- /@w -->: <strong>ra-ravel</strong> <em>a [n [org]]</em></dt>
-<dd><p>Ravel axes [<var>org</var> ... <var>org+n</var>) of array <var>a</var> in C order. <var>n</var> defaults to the rank of <var>a</var> and <var>org</var> defaults to 0.
+<dd><p>Ravel axes [<var>org</var> ... <var>org</var>+<var>n</var>) of array <var>a</var> in C order. <var>n</var> defaults to the rank of <var>a</var> and <var>org</var> defaults to 0.
 </p>
 <p>For example:
 </p><div class="example">
@@ -2108,10 +2108,10 @@ a
 <span id="index-packed-array-2"></span>
 <span id="index-ra_002dorder_002dc_003f"></span>
 <span id="x_002dra_002dorder_002dc_003f"></span><dl>
-<dt id="index-ra_002dorder_002dc_003f-1">function<!-- /@w -->: <strong>ra-order-c?</strong> <em>a [n]</em></dt>
-<dd><p>Check whether the first <var>n</var> axes of <var>ra</var> are in C-order. By default, check that the whole array is in C-order, and additionally that the step on the last axis is 1 (i.e. the array is ‘packed’).
+<dt id="index-ra_002dorder_002dc_003f-1">function<!-- /@w -->: <strong>ra-order-c?</strong> <em>a [n [org]]</em></dt>
+<dd><p>Check whether axes [<var>org</var> ... <var>org</var>+<var>n</var>] of <var>ra</var> are in C-order. By default, check that the whole array is in C-order, and additionally that the step on the last axis is 1 (i.e. the array is ‘packed’).
 </p>
-<p><code>(ra-order-c? a n)</code> implies <code>(eq? (ra-root a) (ra-root (<a href="#x_002dra_002dravel"><code>ra-ravel</code></a> a n)))</code>. Note that the stronger condition <code>(ra-order-c? a)</code> is not necessary for <code>(eq? (ra-root a) (ra-root (ra-ravel a)))</code> to hold.
+<p><code>(ra-order-c? a n org)</code> implies <code>(eq? (ra-root a) (ra-root (<a href="#x_002dra_002dravel"><code>ra-ravel</code></a> a n org)))</code>. Note that the stronger condition <code>(ra-order-c? a)</code> is not necessary for <code>(eq? (ra-root a) (ra-root (ra-ravel a)))</code> to hold.
 </p>
 </dd></dl>
 
@@ -2273,7 +2273,7 @@ indices that match those elements. <code>newra</code> will <em>not</em> check th
 <span id="x_002dra_002dsingletonize"></span><dl>
 <dt id="index-ra_002dsingletonize-1">function<!-- /@w -->: <strong>ra-singletonize</strong> <em>a</em></dt>
 <dd>
-<p>Return an ra with the same root and dimensions as <var>a</var>, except that infinite axes (axes with step 0 and length <code>#f</code>) have their length set to 1.
+<p>Return an ra with the same root and dimensions as <var>a</var>, except that dead axes (axes with step 0 and undefined length) have their length set to 1.
 </p>
 <div class="example">
 <pre class="verbatim">(ra-dimensions (ra-transpose (ra-i 2 3) 1))

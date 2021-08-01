@@ -140,8 +140,6 @@ See also: ra-transpose ra-dims
 
 (define* (ra-order-c? ra #:optional n (org 0))
   "
-ra-order-c? ra [n [org]]
-
 Check whether axes [@var{org} .. @var{org}+@var{n}) of @var{ra} are in C-order
 (aka row-major order).
 
@@ -182,8 +180,6 @@ See also: ra-ravel ra-reshape ra-tile c-dims
 
 (define* (ra-ravel ra #:optional (n (ra-rank ra)) (org 0))
   "
-ra-ravel ra [n [org]] -> rb
-
 Return an array where axes [@var{org} .. @var{org}+@var{n}) of @var{ra} have
 been raveled in C order. @var{n} defaults to the rank of @var{ra} and @var{org}
 defaults to 0.
