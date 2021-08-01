@@ -107,7 +107,7 @@
         (values a b)
         (values b a))))
   (define (lengths dim0 dim1 k)
-    (let* ((sq (apply ra-untranspose s (ra->list (ra-pcat #f 0 dim1 dim0))))
+    (let* ((sq (apply ra-untranspose s (ra->list (ra-cat #f 0 dim1 dim0))))
            (l (apply make-ra 0 (drop (ra-dimensions sq) (ra-len dim1))))
            (border (if (zero? (ra-rank l)) 0 1)))
       (ra-slice-for-each-in-order (ra-len dim1)
@@ -122,7 +122,7 @@
 ; define positions for grid and cells
   (define (scan! a) (let ((s 0)) (ra-map-in-order! a (lambda (c) (let ((d s)) (set! s (+ s c)) d)) a)))
   (define (scan-0 a) (scan! (ra-copy a)))
-  (define (scan-1 a) (scan! (ra-pcat #f 0 a (make-ra 0))))
+  (define (scan-1 a) (scan! (ra-cat #f 0 a (make-ra 0))))
   (define (marks l k)
     (and (>= k 0)
          (let ((m (apply make-ra 0 (take (ra-dimensions l) (+ k 1)))))
@@ -176,7 +176,7 @@
                             (ra-iota (ra-len sq 0) (+ o0 (if (> (ra-rank s) 1) 1 0)))
                             (ra-iota (ra-len sq 1) (+ o1 1 (- l1 (ra-len sq 1) 1)))) ; align right
                    sq))
-       (apply ra-untranspose s (ra->list (ra-pcat #f 0 dim0 dim1)))
+       (apply ra-untranspose s (ra->list (ra-cat #f 0 dim0 dim1)))
        (apply ra-reshape (scan-0 (ra-ravel l0)) 0 (ra-dimensions l0))
        l0
        (ra-transpose (apply ra-reshape (scan-0 (ra-ravel l1)) 0 (ra-dimensions l1)) (ra-rank l0))

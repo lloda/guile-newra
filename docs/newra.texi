@@ -195,7 +195,7 @@ A basic example is obtaining the i₀-th item of A:
 A(i₀) ≡ ((storage-of-A), o+s₀·i₀, (s₁, ...))
 @end quotation
 
-Note that we can iterate over these items by simply bumping the pointer o+s₀·i₀. This means that iterating over (k>0)-cells doesn't have to cost any more than iterating over 0-cells (@ref{x-ra-slice-for-each,@code{ra-slice-for-each}}).
+Note that we can iterate over these items by simply bumping the pointer o+s₀·i₀. This means that iterating over (k>0)-cells doesn't have to cost any more than iterating over 0-cells (@ref{x-ra-slice-for-each,@code{ra-slice-for-each}}). Rank polymorphism isn't just a high level property of arrays; it is enabled and supported by the way they are laid out in memory.
 
 @c ------------------------------------------------
 @node Rank extension
@@ -701,7 +701,7 @@ In the following example, @code{xys} is of rank 2, @code{angle} is of rank 1, an
 @end example
 
 @cindex prefix matching
-The iteration procedures in @code{newra} all perform rank extension of their arguments through prefix matching (see @ref{Rank extension}). In the following example, the shapes of the arguments are (5 5), (5) and (@code{#f} 5), so the common prefixes (5), (5) and (@code{#f}) all match.
+The iteration procedures in @code{newra} all perform rank extension of their arguments through prefix matching (see @ref{Rank extension}). In the following example, the shapes of the arguments are (5 5), (5) and (@code{#f} 5), and the common prefixes all match.
 
 @example
 @verbatim
@@ -945,9 +945,9 @@ To match APL ρ, @code{newra} offers three separate functions.
 @c ------------------------------------------------
 
 @cindex concatenation
-@code{newra} offers two concatenation operations: @ref{x-ra-pcat, @code{ra-pcat}} (prefix cat) and @ref{x-ra-scat, @code{ra-scat}} (suffix cat).
+@code{newra} offers two concatenation operations: @ref{x-ra-cat, @code{ra-cat}} (prefix cat) and @ref{x-ra-scat, @code{ra-scat}} (suffix cat).
 
-For @code{ra-pcat}, the arguments are prefix-matched, and the concatenation axis is counted from the left. E.g. for three arrays @var{r}, @var{s}, @var{t} with shapes
+For @code{ra-cat}, the arguments are prefix-matched, and the concatenation axis is counted from the left. E.g. for three arrays @var{r}, @var{s}, @var{t} with shapes
 
 @example
 @verbatim
@@ -957,7 +957,7 @@ For @code{ra-pcat}, the arguments are prefix-matched, and the concatenation axis
 @end verbatim
 @end example
 
-Then @code{(define val (ra-pcat #t 1 r s t))} will prefix-match these to (it is an error if any of @code{r₀=s₀=t₀}, @code{r₂=s₂}, or @code{r₃=s₃} don't hold)
+Then @code{(define val (ra-cat #t 1 r s t))} will prefix-match these to (it is an error if any of @code{r₀=s₀=t₀}, @code{r₂=s₂}, or @code{r₃=s₃} don't hold)
 
 @example
 @verbatim
@@ -1008,11 +1008,11 @@ for a result
 
 Note that the rank extension of @code{s} on the concatenation axis yields a length of 1 (and not @code{r₀}). It can be useful to think of the axis argument of @code{ra-scat} as indicating cell rank, so the code above means `concatenate 1-cells'.
 
-For both @code{ra-pcat} and @code{ra-scat}, axes other than the concatenation axis must match across all of the arguments.
+For both @code{ra-cat} and @code{ra-scat}, axes other than the concatenation axis must match across all of the arguments.
 
 @example
 @verbatim
-(ra-pcat #t 0 (ra-i 3 2) (ra-i 2))
+(ra-cat #t 0 (ra-i 3 2) (ra-i 2))
 @end verbatim
 @result{} @code{#%2:4:2((0 1) (2 3) (4 5) (0 0) (1 1))}
 @end example
@@ -1028,16 +1028,16 @@ In particular, it is not enough for the lengths to be the same; both bounds must
 
 @example
 @verbatim
-(ra-pcat #t 0 (make-ra 'a '(1 1) '(1 4))
-              (make-ra 'b '(2 2) '(1 4)))
+(ra-cat #t 0 (make-ra 'a '(1 1) '(1 4))
+             (make-ra 'b '(2 2) '(1 4)))
 @end verbatim
 @result{} @code{#%2:2@@1:4((a a a a) (b b b b))} ; axes 1 match, axes 0 don't need to
 @end example
 
 @example
 @verbatim
-(ra-pcat #t 1 (make-ra 'a '(1 1) '(1 4))
-              (make-ra 'b '(2 2) '(1 4)))
+(ra-cat #t 1 (make-ra 'a '(1 1) '(1 4))
+             (make-ra 'b '(2 2) '(1 4)))
 @end verbatim
 @result{} error ; axes 0 don't match
 @end example
@@ -1046,29 +1046,29 @@ Here @ref{x-ra-reshape,@code{ra-reshape}} is used to move axis 0 of the second a
 
 @example
 @verbatim
-(ra-pcat #t 1 (make-ra 'a '(1 1) '(1 4))
-              (ra-reshape (make-ra 'b '(2 2) '(1 4)) 0 '(1 1)))
+(ra-cat #t 1 (make-ra 'a '(1 1) '(1 4))
+             (ra-reshape (make-ra 'b '(2 2) '(1 4)) 0 '(1 1)))
 @end verbatim
 @result{} @code{#%2@@1:1:8((a a a a b b b b))}
 @end example
 
-Both @code{ra-pcat} and @code{ra-scat} accept a negative concatenation axis. That will rank-extend all the arguments to the left (@code{ra-pcat}) or to the right (@code{ra-scat}) before concatenating on the leftmost (@code{ra-pcat}) or rightmost (@code{ra-scat}) axis. In the same way, one may give a concatenation axis which is beyond the rank of the argument with the highest rank. Consider
+Both @code{ra-cat} and @code{ra-scat} accept a negative concatenation axis. That will rank-extend all the arguments to the left (@code{ra-cat}) or to the right (@code{ra-scat}) before concatenating on the leftmost (@code{ra-cat}) or rightmost (@code{ra-scat}) axis. In the same way, one may give a concatenation axis which is beyond the rank of the argument with the highest rank. Consider
 
 @example
 @verbatim
-(ra-pcat #t -1 (ra-i 3) (array->ra #(a b c)))
+(ra-cat #t -1 (ra-i 3) (array->ra #(a b c)))
 @end verbatim
 @result{} @code{#%2:2:3((0 1 2) (a b c))}
 @end example
 @example
 @verbatim
-(ra-pcat #t 0 (ra-i 3) (array->ra #(a b c)))
+(ra-cat #t 0 (ra-i 3) (array->ra #(a b c)))
 @end verbatim
 @result{} @code{#%1:6(0 1 2 a b c)}
 @end example
 @example
 @verbatim
-(ra-pcat #t 1 (ra-i 3) (array->ra #(a b c)))
+(ra-cat #t 1 (ra-i 3) (array->ra #(a b c)))
 @end verbatim
 @result{} @code{#%2:3:2((0 a) (1 b) (2 c))}
 @end example
@@ -1801,9 +1801,9 @@ Create rank-1 index array. The root is of type @code{<aseq>}.
 @end example
 @end deffn
 
-@cindex @code{ra-pcat}
-@anchor{x-ra-pcat}
-@deffn @w{function} ra-pcat type i a ...  @result{} b
+@cindex @code{ra-cat}
+@anchor{x-ra-cat}
+@deffn @w{function} ra-cat type i a ...  @result{} b
 
 Concatenate arrays @var{a} ... along axis @var{i}. The arguments are prefix-matched and rank extended before concatenation. All axes must match, except possibly the concatenation axis.
 
@@ -1811,7 +1811,7 @@ This function always produces a new array, of the type given. If @var{type} is @
 
 @example
 @verbatim
-(ra-pcat #f 1 #%1(a b) #%2((0 1) (2 3)))
+(ra-cat #f 1 #%1(a b) #%2((0 1) (2 3)))
 @end verbatim
 @result{} #%2((a 0 1) (b 2 3))
 @end example
@@ -2079,7 +2079,7 @@ Concatenate @var{i}-items of arrays @var{a} ... . The arguments are suffix-match
 
 This function always produces a new array, of the type given. If @var{type} is @code{#f} then the type of the first @var{a} is used. The lower bound in the concatenation axes of the result is 0; the lower bounds of the arguments in the concatenation axis are ignored.
 
-See also: @ref{x-ra-pcat,@code{ra-pcat}}, @ref{x-ra-tile,@code{ra-tile}}, @ref{Concatenation}.
+See also: @ref{x-ra-cat,@code{ra-cat}}, @ref{x-ra-tile,@code{ra-tile}}, @ref{Concatenation}.
 
 @example
 @verbatim

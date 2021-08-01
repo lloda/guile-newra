@@ -11,7 +11,7 @@
 ;;; Code:
 
 (define-module (newra cat)
-  #:export (ra-pcat ra-scat))
+  #:export (ra-cat ra-scat))
 
 (import (srfi :1) (srfi :26) (srfi :71) (newra base) (newra lib) (newra from) (ice-9 match))
 
@@ -38,7 +38,7 @@
 
 ; FIXME allow inf lens in non-concatenating axes?
 
-(define (ra-pcat type i . xx)
+(define (ra-cat type i . xx)
   "
 Concatenate arrays @var{xx} ... along axis @var{i}. The shapes of @var{xx}
 ... must have matching prefixes except at axis @var{i}.
@@ -52,7 +52,7 @@ If @var{i} is negative, the shape of each @var{xx} ... is prefix-extended by
 @code{(- i)} singleton dimensions and the concatenation is carried out along the
 first axis.
 
-@code{ra-pcat} always creates a new array and not a shared array.
+@code{ra-cat} always creates a new array and not a shared array.
 
 The type of the output is @var{type}, unless @code{#f}; else the type of the
 first argument, unless @code{'d}; else @code{#t}.
@@ -62,24 +62,24 @@ first argument, unless @code{'d}; else @code{#t}.
 For example:
 
 @verbatim
-(ra-pcat #t 0 (ra-i 1 2) (ra-i 2 2))         => #%2((0 1) (0 1) (2 3)))
-(ra-pcat #t 0 (ra-iota 2 1) (ra-iota 3 3))   => #%1(1 2 3 4 5))
-(ra-pcat #t -1 (ra-iota 2 1) (ra-iota 2 4))  => #%2((1 2) (4 5))
-(ra-pcat #t 1 (ra-iota 2 1) (ra-iota 2 4))   => #%2((1 4) (2 5))
-(ra-pcat #t 0 (make-ra 'a) (ra-iota 2))      => #%1(a 0 1)
-(ra-pcat #t 1 (make-ra 'a) (ra-iota 2))      => #%2((a 0) (a 1))
-(ra-pcat #t -1 (make-ra 'a) (ra-iota 2))     => #%2((a a) (0 1))
-(ra-pcat #t 1 (array->ra #(a b)) (ra-i 2 2)) => #%2((a 0 1) (b 2 3))
-(ra-pcat #t 0 (array->ra #(a b)) (ra-i 2 2)) => #%2((a a) (b b) (0 1) (2 3))
+(ra-cat #t 0 (ra-i 1 2) (ra-i 2 2))         => #%2((0 1) (0 1) (2 3)))
+(ra-cat #t 0 (ra-iota 2 1) (ra-iota 3 3))   => #%1(1 2 3 4 5))
+(ra-cat #t -1 (ra-iota 2 1) (ra-iota 2 4))  => #%2((1 2) (4 5))
+(ra-cat #t 1 (ra-iota 2 1) (ra-iota 2 4))   => #%2((1 4) (2 5))
+(ra-cat #t 0 (make-ra 'a) (ra-iota 2))      => #%1(a 0 1)
+(ra-cat #t 1 (make-ra 'a) (ra-iota 2))      => #%2((a 0) (a 1))
+(ra-cat #t -1 (make-ra 'a) (ra-iota 2))     => #%2((a a) (0 1))
+(ra-cat #t 1 (array->ra #(a b)) (ra-i 2 2)) => #%2((a 0 1) (b 2 3))
+(ra-cat #t 0 (array->ra #(a b)) (ra-i 2 2)) => #%2((a a) (b b) (0 1) (2 3))
 @end verbatim
 
 See also: ra-scat ra-tile
 "
   (if (> 0 i)
-    (apply ra-pcat type 0 (map (cute apply ra-tile <> 0 (make-list (max 0 (- i)) 1)) xx))
+    (apply ra-cat type 0 (map (cute apply ra-tile <> 0 (make-list (max 0 (- i)) 1)) xx))
     (match xx
       (()
-       (throw 'ra-pcat-missing-arguments))
+       (throw 'ra-cat-missing-arguments))
       (xx
        (let ((xm (fold (lambda (x xm) (if (> (ra-rank x) (ra-rank xm)) x xm)) (car xx) (cdr xx))))
          (apply plain-cat! i
@@ -126,7 +126,7 @@ For example:
 (ra-scat #t -1 (make-ra 'a) (array->ra #(x y z)))                  => #%2((a x) (a y) (a z))
 @end verbatim
 
-See also: ra-pcat ra-tile
+See also: ra-cat ra-tile
 "
   (if (> 0 i)
     (apply ra-scat type 0 (map (lambda (x) (apply ra-tile x (ra-rank x) (make-list (max 0 (- i)) 1))) xx))

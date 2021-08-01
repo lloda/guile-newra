@@ -45,7 +45,7 @@
 
            ra-from ra-amend! ldots
 
-           ra-pcat ra-scat
+           ra-cat ra-scat
 
            list->ra list->typed-ra
 
