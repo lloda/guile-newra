@@ -2,7 +2,7 @@
 @c %**start of header
 @setfilename newra.info
 @documentencoding UTF-8
-@settitle newra —An alternative array library for Guile 3
+@settitle newra — An alternative array library for Guile 3
 @c %**end of header
 @c last [ma112]
 
@@ -55,6 +55,7 @@ This document uses ‘array’ to refer both to the old built-in array type and 
 * High level::        Guile as an array language.
 * Hazards::           User beware.
 * Reference::         Systematic list of types and functions.
+* Cheatsheet::        Asking for directions
 * @mybibnode{}::      It's been done before.
 * Indices::           Or try the search function.
 @end menu
@@ -287,7 +288,7 @@ An @code{newra} array is an aggregate of the following pieces:
 @cindex dim vector
 @cindex root vector
 @itemize
-@item A @dfn{root vector}.
+@item A @dfn{root vector}, or root for short.
 This can be a Scheme vector, as well as one of several other vector-like types.
 @item A @dfn{zero}.
 An arbitary integer.
@@ -295,7 +296,7 @@ An arbitary integer.
 Each dim consists of a length (@dfn{len}), a lower bound (@dfn{lo}), and a @dfn{step}. The length of the dim vector is the @dfn{rank} of the array.
 @end itemize
 
-Together, the dim vector and the zero define an affine function of array indices @code{i₀, i₁, ..} that produces an index into the root vector (or root for short). Thus, the array is simply a multidimensional view of the root.
+Together, the dim vector and the zero define an affine function of array indices @code{i₀, i₁, ..} that produces an index into the root. Thus, the array is a multidimensional view of the root.
 
 For example, the following pieces
 
@@ -391,7 +392,7 @@ doesn't.
 @section Built-in Guile arrays
 @c ------------------------------------------------
 
-Dense multidimensional arrays work similarly in every language that offers them, and built-in Guile arrays are no different —they also have a root (@code{shared-array-root}), a zero (computable from @code{shared-array-offset} and @code{array-shape}), and a dim vector (@code{array-shape}, @code{shared-array-increments}). Functionally, they are entirely equivalent to the objects offered by @code{newra}. Why replace them?
+Dense multidimensional arrays work similarly in every language that offers them, and built-in Guile arrays are no different — they also have a root (@code{shared-array-root}), a zero (computable from @code{shared-array-offset} and @code{array-shape}), and a dim vector (@code{array-shape}, @code{shared-array-increments}). Functionally, they are entirely equivalent to the objects offered by @code{newra}. Why replace them?
 
 @cindex libguile
 Built-in Guile arrays are implemented in C, as part of libguile. As a Guile type they have their own low-level type tag, and all the basic array operations are C stubs, even the most basic functions such as @code{array-ref} or @code{array-rank}. Obtaining any of the components of the array requires calling into C. There are several problems with this.
@@ -666,7 +667,8 @@ The writing mode can be configured with the following parameter, available from 
 @cindex @code{*ra-print*}
 @anchor{x-star-ra-print-star}
 @deffn @w{Parameter} *ra-print* (lambda (array port) ...)
-@end deffn
+
+Set the default printer for arrays.
 
 For example
 @verbatim
@@ -693,6 +695,7 @@ $1 =
 @end verbatim
 
 The default printer can be reset with @code{(*ra-print* #f)}.
+@end deffn
 
 @c ------------------------------------------------
 @node Iteration
@@ -743,7 +746,7 @@ The iteration procedures in @code{newra} all perform rank extension of their arg
 @result{} @code{#%2:5:5((1 2 3 4 5) (2 4 6 8 10) (3 6 9 12 15) (4 8 12 16 20) (5 10 15 20 25))}
 @end example
 
-Another example using @ref{x-ra-copy!, ra-copy!},
+Another example using @ref{x-ra-copy!, @code{ra-copy!}},
 
 @example
 @verbatim
@@ -946,7 +949,7 @@ a
 @cindex @code{⍴}, reshape
 To match APL ρ, @code{newra} offers three separate functions.
 
-@ref{x-ra-reshape, @code{ra-reshape}} and @ref{x-ra-ravel, @code{ra-ravel}} are in a way the inverse of each other. @code{ra-reshape} makes an axis into (potentially) many, while @code{ra-ravel} collapses a block of axes into a single axis. Neither is able to increase the size of the array (although @code{ra-reshape} can @emph{reduce} it). For that purpose @ref{x-ra-tile, @code{ra-tile}} is provided.
+@ref{x-ra-reshape, @code{ra-reshape}} and @ref{x-ra-ravel, @code{ra-ravel}} are in a way the inverse of each other. @code{ra-reshape} folds an axis into (potentially) many, while @code{ra-ravel} makes a block of axes into a single axis. Neither is able to increase the size of the array (although @code{ra-reshape} can @emph{reduce} it). For that purpose @ref{x-ra-tile, @code{ra-tile}} is provided.
 
 @example
 @verbatim
@@ -1209,7 +1212,7 @@ This ability of @code{ra-transpose} can be exploited to compute `outer products'
 @end example
 
 @cindex prefix matching
-The trailing axes then match with @code{A} through through @ref{Rank extension,prefix matching}.
+The trailing axes then match through @ref{Rank extension,prefix matching}.
 
 @example
 @verbatim
@@ -1407,7 +1410,7 @@ In array languages such as APL, scalar operations are implicitly extended to wor
 @section Differences with...
 @c ------------------------------------------------
 
-If you come to @code{newra} from another array language or library, you may want to be aware of some of these differences.
+If you come to @code{newra} from another array language or library, you may want to be aware of some of these differences. See also the @ref{Cheatsheet}.
 
 Differences with built-in Guile arrays:
 @itemize
@@ -1616,7 +1619,7 @@ Slice @var{a} to the intersection of the bounds of @var{a} and @var{b}. If @var{
 └───┴───┴───┴───┴───┴───┴───┴───┴───┘
 @end verbatim
 @verbatim
-(ra-fill! (ra-clip f (ra-clip a b)) " █ ")
+(ra-fill! (ra-clip f (ra-clip a b)) " o ")
 (ra-format f)
 @end verbatim
 @result{}
@@ -1628,9 +1631,9 @@ Slice @var{a} to the intersection of the bounds of @var{a} and @var{b}. If @var{
 ├───┼───┼───┼───┼───┼───┼───┼───┼───┤
 │   │ A │ A │ A │ A │ A │ A │   │   │
 ├───┼───┼───┼───┼───┼───┼───┼───┼───┤
-│   │ A │ A │ A │ █ │ █ │ █ │ B │   │
+│   │ A │ A │ A │ o │ o │ o │ B │   │
 ├───┼───┼───┼───┼───┼───┼───┼───┼───┤
-│   │ A │ A │ A │ █ │ █ │ █ │ B │   │
+│   │ A │ A │ A │ o │ o │ o │ B │   │
 ├───┼───┼───┼───┼───┼───┼───┼───┼───┤
 │   │   │   │   │ B │ B │ B │ B │   │
 ├───┼───┼───┼───┼───┼───┼───┼───┼───┤
@@ -1996,7 +1999,9 @@ Each of the bounds may be an integer (a length) or a pair of integers (lower and
 @end verbatim
 @end example
 
-@code{ra-reshape} always returns a view of @var{a}. It is an error if such a view cannot be produced for the given arguments. In practice this means that the product of the lengths in @var{bounds} must not exceed the length of axis @var{k} of @var{a}. For example
+The result of @code{ra-reshape} always shares the root of @var{a}.
+
+It is an error if the product of the lengths in @var{bounds} exceeds the length of axis @var{k} of @var{a}. For example
 
 @example
 @verbatim
@@ -2496,8 +2501,8 @@ where @var{i} : @var{i₀} @var{i₁} ... The special value @code{#t} is underst
 Additionally, if each @var{i} ... is one of
 @itemize
 @item @code{#t}
-@item an ra of type @code{d}
-@item an ra of rank 0
+@item an array of type @code{d}
+@item an array of rank 0
 @item an integer
 @end itemize
 then the result @var{b} shares the root of @var{a}. In all other cases a new root is allocated for the result.
@@ -2518,7 +2523,7 @@ Copy @var{c} to the outer product slice of @var{a} by indices @var{i} ...
 
 @example
 @verbatim
-a(i₀(j₀₀ j₀₁ ...) i₁(j₁₀ j₁₁ ...) ...) <- c(j₀₀ j₀₁ ... j₁₀ j₁₁ ...)
+a(i₀(j₀₀ j₀₁ ...) i₁(j₁₀ j₁₁ ...) ...) ← c(j₀₀ j₀₁ ... j₁₀ j₁₁ ...)
 @end verbatim
 @end example
 
@@ -2587,7 +2592,7 @@ See also: @ref{x-array->ra,@code{array->ra}}, @ref{x-ra-singletonize,@code{ra-si
 @anchor{x-ra-singletonize}
 @deffn @w{Function} ra-singletonize a
 
-Return an ra with the same root and dimensions as @var{a}, except that dead axes (axes with step 0 and undefined length) have their length set to 1.
+Return an array with the same root and dimensions as @var{a}, except that dead axes (axes with step 0 and undefined length) have their length set to 1.
 
 @example
 @verbatim
@@ -2605,6 +2610,11 @@ Return an ra with the same root and dimensions as @var{a}, except that dead axes
 @end example
 
 @end deffn
+
+@c ------------------------------------------------
+@node Cheatsheet
+@chapter Cheatsheet
+@c ------------------------------------------------
 
 @c ------------------------------------------------
 @node @mybibnode{}

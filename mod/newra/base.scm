@@ -296,6 +296,7 @@ See also: ra-offset
    ((zero dims i0 i1) (%ra-pos 0 zero dims i0 i1))
    ((zero dims i0 i1 i2) (%ra-pos 0 zero dims i0 i1 i2))
    ((zero dims i0 i1 i2 i3) (%ra-pos 0 zero dims i0 i1 i2 i3))
+   ((zero dims i0 i1 i2 i3 i4) (%ra-pos 0 zero dims i0 i1 i2 i3 i4))
    ((zero dims . i_)
     (let loop ((j 0) (pos zero) (i i_))
       (if (null? i)
@@ -375,6 +376,7 @@ See also: ra-cell ra-slice ra-from
    ((ra i0 i1) (%ra-ref ra i0 i1))
    ((ra i0 i1 i2) (%ra-ref ra i0 i1 i2))
    ((ra i0 i1 i2 i3) (%ra-ref ra i0 i1 i2 i3))
+   ((ra i0 i1 i2 i3 i4) (%ra-ref ra i0 i1 i2 i3 i4))
    ((ra . i)
     (unless (= (ra-rank ra) (length i))
       (throw 'bad-number-of-indices (ra-rank ra) (length i)))
@@ -396,6 +398,7 @@ See also: ra-cell ra-slice ra-from
    ((ra o i0 i1) (%ra-set! ra o i0 i1))
    ((ra o i0 i1 i2) (%ra-set! ra o i0 i1 i2))
    ((ra o i0 i1 i2 i3) (%ra-set! ra o i0 i1 i2 i3))
+   ((ra o i0 i1 i2 i3 i4) (%ra-set! ra o i0 i1 i2 i3 i4))
    ((ra o . i)
     (unless (= (ra-rank ra) (length i))
       (throw 'bad-number-of-indices (ra-rank ra) (length i)))
@@ -485,6 +488,7 @@ See also: ra-ref ra-slice ra-from
    ((ra i0 i1) (%ra-cell ra i0 i1))
    ((ra i0 i1 i2) (%ra-cell ra i0 i1 i2))
    ((ra i0 i1 i2 i3) (%ra-cell ra i0 i1 i2 i3))
+   ((ra i0 i1 i2 i3 i4) (%ra-cell ra i0 i1 i2 i3 i4))
    ((ra . i)
     (let ((ra (ra-check ra)))
       (let ((pos (apply ra-pos (%%ra-zero ra) (%%ra-dims ra) i))
@@ -497,7 +501,7 @@ See also: ra-ref ra-slice ra-from
 
 (define (make-ra* data zero dims type vlen vref vset!)
   (letrec ((ra
-            (make-struct/no-tail ; FIXME use /simple on Guile 3.
+            (make-struct/simple
              <ra-vtable>
              (case-lambda
                (() (ra-cell ra))
@@ -505,6 +509,7 @@ See also: ra-ref ra-slice ra-from
                ((i0 i1) (ra-cell ra i0 i1))
                ((i0 i1 i2) (ra-cell ra i0 i1 i2))
                ((i0 i1 i2 i3) (ra-cell ra i0 i1 i2 i3))
+               ((i0 i1 i2 i3 i4) (ra-cell ra i0 i1 i2 i3 i4))
                (i (apply ra-cell ra i)))
 ; it should be easier :-/
              (match-lambda*
@@ -513,6 +518,7 @@ See also: ra-ref ra-slice ra-from
                ((i0 i1 o) (ra-set! ra o i0 i1))
                ((i0 i1 i2 o) (ra-set! ra o i0 i1 i2))
                ((i0 i1 i2 i3 o) (ra-set! ra o i0 i1 i2 i3))
+               ((i0 i1 i2 i3 i4 o) (ra-set! ra o i0 i1 i2 i3 i4))
                ((i ... o) (apply ra-set! ra o i)))
              data zero dims type vlen vref vset!)))
     ra))
