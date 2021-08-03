@@ -19,7 +19,10 @@
         (ice-9 match) (newra base) (newra map)
         (newra cat) (newra from) (newra lib))
 
-(define *ra-print* (make-parameter #f))
+(define *ra-print*
+  (make-parameter #f (lambda (x) (match x
+                                   ((or 'box 'default #f (? procedure?)) x)
+                                   (x (throw 'bad-argument-to-*ra-print* x))))))
 
 ; FIXME still need to extend (truncated-print).
 
@@ -191,4 +194,7 @@
     scc))
 
 (struct-set! (@ (newra base) <ra-vtable>) vtable-index-printer
-             (lambda (ra o) ((or (*ra-print*) ra-print) ra o)))
+             (lambda (ra o) (match (*ra-print*)
+                              ('box (newline o) (ra-format ra o))
+                              ((or 'default #f) (ra-print ra o))
+                              (f (f ra o)))))

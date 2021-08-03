@@ -682,6 +682,7 @@ $1 = #%2d((0 1 2) (3 4 5))
 
 @verbatim
 (*ra-print* (lambda (ra o) (newline o) (ra-format ra o)))
+; (*ra-print* 'box) ; same thing
 (ra-i 2 3)
 @end verbatim
 @result {}
@@ -694,7 +695,7 @@ $1 =
 └─┴─┴─┘
 @end verbatim
 
-The default printer can be reset with @code{(*ra-print* #f)}.
+The default printer can be reset with @code{(*ra-print* #f)} or @code{(*ra-print* 'default)}.
 @end deffn
 
 @c ------------------------------------------------
@@ -1088,23 +1089,43 @@ Here @ref{x-ra-reshape,@code{ra-reshape}} is used to move axis 0 of the second a
 @result{} @code{#%2@@1:1:8((a a a a b b b b))}
 @end example
 
+On the concatenation axis, only lengths matter; for both @code{ra-cat} and @code{ra-scat}, the lower bound is 0 in the result, and the lower bounds of the arguments are ignored.
+
+@example
+@verbatim
+(define a (make-ra 'a '(1 2) '(2 3)))
+(define b (make-ra 'b '(1 2)))
+(define c (make-ra 'c '(1 2) '(-1 0)))
+(ra-format (ra-cat #t 1 a b c))
+@end verbatim
+@result{}
+@verbatim
+#%2@1:2:5─┐
+│a│a│b│c│c│
+├─┼─┼─┼─┼─┤
+│a│a│b│c│c│
+└─┴─┴─┴─┴─┘
+@end verbatim
+@end example
+
 Both @code{ra-cat} and @code{ra-scat} accept a negative concatenation axis. That will rank-extend all the arguments to the left (@code{ra-cat}) or to the right (@code{ra-scat}) before concatenating on the leftmost (@code{ra-cat}) or rightmost (@code{ra-scat}) axis. In the same way, one may give a concatenation axis which is beyond the rank of the argument with the highest rank. Consider
 
 @example
 @verbatim
-(ra-cat #t -1 (ra-i 3) (array->ra #(a b c)))
+(define abc (list->ra 1 #(a b c)))
+(ra-cat #t -1 (ra-i 3) abc)
 @end verbatim
 @result{} @code{#%2:2:3((0 1 2) (a b c))}
 @end example
 @example
 @verbatim
-(ra-cat #t 0 (ra-i 3) (array->ra #(a b c)))
+(ra-cat #t 0 (ra-i 3) abc)
 @end verbatim
 @result{} @code{#%1:6(0 1 2 a b c)}
 @end example
 @example
 @verbatim
-(ra-cat #t 1 (ra-i 3) (array->ra #(a b c)))
+(ra-cat #t 1 (ra-i 3) abc)
 @end verbatim
 @result{} @code{#%2:3:2((0 a) (1 b) (2 c))}
 @end example
@@ -1113,19 +1134,19 @@ vs
 
 @example
 @verbatim
-(ra-scat #t -1 (ra-i 3) (array->ra #(a b c)))
+(ra-scat #t -1 (ra-i 3) abc)
 @end verbatim
 @result{} @code{#%2:3:2((0 a) (1 b) (2 c))}
 @end example
 @example
 @verbatim
-(ra-scat #t 0 (ra-i 3) (array->ra #(a b c)))
+(ra-scat #t 0 (ra-i 3) abc)
 @end verbatim
 @result{} @code{#%1:6(0 1 2 a b c)}
 @end example
 @example
 @verbatim
-(ra-scat #t 1 (ra-i 3) (array->ra #(a b c)))
+(ra-scat #t 1 (ra-i 3) abc)
 @end verbatim
 @result{} @code{#%2:2:3((0 1 2) (a b c))}
 @end example
@@ -1843,7 +1864,7 @@ Create rank-1 index array. The root is of type @code{<aseq>}.
 
 Concatenate arrays @var{a} ... along axis @var{i}. The arguments are prefix-matched and rank extended before concatenation. All axes must match, except possibly the concatenation axis.
 
-This function always produces a new array, of the type given. If @var{type} is @code{#f} then the type of the first @var{a} is used. The lower bound in the concatenation axis of the result is 0; the lower bounds of the arguments in the concatenation axis are ignored.
+This function always produces a new array, of the type given. If @var{type} is @code{#f} then the type of the first @var{a} is used, unless that is @code{d}, in which case @code{#t} is used. The lower bound in the concatenation axis of the result is 0; the lower bounds of the arguments in the concatenation axis are ignored.
 
 @example
 @verbatim
@@ -2115,9 +2136,7 @@ See also: @ref{x-ra-rotate,@code{ra-rotate}}, @ref{x-ra-reverse,@code{ra-reverse
 
 Concatenate @var{i}-items of arrays @var{a} ... . The arguments are suffix-matched and rank extended before concatenation. All axes must match, except possibly the concatenation axis.
 
-This function always produces a new array, of the type given. If @var{type} is @code{#f} then the type of the first @var{a} is used. The lower bound in the concatenation axes of the result is 0; the lower bounds of the arguments in the concatenation axis are ignored.
-
-See also: @ref{x-ra-cat,@code{ra-cat}}, @ref{x-ra-tile,@code{ra-tile}}, @ref{Concatenation}.
+This function always produces a new array, of the type given. If @var{type} is @code{#f} then the type of the first @var{a} is used, unless that is @code{d}, in which case @code{#t} is used. The lower bound in the concatenation axis of the result is 0; the lower bounds of the arguments in the concatenation axis are ignored.
 
 @example
 @verbatim
@@ -2125,6 +2144,9 @@ See also: @ref{x-ra-cat,@code{ra-cat}}, @ref{x-ra-tile,@code{ra-tile}}, @ref{Con
 @end verbatim
 @result{} #%2((0 1) (2 3) (a b))
 @end example
+
+See also: @ref{x-ra-cat,@code{ra-cat}}, @ref{x-ra-tile,@code{ra-tile}}, @ref{Concatenation}.
+
 @end deffn
 
 @cindex @code{ra-shape}
@@ -2412,7 +2434,7 @@ See also: @ref{x-ra-set!,@code{ra-set!}}, @ref{x-ra-copy!,@code{ra-copy!}}, @ref
 @cindex @code{ra-order-c?}
 @anchor{x-ra-order-c?}
 @deffn @w{Function} ra-order-c? a [n [org]]
-Check whether axes [@var{org} ... @var{org}+@var{n}] of @var{ra} are in C-order. By default, check that the whole array is in C-order, and additionally that the step on the last axis is 1 (i.e. the array is ‘packed’).
+Check whether axes [@var{org} ... @var{org}+@var{n}) of @var{ra} are in C-order. By default, check that the whole array is in C-order, and additionally that the step on the last axis is 1 (i.e. the array is ‘packed’).
 
 @code{(ra-order-c? a n org)} implies @code{(eq? (ra-root a) (ra-root (@ref{x-ra-ravel, @code{ra-ravel}} a n org)))}. Note that the stronger condition @code{(ra-order-c? a)} is not necessary for @code{(eq? (ra-root a) (ra-root (ra-ravel a)))} to hold.
 
