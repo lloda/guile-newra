@@ -1,13 +1,13 @@
 ; -*- mode: scheme; coding: utf-8 -*-
 ; Replacement for Guile C-based array system - Tests
 
-; (c) Daniel Llorens - 2016-2018
+; (c) Daniel Llorens - 2016-2021
 ; This library is free software; you can redistribute it and/or modify it under
 ; the terms of the GNU General Public License as published by the Free
 ; Software Foundation; either version 3 of the License, or (at your option) any
 ; later version.
 
-; Run with $GUILE -L mod -s test.scm
+; Run with $GUILE -L mod test.scm
 
 (import (newra) (newra test) (newra tools) (newra read)
         (srfi :64) (srfi :26) (srfi :8) (only (srfi :1) fold iota drop)
@@ -80,19 +80,30 @@
        (ra1 (array->ra #@1(1 2 3)))
        (ra2 (array->ra #2((1 2) (3 4))))
        (ra3 (array->ra #2@1@1((1 2) (3 4))))
-       (ra4 (array->ra #0(99))))
+       (ra4 (array->ra #0(99)))
+       (ra5 (array->ra #0s64(99)))
+       (ra6 (array->ra #0((a)))))
 
   (test-equal (ra->string ra0) "#%1:3(1 2 3)")
   (test-equal (ra->string ra1) "#%1@1:3(1 2 3)")
   (test-equal (ra->string ra2) "#%2:2:2((1 2) (3 4))")
   (test-equal (ra->string ra3) "#%2@1:2@1:2((1 2) (3 4))")
-  (test-equal (ra->string ra4) "#%0(99)")
+  (parameterize ((*ra-parenthesized-rank-zero* #t))
+    (test-equal (ra->string ra4) "#%0(99)")
+    (test-equal (ra->string ra5) "#%0s64(99)")
+    (test-equal (ra->string ra6) "#%0((a))"))
+  (parameterize ((*ra-parenthesized-rank-zero* #f))
+    (test-equal (ra->string ra4) "#%0 99")
+    (test-equal (ra->string ra5) "#%0s64 99")
+    (test-equal (ra->string ra6) "#%0 (a)"))
 
   (test-equal  #(1 2 3)            (ra->array ra0))
   (test-equal  #@1(1 2 3)          (ra->array ra1))
   (test-equal  #2((1 2) (3 4))     (ra->array ra2))
   (test-equal  #2@1@1((1 2) (3 4)) (ra->array ra3))
-  (test-equal  #0(99)              (ra->array ra4)))
+  (test-equal  #0(99)              (ra->array ra4))
+  (test-equal  #0s64(99)           (ra->array ra5))
+  (test-equal  #0((a))             (ra->array ra6)))
 
 ; dead axes
 (test-equal "#%2d:d:10((0 1 2 3 4 5 6 7 8 9))" (ra->string (ra-transpose (ra-i 10) 1)))

@@ -30,6 +30,7 @@
 
 ; ----------------
 ; fold - probably better ways to do this by fixing or extending (newra map)
+; FIXME consider (KONS KNIL ...) which is in some SRFI and it's just the better way :-/
 ; ----------------
 
 (define-inlinable-case ra-fold

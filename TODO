@@ -2,10 +2,12 @@
 
 Help: [C-uc .] insert timestamp [C-cc] flip checkbox [C-uucc] partial flip checkbox [C-ct] flip TODO.
 
-* TODO bugs [1/2]
+* TODO bugs [2/5]
   * [X] (call-with-input-string "#3()" read) vs (call-with-input-string "#%3()" read)
-  * [ ] docstrings don't work for define-inlinable-case
+  * [X] reader loses type when reading rank 0 arrays
   * [ ] zero lengths break ra-format
+  * [ ] ra-equal? errors out with mismatched shapes
+  * [ ] docstrings don't work for define-inlinable-case
 
 * TODO documentation [1/1]
   * [X] actually explain rank extension / prefix matching in the manual
@@ -57,7 +59,7 @@ Help: [C-uc .] insert timestamp [C-cc] flip checkbox [C-uucc] partial flip check
 * TODO misc array manipulation [0/1]
   * [ ] mapping of indices (beyond ra-reshape/ra-from). Maybe just explain in manual?
 
-* TODO fundamental features [3/5]
+* TODO fundamental features [3/7]
   * [X] unsized index vectors
   * [X] tensor indices
   * [X] broadcasting
@@ -69,7 +71,7 @@ Help: [C-uc .] insert timestamp [C-cc] flip checkbox [C-uucc] partial flip check
     - [ ] each (cf array-curry in srfi-179 or the old Guile array-enclose).
   * [ ] output types
 
-* TODO performance [2/6]
+* TODO performance [0/4]
   * [ ] u8 ra-fill! vs native (see bench.scm)
   * [ ] f64 ra-copy! vs native (see bench.scm)
   * [ ] ra-ref / ra-set! with 1 or 2 args vs built-in array-ref / array-set!
@@ -83,7 +85,7 @@ Help: [C-uc .] insert timestamp [C-cc] flip checkbox [C-uucc] partial flip check
   * [ ] reading of arrays with inf axes
   * [ ] reading of arrays with dead axes
 
-* TODO quality of life [1/9]
+* TODO quality of life [2/9]
   * [X] rank-1 (or higher!) cases in the unrolled section (e.g. bytevector-copy!, bytevector-fill!).
   * [ ] rank-1 (or higher!) cases for generating functions (e.g. array->list).
   * [ ] the reverse of ra-singletonize, find a good name (see 'differences with numpy' in the doc).
@@ -91,8 +93,8 @@ Help: [C-uc .] insert timestamp [C-cc] flip checkbox [C-uucc] partial flip check
   * [ ] refactor macros
   * [ ] bench tracking
   * [ ] move struct defs to (newra types)
-  * [-] parameters to control print format (eg print sizes/strides, truncate...)
-    - [ ] CL/SRFI-163 style rank-0 (e.g. '#0 x' instead of '#0(x)').
+  * [X] parameters to control print format (eg print sizes/strides, truncate...)
+    - [X] CL/SRFI-163 style rank-0 (e.g. '#0 x' instead of '#0(x)').
     - [X] print sizes in prefix
     - [X] pretty-print
   * [-] pretty printer

@@ -13,7 +13,8 @@
 ;;; Code:
 
 (define-module (newra print)
-  #:export (ra-print-prefix ra-print ra-format *ra-print*))
+  #:export (ra-print-prefix ra-print ra-format
+            *ra-print* *ra-parenthesized-rank-zero*))
 
 (import (rnrs io ports) (rnrs base) (srfi :1) (srfi :4 gnu) (srfi :26) (srfi :71)
         (ice-9 match) (newra base) (newra map)
@@ -23,6 +24,9 @@
   (make-parameter #f (lambda (x) (match x
                                    ((or 'box 'default #f (? procedure?)) x)
                                    (x (throw 'bad-argument-to-*ra-print* x))))))
+
+(define *ra-parenthesized-rank-zero*
+  (make-parameter #t))
 
 ; FIXME still need to extend (truncated-print).
 
@@ -55,10 +59,14 @@
         (rank (ra-rank ra)))
 ; special case
     (if (zero? rank)
-      (begin
-        (display #\( port)
-        (write (ref base) port)
-        (display #\) port))
+      (if (*ra-parenthesized-rank-zero*)
+        (begin
+          (display #\( port)
+          (write (ref base) port)
+          (display #\) port))
+        (begin
+          (display #\space port)
+          (write (ref base) port)))
       (let loop ((k 0) (b base))
         (let* ((dim (vector-ref (ra-dims ra) k))
                (i (dim-step dim))

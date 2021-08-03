@@ -3,7 +3,7 @@
 <!-- Created by GNU Texinfo 6.8, https://www.gnu.org/software/texinfo/ -->
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-<!-- newra (version 1, updated 2021 August 1)
+<!-- newra (version 1, updated 2021 August 3)
 
 (c) lloda 2017-2021
 
@@ -105,7 +105,7 @@ Next: <a href="#Introduction" accesskey="n" rel="next">Introduction</a> &nbsp; [
 </div>
 <span id="newra"></span><h1 class="top"><code>newra</code></h1>
 
-<p><code>newra</code> (version 1, updated 2021 August 1)
+<p><code>newra</code> (version 1, updated 2021 August 3)
 </p>
 <p>(c) lloda 2017&ndash;2021
 </p>
@@ -444,7 +444,7 @@ Previous: <a href="#The-pieces-of-an-array" accesskey="p" rel="prev">The pieces 
 </p>
 <p>Second, the C stubs create a barrier to optimization by the Scheme compiler. The main loop of an operation such as <code>(array-map! c + a b)</code> has to be implemented in C (for the reasons given above) and then it has to call back to Scheme on each iteration in order to apply <code>+</code>. Since the Scheme compiler doesn&rsquo;t have any special support for <code>array-map!</code>, it doesn&rsquo;t know what the types of the arguments are, etc. and those checks and dispatches are repeated over and over. <a id="DOCF3" href="#FOOT3"><sup>3</sup></a>
 </p>
-<p>Third, the larger functions of the array interface, such as <code>array-map!</code>, etc. are not interruptible. This is especially inconvenient when operating on large arrays.
+<p>Third, some of the the larger functions of the array interface, such as <code>array-map!</code>, etc. are not interruptible. This is especially inconvenient when operating on large arrays.
 </p>
 <p>These problems are solved if the built-in type is replaced with a new type defined in Scheme.
 </p>
@@ -665,7 +665,7 @@ s
 <div class="example">
 <pre class="verbatim">(ra-format (list-&gt;ra 2 '((1 hello) (&quot;try&quot; 2) (never 3.14))) #:fmt &quot;~s&quot;)
 </pre><pre class="example">&rArr;
-#%2:3:2─────┐
+</pre><pre class="verbatim">#%2:3:2─────┐
 │    1│hello│
 ├─────┼─────┤
 │&quot;try&quot;│    2│
@@ -674,16 +674,17 @@ s
 └─────┴─────┘
 </pre></div>
 
-<p>The writing mode can be configured with the following parameter, available from <code>(newra print)</code>.
+<p>The writing mode can be configured with the following parameter.
 </p>
 <span id="index-_002ara_002dprint_002a"></span>
 <span id="x_002dstar_002dra_002dprint_002dstar"></span><dl class="def">
 <dt id="index-_002ara_002dprint_002a-1"><span class="category">Parameter<!-- /@w -->: </span><span><strong>*ra-print*</strong> <em>(lambda (array port) ...)</em><a href='#index-_002ara_002dprint_002a-1' class='copiable-anchor'> &para;</a></span></dt>
 <dd>
-<p>Set the default printer for arrays.
+<p>Set the default printer for arrays. This parameter is available from <code>(newra print)</code>.
 </p>
 <p>For example
-</p><pre class="verbatim">(*ra-print* (lambda (ra o) (ra-print ra o #:dims? #f)))
+</p><pre class="verbatim">(import (newra print))
+(*ra-print* (lambda (ra o) (ra-print ra o #:dims? #f)))
 (ra-i 2 3)
 </pre><p>&rArr;
 </p><pre class="verbatim">$1 = #%2d((0 1 2) (3 4 5))
@@ -701,6 +702,66 @@ s
 </pre>
 <p>The default printer can be reset with <code>(*ra-print* #f)</code> or <code>(*ra-print* 'default)</code>.
 </p></dd></dl>
+
+<span id="index-SRFI_002d163"></span>
+<p>By default, rank-0 arrays are printed like the built-in Guile arrays, with extra parentheses around the content. In the read syntax specified in [<a href="#Sources">SRFI-163</a>]
+, those parentheses are not used. The following parameter allows one to choose either behavior for both the printer and the reader.
+</p>
+<span id="index-_002ara_002dparenthesized_002drank_002dzero_002a"></span>
+<span id="x_002dstar_002dra_002dparenthesized_002drank_002dzero_002dstar"></span><dl class="def">
+<dt id="index-_002ara_002dparenthesized_002drank_002dzero_002a-1"><span class="category">Parameter<!-- /@w -->: </span><span><strong>*ra-parenthesized-rank-zero*</strong> <em>boolean</em><a href='#index-_002ara_002dparenthesized_002drank_002dzero_002a-1' class='copiable-anchor'> &para;</a></span></dt>
+<dd>
+<p>Control read syntax of rank-0 arrays. This parameter is available from <code>(newra print)</code> or <code>(newra read)</code>.
+</p>
+<p>If <code>(*ra-parenthesized-rank-zero*)</code> is true, the read syntax for rank-0 arrays is
+</p>
+<div class="display">
+<pre class="display"><code>#%0TYPE(item)</code>
+</pre></div>
+
+<p>If it is <code>#f</code>, it is
+</p>
+<div class="display">
+<pre class="display"><code>#%0TYPE item</code>
+</pre></div>
+
+<p>with <code>TYPE</code> being optional in either case. Note that these are not compatible:
+</p>
+<div class="example">
+<pre class="verbatim">(ra-ref (parameterize ((*ra-parenthesized-rank-zero* #t))
+          (call-with-input-string &quot;#%0(a)&quot; read)))
+</pre><pre class="example">&rArr; <code>a</code>
+</pre><pre class="verbatim">(ra-ref (parameterize ((*ra-parenthesized-rank-zero* #f))
+          (call-with-input-string &quot;#%0(a)&quot; read)))
+</pre><pre class="example">&rArr; <code>(a)</code>
+</pre><pre class="verbatim">(ra-ref (parameterize ((*ra-parenthesized-rank-zero* #f))
+          (call-with-input-string &quot;#%0 a&quot; read)))
+</pre><pre class="example">&rArr; <code>a</code>
+</pre></div>
+
+<p>In the last example, the space is necessary (unlike in [<a href="#Sources">SRFI-163</a>]
+) since the array type tag is optional in Guile.
+</p>
+<div class="example">
+<pre class="verbatim">(parameterize ((*ra-parenthesized-rank-zero* #f))
+  (call-with-input-string &quot;#%0a&quot; read))
+</pre><pre class="example">&rArr; Wrong type (expecting character): #&lt;eof&gt;
+</pre></div>
+
+<p>The printer always uses a space in this mode:
+</p>
+<div class="example">
+<pre class="verbatim">(parameterize ((*ra-parenthesized-rank-zero* #f))
+ (display (make-ra '(a))))
+</pre><pre class="example">&rArr; <code>#%0 (a)</code>
+</pre></div>
+
+<p>Note that setting this parameter to <code>#f</code> still doesn&rsquo;t make the array read syntax fully compatible with that of [<a href="#Sources">SRFI-163</a>]
+, since the type tag <code>a</code> is reserved (in Guile) for character arrays.
+</p>
+<p>The default value of this parameter is <code>#t</code>.
+</p>
+</dd></dl>
 
 <hr>
 </div>
@@ -1634,6 +1695,7 @@ element
 ┃═══════════╩═══════════╩═══════════┃═══════════╩═══════════╩═══════════┃
 </pre></div>
 
+<span id="index-SRFI_002d163-1"></span>
 <p>A nested array (example from [<a href="#Sources">SRFI-163</a>]
 ):
 </p>
@@ -2083,7 +2145,7 @@ a
 <span id="index-ra_002dslice_002dfor_002deach"></span>
 <span id="x_002dra_002dslice_002dfor_002deach"></span><dl class="def">
 <dt id="index-ra_002dslice_002dfor_002deach-1"><span class="category">Function<!-- /@w -->: </span><span><strong>ra-slice-for-each</strong> <em>k op a ...</em><a href='#index-ra_002dslice_002dfor_002deach-1' class='copiable-anchor'> &para;</a></span></dt>
-<dd><p>Iterate over the <var>k</var>-frames of arrays <var>a</var> ..., applying <var>op</var> to the respective slices. The arguments <var>a</var> ... must have matching dimensions over their <var>k</var>-frames.
+<dd><p>Iterate over the <var>k</var>-frames of arrays <var>a</var> ..., applying <var>op</var> to the respective slices. The arguments <var>a</var> ... must have matching shapes over their <var>k</var>-frames.
 </p>
 <p>Note that it isn&rsquo;t necessary for arguments <var>a</var> to have rank ≥ <var>k</var>. Arguments with rank &lt; <var>k</var> are rank-extended and the corresponding arguments are 0-cells. For example:
 </p>
@@ -2107,7 +2169,7 @@ a
 <span id="index-ra_002dmap_0021"></span>
 <span id="x_002dra_002dmap_0021"></span><dl class="def">
 <dt id="index-ra_002dmap_0021-1"><span class="category">Function<!-- /@w -->: </span><span><strong>ra-map!</strong> <em>dst op a ... &rArr; dst</em><a href='#index-ra_002dmap_0021-1' class='copiable-anchor'> &para;</a></span></dt>
-<dd><p>Iterate over arrays <var>dst</var> <var>a</var> ... applying <var>op</var> to the respective elements in <var>a</var>, and storing the result in the respective element of <var>dst</var>. The arguments must have matching dimensions and the type of <var>dst</var> must be compatible with the results of <var>op</var>.
+<dd><p>Iterate over arrays <var>dst</var> <var>a</var> ... applying <var>op</var> to the respective elements in <var>a</var>, and storing the result in the respective element of <var>dst</var>. The arguments must have matching shapes and the type of <var>dst</var> must be compatible with the results of <var>op</var>.
 </p>
 <p>This is equivalent to
 </p><pre class="verbatim">(apply ra-slice-for-each
@@ -2120,7 +2182,7 @@ a
 <span id="index-ra_002dcopy_0021"></span>
 <span id="x_002dra_002dcopy_0021"></span><dl class="def">
 <dt id="index-ra_002dcopy_0021-1"><span class="category">Function<!-- /@w -->: </span><span><strong>ra-copy!</strong> <em>dst src &rArr; dst</em><a href='#index-ra_002dcopy_0021-1' class='copiable-anchor'> &para;</a></span></dt>
-<dd><p>Copy <var>src</var> to <var>dst</var>. The arguments must have matching dimensions and be of compatible types.
+<dd><p>Copy <var>src</var> to <var>dst</var>. The arguments must have matching shapes and be of compatible types.
 </p>
 <p>For valid arguments, this is equivalent to any one of
 </p><pre class="verbatim">(ra-map! dst identity src)
@@ -2184,7 +2246,7 @@ a
 <span id="index-ra_002dorder_002dc_003f"></span>
 <span id="x_002dra_002dorder_002dc_003f"></span><dl class="def">
 <dt id="index-ra_002dorder_002dc_003f-1"><span class="category">Function<!-- /@w -->: </span><span><strong>ra-order-c?</strong> <em>a [n [org]]</em><a href='#index-ra_002dorder_002dc_003f-1' class='copiable-anchor'> &para;</a></span></dt>
-<dd><p>Check whether axes [<var>org</var> ... <var>org</var>+<var>n</var>) of <var>ra</var> are in C-order. By default, check that the whole array is in C-order, and additionally that the step on the last axis is 1 (i.e. the array is ‘packed’).
+<dd><p>Check whether axes [<var>org</var> ... <var>org</var>+<var>n</var>) of <var>a</var> are in C-order. By default, check that the whole array is in C-order, and additionally that the step on the last axis is 1 (i.e. the array is ‘packed’).
 </p>
 <p><code>(ra-order-c? a n org)</code> implies <code>(eq? (ra-root a) (ra-root (<a href="#x_002dra_002dravel"><code>ra-ravel</code></a> a n org)))</code>. Note that the stronger condition <code>(ra-order-c? a)</code> is not necessary for <code>(eq? (ra-root a) (ra-root (ra-ravel a)))</code> to hold.
 </p>
@@ -2243,6 +2305,56 @@ a
 
 
 <p>See also: <a href="#x_002dra_002dslice"><code>ra-slice</code></a>, <a href="#x_002dra_002dref"><code>ra-ref</code></a>, <a href="#x_002dra_002dfrom"><code>ra-from</code></a>, <a href="#Slicing">Slicing</a>.
+</p>
+</dd></dl>
+
+<span id="index-ra_002dequal_003f"></span>
+<span id="x_002dra_002dequal_003f"></span><dl class="def">
+<dt id="index-ra_002dequal_003f-1"><span class="category">Function<!-- /@w -->: </span><span><strong>ra-equal?</strong> <em>a ... → boolean</em><a href='#index-ra_002dequal_003f-1' class='copiable-anchor'> &para;</a></span></dt>
+<dd>
+<p>Return <code>#t</code> if the arrays <var>a</var> ... have the same shapes and types and their
+corresponding elements are all <code>equal?</code> to each other, or <code>#f</code> otherwise.
+</p>
+<p>Note that this function isn&rsquo;t rank extending. Here&rsquo;s a rank-extending version for two arguments:
+</p>
+<div class="example">
+<pre class="verbatim">(import (ice-9 control))
+(define (ra-equal?* . a) (let/ec exit (apply ra-for-each (lambda a (unless (apply equal? a) (exit #f))) a) #t))
+</pre></div>
+
+<p>See also: <a href="#x_002dra_002dfor_002deach"><code>ra-for-each</code></a>, <a href="#x_002dra_002dfold"><code>ra-fold</code></a>, <a href="#x_002dra_002devery"><code>ra-every</code></a>, <a href="#x_002dra_002dany"><code>ra-any</code></a>.
+</p>
+</dd></dl>
+
+<span id="index-ra_002dfor_002deach"></span>
+<span id="x_002dra_002dfor_002deach"></span><dl class="def">
+<dt id="index-ra_002dfor_002deach-1"><span class="category">Function<!-- /@w -->: </span><span><strong>ra-for-each</strong> <em>op a ...</em><a href='#index-ra_002dfor_002deach-1' class='copiable-anchor'> &para;</a></span></dt>
+<dd>
+<p>See also: <a href="#x_002dra_002dslice_002dfor_002deach"><code>ra-slice-for-each</code></a>, <a href="#x_002dra_002dmap_0021"><code>ra-map</code></a>, <a href="#Iteration">Iteration</a>.
+</p>
+</dd></dl>
+
+<span id="index-ra_002dfold"></span>
+<span id="x_002dra_002dfold"></span><dl class="def">
+<dt id="index-ra_002dfold-1"><span class="category">Function<!-- /@w -->: </span><span><strong>ra-fold</strong> <em>op knil a ...</em><a href='#index-ra_002dfold-1' class='copiable-anchor'> &para;</a></span></dt>
+<dd>
+<p>See also: <a href="#x_002dra_002devery"><code>ra-every</code></a>, <a href="#x_002dra_002dany"><code>ra-any</code></a>, <a href="#Iteration">Iteration</a>.
+</p>
+</dd></dl>
+
+<span id="index-ra_002devery"></span>
+<span id="x_002dra_002devery"></span><dl class="def">
+<dt id="index-ra_002devery-1"><span class="category">Function<!-- /@w -->: </span><span><strong>ra-every</strong> <em>pred? a ...</em><a href='#index-ra_002devery-1' class='copiable-anchor'> &para;</a></span></dt>
+<dd>
+<p>See also: <a href="#x_002dra_002dfold"><code>ra-fold</code></a>, <a href="#x_002dra_002dany"><code>ra-any</code></a>.
+</p>
+</dd></dl>
+
+<span id="index-ra_002dany"></span>
+<span id="x_002dra_002dany"></span><dl class="def">
+<dt id="index-ra_002dany-1"><span class="category">Function<!-- /@w -->: </span><span><strong>ra-any</strong> <em>pred? a ...</em><a href='#index-ra_002dany-1' class='copiable-anchor'> &para;</a></span></dt>
+<dd>
+<p>See also: <a href="#x_002dra_002dfold"><code>ra-fold</code></a>, <a href="#x_002dra_002devery"><code>ra-every</code></a>.
 </p>
 </dd></dl>
 
@@ -2483,6 +2595,7 @@ Previous: <a href="#Sources" accesskey="p" rel="prev">Sources</a>, Up: <a href="
 <tr><td></td><th align="left">Index Entry</th><td>&nbsp;</td><th align="left"> Section</th></tr>
 <tr><td colspan="4"> <hr></td></tr>
 <tr><th id="Indices_cp_symbol-1">*</th><td></td><td></td></tr>
+<tr><td></td><td valign="top"><a href="#index-_002ara_002dparenthesized_002drank_002dzero_002a"><code>*ra-parenthesized-rank-zero*</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Writing-and-reading">Writing and reading</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-_002ara_002dprint_002a"><code>*ra-print*</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Writing-and-reading">Writing and reading</a></td></tr>
 <tr><td colspan="4"> <hr></td></tr>
 <tr><th id="Indices_cp_symbol-2">,</th><td></td><td></td></tr>
@@ -2577,13 +2690,18 @@ Previous: <a href="#Sources" accesskey="p" rel="prev">Sources</a>, Up: <a href="
 <tr><th id="Indices_cp_letter-R">R</th><td></td><td></td></tr>
 <tr><td></td><td valign="top"><a href="#index-ra_002d_003earray"><code>ra-&gt;array</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-ra_002damend_0021"><code>ra-amend!</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
+<tr><td></td><td valign="top"><a href="#index-ra_002dany"><code>ra-any</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-ra_002dcat"><code>ra-cat</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-ra_002dcell"><code>ra-cell</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-ra_002dclip"><code>ra-clip</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-ra_002dcopy"><code>ra-copy</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-ra_002dcopy_0021"><code>ra-copy!</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-ra_002ddimensions"><code>ra-dimensions</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
+<tr><td></td><td valign="top"><a href="#index-ra_002dequal_003f"><code>ra-equal?</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
+<tr><td></td><td valign="top"><a href="#index-ra_002devery"><code>ra-every</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-ra_002dfill_0021"><code>ra-fill!</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
+<tr><td></td><td valign="top"><a href="#index-ra_002dfold"><code>ra-fold</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
+<tr><td></td><td valign="top"><a href="#index-ra_002dfor_002deach"><code>ra-for-each</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-ra_002dformat"><code>ra-format</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-ra_002dfrom"><code>ra-from</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-ra_002di"><code>ra-i</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
@@ -2619,6 +2737,8 @@ Previous: <a href="#Sources" accesskey="p" rel="prev">Sources</a>, Up: <a href="
 <tr><td></td><td valign="top"><a href="#index-shape-agreement_002c-suffix">shape agreement, suffix</a>:</td><td>&nbsp;</td><td valign="top"><a href="#Rank-extension">Rank extension</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-shared-root">shared root</a>:</td><td>&nbsp;</td><td valign="top"><a href="#The-pieces-of-an-array">The pieces of an array</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-singleton-axis">singleton axis</a>:</td><td>&nbsp;</td><td valign="top"><a href="#Special-arrays">Special arrays</a></td></tr>
+<tr><td></td><td valign="top"><a href="#index-SRFI_002d163">SRFI-163</a>:</td><td>&nbsp;</td><td valign="top"><a href="#Writing-and-reading">Writing and reading</a></td></tr>
+<tr><td></td><td valign="top"><a href="#index-SRFI_002d163-1">SRFI-163</a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
 <tr><td colspan="4"> <hr></td></tr>
 <tr><th id="Indices_cp_letter-T">T</th><td></td><td></td></tr>
 <tr><td></td><td valign="top"><a href="#index-transpose">transpose</a>:</td><td>&nbsp;</td><td valign="top"><a href="#Transposition">Transposition</a></td></tr>

@@ -7,7 +7,7 @@
 @c last [ma112]
 
 @set VERSION 1
-@set UPDATED 2021 August 1
+@set UPDATED 2021 August 3
 
 @copying
 @code{newra} (version @value{VERSION}, updated @value{UPDATED})
@@ -401,7 +401,7 @@ First, the built-in library offers a single function to manipulate array dims, @
 
 Second, the C stubs create a barrier to optimization by the Scheme compiler. The main loop of an operation such as @code{(array-map! c + a b)} has to be implemented in C (for the reasons given above) and then it has to call back to Scheme on each iteration in order to apply @code{+}. Since the Scheme compiler doesn't have any special support for @code{array-map!}, it doesn't know what the types of the arguments are, etc. and those checks and dispatches are repeated over and over. @footnote{Guile (before v1.8) used to offer dedicated operations to sum arrays, etc. but obviously that isn't any kind of solution.}
 
-Third, the larger functions of the array interface, such as @code{array-map!}, etc. are not interruptible. This is especially inconvenient when operating on large arrays.
+Third, some of the the larger functions of the array interface, such as @code{array-map!}, etc. are not interruptible. This is especially inconvenient when operating on large arrays.
 
 These problems are solved if the built-in type is replaced with a new type defined in Scheme.
 
@@ -653,6 +653,7 @@ The function @ref{x-ra-format, @code{ra-format}} can be used to pretty print arr
 (ra-format (list->ra 2 '((1 hello) ("try" 2) (never 3.14))) #:fmt "~s")
 @end verbatim
 @result{}
+@verbatim
 #%2:3:2─────┐
 │    1│hello│
 ├─────┼─────┤
@@ -660,18 +661,20 @@ The function @ref{x-ra-format, @code{ra-format}} can be used to pretty print arr
 ├─────┼─────┤
 │never│ 3.14│
 └─────┴─────┘
+@end verbatim
 @end example
 
-The writing mode can be configured with the following parameter, available from @code{(newra print)}.
+The writing mode can be configured with the following parameter.
 
 @cindex @code{*ra-print*}
 @anchor{x-star-ra-print-star}
 @deffn @w{Parameter} *ra-print* (lambda (array port) ...)
 
-Set the default printer for arrays.
+Set the default printer for arrays. This parameter is available from @code{(newra print)}.
 
 For example
 @verbatim
+(import (newra print))
 (*ra-print* (lambda (ra o) (ra-print ra o #:dims? #f)))
 (ra-i 2 3)
 @end verbatim
@@ -696,6 +699,73 @@ $1 =
 @end verbatim
 
 The default printer can be reset with @code{(*ra-print* #f)} or @code{(*ra-print* 'default)}.
+@end deffn
+
+@cindex SRFI-163
+By default, rank-0 arrays are printed like the built-in Guile arrays, with extra parentheses around the content. In the read syntax specified in @mybibcite{SRFI-163}, those parentheses are not used. The following parameter allows one to choose either behavior for both the printer and the reader.
+
+@cindex @code{*ra-parenthesized-rank-zero*}
+@anchor{x-star-ra-parenthesized-rank-zero-star}
+@deffn @w{Parameter} *ra-parenthesized-rank-zero* boolean
+
+Control read syntax of rank-0 arrays. This parameter is available from @code{(newra print)} or @code{(newra read)}.
+
+If @code{(*ra-parenthesized-rank-zero*)} is true, the read syntax for rank-0 arrays is
+
+@display
+@code{#%0TYPE(item)}
+@end display
+
+If it is @code{#f}, it is
+
+@display
+@code{#%0TYPE item}
+@end display
+
+with @code{TYPE} being optional in either case. Note that these are not compatible:
+
+@example
+@verbatim
+(ra-ref (parameterize ((*ra-parenthesized-rank-zero* #t))
+          (call-with-input-string "#%0(a)" read)))
+@end verbatim
+@result{} @code{a}
+@verbatim
+(ra-ref (parameterize ((*ra-parenthesized-rank-zero* #f))
+          (call-with-input-string "#%0(a)" read)))
+@end verbatim
+@result{} @code{(a)}
+@verbatim
+(ra-ref (parameterize ((*ra-parenthesized-rank-zero* #f))
+          (call-with-input-string "#%0 a" read)))
+@end verbatim
+@result{} @code{a}
+@end example
+
+In the last example, the space is necessary (unlike in @mybibcite{SRFI-163}) since the array type tag is optional in Guile.
+
+@example
+@verbatim
+(parameterize ((*ra-parenthesized-rank-zero* #f))
+  (call-with-input-string "#%0a" read))
+@end verbatim
+@result{} Wrong type (expecting character): #<eof>
+@end example
+
+The printer always uses a space in this mode:
+
+@example
+@verbatim
+(parameterize ((*ra-parenthesized-rank-zero* #f))
+ (display (make-ra '(a))))
+@end verbatim
+@result{} @code{#%0 (a)}
+@end example
+
+Note that setting this parameter to @code{#f} still doesn't make the array read syntax fully compatible with that of @mybibcite{SRFI-163}, since the type tag @code{a} is reserved (in Guile) for character arrays.
+
+The default value of this parameter is @code{#t}.
+
 @end deffn
 
 @c ------------------------------------------------
@@ -1779,6 +1849,7 @@ A 5-array:
 @end verbatim
 @end example
 
+@cindex SRFI-163
 A nested array (example from @mybibcite{SRFI-163}):
 
 @example
@@ -2315,7 +2386,7 @@ For example:
 @cindex @code{ra-slice-for-each}
 @anchor{x-ra-slice-for-each}
 @deffn @w{Function} ra-slice-for-each k op a ...
-Iterate over the @var{k}-frames of arrays @var{a} ..., applying @var{op} to the respective slices. The arguments @var{a} ... must have matching dimensions over their @var{k}-frames.
+Iterate over the @var{k}-frames of arrays @var{a} ..., applying @var{op} to the respective slices. The arguments @var{a} ... must have matching shapes over their @var{k}-frames.
 
 Note that it isn't necessary for arguments @var{a} to have rank ≥ @var{k}. Arguments with rank < @var{k} are rank-extended and the corresponding arguments are 0-cells. For example:
 
@@ -2343,7 +2414,7 @@ Note that it isn't necessary for arguments @var{a} to have rank ≥ @var{k}. Arg
 @cindex @code{ra-map!}
 @anchor{x-ra-map!}
 @deffn @w{Function} ra-map! dst op a ... @result{} dst
-Iterate over arrays @var{dst} @var{a} ... applying @var{op} to the respective elements in @var{a}, and storing the result in the respective element of @var{dst}. The arguments must have matching dimensions and the type of @var{dst} must be compatible with the results of @var{op}.
+Iterate over arrays @var{dst} @var{a} ... applying @var{op} to the respective elements in @var{a}, and storing the result in the respective element of @var{dst}. The arguments must have matching shapes and the type of @var{dst} must be compatible with the results of @var{op}.
 
 This is equivalent to
 @verbatim
@@ -2358,7 +2429,7 @@ This is equivalent to
 @cindex @code{ra-copy!}
 @anchor{x-ra-copy!}
 @deffn @w{Function} ra-copy! dst src @result{} dst
-Copy @var{src} to @var{dst}. The arguments must have matching dimensions and be of compatible types.
+Copy @var{src} to @var{dst}. The arguments must have matching shapes and be of compatible types.
 
 For valid arguments, this is equivalent to any one of
 @verbatim
@@ -2434,7 +2505,7 @@ See also: @ref{x-ra-set!,@code{ra-set!}}, @ref{x-ra-copy!,@code{ra-copy!}}, @ref
 @cindex @code{ra-order-c?}
 @anchor{x-ra-order-c?}
 @deffn @w{Function} ra-order-c? a [n [org]]
-Check whether axes [@var{org} ... @var{org}+@var{n}) of @var{ra} are in C-order. By default, check that the whole array is in C-order, and additionally that the step on the last axis is 1 (i.e. the array is ‘packed’).
+Check whether axes [@var{org} ... @var{org}+@var{n}) of @var{a} are in C-order. By default, check that the whole array is in C-order, and additionally that the step on the last axis is 1 (i.e. the array is ‘packed’).
 
 @code{(ra-order-c? a n org)} implies @code{(eq? (ra-root a) (ra-root (@ref{x-ra-ravel, @code{ra-ravel}} a n org)))}. Note that the stronger condition @code{(ra-order-c? a)} is not necessary for @code{(eq? (ra-root a) (ra-root (ra-ravel a)))} to hold.
 
@@ -2499,6 +2570,58 @@ It is an error if the number of @var{i ...} exceeds the rank of @var{a}.
 
 
 See also: @ref{x-ra-slice,@code{ra-slice}}, @ref{x-ra-ref,@code{ra-ref}}, @ref{x-ra-from,@code{ra-from}}, @ref{Slicing}.
+
+@end deffn
+
+@cindex @code{ra-equal?}
+@anchor{x-ra-equal?}
+@deffn @w{Function} ra-equal? a ... → boolean
+
+Return @code{#t} if the arrays @var{a} ... have the same shapes and types and their
+corresponding elements are all @code{equal?} to each other, or @code{#f} otherwise.
+
+Note that this function isn't rank extending. Here's a rank-extending version for two arguments:
+
+@example
+@verbatim
+(import (ice-9 control))
+(define (ra-equal?* . a) (let/ec exit (apply ra-for-each (lambda a (unless (apply equal? a) (exit #f))) a) #t))
+@end verbatim
+@end example
+
+See also: @ref{x-ra-for-each,@code{ra-for-each}}, @ref{x-ra-fold,@code{ra-fold}}, @ref{x-ra-every,@code{ra-every}}, @ref{x-ra-any,@code{ra-any}}.
+
+@end deffn
+
+@cindex @code{ra-for-each}
+@anchor{x-ra-for-each}
+@deffn @w{Function} ra-for-each op a ...
+
+See also: @ref{x-ra-slice-for-each, @code{ra-slice-for-each}}, @ref{x-ra-map!,@code{ra-map}}, @ref{Iteration}.
+
+@end deffn
+
+@cindex @code{ra-fold}
+@anchor{x-ra-fold}
+@deffn @w{Function} ra-fold op knil a ...
+
+See also: @ref{x-ra-every,@code{ra-every}}, @ref{x-ra-any,@code{ra-any}}, @ref{Iteration}.
+
+@end deffn
+
+@cindex @code{ra-every}
+@anchor{x-ra-every}
+@deffn @w{Function} ra-every pred? a ...
+
+See also: @ref{x-ra-fold,@code{ra-fold}}, @ref{x-ra-any,@code{ra-any}}.
+
+@end deffn
+
+@cindex @code{ra-any}
+@anchor{x-ra-any}
+@deffn @w{Function} ra-any pred? a ...
+
+See also: @ref{x-ra-fold,@code{ra-fold}}, @ref{x-ra-every,@code{ra-every}}.
 
 @end deffn
 

@@ -769,13 +769,14 @@ See also: ra-every ra-equal? ra-fold
 
 ; FIXME it's a bit silly that (ra-transpose (ra-i 9) 1) isn't ra-equal? to
 ; itself because dead axes don't match each other.
+; FIXME built-in array-equal? says 'equal? or array-equal?' for the elements.
 
 (define (ra-equal? . rx)
   "
 ra-equal? rx ...
 
-Return #t if the ras RX ... have the same shapes and their elements are EQUAL?,
-or #f otherwise.
+Return #t if the arrays @var{rx} ... have the same shapes and types and their
+corresponding elements are @code{equal?}, or #f otherwise.
 
 See also: ra-map! ra-for-each
 "

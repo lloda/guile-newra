@@ -15,9 +15,12 @@
   #:export (list->ra list->typed-ra))
 
 (import (newra base) (newra map) (newra tools)
+        (only (newra print) *ra-parenthesized-rank-zero*)
         (ice-9 match) (ice-9 rdelim)
         (rnrs io ports) (only (rnrs base) vector-map)
         (srfi :71) (srfi :26) (only (srfi :1) fold unzip2 car+cdr))
+
+(re-export *ra-parenthesized-rank-zero*)
 
 (define vector-fold (@ (newra vector) vector-fold))
 
@@ -114,7 +117,7 @@
                        (throw 'bad-rank rank)
                        rank))
                    1))
-           (type (read-delimited ":@([" port 'peek))
+           (type (read-delimited ":@([ " port 'peek))
            (type (if (zero? (string-length type)) #t (string->symbol type)))
            (lo (make-vector rank 0))
            (len (make-vector rank #f)))
@@ -141,16 +144,21 @@
             (loop (+ k 1)))
            (else
             (unless (or (zero? k) (= k rank)) (throw 'too-few-dimensions-for-rank k rank))
-            (unless (delim-open? c) (throw 'expected-open-paren c))
             (let ((delim-stack (list c)))
 ; read content here
               (cond
                ((zero? rank)
-                (get-char port)
-                (let ((item (read port)))
-                  (get-char port)
-                  (make-ra-new #t item #())))
+                (if (*ra-parenthesized-rank-zero*)
+                  (let ((c (get-char port)))
+                    (unless (delim-open? c) (throw 'expected-open-paren c))
+                    (let* ((item (read port))
+                           (cc (get-char port)))
+                      (unless (eqv? (delim-pair c) cc)
+                        (throw 'mismatched-delimiters-in-zero-rank-array c cc))
+                      (make-ra-new type item #())))
+                  (make-ra-new type (read port) #())))
                (else
+                (unless (delim-open? c) (throw 'expected-open-paren c))
                 (let ((temp resize-temp (make-temp-root len type))
                       (j 0))
                   (let loop-rank ((k rank))

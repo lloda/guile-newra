@@ -1,13 +1,13 @@
 ; -*- mode: scheme; coding: utf-8 -*-
 ; Replacement for Guile C-based array system - Benchmarks
 
-; (c) Daniel Llorens - 2016-2017
+; (c) Daniel Llorens - 2016-2021
 ; This library is free software; you can redistribute it and/or modify it under
 ; the terms of the GNU General Public License as published by the Free
 ; Software Foundation; either version 3 of the License, or (at your option) any
 ; later version.
 
-; Run with $GUILE -L mod -s bench.scm
+; Run with $GUILE -L mod bench.scm
 
 (import (newra) (newra tools) (newra test) (newra read) (ice-9 popen)
         (only (newra print) ra-print) (ice-9 rdelim) (srfi :26) (srfi :8) (srfi :19)
