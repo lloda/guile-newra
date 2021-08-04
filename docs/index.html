@@ -3,7 +3,7 @@
 <!-- Created by GNU Texinfo 6.8, https://www.gnu.org/software/texinfo/ -->
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-<!-- newra (version 1, updated 2021 August 3)
+<!-- newra (version 1, updated 2021 August 4)
 
 (c) lloda 2017-2021
 
@@ -105,7 +105,7 @@ Next: <a href="#Introduction" accesskey="n" rel="next">Introduction</a> &nbsp; [
 </div>
 <span id="newra"></span><h1 class="top"><code>newra</code></h1>
 
-<p><code>newra</code> (version 1, updated 2021 August 3)
+<p><code>newra</code> (version 1, updated 2021 August 4)
 </p>
 <p>(c) lloda 2017&ndash;2021
 </p>
@@ -682,24 +682,35 @@ s
 <dd>
 <p>Set the default printer for arrays. This parameter is available from <code>(newra print)</code>.
 </p>
+<span id="index-box"></span>
+<span id="index-box_002dcompact"></span>
+<span id="index-default"></span>
+<p>The parameter can be set to a function <code>(lambda (array port) ...)</code> or to one of the values <code>#f</code>, <code>'default</code>, <code>'box</code> or <code>'box-compact</code>.
+</p>
 <p>For example
-</p><pre class="verbatim">(import (newra print))
+</p><div class="example">
+<pre class="verbatim">(import (newra print))
 (*ra-print* (lambda (ra o) (ra-print ra o #:dims? #f)))
 (ra-i 2 3)
-</pre><p>&rArr;
-</p><pre class="verbatim">$1 = #%2d((0 1 2) (3 4 5))
-</pre>
+</pre><pre class="example">&rArr;
+</pre><pre class="verbatim">$1 = #%2d((0 1 2) (3 4 5))
+</pre></div>
+
+<p>or
+</p>
+<div class="example">
 <pre class="verbatim">(*ra-print* (lambda (ra o) (newline o) (ra-format ra o)))
 ; (*ra-print* 'box) ; same thing
 (ra-i 2 3)
-</pre><p>&rArr;
-</p><pre class="verbatim">$1 =
+</pre><pre class="example">&rArr;
+</pre><pre class="verbatim">$1 =
 #%2d:2:3
 │0│1│2│
 ├─┼─┼─┤
 │3│4│5│
 └─┴─┴─┘
-</pre>
+</pre></div>
+
 <p>The default printer can be reset with <code>(*ra-print* #f)</code> or <code>(*ra-print* 'default)</code>.
 </p></dd></dl>
 
@@ -1636,13 +1647,15 @@ a
 <dd>
 <p>Pretty print array <var>ra</var>.
 </p>
-<p>Each element <var>x</var> of <var>ra</var> is converted to a string using <code>(fmt x)</code>, or <code>(format #f fmt x)</code><a id="DOCF8" href="#FOOT8"><sup>8</sup></a> if <var>fmt</var> is a string. <var>fmt</var> defauts to <code>&quot;~a&quot;</code>. If the element is an array, it is formatted using <code>ra-format</code> recursively.
+<p>Each element <var>x</var> of <var>ra</var> is converted to a string using <code>(fmt x)</code>, or <code>(format #f fmt x)</code><a id="DOCF8" href="#FOOT8"><sup>8</sup></a> if <var>fmt</var> is a string. <var>fmt</var> defauts to <code>&quot;~a&quot;</code>. Elements that are arrays are formatted using <code>ra-format</code> recursively.
 </p>
 <p>If <var>port</var> is <code>#t</code>, the array is printed to standard output. If is <code>#f</code>, nothing is printed; instead, the function returns a rank-2 character array <var>sc</var> with the result of the printing.
 </p>
-<p>If <var>prefix?</var> is <code>#t</code>, the array print prefix <a href="#x_002dra_002dprint_002dprefix"><code>ra-print-prefix</code></a> is printed over the first line of the printout if the rank of <var>ra</var> is 2 or greater, else it is printed on a separate line above the printout.
+<p>If <var>prefix?</var> is true, the array print prefix <a href="#x_002dra_002dprint_002dprefix"><code>ra-print-prefix</code></a> is printed over the first line of the printout if the rank of <var>ra</var> is 2 or greater, else it is printed on a separate line above the printout.
 </p>
-<p>This function handles arrays of rank up to 8. The even dimensions (counting from the last one) are arranged horizontally, while the odd dimensions are arranged vertically. The dimensions are separated visually using <a href="https://unicode.org/charts/nameslist/n_2500.html">box-drawing characters</a>. This might look better or worse depending on the font.
+<p>If <var>compact?</var> is true, the separators for the rank-0 cells are replaced by spaces and the separators for the rank-1 cells are omitted. This results in a more compact output at the cost of some clarity.
+</p>
+<p>This function handles arrays of rank up to 8, or up to 10 in compact mode. The even dimensions (counting from the last one) are arranged horizontally, while the odd dimensions are arranged vertically. The dimensions are separated visually using <a href="https://unicode.org/charts/nameslist/n_2500.html">box-drawing characters</a>. This might look better or worse depending on the font.
 </p>
 <p>A 0-array:
 </p><div class="example">
@@ -1695,6 +1708,19 @@ element
 ┃──┼──┼──┼──║──┼──┼──┼──║──┼──┼──┼──┃──┼──┼──┼──║──┼──┼──┼──║──┼──┼──┼──┃
 ┃28│29│30│31║36│37│38│39║44│45│46│47┃76│77│78│79║84│85│86│87║92│93│94│95┃
 ┃═══════════╩═══════════╩═══════════┃═══════════╩═══════════╩═══════════┃
+</pre></div>
+
+<p>The same 5-array in compact mode:
+</p><div class="example">
+<pre class="verbatim">(ra-format (ra-i 2 2 3 2 4) #:prefix? #f #:compact? #t)
+</pre><pre class="example">&rArr;
+</pre><pre class="verbatim">║───────────┬───────────┬───────────║───────────┬───────────┬───────────║
+║ 0  1  2  3│ 8  9 10 11│16 17 18 19║48 49 50 51│56 57 58 59│64 65 66 67║
+║ 4  5  6  7│12 13 14 15│20 21 22 23║52 53 54 55│60 61 62 63│68 69 70 71║
+║───────────┼───────────┼───────────║───────────┼───────────┼───────────║
+║24 25 26 27│32 33 34 35│40 41 42 43║72 73 74 75│80 81 82 83│88 89 90 91║
+║28 29 30 31│36 37 38 39│44 45 46 47║76 77 78 79│84 85 86 87│92 93 94 95║
+║───────────┴───────────┴───────────║───────────┴───────────┴───────────║
 </pre></div>
 
 <span id="index-SRFI_002d163-1"></span>
@@ -2649,6 +2675,8 @@ Previous: <a href="#Sources" accesskey="p" rel="prev">Sources</a>, Up: <a href="
 <tr><th id="Indices_cp_letter-B">B</th><td></td><td></td></tr>
 <tr><td></td><td valign="top"><a href="#index-bounds">bounds</a>:</td><td>&nbsp;</td><td valign="top"><a href="#Introduction">Introduction</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-bounds-1">bounds</a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
+<tr><td></td><td valign="top"><a href="#index-box"><code>box</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Writing-and-reading">Writing and reading</a></td></tr>
+<tr><td></td><td valign="top"><a href="#index-box_002dcompact"><code>box-compact</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Writing-and-reading">Writing and reading</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-broadcasting_002c-singleton_002c-newaxis">broadcasting, singleton, newaxis</a>:</td><td>&nbsp;</td><td valign="top"><a href="#Rank-extension">Rank extension</a></td></tr>
 <tr><td colspan="4"> <hr></td></tr>
 <tr><th id="Indices_cp_letter-C">C</th><td></td><td></td></tr>
@@ -2658,6 +2686,7 @@ Previous: <a href="#Sources" accesskey="p" rel="prev">Sources</a>, Up: <a href="
 <tr><td colspan="4"> <hr></td></tr>
 <tr><th id="Indices_cp_letter-D">D</th><td></td><td></td></tr>
 <tr><td></td><td valign="top"><a href="#index-dead-axes">dead axes</a>:</td><td>&nbsp;</td><td valign="top"><a href="#Special-arrays">Special arrays</a></td></tr>
+<tr><td></td><td valign="top"><a href="#index-default"><code>default</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Writing-and-reading">Writing and reading</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-diagonal">diagonal</a>:</td><td>&nbsp;</td><td valign="top"><a href="#Transposition">Transposition</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-dim-vector">dim vector</a>:</td><td>&nbsp;</td><td valign="top"><a href="#The-pieces-of-an-array">The pieces of an array</a></td></tr>
 <tr><td colspan="4"> <hr></td></tr>

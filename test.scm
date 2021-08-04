@@ -1226,24 +1226,28 @@
   (ra-format ra #:fmt "~a"))
 
 (let ((ra (ra-i 2 2 2 2 2 2 2 2)))
-  (ra-format ra))
+  (ra-format ra #:compact? #t))
 
 (let* ((ra (ra-set! (ra-copy #t (ra-i 7)) (make-ra-root #(hello world of ras) (c-dims 2 2)) 3))
        (ra (ra-tile ra (ra-rank ra) 1)))
   (ra-format ra))
 
-; example from srfi-164
+; example from srfi-163.
 (let* ((arr
-       #2@1:2@1:3((#2((1 2) (3 4)) 9 #2((3 4) (5 6)))
-                  (#(42 43) #2((8 7 6)) #2((90 91) (100 101)))))
+        #2@1:2@1:3((#2((1 2) (3 4)) 9 #2((3 4) (5 6)))
+                   (#(42 43) #2((8 7 6)) #2((90 91) (100 101)))))
        (ra (array->ra arr))
        (ra (ra-map! (ra-copy ra) (lambda (x) (if (array? x) (array->ra x) x)) ra)))
-  (ra-format ra #:prefix? #t))
+  (ra-format ra #:prefix? #t #:compact? #t)
+  (ra-format ra #:prefix? #t #:compact? #f))
 
 (let ((ra (array->ra #2@1:2@1:3((1 2 3) (4 5 6)))))
   (ra-format ra))
 
 (let ((ra (make-ra 'zero)))
+  (ra-format ra))
+
+(let ((ra (make-ra 'x))) ; shorter than the prefix; was a bug
   (ra-format ra))
 
 

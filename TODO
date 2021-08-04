@@ -99,7 +99,7 @@ Help: [C-uc .] insert timestamp [C-cc] flip checkbox [C-uucc] partial flip check
     - [X] pretty-print
   * [-] pretty printer
     - [X] basic ra-format
-    - [ ] compact mode
+    - [X] compact mode
     - [ ] auto truncation
 
 * TODO replace Guile arrays [0/5]
