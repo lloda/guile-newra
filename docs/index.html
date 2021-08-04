@@ -1634,7 +1634,9 @@ a
 <dt id="index-ra_002dformat-1"><span class="category">Function<!-- /@w -->: </span><span><strong>ra-format</strong> <em>ra port #:fmt #:prefix?</em><a href='#index-ra_002dformat-1' class='copiable-anchor'> &para;</a></span></dt>
 <dt id="index-ra_002dformat-2"><span class="category">Function<!-- /@w -->: </span><span><strong>ra-format</strong> <em>ra #f #:fmt #:prefix? &rArr; sc</em><a href='#index-ra_002dformat-2' class='copiable-anchor'> &para;</a></span></dt>
 <dd>
-<p>Pretty print array <var>ra</var>. Each of the elements of <var>ra</var> is formatted using <code>(format #f fmt el)</code> from <a href="https://www.gnu.org/software/guile/manual/html_node/Formatted-Output.html"><code>(ice-9 format)</code></a>. <var>fmt</var> defauts to <code>&quot;~a&quot;</code>. If the element is itself an array, it is formatted using <code>ra-format</code> recursively.
+<p>Pretty print array <var>ra</var>.
+</p>
+<p>Each element <var>x</var> of <var>ra</var> is converted to a string using <code>(fmt x)</code>, or <code>(format #f fmt x)</code><a id="DOCF8" href="#FOOT8"><sup>8</sup></a> if <var>fmt</var> is a string. <var>fmt</var> defauts to <code>&quot;~a&quot;</code>. If the element is an array, it is formatted using <code>ra-format</code> recursively.
 </p>
 <p>If <var>port</var> is <code>#t</code>, the array is printed to standard output. If is <code>#f</code>, nothing is printed; instead, the function returns a rank-2 character array <var>sc</var> with the result of the printing.
 </p>
@@ -1734,6 +1736,25 @@ element
 ├─┼─┼─┼─┼─┼─┼─┤
 │└│─│┴│─│┴│─│┘│
 └─┴─┴─┴─┴─┴─┴─┘
+</pre></div>
+
+<p>Using a custom element formatter:
+</p><div class="example">
+<pre class="verbatim">(ra-format (ra-map! (make-ra #f 4 4) sqrt (ra-reshape (ra-iota 20 -10) 0 4 4))
+           #:fmt (lambda (x) (format #f (cond ((real? x) &quot;~4,2f&quot;)
+                                              ((complex? x) &quot;~4,2i&quot;)
+                                              (else &quot;~a&quot;))
+                                     x)))
+</pre><pre class="example">&rArr;
+</pre><pre class="verbatim">#%2:4:4────┬──────────┬──────────┬──────────┐
+│0.00+3.16i│0.00+3.00i│0.00+2.83i│0.00+2.65i│
+├──────────┼──────────┼──────────┼──────────┤
+│0.00+2.45i│0.00+2.24i│0.00+2.00i│0.00+1.73i│
+├──────────┼──────────┼──────────┼──────────┤
+│0.00+1.41i│0.00+1.00i│      0.00│      1.00│
+├──────────┼──────────┼──────────┼──────────┤
+│      1.41│      1.73│      2.00│      2.24│
+└──────────┴──────────┴──────────┴──────────┘
 </pre></div>
 
 <p>This function doesn&rsquo;t handle large arrays in any particular way. User beware!
@@ -1864,7 +1885,7 @@ element
 <p>To ravel other combinations of axes, use <a href="#Transposition">Transposition</a>.
 </p>
 <span id="index-packed-array-1"></span>
-<p>The full ravel of an array doesn&rsquo;t necessarily result in a rank-1 &lsquo;packed&rsquo; array, that is, one where the step is 1. If that is required, one can use <code>(ra-ravel (ra-copy ra))</code>, since <a href="#x_002dra_002dorder_002dc_003f"><code>ra-order-c?</code></a> is always true for the result of <code>ra-copy</code><a id="DOCF8" href="#FOOT8"><sup>8</sup></a> .
+<p>The full ravel of an array doesn&rsquo;t necessarily result in a rank-1 &lsquo;packed&rsquo; array, that is, one where the step is 1. If that is required, one can use <code>(ra-ravel (ra-copy ra))</code>, since <a href="#x_002dra_002dorder_002dc_003f"><code>ra-order-c?</code></a> is always true for the result of <code>ra-copy</code><a id="DOCF9" href="#FOOT9"><sup>9</sup></a> .
 </p>
 <p>See also: <a href="#x_002dra_002dreshape"><code>ra-reshape</code></a>, <a href="#x_002dra_002dtile"><code>ra-tile</code></a>, <a href="#Reshaping">Reshaping</a>.
 </p>
@@ -2820,6 +2841,8 @@ Previous: <a href="#Sources" accesskey="p" rel="prev">Sources</a>, Up: <a href="
 <h5><a id="FOOT7" href="#DOCF7">(7)</a></h5>
 <p>I rejected this approach for <code>newra</code> because in my experience it results in errors going undetected much more often than it saves any work.</p>
 <h5><a id="FOOT8" href="#DOCF8">(8)</a></h5>
+<p><a href="https://www.gnu.org/software/guile/manual/html_node/Formatted-Output.html"><code>(ice-9 format)</code></a></p>
+<h5><a id="FOOT9" href="#DOCF9">(9)</a></h5>
 <p>Note that the ravel operation in <code>(ra-ravel (ra-copy ra))</code> is free, while it might not be in <code>(ra-copy (ra-ravel ra))</code>, so it is preferable, in principle, to copy first.</p>
 </div>
 

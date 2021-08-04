@@ -7,7 +7,7 @@
 @c last [ma112]
 
 @set VERSION 1
-@set UPDATED 2021 August 3
+@set UPDATED 2021 August 4
 
 @copying
 @code{newra} (version @value{VERSION}, updated @value{UPDATED})
@@ -1768,7 +1768,9 @@ See also: @ref{x-ra-shape,@code{ra-shape}}, @ref{x-make-ra,@code{make-ra}}.
 @deffn @w{Function} ra-format ra port #:fmt #:prefix?
 @deffnx @w{Function} ra-format ra #f #:fmt #:prefix? @result{} sc
 
-Pretty print array @var{ra}. Each of the elements of @var{ra} is formatted using @code{(format #f fmt el)} from @url{https://www.gnu.org/software/guile/manual/html_node/Formatted-Output.html,@code{(ice-9 format)}}. @var{fmt} defauts to @code{"~a"}. If the element is itself an array, it is formatted using @code{ra-format} recursively.
+Pretty print array @var{ra}.
+
+Each element @var{x} of @var{ra} is converted to a string using @code{(fmt x)}, or @code{(format #f fmt x)}@footnote{@url{https://www.gnu.org/software/guile/manual/html_node/Formatted-Output.html,@code{(ice-9 format)}}} if @var{fmt} is a string. @var{fmt} defauts to @code{"~a"}. If the element is an array, it is formatted using @code{ra-format} recursively.
 
 If @var{port} is @code{#t}, the array is printed to standard output. If is @code{#f}, nothing is printed; instead, the function returns a rank-2 character array @var{sc} with the result of the printing.
 
@@ -1894,6 +1896,29 @@ Looking at the return value when @var{port} is @code{#f}:
 ├─┼─┼─┼─┼─┼─┼─┤
 │└│─│┴│─│┴│─│┘│
 └─┴─┴─┴─┴─┴─┴─┘
+@end verbatim
+@end example
+
+Using a custom element formatter:
+@example
+@verbatim
+(ra-format (ra-map! (make-ra #f 4 4) sqrt (ra-reshape (ra-iota 20 -10) 0 4 4))
+           #:fmt (lambda (x) (format #f (cond ((real? x) "~4,2f")
+                                              ((complex? x) "~4,2i")
+                                              (else "~a"))
+                                     x)))
+@end verbatim
+@result{}
+@verbatim
+#%2:4:4────┬──────────┬──────────┬──────────┐
+│0.00+3.16i│0.00+3.00i│0.00+2.83i│0.00+2.65i│
+├──────────┼──────────┼──────────┼──────────┤
+│0.00+2.45i│0.00+2.24i│0.00+2.00i│0.00+1.73i│
+├──────────┼──────────┼──────────┼──────────┤
+│0.00+1.41i│0.00+1.00i│      0.00│      1.00│
+├──────────┼──────────┼──────────┼──────────┤
+│      1.41│      1.73│      2.00│      2.24│
+└──────────┴──────────┴──────────┴──────────┘
 @end verbatim
 @end example
 

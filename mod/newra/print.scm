@@ -105,12 +105,13 @@
 (define arts (make-ra-root (vector "│─┌┐└┘├┤┬┴┼" "║═╔╗╚╝╠╣╦╩╬" "┃━┏┓┗┛┣┫┳┻╋" "████████████")))
 
 (define* (ra-format ra #:optional (port #t) #:key (fmt "~a") (prefix? #t))
+  (define tostring (if (string? fmt) (cut format #f fmt <>) fmt))
 ; size the cells
   (define s (ra-map! (apply make-ra #f (ra-dimensions ra))
                      (lambda (x)
                        (if (ra? x)
                          (ra-format x #f #:fmt fmt #:prefix? prefix?)
-                         (ra-tile (array->ra (format #f fmt x)) 0 1)))
+                         (ra-tile (make-ra-root (tostring x)) 0 1)))
                      ra))
   (define-values (dim0 dim1)
     (let* ((q r (euclidean/ (ra-rank s) 2))
@@ -162,18 +163,24 @@
                (>m0< (and m0 (ra-from m0 (ra-iota (- (ra-len m0) 2) 1))))
                (>m1< (and m1 (ra-from m1 (ra-iota (- (ra-len m1) 2) 1)))))
           (cond ((and m0 m1)
+; horizontal
                  (ra-for-each (lambda (m0) (line-1 sc k (ra-iota (+ 1 t1) 0) m0)) m0)
+; vertical
                  (ra-for-each (lambda (m1) (line-0 sc k (ra-iota (+ 1 t0) 0) m1)) m1)
+; crosses
                  (ra-for-each (lambda (m0 m1) (ra-set! sc (char k 10) m0 m1))
                               >m0< (ra-transpose >m1< 1))
+; crosses vertical
                  (ra-for-each (lambda (m1)
                                 (ra-set! sc (char k 8) 0 m1)
                                 (ra-set! sc (char k 9) t0 m1))
                               >m1<)
+; crosses horizontal
                  (ra-for-each (lambda (m0)
                                 (ra-set! sc (char k 6) m0 0)
                                 (ra-set! sc (char k 7) m0 t1))
                               >m0<)
+; corners
                  (ra-set! sc (char k 2) 0 0)
                  (ra-set! sc (char k 3) 0 t1)
                  (ra-set! sc (char k 4) t0 0)
