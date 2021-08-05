@@ -23,6 +23,7 @@ Help: [C-uc .] insert timestamp [C-cc] flip checkbox [C-uucc] partial flip check
   * [X] ra-root ra-offset
   * [X] ra-equal?
   * [ ] root vectors are equivalent to rank-1 newra objects
+  * [ ] return roots for trivial rank-1 views on roots
 
 * TODO whole array functions [8/15]
   * [X] ra-fold ra-fold*
@@ -38,8 +39,9 @@ Help: [C-uc .] insert timestamp [C-cc] flip checkbox [C-uucc] partial flip check
     - [X] (ra-ravel a [n])
     - [X] (ra-order-c? a [n [org]])
     - [X] (ra-ravel a [n [org]])
-  * [X] ra-tile [1/1]
+  * [X] ra-tile [2/2]
     - [X] accept arbitrary axis
+    - [X] can produce dead axes
   * [X] ra-cat (ra-cat, ra-scat)
     - [X] implementation
     - [X] tests
