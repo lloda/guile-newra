@@ -557,7 +557,7 @@ Next: <a href="#Writing-and-reading" accesskey="n" rel="next">Writing and readin
 </li><li> bitvectors (e.g. <code>(bitvector #f #t #f #t)</code>)
 </li></ul>
 
-<p><code>newra</code> supports an additional root vector type, <code>&lt;aseq&gt;</code>, representing an infinite arithmetic sequence.
+<p><code>newra</code> supports an additional root vector type, <code>&lt;aseq&gt;</code>, representing an unbounded arithmetic sequence.
 </p>
 <span id="index-make_002daseq"></span>
 <span id="x_002dnone"></span><dl class="def">
@@ -576,7 +576,8 @@ Next: <a href="#Writing-and-reading" accesskey="n" rel="next">Writing and readin
 <p><code>aseq</code> roots are immutable. The type tag of <code>aseq</code> roots is <code>d</code>. Arrays with integer-valued <code>aseq</code> roots have a few special uses; one of them is as arguments in <a href="#Slicing">slicing</a>.
 </p>
 <span id="index-infinite-axes"></span>
-<p>To make <code>&lt;aseq&gt;</code> even more useful, <code>newra</code> supports axes with infinite length.
+<span id="index-unbounded-axes"></span>
+<p>To make <code>&lt;aseq&gt;</code> even more useful, <code>newra</code> supports unbounded axes.
 </p>
 <div class="example">
 <pre class="verbatim">(ra-ref (make-ra-root (make-aseq) (vector (make-dim #f)) 0) #e1e12) ; or more simply
@@ -628,7 +629,7 @@ Next: <a href="#Iteration" accesskey="n" rel="next">Iteration</a>, Previous: <a 
 </pre><pre class="example">&rArr; <code>#%1:3(2 2 2)</code>
 </pre></div>
 
-<p>Dead axes print as <code>d</code>, and infinite (not dead) axes print as <code>f</code>. These cannot be read back.
+<p>Dead axes print as <code>d</code>, and unbounded (not dead) axes print as <code>f</code>. These cannot be read back.
 </p>
 <div class="example">
 <pre class="verbatim">(display (ra-transpose (ra-copy (ra-iota 3)) 1))
@@ -790,7 +791,7 @@ Next: <a href="#Slicing" accesskey="n" rel="next">Slicing</a>, Previous: <a href
 </pre><pre class="example">&rArr; #%1:3(-1 -2 -3)
 </pre></div>
 
-<p>It is common to need the indices of the elements during array iteration. <code>newra</code> iteration operations do not keep track of those indices<a id="DOCF4" href="#FOOT4"><sup>4</sup></a> because that has a cost. You need to pass the indices you need as arguments, but it&rsquo;s easy to do so by using an infinite index vector together with <a href="#x_002dra_002dtranspose"><code>ra-transpose</code></a>.
+<p>It is common to need the indices of the elements during array iteration. <code>newra</code> iteration operations do not keep track of those indices<a id="DOCF4" href="#FOOT4"><sup>4</sup></a> because that has a cost. You need to pass the indices you need as arguments, but it&rsquo;s easy to do so by using an unbounded index vector together with <a href="#x_002dra_002dtranspose"><code>ra-transpose</code></a>.
 </p>
 <div class="example">
 <pre class="verbatim">(define i0 (ra-iota))
@@ -1285,7 +1286,7 @@ Previous: <a href="#Foreign-interface" accesskey="p" rel="prev">Foreign interfac
 </div>
 <span id="Compatibility-with-old-Guile-arrays-1"></span><h3 class="section">2.11 Compatibility with old Guile arrays</h3>
 
-<p>The functions <a href="#x_002dra_002d_003earray"><code>ra-&gt;array</code></a> and <a href="#x_002darray_002d_003era"><code>array-&gt;ra</code></a> are provided to convert to and from <code>newra</code> arrays and built-in Guile arrays. It is an error to use <code>ra-&gt;array</code> on arrays whose root isn&rsquo;t supported by the built-in arrays, or that have an infinite length. Except in those two cases, the conversion is transparent both ways, and the result always shares the root of the argument.
+<p>The functions <a href="#x_002dra_002d_003earray"><code>ra-&gt;array</code></a> and <a href="#x_002darray_002d_003era"><code>array-&gt;ra</code></a> are provided to convert to and from <code>newra</code> arrays and built-in Guile arrays. It is an error to use <code>ra-&gt;array</code> on arrays whose root isn&rsquo;t supported by the built-in arrays, or that have an unbounded axis. Except in those two cases, the conversion is transparent both ways, and the result always shares the root of the argument.
 </p>
 <div class="example">
 <pre class="verbatim">(define a (make-array 'o 2 3))
@@ -1305,7 +1306,7 @@ a
 </pre><pre class="example">&rArr; #2((0 1 2) (3 4 5))
 </pre></div>
 
-<p>On dead axes, infinite lengths can be set to 1 (with <a href="#x_002dra_002dsingletonize"><code>ra-singletonize</code></a>) to allow conversion with <code>ra-&gt;array</code> or to other array systems that do singleton broadcasting.
+<p>On dead axes, lengths can be set to 1 (with <a href="#x_002dra_002dsingletonize"><code>ra-singletonize</code></a>) to allow conversion with <code>ra-&gt;array</code> or to other array systems that do singleton broadcasting.
 </p>
 <div class="example">
 <pre class="verbatim">(define a (ra-transpose (ra-i 2 3) 1 3))
@@ -1491,7 +1492,7 @@ a
 <span id="index-packed-array"></span>
 <p>Create dims for C-order array (packed elements, last dimension changing fastest).
 </p>
-<p>Each of the bounds may be an integer (a length) or a pair of integers (lower and upper bounds).
+<p>Each of the bounds may be a pair of bounds (<var>lo</var> <var>hi</var>) or a single length <var>len</var>, which implies zero <var>lo</var>.
 </p><div class="example">
 <pre class="verbatim">(c-dims 2 3)
 </pre><pre class="example">&rArr; <code>#(#&lt;&lt;dim&gt; len: 2 lo: 0 step: 3&gt; #&lt;&lt;dim&gt; len: 3 lo: 0 step: 1&gt;)</code>
@@ -1789,9 +1790,11 @@ element
 
 <span id="index-ra_002di"></span>
 <span id="x_002dra_002di"></span><dl class="def">
-<dt id="index-ra_002di-1"><span class="category">Function<!-- /@w -->: </span><span><strong>ra-i</strong> <em>len ...</em><a href='#index-ra_002di-1' class='copiable-anchor'> &para;</a></span></dt>
+<dt id="index-ra_002di-1"><span class="category">Function<!-- /@w -->: </span><span><strong>ra-i</strong> <em>bounds ...</em><a href='#index-ra_002di-1' class='copiable-anchor'> &para;</a></span></dt>
 <dd>
-<p>Create multidimensional index array with the given lengths. The root is of type <code>&lt;aseq&gt;</code>.
+<p>Create multidimensional index array with the given bounds.
+</p>
+<p>The root is of type <code>&lt;aseq&gt;</code>. The first upper bound that isn&rsquo;t <code>#f</code> may be <code>#t</code>; this creates an unbounded axis.
 </p>
 <div class="example">
 <pre class="verbatim">(ra-i 2 3 4)
@@ -1801,14 +1804,25 @@ element
 
 <span id="index-ra_002diota"></span>
 <span id="x_002dra_002diota"></span><dl class="def">
-<dt id="index-ra_002diota-1"><span class="category">Function<!-- /@w -->: </span><span><strong>ra-iota</strong> <em>[len [lo [step]]]</em><a href='#index-ra_002diota-1' class='copiable-anchor'> &para;</a></span></dt>
+<dt id="index-ra_002diota-1"><span class="category">Function<!-- /@w -->: </span><span><strong>ra-iota</strong> <em>len [lo [step]]</em><a href='#index-ra_002diota-1' class='copiable-anchor'> &para;</a></span></dt>
+<dt id="index-ra_002diota-2"><span class="category">Function<!-- /@w -->: </span><span><strong>ra-iota</strong><a href='#index-ra_002diota-2' class='copiable-anchor'> &para;</a></span></dt>
 <dd>
-<p>Create rank-1 index array. The root is of type <code>&lt;aseq&gt;</code>.
+<p>Create rank-1 index array. The root is of type <code>&lt;aseq&gt;</code>. <var>lo</var> defaults to 0 and <var>step</var> to 1.
 </p>
 <div class="example">
 <pre class="verbatim">(ra-iota 4 3 -1)
 </pre><pre class="example">&rArr; #%1d:4(3 2 1 0)
 </pre></div>
+
+<p><code>(ra-iota)</code> is unbounded both ways, e.g.
+</p>
+<div class="example">
+<pre class="verbatim">(ra-shape (ra-iota))
+</pre><pre class="example">&rArr; <code>((#f #f))</code>
+</pre><pre class="verbatim">((ra-iota) -100000000000)
+</pre><pre class="example">&rArr; -100000000000
+</pre></div>
+
 </dd></dl>
 
 <span id="index-ra_002dcat"></span>
@@ -2127,6 +2141,13 @@ a
 ║─┼─║─┼─║──┼──║
 ║3│3║7│7║11│11║
 ║─┴─║─┴─║──┴──║
+</pre></div>
+
+<p>Either <var>len</var> or <var>hi</var> being <code>#f</code> creates <a href="#x_002ddead_002daxes">dead axes</a>.
+</p><div class="example">
+<pre class="verbatim">(define a (ra-tile (ra-i 2 2) 0 #f #f))
+(define b (ra-transpose (ra-i 2 2) 2)) ; same thing
+</pre><pre class="example">&rArr; <code>#%4d:d:d:2:2((((0 1) (2 3))))</code>
 </pre></div>
 
 <p>The tiled array shares the root of <var>a</var>.
@@ -2490,7 +2511,7 @@ indices that match those elements. <code>newra</code> will <em>not</em> check th
 </p>
 <p>This function does not create a copy of the array, but reuses the root (<code>ra-root</code>) of <var>a</var>, that is, <code>(eq? (ra-root a) (shared-array-root (ra-&gt;array a)))</code> is <code>#t</code>.
 </p>
-<p>Not all arrays can be converted into built-in Guile arrays. For example, type <code>d</code> arrays, or arrays with infinite axes, are not convertible.
+<p>Not all arrays can be converted into built-in Guile arrays. For example, type <code>d</code> arrays, or arrays with unbounded axes, are not convertible.
 </p>
 <div class="example">
 <pre class="verbatim">(ra-&gt;array (ra-i 3)) ; error, type d not convertible
@@ -2636,6 +2657,8 @@ Previous: <a href="#Sources" accesskey="p" rel="prev">Sources</a>, Up: <a href="
 <a class="summary-letter" href="#Indices_cp_letter-S"><b>S</b></a>
  &nbsp; 
 <a class="summary-letter" href="#Indices_cp_letter-T"><b>T</b></a>
+ &nbsp; 
+<a class="summary-letter" href="#Indices_cp_letter-U"><b>U</b></a>
  &nbsp; 
 </td></tr></table>
 <table class="index-cp" border="0">
@@ -2793,6 +2816,9 @@ Previous: <a href="#Sources" accesskey="p" rel="prev">Sources</a>, Up: <a href="
 <tr><th id="Indices_cp_letter-T">T</th><td></td><td></td></tr>
 <tr><td></td><td valign="top"><a href="#index-transpose">transpose</a>:</td><td>&nbsp;</td><td valign="top"><a href="#Transposition">Transposition</a></td></tr>
 <tr><td colspan="4"> <hr></td></tr>
+<tr><th id="Indices_cp_letter-U">U</th><td></td><td></td></tr>
+<tr><td></td><td valign="top"><a href="#index-unbounded-axes">unbounded axes</a>:</td><td>&nbsp;</td><td valign="top"><a href="#Special-arrays">Special arrays</a></td></tr>
+<tr><td colspan="4"> <hr></td></tr>
 </table>
 <table><tr><th valign="top">Jump to: &nbsp; </th><td><a class="summary-letter" href="#Indices_cp_symbol-1"><b>*</b></a>
  &nbsp; 
@@ -2840,6 +2866,8 @@ Previous: <a href="#Sources" accesskey="p" rel="prev">Sources</a>, Up: <a href="
 <a class="summary-letter" href="#Indices_cp_letter-S"><b>S</b></a>
  &nbsp; 
 <a class="summary-letter" href="#Indices_cp_letter-T"><b>T</b></a>
+ &nbsp; 
+<a class="summary-letter" href="#Indices_cp_letter-U"><b>U</b></a>
  &nbsp; 
 </td></tr></table>
 

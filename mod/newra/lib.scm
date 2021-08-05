@@ -279,13 +279,14 @@ See also: @code{ra-iota} @code{ra-i}
 (define (ra-i . i)
   (make-ra-root (make-aseq) (apply c-dims i)))
 
+; FIXME (ra-iota #f ...) is somewhat inconsistent with (ra-i #t). Maybe accept ra-iota #t instead?
 (define ra-iota
   (case-lambda*
    (()
 ; lo #f so it matches axes with any lo
     (make-ra-root (make-aseq) (vector (make-dim #f #f 1))))
    ((len #:optional (lo 0) (step 1))
-    (make-ra-root (make-aseq lo step) (c-dims len)))))
+    (make-ra-root (make-aseq lo step) (vector (make-dim len 0 1))))))
 
 ; oldra has array-copy in (ice-9 arrays). Something of the sort.
 ; FIXME handling of dead axes could be faster - maybe c-dims should be written differently.

@@ -565,28 +565,40 @@ See also: ra-root ra-zero ra-dims
   "
 c-dims d ...
 
-Compute dim-vector for C-order (row-major) array of lengths @var{D} ...
+Compute dim-vector for C-order (row-major) array of bounds @var{d} ...
 
-The first length may given as #f, which indicates an infinite dimension.
+Each of the @var{d} ... may be @var{len}, or a bounds pair (@var{lo}
+@var{hi}). If @var{len} or @var{hi} is @code{#f}, this creates a dead axis.
+
+The first non-@code{#f} @var{hi} or @var{len} may be @code{#t}; this creates an
+unbounded axis.
 
 See also: make-ra-root make-ra-new
 "
-  (list->vector
-   (let loop ((d d))
-     (match d
-       (()
-        '())
-       (((lo hi))
-        (list (make-dim (- hi lo -1) lo 1)))
-       ((len)
-        (list (make-dim len 0 1)))
-       (((lo hi) . rest)
-        (let ((next (loop rest))
-              (len (- hi lo -1)))
-          (cons (make-dim len lo (* (dim-len (car next)) (dim-step (car next)))) next)))
-       ((len . rest)
-        (let ((next (loop rest)))
-          (cons (make-dim len 0 (* (dim-len (car next)) (dim-step (car next)))) next)))))))
+  (let ((d (list->vector d)))
+    (let loop ((i (- (vector-length d) 1)) (step 1))
+      (if (negative? i)
+        d
+        (match (vector-ref d i)
+          ((lo #f)
+           (vector-set! d i (make-dim #f lo 0))
+           (loop (- i 1) step))
+          ((lo #t)
+           (vector-set! d i (make-dim #f lo step))
+           (loop (- i 1) #f))
+          ((lo hi)
+           (let ((len (- hi lo -1)))
+             (vector-set! d i (make-dim len lo step))
+             (loop (- i 1) (* len step))))
+          (#t
+           (vector-set! d i (make-dim #f 0 step))
+           (loop (- i 1) #f))
+          (#f
+           (vector-set! d i (make-dim #f 0 0))
+           (loop (- i 1) step))
+          (len
+           (vector-set! d i (make-dim len 0 step))
+           (loop (- i 1) (* len step))))))))
 
 (define (make-ra-new type value dims)
   "

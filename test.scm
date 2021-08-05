@@ -137,7 +137,21 @@
 
 ; default ra-iota has lo #f so it will match any lower bound and act as index placeholder.
 (test-equal "#%1@2:3(2 3 4)"
-            (ra->string (ra-copy! (make-ra-new #t 'o (c-dims '(2 4))) (ra-iota))))
+  (ra->string (ra-copy! (make-ra-new #t 'o (c-dims '(2 4))) (ra-iota))))
+
+; mixing dead and unbounded axes
+(let ((a (ra-i #f #t #f 2 3)))
+  (test-equal 5 (a 0 0 0 1 2))
+  (test-equal 5 (a 0 0 1 1 2))
+  (test-equal 11 (a 0 1 0 1 2))
+; reducing the unbounded axis
+  (test-equal "#%4d:d:d:2:3((((6 7 8) (9 10 11))))"
+    (ra->string (ra-from a #t 1))))
+
+; unbounded both ways
+(let ((a (ra-i #f '(#f #t) #f 2 3)))
+  (test-equal "#%4d:d:d:2:3((((-6 -5 -4) (-3 -2 -1))))"
+    (ra->string (ra-from a #t -1 #t))))
 
 ; 2/3/4 use moving slice but 1 uses direct slicing in the lo..hi range.
 
@@ -721,21 +735,24 @@
 
 (test-assert (ra-equal? (ra-i 3) (make-ra-root (make-aseq) (c-dims 3))))
 
-; inf index vector
+; inf dimension
 (test-assert (not (dim-len (make-dim #f))))
 
-; make an array out of inf index vector
+; make an array out of inf root
 (test-assert (ra-equal? (ra-i 3) (make-ra-root (make-aseq) (c-dims 3))))
 
 ; make an inf array
-(let ((rainf (make-ra-root (make-aseq) (c-dims #f))))
+(let ((rainf (make-ra-root (make-aseq) (c-dims #t))))
   (throws-exception? 'unset-len-for-dim (lambda () (ra-for-each pk rainf)))
   (test-equal #(10 8 6) (ra->array (ra-map! (make-ra #f 3) - (ra-iota 3 10 -1) rainf)))
   (test-equal #(-10 -8 -6) (ra->array (ra-map! (make-ra #f 3) - rainf (ra-iota 3 10 -1)))))
 
-(let ((rainf (ra-i #f 3 4)))
+(let ((rainf (ra-i #t 3 4)))
   (test-equal #(1204 1205 1206 1207) (ra->array (ra-copy #t (rainf 100 1))))
   (test-equal '(#f 3 4) (ra-dimensions rainf)))
+
+; properties of inf arrays
+(test-equal '((#f #f)) (ra-shape (ra-iota)))
 
 
 ; -----------------------
@@ -919,7 +936,7 @@
   (test-equal 0 (ra-ref (ra-from A (make-ra -3)))))
 
 (test-equal "#%1d:2(0 1)" (ra->string (ra-from (ra-i 4) (ra-iota 2))))
-(test-equal "#%1d:4(0 1 2 3)" (ra->string (ra-from (ra-i #f) (ra-iota 4))))
+(test-equal "#%1d:4(0 1 2 3)" (ra->string (ra-from (ra-i #t) (ra-iota 4))))
 (test-equal "#%1d:4(0 -1 -2 -3)" (ra->string (ra-from (make-ra-root (make-aseq) (vector (make-dim 4 -3 -1))) (ra-iota 4 -3))))
 
 ; note that arrays are always indexed upwards, so you cannot have (lo hi) be (#f number).
@@ -1081,7 +1098,9 @@
 
 (define (test-tile a shape check-shape)
   (let* ((b (apply ra-tile a 0 shape)))
-    (ra-slice-for-each 2 (lambda (b) (test-assert (ra-equal? a b))) b)
+    (ra-slice-for-each 2 (lambda (b) (test-assert (ra-equal? a b)))
+; enable loop in the dead axis case since there's only that argument.
+                       (ra-singletonize b))
     (test-assert (eq? (ra-root a) (ra-root b)))
     (test-equal check-shape (ra-shape b))))
 
@@ -1091,6 +1110,10 @@
            '(2 3) '((0 1) (0 2) (1 4) (4 9)))
 (test-tile (ra-transpose (make-ra-root (make-aseq) (c-dims '(4 9) '(1 4))) 1 0)
            '((2 4) (-1 3)) '((2 4) (-1 3) (1 4) (4 9)))
+
+(test-tile (ra-i 5)
+           '(2 #f) '((0 1) (0 #f) (0 4)))
+
 
 
 ; -----------------------

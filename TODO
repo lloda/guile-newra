@@ -8,6 +8,7 @@ Help: [C-uc .] insert timestamp [C-cc] flip checkbox [C-uucc] partial flip check
   * [ ] zero lengths break ra-format
   * [ ] ra-equal? errors out with mismatched shapes
   * [ ] docstrings don't work for define-inlinable-case
+  * [ ] (ra-dimensions (ra-iota))
 
 * TODO documentation [1/1]
   * [X] actually explain rank extension / prefix matching in the manual

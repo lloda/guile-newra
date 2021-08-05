@@ -264,7 +264,7 @@ As you can verify, the prefix agreement rule is distributive. Therefore it can b
 @cindex broadcasting, singleton, newaxis
 An weakness of prefix agreement is that the axes you want to match aren't always the prefix axes. Other array systems (e.g. @mybibcite{num17}) offer a feature similar to rank extension called ‘broadcasting’ that is a bit more flexible. For example an array of shape [A B 1 D] will match an array of shape [A B C D] for any value of C. The process of broadcasting consists in inserting so-called ‘singleton dimensions’ (axes with length one) to align the axes that one wishes to match. One may think of rank extension as a particular case of broadcasting where the singleton dimensions are added to the end of the shorter shapes automatically.
 
-A drawback of singleton broadcasting is that it muddles the distinction between a scalar and a vector of length 1. Sometimes, an axis of length 1 is no more than that, and if 2≠3 is a size error, it isn't obvious why 1≠2 shouldn't be. For this reason @code{newra}'s support for explicit broadcasting is based on @ref{x-dead-axes, dead axes}.
+A drawback of singleton broadcasting is that it muddles the distinction between a scalar and a vector of length 1. Sometimes, an axis of length 1 is no more than that, and if 2≠3 is a size error, it isn't obvious why 1≠2 shouldn't be. For this reason @code{newra}'s support for explicit broadcasting is based on @ref{x-dead-axes,dead axes}.
 
 @example
 @verbatim
@@ -522,7 +522,7 @@ Any type that is usable as the root of an old built-in Guile array is also usabl
 @item bitvectors (e.g. @code{(bitvector #f #t #f #t)})
 @end itemize
 
-@code{newra} supports an additional root vector type, @code{<aseq>}, representing an infinite arithmetic sequence.
+@code{newra} supports an additional root vector type, @code{<aseq>}, representing an unbounded arithmetic sequence.
 
 @cindex @code{make-aseq}
 @anchor{x-none}
@@ -543,7 +543,8 @@ Create an arithmetic sequence [@code{org, org+inc, org+2·inc, ...}]. The defaul
 @code{aseq} roots are immutable. The type tag of @code{aseq} roots is @code{d}. Arrays with integer-valued @code{aseq} roots have a few special uses; one of them is as arguments in @ref{Slicing, slicing}.
 
 @cindex infinite axes
-To make @code{<aseq>} even more useful, @code{newra} supports axes with infinite length.
+@cindex unbounded axes
+To make @code{<aseq>} even more useful, @code{newra} supports unbounded axes.
 
 @example
 @verbatim
@@ -604,7 +605,7 @@ The read syntax for arrays is @url{https://www.gnu.org/software/guile/manual/htm
 @result{} @code{#%1:3(2 2 2)}
 @end example
 
-Dead axes print as @code{d}, and infinite (not dead) axes print as @code{f}. These cannot be read back.
+Dead axes print as @code{d}, and unbounded (not dead) axes print as @code{f}. These cannot be read back.
 
 @example
 @verbatim
@@ -793,7 +794,7 @@ The basic array iteration operations in @code{newra} all operate by effect. This
 @result{} #%1:3(-1 -2 -3)
 @end example
 
-It is common to need the indices of the elements during array iteration. @code{newra} iteration operations do not keep track of those indices@footnote{Except for @ref{x-ra-index-map!, @code{ra-index-map!}}, which is provided out of compatibility with the older array system.} because that has a cost. You need to pass the indices you need as arguments, but it's easy to do so by using an infinite index vector together with @ref{x-ra-transpose, @code{ra-transpose}}.
+It is common to need the indices of the elements during array iteration. @code{newra} iteration operations do not keep track of those indices@footnote{Except for @ref{x-ra-index-map!, @code{ra-index-map!}}, which is provided out of compatibility with the older array system.} because that has a cost. You need to pass the indices you need as arguments, but it's easy to do so by using an unbounded index vector together with @ref{x-ra-transpose, @code{ra-transpose}}.
 
 @example
 @verbatim
@@ -1292,7 +1293,7 @@ as are these:
 @end verbatim
 @end example
 
-Note that in the last example there is no source axis for destination axis 0. Destination axes not mentioned in the axis argument list become @ref{x-dead-axes, dead axes}. The rank of the result array is always just large enough to fit all the destination axes.
+Note that in the last example there is no source axis for destination axis 0. Destination axes not mentioned in the axis argument list become @ref{x-dead-axes,dead axes}. The rank of the result array is always just large enough to fit all the destination axes.
 
 @example
 @verbatim
@@ -1402,7 +1403,7 @@ For example:
 @section Compatibility with old Guile arrays
 @c ------------------------------------------------
 
-The functions @ref{x-ra->array, @code{ra->array}} and @ref{x-array->ra, @code{array->ra}} are provided to convert to and from @code{newra} arrays and built-in Guile arrays. It is an error to use @code{ra->array} on arrays whose root isn't supported by the built-in arrays, or that have an infinite length. Except in those two cases, the conversion is transparent both ways, and the result always shares the root of the argument.
+The functions @ref{x-ra->array, @code{ra->array}} and @ref{x-array->ra, @code{array->ra}} are provided to convert to and from @code{newra} arrays and built-in Guile arrays. It is an error to use @code{ra->array} on arrays whose root isn't supported by the built-in arrays, or that have an unbounded axis. Except in those two cases, the conversion is transparent both ways, and the result always shares the root of the argument.
 
 @example
 @verbatim
@@ -1428,7 +1429,7 @@ b
 @result{} #2((0 1 2) (3 4 5))
 @end example
 
-On dead axes, infinite lengths can be set to 1 (with @ref{x-ra-singletonize, @code{ra-singletonize}}) to allow conversion with @code{ra->array} or to other array systems that do singleton broadcasting.
+On dead axes, lengths can be set to 1 (with @ref{x-ra-singletonize, @code{ra-singletonize}}) to allow conversion with @code{ra->array} or to other array systems that do singleton broadcasting.
 
 @example
 @verbatim
@@ -1601,7 +1602,7 @@ See also: @ref{x-ra->array,@code{ra->array}}.
 @cindex packed array
 Create dims for C-order array (packed elements, last dimension changing fastest).
 
-Each of the bounds may be an integer (a length) or a pair of integers (lower and upper bounds).
+Each of the bounds may be a pair of bounds (@var{lo} @var{hi}) or a single length @var{len}, which implies zero @var{lo}.
 @example
 @verbatim
 (c-dims 2 3)
@@ -1958,9 +1959,11 @@ This function doesn't handle large arrays in any particular way. User beware!
 
 @cindex @code{ra-i}
 @anchor{x-ra-i}
-@deffn @w{Function} ra-i len ...
+@deffn @w{Function} ra-i bounds ...
 
-Create multidimensional index array with the given lengths. The root is of type @code{<aseq>}.
+Create multidimensional index array with the given bounds.
+
+The root is of type @code{<aseq>}. The first upper bound that isn't @code{#f} may be @code{#t}; this creates an unbounded axis.
 
 @example
 @verbatim
@@ -1972,9 +1975,10 @@ Create multidimensional index array with the given lengths. The root is of type 
 
 @cindex @code{ra-iota}
 @anchor{x-ra-iota}
-@deffn @w{Function} ra-iota [len [lo [step]]]
+@deffn @w{Function} ra-iota len [lo [step]]
+@deffnx @w{Function} ra-iota
 
-Create rank-1 index array. The root is of type @code{<aseq>}.
+Create rank-1 index array. The root is of type @code{<aseq>}. @var{lo} defaults to 0 and @var{step} to 1.
 
 @example
 @verbatim
@@ -1982,6 +1986,20 @@ Create rank-1 index array. The root is of type @code{<aseq>}.
 @end verbatim
 @result{} #%1d:4(3 2 1 0)
 @end example
+
+@code{(ra-iota)} is unbounded both ways, e.g.
+
+@example
+@verbatim
+(ra-shape (ra-iota))
+@end verbatim
+@result{} @code{((#f #f))}
+@verbatim
+((ra-iota) -100000000000)
+@end verbatim
+@result{} -100000000000
+@end example
+
 @end deffn
 
 @cindex @code{ra-cat}
@@ -2368,6 +2386,15 @@ Each of the bounds may be an integer (a length) or a pair of integers (lower and
 ║3│3║7│7║11│11║
 ║─┴─║─┴─║──┴──║
 @end verbatim
+@end example
+
+Either @var{len} or @var{hi} being @code{#f} creates @ref{x-dead-axes,dead axes}.
+@example
+@verbatim
+(define a (ra-tile (ra-i 2 2) 0 #f #f))
+(define b (ra-transpose (ra-i 2 2) 2)) ; same thing
+@end verbatim
+@result{} @code{#%4d:d:d:2:2((((0 1) (2 3))))}
 @end example
 
 The tiled array shares the root of @var{a}.
@@ -2773,7 +2800,7 @@ Convert (@code{newra}) array @var{a} into built-in Guile array.
 
 This function does not create a copy of the array, but reuses the root (@code{ra-root}) of @var{a}, that is, @code{(eq? (ra-root a) (shared-array-root (ra->array a)))} is @code{#t}.
 
-Not all arrays can be converted into built-in Guile arrays. For example, type @code{d} arrays, or arrays with infinite axes, are not convertible.
+Not all arrays can be converted into built-in Guile arrays. For example, type @code{d} arrays, or arrays with unbounded axes, are not convertible.
 
 @example
 @verbatim
