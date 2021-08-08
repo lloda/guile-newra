@@ -21,9 +21,10 @@
         (newra cat) (newra from) (newra lib))
 
 (define *ra-print*
-  (make-parameter #f (lambda (x) (match x
-                                   ((or 'box 'default #f (? procedure?)) x)
-                                   (x (throw 'bad-argument-to-*ra-print* x))))))
+  (make-parameter #f
+    (lambda (x) (match x
+                  ((or 'box 'box-compact 'default #f (? procedure?)) x)
+                  (x (throw 'bad-argument-to-*ra-print* x))))))
 
 (define *ra-parenthesized-rank-zero*
   (make-parameter #t))

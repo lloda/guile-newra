@@ -1398,6 +1398,8 @@ One of the major reasons to use arrays instead of other Scheme data structures i
 
 For example:
 
+TODO
+
 @c ------------------------------------------------
 @node Compatibility with old Guile arrays
 @section Compatibility with old Guile arrays
@@ -2463,6 +2465,8 @@ For example:
 @result{} @code{#%2:3:4((0 -1 -2 -3) (1 0 -1 -2) (2 1 0 -1))}
 @end example
 
+See also: @ref{x-ra-map!,@code{ra-map!}}, @ref{Iteration}.
+
 @end deffn
 
 @cindex @code{ra-slice-for-each}
@@ -2491,6 +2495,9 @@ Note that it isn't necessary for arguments @var{a} to have rank ≥ @var{k}. Arg
 @end verbatim
 @result{} @code{(a 0)(a 1)(a 2)(b 3)(b 4)(b 5)}
 @end example
+
+See also: @ref{x-ra-map!,@code{ra-map!}}, @ref{x-ra-for-each,@code{ra-for-each}}, @ref{Iteration}.
+
 @end deffn
 
 @cindex @code{ra-map!}
@@ -2506,6 +2513,9 @@ This is equivalent to
          (ra-set! dst (apply op (map ra-ref a))))
        dst a)
 @end verbatim
+
+See also: @ref{x-ra-for-each,@code{ra-for-each}}, @ref{x-ra-slice-for-each,@code{ra-slice-for-each}}, @ref{Iteration}.
+
 @end deffn
 
 @cindex @code{ra-copy!}
@@ -2520,6 +2530,7 @@ For valid arguments, this is equivalent to any one of
 @end verbatim
 
 See also @ref{x-ra-copy,@code{ra-copy}} @ref{x-ra-amend!,@code{ra-amend!}} @ref{x-ra-set!,@code{ra-set!}} @ref{x-ra-map!,@code{ra-map!}}.
+
 @end deffn
 
 @cindex @code{ra-copy}
@@ -2617,7 +2628,9 @@ See also: @ref{x-ra-amend!,@code{ra-amend!}}, @ref{x-ra-ref,@code{ra-ref}}.
 @anchor{x-ra-slice}
 @deffn @w{Function} ra-slice a i ...
 
-Look up array cell. This function returns a view of @var{a} with rank @var{a}-card(@var{i ...}), even if that is 0.
+Look up array cell.
+
+This function returns a view of @var{a} with rank @var{k} equal to the rank of @var{a} minus the number of @var{i ...}, even if that is 0.
 
 It is an error if the number of @var{i ...} exceeds the rank of @var{a}.
 
@@ -2628,7 +2641,9 @@ See also: @ref{x-ra-cell,@code{ra-cell}}, @ref{x-ra-ref,@code{ra-ref}}, @ref{x-r
 @anchor{x-ra-cell}
 @deffn @w{Function} ra-cell a i ...
 
-Look up array cell. If @var{k}=@var{a}-card(@var{i ...}) is zero, return the array element at @var{i ...}, like @ref{x-ra-ref,@code{ra-ref}}; else return a @var{k}-view of @var{a}, like @ref{x-ra-slice,@code{ra-slice}}.
+Look up array cell.
+
+Let @var{k} be the rank of @var{a} minus the number of @var{i ...}. If @var{k} is zero, return the array element at @var{i ...}, like @ref{x-ra-ref,@code{ra-ref}}; else return a @var{k}-view of @var{a}, like @ref{x-ra-slice,@code{ra-slice}}.
 
 It is an error if the number of @var{i ...} exceeds the rank of @var{a}.
 
@@ -2662,7 +2677,7 @@ See also: @ref{x-ra-slice,@code{ra-slice}}, @ref{x-ra-ref,@code{ra-ref}}, @ref{x
 Return @code{#t} if the arrays @var{a} ... have the same shapes and types and their
 corresponding elements are all @code{equal?} to each other, or @code{#f} otherwise.
 
-Note that this function isn't rank extending. Here's a rank-extending version for two arguments:
+Note that this function isn't rank extending; the shapes of the arguments must be the same, not just match. Here's a rank-extending version:
 
 @example
 @verbatim

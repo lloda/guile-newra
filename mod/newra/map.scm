@@ -558,13 +558,12 @@ See also: ra-copy! ra-map!
   (define (line! t)
     (match t
       (#t
-       (lambda (fill target tstart len)
-; FIXME vector-fill! is much slower with the optional args for some reason.
-         (vector-fill! target fill tstart (+ tstart len))))
+       (lambda (fill dst dstart len)
+         (vector-fill! dst fill dstart (+ dstart len))))
       ('s
-       (lambda (fill target tstart len)
-         (string-fill! target fill tstart (+ tstart len))))
-      ('d (throw 'cannot-copy-type 'd))
+       (lambda (fill dst dstart len)
+         (string-fill! dst fill dstart (+ dstart len))))
+      ('d (throw 'cannot-fill-type 'd))
       (t #f)))
 
 ; optimization 1
@@ -609,15 +608,15 @@ See also: ra-fill! ra-map! ra-clip
   (define (line! t)
     (match t
       (#t
-       (lambda (target tstart source sstart len)
-         (vector-copy! target tstart source sstart (+ sstart len))))
+       (lambda (dst dstart src sstart len)
+         (vector-copy! dst dstart src sstart (+ sstart len))))
       ((or 'u8 's8 'u16 's16 'u32 's32 'f32 'c32 'u64 's64 'f64 'c64)
        (let ((bs (bytevector-type-size t)))
-         (lambda (target tstart source sstart len)
-           (bytevector-copy! source (* bs sstart) target (* bs tstart) (* bs len)))))
+         (lambda (dst dstart src sstart len)
+           (bytevector-copy! src (* bs sstart) dst (* bs dstart) (* bs len)))))
       ('s
-       (lambda (target tstart source sstart len)
-         (string-copy! target tstart source sstart (+ sstart len))))
+       (lambda (dst dstart src sstart len)
+         (string-copy! dst dstart src sstart (+ sstart len))))
       ('d (throw 'cannot-copy-type 'd))
       (t #f)))
 
@@ -757,13 +756,15 @@ See also: ra-every ra-equal? ra-fold
     (let ((da (ra-dims ra))
           (ta (ra-type ra)))
       (for-each (lambda (rb)
-                  (unless (eq? ta (ra-type rb))
-                    (exit #f))
-                  (vector-for-each
-                   (lambda (da db)
-                     (unless (and (eqv? (dim-lo da) (dim-lo db)) (eqv? (dim-len da) (dim-len db)))
-                       (exit #f)))
-                   da (ra-dims rb)))
+                  (let ((db (ra-dims rb)))
+                    (unless (and (eq? ta (ra-type rb))
+                                 (= (vector-length da) (vector-length db)))
+                      (exit #f))
+                    (vector-for-each
+                     (lambda (da db)
+                       (unless (and (eqv? (dim-lo da) (dim-lo db)) (eqv? (dim-len da) (dim-len db)))
+                         (exit #f)))
+                     da db)))
         rx)
       #t)))
 
