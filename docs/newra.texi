@@ -7,7 +7,7 @@
 @c last [ma112]
 
 @set VERSION 1
-@set UPDATED 2021 August 4
+@set UPDATED 2021 August 9
 
 @copying
 @code{newra} (version @value{VERSION}, updated @value{UPDATED})
@@ -794,7 +794,7 @@ The basic array iteration operations in @code{newra} all operate by effect. This
 @result{} #%1:3(-1 -2 -3)
 @end example
 
-It is common to need the indices of the elements during array iteration. @code{newra} iteration operations do not keep track of those indices@footnote{Except for @ref{x-ra-index-map!, @code{ra-index-map!}}, which is provided out of compatibility with the older array system.} because that has a cost. You need to pass the indices you need as arguments, but it's easy to do so by using an unbounded index vector together with @ref{x-ra-transpose, @code{ra-transpose}}.
+It is common to need the indices of the elements during array iteration. @code{newra} iteration operations do not keep track of those indices@footnote{An exception is @ref{x-ra-index-map!, @code{ra-index-map!}}, where passing the indices is the purpose.} because that has a cost. You need to pass the indices you need as arguments, but it's easy to do so by using an unbounded index vector together with @ref{x-ra-transpose, @code{ra-transpose}}.
 
 @example
 @verbatim
@@ -1445,7 +1445,7 @@ a
 @result{} @code{#%4d:1:2:1:3((((0 1 2)) ((3 4 5))))}
 @end example
 
-One important difference between the built-in array functions and @code{newra} is that bounds matching in @code{newra} is strict: finite bounds must be identical for axes to match, while for @code{array-map!}, @code{array-for-each}, @code{array-copy!}, etc. the iteration range is the intersection of the ranges of the arguments@footnote{I rejected this approach for @code{newra} because in my experience it results in errors going undetected much more often than it saves any work.}. @code{newra} provides @ref{x-ra-clip, @code{ra-clip}} to match ranges easily.
+One important difference between the built-in array functions and @code{newra} is that bounds matching in @code{newra} is strict: finite bounds must be identical for axes to match, while for @code{array-map!}, @code{array-for-each}, @code{array-copy!}, etc. the iteration range is the intersection of the ranges of the arguments@footnote{I decided against this approach for @code{newra} because in my experience it results in errors going undetected much more often than it saves any work.}. @code{newra} provides @ref{x-ra-clip, @code{ra-clip}} to match ranges easily.
 
 @example
 @verbatim
@@ -1786,7 +1786,7 @@ Pretty print array @var{ra}.
 
 Each element @var{x} of @var{ra} is converted to a string using @code{(fmt x)}, or @code{(format #f fmt x)}@footnote{@url{https://www.gnu.org/software/guile/manual/html_node/Formatted-Output.html,@code{(ice-9 format)}}} if @var{fmt} is a string. @var{fmt} defauts to @code{"~a"}. Elements that are arrays are formatted using @code{ra-format} recursively.
 
-If @var{port} is @code{#t}, the array is printed to standard output. If is @code{#f}, nothing is printed; instead, the function returns a rank-2 character array @var{sc} with the result of the printing.
+If @var{port} is @code{#f}, nothing is printed; instead, the function returns a rank-2 character array @var{sc} with the result of the printing. Otherwise the array is printed to @var{port} and the function returns an unspecified value. The default for @var{port} is @code{#t}, which works as @code{current-output-port}.
 
 If @var{prefix?} is true, the array print prefix @ref{x-ra-print-prefix,@code{ra-print-prefix}} is printed over the first line of the printout if the rank of @var{ra} is 2 or greater, else it is printed on a separate line above the printout.
 
@@ -1955,6 +1955,8 @@ Using a custom element formatter:
 @end verbatim
 @end example
 
+If any of the lengths of @var{ra} is 0, only the prefix is printed.
+
 This function doesn't handle large arrays in any particular way. User beware!
 
 @end deffn
@@ -1973,6 +1975,9 @@ The root is of type @code{<aseq>}. The first upper bound that isn't @code{#f} ma
 @end verbatim
 @result{} #%3d:2:3:4(((0 1 2 3) (4 5 6 7) (8 9 10 11)) ((12 13 14 15) (16 17 18 19) (20 21 22 23)))
 @end example
+
+See also: @ref{x-ra-iota,@code{ra-iota}}, @ref{x-ra-index-map!,@code{ra-index-map!}}. @footnote{Cf. @code{array-index} from @mybibcite{SRFI-164}.}
+
 @end deffn
 
 @cindex @code{ra-iota}
@@ -2001,6 +2006,8 @@ Create rank-1 index array. The root is of type @code{<aseq>}. @var{lo} defaults 
 @end verbatim
 @result{} -100000000000
 @end example
+
+See also: @ref{x-ra-i,@code{ra-i}}.
 
 @end deffn
 
@@ -2665,7 +2672,6 @@ It is an error if the number of @var{i ...} exceeds the rank of @var{a}.
 @result{} @code{4}
 @end example
 
-
 See also: @ref{x-ra-slice,@code{ra-slice}}, @ref{x-ra-ref,@code{ra-ref}}, @ref{x-ra-from,@code{ra-from}}, @ref{Slicing}.
 
 @end deffn
@@ -2747,13 +2753,66 @@ Additionally, if each @var{i} ... is one of
 @item an array of rank 0
 @item an integer
 @end itemize
-then the result @var{b} shares the root of @var{a}. In all other cases a new root is allocated for the result.
+then the result @var{b} shares the root of @var{a}. In all other cases a new root is allocated for the result. For example
+
+@example
+@verbatim
+(define a (list->ra 2 '((1 2 3) (a b c))))
+(define b (ra-from a #t (ra-iota 3 2 -1))) ; same as (ra-reverse a 1)
+b
+@end verbatim
+@result {} @code{#%2:2:3((3 2 1) (c b a))}
+@verbatim
+(eq? (ra-root a) (ra-root b))
+@end verbatim
+@result {} @code{#t}
+@verbatim
+(define c (ra-from a #t (list->ra 1 '(2 1 0))))
+b
+@end verbatim
+@result {} @code{#%2:2:3((3 2 1) (c b a))}
+@verbatim
+(eq? (ra-root a) (ra-root c))
+@end verbatim
+@result {} @code{#f}
+@end example
+
+Unbounded indices aren't treated especially, so they are only valid if the relevant axis of @var{ra} is itself unbounded.
+
+@example
+@verbatim
+(ra-i #t 4)
+@end verbatim
+@result {}
+@verbatim
+#%2d:f:4──┐
+│0│1│ 2│ 3│
+├─┼─┼──┼──┤
+│4│5│ 6│ 7│
+├─┼─┼──┼──┤
+│8│9│10│11│
+...........
+@end verbatim
+@verbatim
+(ra-from (ra-i #t 4) (ra-iota #f 0 2))
+@end verbatim
+@result {}
+@verbatim
+#%2d:f:4─┬──┐
+│ 0│ 1│ 2│ 3│
+├──┼──┼──┼──┤
+│ 8│ 9│10│11│
+├──┼──┼──┼──┤
+│16│17│18│19│
+.............
+@end verbatim
+@end example
 
 If the result would have rank 0, then an array element is returned, and not a 0-rank view of @var{a}. Use @ref{x-ra-amend!,@code{ra-amend!}} to assign to cells of an array regardless of whether they are of 0-rank or higher.
 
 The type of @var{b} is the same as that of @var{a}, with the only exception that if the type of @var{a} is @code{d} and the root of @var{b} cannot be shared with the root of @var{a}, then the type of @var{b} is @code{#t}.
 
-See also: @ref{x-ra-cell,@code{ra-cell}}, @ref{x-ra-ref,@code{ra-ref}}, @ref{x-ra-slice,@code{ra-slice}}, @ref{x-ra-amend!,@code{ra-amend!}}, @ref{Slicing}.
+See also: @ref{x-ra-cell,@code{ra-cell}}, @ref{x-ra-ref,@code{ra-ref}}, @ref{x-ra-slice,@code{ra-slice}}, @ref{x-ra-amend!,@code{ra-amend!}}, @ref{Slicing}.@footnote{Cf. @code{array-index-ref} from @mybibcite{SRFI-164}.}
 
 @end deffn
 
@@ -2802,7 +2861,7 @@ indices that match those elements. @code{newra} will @emph{not} check that each 
 
 This function returns the modified array @var{a}.
 
-See also: @ref{x-ra-copy!,@code{ra-copy!}} @ref{x-ra-cell,@code{ra-cell}} @ref{x-ra-ref,@code{ra-ref}} @ref{x-ra-slice,@code{ra-slice}} @ref{x-ra-from,@code{ra-from}} @ref{x-ra-set!,@code{ra-set!}}.
+See also: @ref{x-ra-from,@code{ra-from}}, @ref{x-ra-copy!,@code{ra-copy!}} @ref{x-ra-cell,@code{ra-cell}} @ref{x-ra-ref,@code{ra-ref}} @ref{x-ra-slice,@code{ra-slice}} @ref{x-ra-from,@code{ra-from}} @ref{x-ra-set!,@code{ra-set!}}.
 
 @end deffn
 

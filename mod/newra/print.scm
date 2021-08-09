@@ -159,68 +159,70 @@
   (define (char k n) (string-ref (ra-ref arts (+ (if compact? 0 1) k)) n))
   (define (line-0 sc k range at) (ra-amend! sc (char k 0) range at))
   (define (line-1 sc k range at) (ra-amend! sc (char k 1) at range))
-  (if (zero? (ra-rank ra))
-    (let ((s (s))) (ra-copy! (ra-clip sc s) s)) ; align left
-    (begin
+  (cond
+   ((zero? (ra-rank ra))
+    (let ((s (s))) (ra-copy! (ra-clip sc s) s))) ; align left
+   ((zero? (ra-size ra)) #f)
+   (else
 ; print grid
-      (let loop ((k 0))
-        (let* ((m0 (marks l0 (- (ra-rank l0) 1 k)))
-               (m1 (marks l1 (- (ra-rank l1) 1 k)))
-               (>m0< (and m0 (ra-from m0 (ra-iota (- (ra-len m0) 2) 1))))
-               (>m1< (and m1 (ra-from m1 (ra-iota (- (ra-len m1) 2) 1)))))
-          (cond ((and m0 m1)
+    (let loop ((k 0))
+      (let* ((m0 (marks l0 (- (ra-rank l0) 1 k)))
+             (m1 (marks l1 (- (ra-rank l1) 1 k)))
+             (>m0< (and m0 (ra-from m0 (ra-iota (- (ra-len m0) 2) 1))))
+             (>m1< (and m1 (ra-from m1 (ra-iota (- (ra-len m1) 2) 1)))))
+        (cond ((and m0 m1)
 ; horiz + vert
-                 (if (and compact? (zero? k))
-                   (begin
-                     (line-1 sc k (ra-iota (+ 1 t1) 0) (ra-ref m0 0))
-                     (line-1 sc k (ra-iota (+ 1 t1) 0) (ra-ref m0 (- (ra-len m0) 1)))
-                     (line-0 sc k (ra-iota (+ 1 t0) 0) (ra-ref m1 0))
-                     (line-0 sc k (ra-iota (+ 1 t0) 0) (ra-ref m1 (- (ra-len m1) 1))))
-                   (begin
-                     (ra-for-each (lambda (m0) (line-1 sc k (ra-iota (+ 1 t1) 0) m0)) m0)
-                     (ra-for-each (lambda (m1) (line-0 sc k (ra-iota (+ 1 t0) 0) m1)) m1)))
+               (if (and compact? (zero? k))
+                 (begin
+                   (line-1 sc k (ra-iota (+ 1 t1) 0) (ra-ref m0 0))
+                   (line-1 sc k (ra-iota (+ 1 t1) 0) (ra-ref m0 (- (ra-len m0) 1)))
+                   (line-0 sc k (ra-iota (+ 1 t0) 0) (ra-ref m1 0))
+                   (line-0 sc k (ra-iota (+ 1 t0) 0) (ra-ref m1 (- (ra-len m1) 1))))
+                 (begin
+                   (ra-for-each (lambda (m0) (line-1 sc k (ra-iota (+ 1 t1) 0) m0)) m0)
+                   (ra-for-each (lambda (m1) (line-0 sc k (ra-iota (+ 1 t0) 0) m1)) m1)))
 ; crosses
-                 (if compact?
-                   (when (> k 0)
-                     (ra-for-each (lambda (m0 m1) (ra-set! sc (char k 10) m0 m1))
-                                  >m0< (ra-transpose >m1< 1)))
+               (if compact?
+                 (when (> k 0)
                    (ra-for-each (lambda (m0 m1) (ra-set! sc (char k 10) m0 m1))
                                 >m0< (ra-transpose >m1< 1)))
+                 (ra-for-each (lambda (m0 m1) (ra-set! sc (char k 10) m0 m1))
+                              >m0< (ra-transpose >m1< 1)))
 ; crosses horiz + vert
-                 (unless (and compact? (zero? k))
-                   (ra-for-each (lambda (m0)
-                                  (ra-set! sc (char k 6) m0 0)
-                                  (ra-set! sc (char k 7) m0 t1))
-                                >m0<)
-                   (ra-for-each (lambda (m1)
-                                  (ra-set! sc (char k 8) 0 m1)
-                                  (ra-set! sc (char k 9) t0 m1))
-                                >m1<))
+               (unless (and compact? (zero? k))
+                 (ra-for-each (lambda (m0)
+                                (ra-set! sc (char k 6) m0 0)
+                                (ra-set! sc (char k 7) m0 t1))
+                              >m0<)
+                 (ra-for-each (lambda (m1)
+                                (ra-set! sc (char k 8) 0 m1)
+                                (ra-set! sc (char k 9) t0 m1))
+                              >m1<))
 ; corners
-                 (ra-set! sc (char k 2) 0 0)
-                 (ra-set! sc (char k 3) 0 t1)
-                 (ra-set! sc (char k 4) t0 0)
-                 (ra-set! sc (char k 5) t0 t1)
-                 (loop (+ k 1)))
-                (m1
-                 (if (and compact? (zero? k))
-                   (begin
-                     (line-0 sc k (ra-iota (+ t0 1) 0) 0)
-                     (line-0 sc k (ra-iota (+ t0 1) 0) (ra-ref m1 (- (ra-len m1) 1))))
-                   (ra-for-each (lambda (m1) (line-0 sc k (ra-iota (+ t0 1) 0) m1)) m1)))
-                (else #f))))
+               (ra-set! sc (char k 2) 0 0)
+               (ra-set! sc (char k 3) 0 t1)
+               (ra-set! sc (char k 4) t0 0)
+               (ra-set! sc (char k 5) t0 t1)
+               (loop (+ k 1)))
+              (m1
+               (if (and compact? (zero? k))
+                 (begin
+                   (line-0 sc k (ra-iota (+ t0 1) 0) 0)
+                   (line-0 sc k (ra-iota (+ t0 1) 0) (ra-ref m1 (- (ra-len m1) 1))))
+                 (ra-for-each (lambda (m1) (line-0 sc k (ra-iota (+ t0 1) 0) m1)) m1)))
+              (else #f))))
 ; print cells
-      (ra-for-each
-       (lambda (sq o0 l0 o1 l1)
-         (ra-copy! (ra-from sc
-                            (ra-iota (ra-len sq 0) (+ o0 (if (> (ra-rank s) 1) 1 0)))
-                            (ra-iota (ra-len sq 1) (+ o1 1 (- l1 (ra-len sq 1) 1)))) ; align right
-                   sq))
-       (apply ra-untranspose s (ra->list (ra-cat #f 0 dim0 dim1)))
-       (apply ra-reshape (scan-0 (ra-ravel l0)) 0 (ra-dimensions l0))
-       l0
-       (ra-transpose (apply ra-reshape (scan-0 (ra-ravel l1)) 0 (ra-dimensions l1)) (ra-rank l0))
-       (ra-transpose l1 (ra-rank l0)))))
+    (ra-for-each
+     (lambda (sq o0 l0 o1 l1)
+       (ra-copy! (ra-from sc
+                          (ra-iota (ra-len sq 0) (+ o0 (if (> (ra-rank s) 1) 1 0)))
+                          (ra-iota (ra-len sq 1) (+ o1 1 (- l1 (ra-len sq 1) 1)))) ; align right
+                 sq))
+     (apply ra-untranspose s (ra->list (ra-cat #f 0 dim0 dim1)))
+     (apply ra-reshape (scan-0 (ra-ravel l0)) 0 (ra-dimensions l0))
+     l0
+     (ra-transpose (apply ra-reshape (scan-0 (ra-ravel l1)) 0 (ra-dimensions l1)) (ra-rank l0))
+     (ra-transpose l1 (ra-rank l0)))))
 ; print prefix
   (when prefix
     (ra-amend! scc (make-ra-root prefix) 0 (ra-iota (string-length prefix))))

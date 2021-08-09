@@ -2,11 +2,12 @@
 
 Help: [C-uc .] insert timestamp [C-cc] flip checkbox [C-uucc] partial flip checkbox [C-ct] flip TODO.
 
-* TODO bugs [3/6]
+* TODO bugs [4/7]
   * [X] (call-with-input-string "#3()" read) vs (call-with-input-string "#%3()" read)
   * [X] reader loses type when reading rank 0 arrays
   * [X] ra-equal? errors out with mismatched shapes
-  * [ ] zero lengths break ra-format
+  * [X] zero lengths break ra-format
+  * [ ] (ra-from (list->ra 2 '((a b c) (x y z))) 1 1) => #%0(y) contradicts doc
   * [ ] docstrings don't work for define-inlinable-case
   * [ ] (ra-dimensions (ra-iota))
 

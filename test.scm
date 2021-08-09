@@ -811,6 +811,14 @@
             (ra->string (ra-from A (ra-copy #t (ra-iota 3)))))
 (test-equal "#%2:3:2((0 1) (10 11) (20 21))" (ra->string (ra-from A (ra-iota 3) (ra-iota 2))))
 
+; manual examples
+(let* ((a (list->ra 2 '((1 2 3) (a b c))))
+       (b (ra-from a #t (ra-iota 3 2 -1)))
+       (c (ra-from a #t (list->ra 1 '(2 1 0)))))
+  (test-equal "#%2:2:3((3 2 1) (c b a))" (ra->string b) (ra->string c))
+  (test-assert (eq? (ra-root a) (ra-root b)))
+  (test-assert (not (eq? (ra-root a) (ra-root c)))))
+
 
 ; ------------------------
 ; tests
@@ -1271,8 +1279,12 @@
 (let ((ra (make-ra 'zero)))
   (ra-format ra))
 
-(let ((ra (make-ra 'x))) ; shorter than the prefix; was a bug
+; shorter than the prefix; was a bug
+(let ((ra (make-ra 'x)))
   (ra-format ra))
+
+; when size is 0, just print the prefix
+(ra-format (ra-i 3 0 4))
 
 
 ; -----------------------

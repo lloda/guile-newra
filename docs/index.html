@@ -1,6 +1,6 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
 <html>
-<!-- newra (version 1, updated 2021 August 4)
+<!-- newra (version 1, updated 2021 August 9)
 
 (c) lloda 2017-2021
 
@@ -100,7 +100,7 @@ Next: <a href="#Introduction" accesskey="n" rel="next">Introduction</a> &nbsp; [
 </div>
 <span id="newra"></span><h1 class="top"><code>newra</code></h1>
 
-<p><code>newra</code> (version 1, updated 2021 August 4)
+<p><code>newra</code> (version 1, updated 2021 August 9)
 </p>
 <p>(c) lloda 2017&ndash;2021
 </p>
@@ -1626,7 +1626,7 @@ a
 </p>
 <p>Each element <var>x</var> of <var>ra</var> is converted to a string using <code>(fmt x)</code>, or <code>(format #f fmt x)</code><a id="DOCF8" href="#FOOT8"><sup>8</sup></a> if <var>fmt</var> is a string. <var>fmt</var> defauts to <code>&quot;~a&quot;</code>. Elements that are arrays are formatted using <code>ra-format</code> recursively.
 </p>
-<p>If <var>port</var> is <code>#t</code>, the array is printed to standard output. If is <code>#f</code>, nothing is printed; instead, the function returns a rank-2 character array <var>sc</var> with the result of the printing.
+<p>If <var>port</var> is <code>#f</code>, nothing is printed; instead, the function returns a rank-2 character array <var>sc</var> with the result of the printing. Otherwise the array is printed to <var>port</var> and the function returns an unspecified value. The default for <var>port</var> is <code>#t</code>, which works as <code>current-output-port</code>.
 </p>
 <p>If <var>prefix?</var> is true, the array print prefix <a href="#x_002dra_002dprint_002dprefix"><code>ra-print-prefix</code></a> is printed over the first line of the printout if the rank of <var>ra</var> is 2 or greater, else it is printed on a separate line above the printout.
 </p>
@@ -1760,6 +1760,8 @@ element
 └──────────┴──────────┴──────────┴──────────┘
 </pre></div>
 
+<p>If any of the lengths of <var>ra</var> is 0, only the prefix is printed.
+</p>
 <p>This function doesn&rsquo;t handle large arrays in any particular way. User beware!
 </p>
 </dd></dl>
@@ -1776,6 +1778,9 @@ element
 <pre class="verbatim">(ra-i 2 3 4)
 </pre><pre class="example">&rArr; #%3d:2:3:4(((0 1 2 3) (4 5 6 7) (8 9 10 11)) ((12 13 14 15) (16 17 18 19) (20 21 22 23)))
 </pre></div>
+
+<p>See also: <a href="#x_002dra_002diota"><code>ra-iota</code></a>, <a href="#x_002dra_002dindex_002dmap_0021"><code>ra-index-map!</code></a>. <a id="DOCF9" href="#FOOT9"><sup>9</sup></a>
+</p>
 </dd></dl>
 
 <span id="index-ra_002diota"></span>
@@ -1799,6 +1804,8 @@ element
 </pre><pre class="example">&rArr; -100000000000
 </pre></div>
 
+<p>See also: <a href="#x_002dra_002di"><code>ra-i</code></a>.
+</p>
 </dd></dl>
 
 <span id="index-ra_002dcat"></span>
@@ -1901,7 +1908,7 @@ element
 <p>To ravel other combinations of axes, use <a href="#Transposition">Transposition</a>.
 </p>
 <span id="index-packed-array-1"></span>
-<p>The full ravel of an array doesn&rsquo;t necessarily result in a rank-1 &lsquo;packed&rsquo; array, that is, one where the step is 1. If that is required, one can use <code>(ra-ravel (ra-copy ra))</code>, since <a href="#x_002dra_002dorder_002dc_003f"><code>ra-order-c?</code></a> is always true for the result of <code>ra-copy</code><a id="DOCF9" href="#FOOT9"><sup>9</sup></a> .
+<p>The full ravel of an array doesn&rsquo;t necessarily result in a rank-1 &lsquo;packed&rsquo; array, that is, one where the step is 1. If that is required, one can use <code>(ra-ravel (ra-copy ra))</code>, since <a href="#x_002dra_002dorder_002dc_003f"><code>ra-order-c?</code></a> is always true for the result of <code>ra-copy</code><a id="DOCF10" href="#FOOT10"><sup>10</sup></a> .
 </p>
 <p>See also: <a href="#x_002dra_002dreshape"><code>ra-reshape</code></a>, <a href="#x_002dra_002dtile"><code>ra-tile</code></a>, <a href="#Reshaping">Reshaping</a>.
 </p>
@@ -2360,7 +2367,6 @@ a
 </pre><pre class="example">&rArr; <code>4</code>
 </pre></div>
 
-
 <p>See also: <a href="#x_002dra_002dslice"><code>ra-slice</code></a>, <a href="#x_002dra_002dref"><code>ra-ref</code></a>, <a href="#x_002dra_002dfrom"><code>ra-from</code></a>, <a href="#Slicing">Slicing</a>.
 </p>
 </dd></dl>
@@ -2438,13 +2444,50 @@ that is
 </li><li> an array of rank 0
 </li><li> an integer
 </li></ul>
-<p>then the result <var>b</var> shares the root of <var>a</var>. In all other cases a new root is allocated for the result.
+<p>then the result <var>b</var> shares the root of <var>a</var>. In all other cases a new root is allocated for the result. For example
 </p>
+<div class="example">
+<pre class="verbatim">(define a (list-&gt;ra 2 '((1 2 3) (a b c))))
+(define b (ra-from a #t (ra-iota 3 2 -1))) ; same as (ra-reverse a 1)
+b
+</pre><pre class="example">&rArr; <code>#%2:2:3((3 2 1) (c b a))</code>
+</pre><pre class="verbatim">(eq? (ra-root a) (ra-root b))
+</pre><pre class="example">&rArr; <code>#t</code>
+</pre><pre class="verbatim">(define c (ra-from a #t (list-&gt;ra 1 '(2 1 0))))
+b
+</pre><pre class="example">&rArr; <code>#%2:2:3((3 2 1) (c b a))</code>
+</pre><pre class="verbatim">(eq? (ra-root a) (ra-root c))
+</pre><pre class="example">&rArr; <code>#f</code>
+</pre></div>
+
+<p>Unbounded indices aren&rsquo;t treated especially, so they are only valid if the relevant axis of <var>ra</var> is itself unbounded.
+</p>
+<div class="example">
+<pre class="verbatim">(ra-i #t 4)
+</pre><pre class="example">&rArr;
+</pre><pre class="verbatim">#%2d:f:4──┐
+│0│1│ 2│ 3│
+├─┼─┼──┼──┤
+│4│5│ 6│ 7│
+├─┼─┼──┼──┤
+│8│9│10│11│
+...........
+</pre><pre class="verbatim">(ra-from (ra-i #t 4) (ra-iota #f 0 2))
+</pre><pre class="example">&rArr;
+</pre><pre class="verbatim">#%2d:f:4─┬──┐
+│ 0│ 1│ 2│ 3│
+├──┼──┼──┼──┤
+│ 8│ 9│10│11│
+├──┼──┼──┼──┤
+│16│17│18│19│
+.............
+</pre></div>
+
 <p>If the result would have rank 0, then an array element is returned, and not a 0-rank view of <var>a</var>. Use <a href="#x_002dra_002damend_0021"><code>ra-amend!</code></a> to assign to cells of an array regardless of whether they are of 0-rank or higher.
 </p>
 <p>The type of <var>b</var> is the same as that of <var>a</var>, with the only exception that if the type of <var>a</var> is <code>d</code> and the root of <var>b</var> cannot be shared with the root of <var>a</var>, then the type of <var>b</var> is <code>#t</code>.
 </p>
-<p>See also: <a href="#x_002dra_002dcell"><code>ra-cell</code></a>, <a href="#x_002dra_002dref"><code>ra-ref</code></a>, <a href="#x_002dra_002dslice"><code>ra-slice</code></a>, <a href="#x_002dra_002damend_0021"><code>ra-amend!</code></a>, <a href="#Slicing">Slicing</a>.
+<p>See also: <a href="#x_002dra_002dcell"><code>ra-cell</code></a>, <a href="#x_002dra_002dref"><code>ra-ref</code></a>, <a href="#x_002dra_002dslice"><code>ra-slice</code></a>, <a href="#x_002dra_002damend_0021"><code>ra-amend!</code></a>, <a href="#Slicing">Slicing</a>.<a id="DOCF11" href="#FOOT11"><sup>11</sup></a>
 </p>
 </dd></dl>
 
@@ -2487,7 +2530,7 @@ indices that match those elements. <code>newra</code> will <em>not</em> check th
 
 <p>This function returns the modified array <var>a</var>.
 </p>
-<p>See also: <a href="#x_002dra_002dcopy_0021"><code>ra-copy!</code></a> <a href="#x_002dra_002dcell"><code>ra-cell</code></a> <a href="#x_002dra_002dref"><code>ra-ref</code></a> <a href="#x_002dra_002dslice"><code>ra-slice</code></a> <a href="#x_002dra_002dfrom"><code>ra-from</code></a> <a href="#x_002dra_002dset_0021"><code>ra-set!</code></a>.
+<p>See also: <a href="#x_002dra_002dfrom"><code>ra-from</code></a>, <a href="#x_002dra_002dcopy_0021"><code>ra-copy!</code></a> <a href="#x_002dra_002dcell"><code>ra-cell</code></a> <a href="#x_002dra_002dref"><code>ra-ref</code></a> <a href="#x_002dra_002dslice"><code>ra-slice</code></a> <a href="#x_002dra_002dfrom"><code>ra-from</code></a> <a href="#x_002dra_002dset_0021"><code>ra-set!</code></a>.
 </p>
 </dd></dl>
 
@@ -2871,17 +2914,23 @@ Previous: <a href="#Sources" accesskey="p" rel="prev">Sources</a>, Up: <a href="
 <h5><a id="FOOT3" href="#DOCF3">(3)</a></h3>
 <p>Guile (before v1.8) used to offer dedicated operations to sum arrays, etc. but obviously that isn&rsquo;t any kind of solution.</p>
 <h5><a id="FOOT4" href="#DOCF4">(4)</a></h3>
-<p>Except for <a href="#x_002dra_002dindex_002dmap_0021"><code>ra-index-map!</code></a>, which is provided out of compatibility with the older array system.</p>
+<p>An exception is <a href="#x_002dra_002dindex_002dmap_0021"><code>ra-index-map!</code></a>, where passing the indices is the purpose.</p>
 <h5><a id="FOOT5" href="#DOCF5">(5)</a></h3>
 <p>Note that this is not the same as <code>(let ((d (vector-ref (ra-dims a) k))) (ra-iota (dim-len d) (dim-lo d)))</code>, because the lower bound of <code>(ra-iota ...)</code> (<em>not</em> its content) is 0, not <code>(dim-lo d)</code>, so the corresponding lower bound on the result array would also be 0, while <code>#t</code> preserves the lower bound of <code>a</code>.</p>
 <h5><a id="FOOT6" href="#DOCF6">(6)</a></h3>
 <p>An example of how using lower bounds other than 0 is generally worthless trouble, not least for the library author.</p>
 <h5><a id="FOOT7" href="#DOCF7">(7)</a></h3>
-<p>I rejected this approach for <code>newra</code> because in my experience it results in errors going undetected much more often than it saves any work.</p>
+<p>I decided against this approach for <code>newra</code> because in my experience it results in errors going undetected much more often than it saves any work.</p>
 <h5><a id="FOOT8" href="#DOCF8">(8)</a></h3>
 <p><a href="https://www.gnu.org/software/guile/manual/html_node/Formatted-Output.html"><code>(ice-9 format)</code></a></p>
 <h5><a id="FOOT9" href="#DOCF9">(9)</a></h3>
+<p>Cf. <code>array-index</code> from [<a href="#Sources">SRFI-164</a>]
+.</p>
+<h5><a id="FOOT10" href="#DOCF10">(10)</a></h3>
 <p>Note that the ravel operation in <code>(ra-ravel (ra-copy ra))</code> is free, while it might not be in <code>(ra-copy (ra-ravel ra))</code>, so it is preferable, in principle, to copy first.</p>
+<h5><a id="FOOT11" href="#DOCF11">(11)</a></h3>
+<p>Cf. <code>array-index-ref</code> from [<a href="#Sources">SRFI-164</a>]
+.</p>
 </div>
 <hr>
 
