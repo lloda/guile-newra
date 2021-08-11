@@ -367,7 +367,7 @@ and the other way around,
 @cindex new array
 It is often important to know whether an operation on an array returns a different view of its argument, or instead it allocates a new root which can be modified without affecting the original argument. When we say that a function `creates a new array', we mean that it allocates a new root.
 
-Generally a given function will always do one or the other, e.g. the result of @ref{x-ra-tile, @code{ra-tile}} always shares the root of its argument, while @ref{x-ra-copy, @code{ra-copy}} always creates a new array. Some functions, like @ref{x-ra-ravel, @code{ra-ravel}}, may do either, depending on their arguments. For example, the result of
+Generally a given function will always do one or the other, e.g. the result of @ref{x-ra-tile, @code{ra-tile}} always shares the root of its argument, while @ref{x-ra-copy, @code{ra-copy}} always creates a new array. Some functions, like @ref{x-ra-ravel, @code{ra-ravel}} or @ref{x-ra-from, @code{ra-from}}, may do either, depending on their arguments. For example, the result of
 
 @example
 @verbatim
@@ -2137,6 +2137,17 @@ See also: @ref{x-ra-reshape,@code{ra-reshape}}, @ref{x-ra-tile,@code{ra-tile}}, 
 
 @end deffn
 
+@cindex @code{ra-ravel-copy}
+@anchor{x-ra-ravel-copy}
+@deffn @w{Function} ra-ravel-copy a [n [org]]
+
+Same as @code{ra-ravel}, but always return a newly allocated array. This is equivalent to @code{(ra-copy (ra-ravel a ...))}, but it doesn't incur a second copy in case @code{ra-ravel} already allocates a new array.
+
+See also: @ref{x-ra-ravel,@code{ra-ravel}}.
+
+@end deffn
+
+
 @cindex @code{ra-reshape}
 @anchor{x-ra-reshape}
 @deffn @w{Function} ra-reshape a k bounds ... @result{} b
@@ -2813,6 +2824,16 @@ If the result would have rank 0, then an array element is returned, and not a 0-
 The type of @var{b} is the same as that of @var{a}, with the only exception that if the type of @var{a} is @code{d} and the root of @var{b} cannot be shared with the root of @var{a}, then the type of @var{b} is @code{#t}.
 
 See also: @ref{x-ra-cell,@code{ra-cell}}, @ref{x-ra-ref,@code{ra-ref}}, @ref{x-ra-slice,@code{ra-slice}}, @ref{x-ra-amend!,@code{ra-amend!}}, @ref{Slicing}.@footnote{Cf. @code{array-index-ref} from @mybibcite{SRFI-164}.}
+
+@end deffn
+
+@cindex @code{ra-from-copy}
+@anchor{x-ra-from-copy}
+@deffn @w{Function} ra-from-copy a i ... → b
+
+Same as @code{ra-from}, but always return a newly allocated array. This is equivalent to @code{(ra-copy (ra-from a i ...))}, but it doesn't incur a second copy in case @code{ra-from} already allocates a new array.
+
+See also: @ref{x-ra-from,@code{ra-from}}.
 
 @end deffn
 

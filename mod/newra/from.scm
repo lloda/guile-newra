@@ -14,7 +14,7 @@
 
 (define-module (newra from)
   #:export (ldots
-            ra-from ra-amend! ra-clip
+            ra-from ra-from-copy ra-amend! ra-clip
             ra-rotate!
             fromb fromu amendu!))
 
@@ -67,45 +67,45 @@
               (throw 'ldots-n-at-j-too-large-for-rank n j (%%ra-rank A)))
             (loopj jnext irest zero (cons (vector-copy (%%ra-dims A) j jnext) bdims))))
          ((? ra? i)
-          (let ((dimA (vector-ref (%%ra-dims A) j)))
-            (let ((ri (%%ra-rank i)))
-              (if (zero? ri)
-                (loopj (+ j 1) irest (+ zero (* (dim-step dimA) (dim-check dimA (i)))) bdims)
-                (let ((root (%%ra-root i)))
-                  (match root
-                    (($ <aseq> rorg rinc)
-                     (let ((bdimsj (make-vector ri))
-                           (izero (%%ra-zero i)))
-                       (let loopk ((k 0) (lo izero) (hi izero))
-                         (if (< k ri)
-                           (match (vector-ref (%%ra-dims i) k)
-                             (($ <dim> ilen ilo istep)
-                              (vector-set! bdimsj k (make-dim ilen ilo (* (dim-step dimA) istep rinc)))
-                              (cond
-                               ((zero? istep)
-                                (loopk (+ k 1) lo hi))
-                               ((positive? istep)
-                                (loopk (+ k 1)
-                                       (and lo ilo (+ lo (* istep ilo)))
-                                       (and hi ilo ilen (+ hi (* istep (+ ilo ilen -1))))))
-                               (else
-                                (loopk (+ k 1)
-                                       (and lo ilo ilen (+ lo (* istep (+ ilo ilen -1))))
-                                       (and hi ilo (+ hi (* istep ilo))))))))
+          (let ((dimA (vector-ref (%%ra-dims A) j))
+                (ri (%%ra-rank i)))
+            (if (zero? ri)
+              (loopj (+ j 1) irest (+ zero (* (dim-step dimA) (dim-check dimA (i)))) bdims)
+              (let ((root (%%ra-root i)))
+                (match root
+                  (($ <aseq> rorg rinc)
+                   (let ((bdimsj (make-vector ri))
+                         (izero (%%ra-zero i)))
+                     (let loopk ((k 0) (lo izero) (hi izero))
+                       (if (< k ri)
+                         (match (vector-ref (%%ra-dims i) k)
+                           (($ <dim> ilen ilo istep)
+                            (vector-set! bdimsj k (make-dim ilen ilo (* (dim-step dimA) istep rinc)))
+                            (cond
+                             ((zero? istep)
+                              (loopk (+ k 1) lo hi))
+                             ((positive? istep)
+                              (loopk (+ k 1)
+                                     (and lo ilo (+ lo (* istep ilo)))
+                                     (and hi ilo ilen (+ hi (* istep (+ ilo ilen -1))))))
+                             (else
+                              (loopk (+ k 1)
+                                     (and lo ilo ilen (+ lo (* istep (+ ilo ilen -1))))
+                                     (and hi ilo (+ hi (* istep ilo))))))))
 
-                           (let* ((lo (and lo (aseq-ref root lo)))
-                                  (hi (and hi (aseq-ref root hi)))
-                                  (lo hi (if (negative? rinc) (values hi lo) (values lo hi))))
+                         (let* ((lo (and lo (aseq-ref root lo)))
+                                (hi (and hi (aseq-ref root hi)))
+                                (lo hi (if (negative? rinc) (values hi lo) (values lo hi))))
 ; we don't use dim-check as that requires integer i.
-                             (when (dim-lo dimA)
-                               (unless (and lo (>= lo (dim-lo dimA)))
-                                 (throw 'dim-check-out-of-range dimA lo)))
-                             (when (dim-hi dimA)
-                               (unless (and hi (<= hi (dim-hi dimA)))
-                                 (throw 'dim-check-out-of-range dimA lo)))
-                             (loopj (+ j 1) irest
-                                    (+ zero (* (dim-step dimA) (+ rorg (* rinc izero))))
-                                    (cons bdimsj bdims))))))))))))))))))
+                           (when (dim-lo dimA)
+                             (unless (and lo (>= lo (dim-lo dimA)))
+                               (throw 'dim-check-out-of-range dimA lo)))
+                           (when (dim-hi dimA)
+                             (unless (and hi (<= hi (dim-hi dimA)))
+                               (throw 'dim-check-out-of-range dimA lo)))
+                           (loopj (+ j 1) irest
+                                  (+ zero (* (dim-step dimA) (+ rorg (* rinc izero))))
+                                  (cons bdimsj bdims)))))))))))))))))
 
 
 ; ------------------------
@@ -224,13 +224,11 @@
 
 (define (ra-from A . i)
   "
-ra-from A . i -> B
-
 Outer product slice of @var{A} by indices @var{i} ...
 
-The shape of @var{B} is the concatenation of the shapes of @var{i}... and the
-contents are obtained by looking up in each dimension of A by the indices I,
-that is
+The shape of the result @var{B} is the concatenation of the shapes of
+@var{i}... and the contents are obtained by looking up in each dimension of
+@var{A} by the indices @var{I}, that is
 
 @verbatim
 B(i00 i01 ... i10 i11 ...) = A(i0(i00 i01 ...) i1(i10 i11 ...) ...)
@@ -244,15 +242,29 @@ Additionally, if every @var{i} ... is either 1) #t 2) an ra of type 'd, 3) an ra
 of rank 0, or 4) an integer, the result @var{B} shares the root of @var{A}. In
 all other cases a new root is allocated.
 
-The type of @var{B} is the same as that of @var{A}, with the only exception that
-if the type of @var{A} is 'd and the root of @var{B} isn't shared with
-the root of @var{A}, then the type of @var{B} is #t.
+The type of @var{B} is the same as that of @var{A}, with the exception that if
+the type of @var{A} is 'd and the root of @var{B} isn't shared with the root of
+@var{A}, then the type of @var{B} is #t.
 
 See also: ra-cell ra-ref ra-slice ra-amend! ra-set!
 "
   (let ((B iu tu tb (apply parse-args A i)))
+; optimization. FIXME return (ra-ref B) if (zero? (ra-rank B)) ? Not sure that's the right choice.
+    (if (null? iu)
+      B
 ; apply the unbeatable axes and undo the transposition. ra-transpose handles any trailing axes
-    (apply ra-transpose (apply fromu B iu) (append tu tb))))
+      (apply ra-transpose (apply fromu B iu) (append tu tb)))))
+
+(define (ra-from-copy A . i)
+  "
+Like @code{(ra-from A i ...)}, but always return a newly allocated array.
+
+See also: ra-from ra-amend! ra-copy ra-copy!
+"
+  (let ((B iu tu tb (apply parse-args A i)))
+    (if (null? iu)
+      (ra-copy B)
+      (apply ra-transpose (apply fromu B iu) (append tu tb)))))
 
 
 ; -----------------------
@@ -263,8 +275,6 @@ See also: ra-cell ra-ref ra-slice ra-amend! ra-set!
 
 (define (ra-amend! A C . i)
   "
-ra-amend! A C . i -> A
-
 Copy @var{C} to the outer product slice of @var{A} by indices var{i} ...
 
 @verbatim
@@ -274,14 +284,15 @@ A(i0(j00 j01 ...) i1(j10 j11 ...) ...) <- C(j00 j01 ... j10 j11 ...)
 where @var{i} : i0 i1 ...
 
 This is equivalent to @code{(ra-copy! (ra-from A i ...) C)} whenever
-@code{(ra-from A i ...)} would return a shared ra of @var{A}. I may take any of
+@code{(ra-from A i ...)} would return a view of @var{A}. @var{i} may take any of
 the special values accepted by @code{ra-from}.
 
-If I contains repeated indices or the steps of @var{A} make it so that the same
-elements of @var{A} are referenced more than once, the value that ends up in
-@var{A} may correspond to any of the indices that match those elements.
+The copy is performed in no particular order.  If @var{I} contains repeated
+indices or the steps of @var{A} make it so that the same elements of @var{A} are
+referenced more than once, the value that ends up in @var{A} may correspond to
+any of the indices that match those elements.
 
-This function returns the modified ra @var{A}.
+This function returns the modified array @var{A}.
 
 See also: ra-set! ra-from ra-copy! ra-cell ra-ref ra-slice
 "

@@ -411,7 +411,7 @@ Each dim consists of a length (<em>len</em>), a lower bound (<em>lo</em>), and a
 <span id="index-new-array"></span>
 <p>It is often important to know whether an operation on an array returns a different view of its argument, or instead it allocates a new root which can be modified without affecting the original argument. When we say that a function &lsquo;creates a new array&rsquo;, we mean that it allocates a new root.
 </p>
-<p>Generally a given function will always do one or the other, e.g. the result of <a href="#x_002dra_002dtile"><code>ra-tile</code></a> always shares the root of its argument, while <a href="#x_002dra_002dcopy"><code>ra-copy</code></a> always creates a new array. Some functions, like <a href="#x_002dra_002dravel"><code>ra-ravel</code></a>, may do either, depending on their arguments. For example, the result of
+<p>Generally a given function will always do one or the other, e.g. the result of <a href="#x_002dra_002dtile"><code>ra-tile</code></a> always shares the root of its argument, while <a href="#x_002dra_002dcopy"><code>ra-copy</code></a> always creates a new array. Some functions, like <a href="#x_002dra_002dravel"><code>ra-ravel</code></a> or <a href="#x_002dra_002dfrom"><code>ra-from</code></a>, may do either, depending on their arguments. For example, the result of
 </p>
 <div class="example">
 <pre class="verbatim">(ra-ravel (ra-iota 3 4))
@@ -1914,6 +1914,17 @@ element
 </p>
 </dd></dl>
 
+<span id="index-ra_002dravel_002dcopy"></span>
+<span id="x_002dra_002dravel_002dcopy"></span><dl>
+<dt id="index-ra_002dravel_002dcopy-1">Function<!-- /@w -->: <strong>ra-ravel-copy</strong> <em>a [n [org]]</em></dt>
+<dd>
+<p>Same as <code>ra-ravel</code>, but always return a newly allocated array. This is equivalent to <code>(ra-copy (ra-ravel a ...))</code>, but it doesn&rsquo;t incur a second copy in case <code>ra-ravel</code> already allocates a new array.
+</p>
+<p>See also: <a href="#x_002dra_002dravel"><code>ra-ravel</code></a>.
+</p>
+</dd></dl>
+
+
 <span id="index-ra_002dreshape"></span>
 <span id="x_002dra_002dreshape"></span><dl>
 <dt id="index-ra_002dreshape-1">Function<!-- /@w -->: <strong>ra-reshape</strong> <em>a k bounds ... &rArr; b</em></dt>
@@ -2491,6 +2502,16 @@ b
 </p>
 </dd></dl>
 
+<span id="index-ra_002dfrom_002dcopy"></span>
+<span id="x_002dra_002dfrom_002dcopy"></span><dl>
+<dt id="index-ra_002dfrom_002dcopy-1">Function<!-- /@w -->: <strong>ra-from-copy</strong> <em>a i ... → b</em></dt>
+<dd>
+<p>Same as <code>ra-from</code>, but always return a newly allocated array. This is equivalent to <code>(ra-copy (ra-from a i ...))</code>, but it doesn&rsquo;t incur a second copy in case <code>ra-from</code> already allocates a new array.
+</p>
+<p>See also: <a href="#x_002dra_002dfrom"><code>ra-from</code></a>.
+</p>
+</dd></dl>
+
 <span id="index-ra_002damend_0021"></span>
 <span id="x_002dra_002damend_0021"></span><dl>
 <dt id="index-ra_002damend_0021-1">Function<!-- /@w -->: <strong>ra-amend!</strong> <em>a c i ... → a</em></dt>
@@ -2803,6 +2824,7 @@ Previous: <a href="#Sources" accesskey="p" rel="prev">Sources</a>, Up: <a href="
 <tr><td></td><td valign="top"><a href="#index-ra_002dfor_002deach"><code>ra-for-each</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-ra_002dformat"><code>ra-format</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-ra_002dfrom"><code>ra-from</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
+<tr><td></td><td valign="top"><a href="#index-ra_002dfrom_002dcopy"><code>ra-from-copy</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-ra_002di"><code>ra-i</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-ra_002dindex_002dmap_0021"><code>ra-index-map!</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-ra_002diota"><code>ra-iota</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
@@ -2810,6 +2832,7 @@ Previous: <a href="#Sources" accesskey="p" rel="prev">Sources</a>, Up: <a href="
 <tr><td></td><td valign="top"><a href="#index-ra_002dorder_002dc_003f"><code>ra-order-c?</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-ra_002dprint_002dprefix"><code>ra-print-prefix</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-ra_002dravel"><code>ra-ravel</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
+<tr><td></td><td valign="top"><a href="#index-ra_002dravel_002dcopy"><code>ra-ravel-copy</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-ra_002dref"><code>ra-ref</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-ra_002dreshape"><code>ra-reshape</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-ra_002dreverse"><code>ra-reverse</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>

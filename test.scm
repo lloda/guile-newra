@@ -814,9 +814,11 @@
 ; manual examples
 (let* ((a (list->ra 2 '((1 2 3) (a b c))))
        (b (ra-from a #t (ra-iota 3 2 -1)))
+       (bc (ra-from-copy a #t (ra-iota 3 2 -1)))
        (c (ra-from a #t (list->ra 1 '(2 1 0)))))
   (test-equal "#%2:2:3((3 2 1) (c b a))" (ra->string b) (ra->string c))
   (test-assert (eq? (ra-root a) (ra-root b)))
+  (test-assert (not (eq? (ra-root a) (ra-root bc))))
   (test-assert (not (eq? (ra-root a) (ra-root c)))))
 
 

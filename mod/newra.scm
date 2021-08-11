@@ -37,13 +37,13 @@
            ra-i ra-iota
            ra-copy
            ra-reverse ra-transpose ra-untranspose ra-order-c?
-           ra-ravel ra-reshape ra-tile
+           ra-ravel ra-ravel-copy ra-reshape ra-tile
            ra-fold ra-fold*
            ra-rotate!
 
            ra-singletonize ra-clip
 
-           ra-from ra-amend! ldots
+           ra-from ra-from-copy ra-amend! ldots
 
            ra-cat ra-scat
 
