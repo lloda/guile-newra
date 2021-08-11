@@ -2,11 +2,12 @@
 
 Help: [C-uc .] insert timestamp [C-cc] flip checkbox [C-uucc] partial flip checkbox [C-ct] flip TODO.
 
-* TODO bugs [4/7]
+* TODO bugs [4/8]
   * [X] (call-with-input-string "#3()" read) vs (call-with-input-string "#%3()" read)
   * [X] reader loses type when reading rank 0 arrays
   * [X] ra-equal? errors out with mismatched shapes
   * [X] zero lengths break ra-format
+  * [ ] ra-slice-for-each shouldn't return anything
   * [ ] (ra-from (list->ra 2 '((a b c) (x y z))) 1 1) => #%0(y) contradicts doc
   * [ ] docstrings don't work for define-inlinable-case
   * [ ] (ra-dimensions (ra-iota))
@@ -104,6 +105,7 @@ Help: [C-uc .] insert timestamp [C-cc] flip checkbox [C-uucc] partial flip check
   * [-] pretty printer
     - [X] basic ra-format
     - [X] compact mode
+    - [ ] handle unbounded axes
     - [ ] auto truncation
 
 * TODO replace Guile arrays [0/5]

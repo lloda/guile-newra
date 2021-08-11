@@ -1,6 +1,6 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
 <html>
-<!-- newra (version 1, updated 2021 August 9)
+<!-- newra (version 1, updated 2021 August 11)
 
 (c) lloda 2017-2021
 
@@ -100,7 +100,7 @@ Next: <a href="#Introduction" accesskey="n" rel="next">Introduction</a> &nbsp; [
 </div>
 <span id="newra"></span><h1 class="top"><code>newra</code></h1>
 
-<p><code>newra</code> (version 1, updated 2021 August 9)
+<p><code>newra</code> (version 1, updated 2021 August 11)
 </p>
 <p>(c) lloda 2017&ndash;2021
 </p>
@@ -234,6 +234,7 @@ A(2)
 </p></blockquote>
 
 <span id="index-order_002c-row_002dmajor"></span>
+<span id="index-order_002c-C"></span>
 <p>This way to lay out an array in memory is called <em>row-major order</em> or <em>C-order</em>, since it&rsquo;s the default order for built-in arrays in C. A row-major array A with lengths (l₀, l₁, ... lᵣ₋₁) can be looked up like this:
 </p>
 <span id="x_002dsteps"></span><blockquote>
@@ -1466,7 +1467,7 @@ a
 <dt id="index-c_002ddims-1">Function<!-- /@w -->: <strong>c-dims</strong> <em>bounds ...</em></dt>
 <dd>
 <span id="index-packed-array"></span>
-<p>Create dims for C-order array (packed elements, last dimension changing fastest).
+<p>Create dims for row-major order array (packed elements, last dimension changing fastest).
 </p>
 <p>Each of the bounds may be a pair of bounds (<var>lo</var> <var>hi</var>) or a single length <var>len</var>, which implies zero <var>lo</var>.
 </p><div class="example">
@@ -1850,8 +1851,8 @@ element
 
 <span id="index-ra_002dravel"></span>
 <span id="x_002dra_002dravel"></span><dl>
-<dt id="index-ra_002dravel-1">Function<!-- /@w -->: <strong>ra-ravel</strong> <em>a [n [org]]</em></dt>
-<dd><p>Ravel axes [<var>org</var> ... <var>org</var>+<var>n</var>) of array <var>a</var> in C order. <var>n</var> defaults to the rank of <var>a</var> and <var>org</var> defaults to 0.
+<dt id="index-ra_002dravel-1">Function<!-- /@w -->: <strong>ra-ravel</strong> <em>a [n [org]] &rArr; b</em></dt>
+<dd><p>Ravel axes [<var>org</var> ... <var>org</var>+<var>n</var>) of array <var>a</var> in row-major order. <var>n</var> defaults to the rank of <var>a</var> and <var>org</var> defaults to 0.
 </p>
 <p>For example:
 </p><div class="example">
@@ -1916,14 +1917,13 @@ element
 
 <span id="index-ra_002dravel_002dcopy"></span>
 <span id="x_002dra_002dravel_002dcopy"></span><dl>
-<dt id="index-ra_002dravel_002dcopy-1">Function<!-- /@w -->: <strong>ra-ravel-copy</strong> <em>a [n [org]]</em></dt>
+<dt id="index-ra_002dravel_002dcopy-1">Function<!-- /@w -->: <strong>ra-ravel-copy</strong> <em>a [n [org]] &rArr; b</em></dt>
 <dd>
-<p>Same as <code>ra-ravel</code>, but always return a newly allocated array. This is equivalent to <code>(ra-copy (ra-ravel a ...))</code>, but it doesn&rsquo;t incur a second copy in case <code>ra-ravel</code> already allocates a new array.
+<p>Like <code>ra-ravel</code>, but always return a newly allocated array. This is equivalent to <code>(ra-copy (ra-ravel a ...))</code>, but it doesn&rsquo;t incur a second copy in case <code>ra-ravel</code> already allocates a new array.
 </p>
 <p>See also: <a href="#x_002dra_002dravel"><code>ra-ravel</code></a>.
 </p>
 </dd></dl>
-
 
 <span id="index-ra_002dreshape"></span>
 <span id="x_002dra_002dreshape"></span><dl>
@@ -2273,14 +2273,14 @@ a
 
 <span id="index-ra_002dswap_0021"></span>
 <span id="x_002dra_002dswap_0021"></span><dl>
-<dt id="index-ra_002dswap_0021-1">Function<!-- /@w -->: <strong>ra-swap!</strong> <em>a b</em></dt>
+<dt id="index-ra_002dswap_0021-1">Function<!-- /@w -->: <strong>ra-swap!</strong> <em>a b &rArr; a</em></dt>
 <dd><p>Swap the contents of <var>a</var> and <var>b</var>. The swap is executed in unspecified order, so the effect on <var>a</var> and <var>b</var> is undefined if <var>a</var> and <var>b</var> share storage.
 </p></dd></dl>
 
 <span id="index-ra_002dswap_002din_002dorder_0021"></span>
 <span id="x_002dra_002dswap_002din_002dorder_0021"></span><dl>
-<dt id="index-ra_002dswap_002din_002dorder_0021-1">Function<!-- /@w -->: <strong>ra-swap-in-order!</strong> <em>a b</em></dt>
-<dd><p>Swap the contents of <var>a</var> and <var>b</var>. The swap is executed in row major order.
+<dt id="index-ra_002dswap_002din_002dorder_0021-1">Function<!-- /@w -->: <strong>ra-swap-in-order!</strong> <em>a b &rArr; a</em></dt>
+<dd><p>Swap the contents of <var>a</var> and <var>b</var>. The swap is executed in row-major order.
 </p></dd></dl>
 
 <span id="index-ra_002dfill_0021"></span>
@@ -2317,7 +2317,7 @@ a
 <span id="index-ra_002dorder_002dc_003f"></span>
 <span id="x_002dra_002dorder_002dc_003f"></span><dl>
 <dt id="index-ra_002dorder_002dc_003f-1">Function<!-- /@w -->: <strong>ra-order-c?</strong> <em>a [n [org]]</em></dt>
-<dd><p>Check whether axes [<var>org</var> ... <var>org</var>+<var>n</var>) of <var>a</var> are in C-order. By default, check that the whole array is in C-order, and additionally that the step on the last axis is 1 (i.e. the array is ‘packed’).
+<dd><p>Check whether axes [<var>org</var> ... <var>org</var>+<var>n</var>) of <var>a</var> are in row-major order. By default, check that the whole array is in row-major order, and additionally that the step on the last axis is 1 (i.e. the array is ‘packed’).
 </p>
 <p><code>(ra-order-c? a n org)</code> implies <code>(eq? (ra-root a) (ra-root (<a href="#x_002dra_002dravel"><code>ra-ravel</code></a> a n org)))</code>. Note that the stronger condition <code>(ra-order-c? a)</code> is not necessary for <code>(eq? (ra-root a) (ra-root (ra-ravel a)))</code> to hold.
 </p>
@@ -2448,7 +2448,7 @@ that is
 
 <p>where <var>i</var> : <var>i₀</var> <var>i₁</var> ... The special value <code>#t</code> is understood as the full range of <var>a</var> on that axis.
 </p>
-<p>Additionally, if each <var>i</var> ... is one of
+<p>Additionally, if each of the <var>i</var> ... is one of
 </p><ul>
 <li> <code>#t</code>
 </li><li> an array of type <code>d</code>
@@ -2494,7 +2494,7 @@ b
 .............
 </pre></div>
 
-<p>If the result would have rank 0, then an array element is returned, and not a 0-rank view of <var>a</var>. Use <a href="#x_002dra_002damend_0021"><code>ra-amend!</code></a> to assign to cells of an array regardless of whether they are of 0-rank or higher.
+<p><i>If the result would have rank 0, then an array element is returned, and not a 0-rank view of <var>a</var>. Use <a href="#x_002dra_002damend_0021"><code>ra-amend!</code></a> to assign to cells of an array regardless of whether they are of 0-rank or higher.</i>
 </p>
 <p>The type of <var>b</var> is the same as that of <var>a</var>, with the only exception that if the type of <var>a</var> is <code>d</code> and the root of <var>b</var> cannot be shared with the root of <var>a</var>, then the type of <var>b</var> is <code>#t</code>.
 </p>
@@ -2504,9 +2504,9 @@ b
 
 <span id="index-ra_002dfrom_002dcopy"></span>
 <span id="x_002dra_002dfrom_002dcopy"></span><dl>
-<dt id="index-ra_002dfrom_002dcopy-1">Function<!-- /@w -->: <strong>ra-from-copy</strong> <em>a i ... → b</em></dt>
+<dt id="index-ra_002dfrom_002dcopy-1">Function<!-- /@w -->: <strong>ra-from-copy</strong> <em>a i ... &rArr; b</em></dt>
 <dd>
-<p>Same as <code>ra-from</code>, but always return a newly allocated array. This is equivalent to <code>(ra-copy (ra-from a i ...))</code>, but it doesn&rsquo;t incur a second copy in case <code>ra-from</code> already allocates a new array.
+<p>Like <code>ra-from</code>, but always return a newly allocated array. This is equivalent to <code>(ra-copy (ra-from a i ...))</code>, but it doesn&rsquo;t incur a second copy in case <code>ra-from</code> already allocates a new array.
 </p>
 <p>See also: <a href="#x_002dra_002dfrom"><code>ra-from</code></a>.
 </p>
@@ -2515,8 +2515,7 @@ b
 <span id="index-ra_002damend_0021"></span>
 <span id="x_002dra_002damend_0021"></span><dl>
 <dt id="index-ra_002damend_0021-1">Function<!-- /@w -->: <strong>ra-amend!</strong> <em>a c i ... → a</em></dt>
-<dd>
-<p>Copy <var>c</var> to the outer product slice of <var>a</var> by indices <var>i</var> ...
+<dd><p>Copy <var>c</var> to the outer product slice of <var>a</var> by indices <var>i</var> ...
 </p>
 <div class="example">
 <pre class="verbatim">a(i₀(j₀₀ j₀₁ ...) i₁(j₁₀ j₁₁ ...) ...) ← c(j₀₀ j₀₁ ... j₁₀ j₁₁ ...)
@@ -2793,6 +2792,7 @@ Previous: <a href="#Sources" accesskey="p" rel="prev">Sources</a>, Up: <a href="
 <tr><td colspan="4"> <hr></td></tr>
 <tr><th id="Indices_cp_letter-O">O</th><td></td><td></td></tr>
 <tr><td></td><td valign="top"><a href="#index-Octave">Octave</a>:</td><td>&nbsp;</td><td valign="top"><a href="#Differences-with_002e_002e_002e">Differences with...</a></td></tr>
+<tr><td></td><td valign="top"><a href="#index-order_002c-C">order, C</a>:</td><td>&nbsp;</td><td valign="top"><a href="#Rank-polymorphism">Rank polymorphism</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-order_002c-row_002dmajor">order, row-major</a>:</td><td>&nbsp;</td><td valign="top"><a href="#Rank-polymorphism">Rank polymorphism</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-outer-product">outer product</a>:</td><td>&nbsp;</td><td valign="top"><a href="#Transposition">Transposition</a></td></tr>
 <tr><td colspan="4"> <hr></td></tr>

@@ -51,7 +51,7 @@
 ;; lenm:        len - 1.
 ;; v:           a vector
 ;; l:           a list
-;; i, j:        indices in a dim, from hi to lo
+;; i, j:        indices in a dim, from lo to hi
 ;; k:           an index in a dim vector, from 0 to rank-1
 ;; slice:       an ra, as a piece of another ra
 ;; cell:        (also prefix-cell) slice obtained by fixing the first k indices into an ra.
@@ -101,7 +101,7 @@
 
 
 ; ----------------
-; root as delayed iota - an arithmetic sequence.
+; arithmetic sequence for ra roots
 ; ----------------
 
 (define-immutable-record-type <aseq>
@@ -207,19 +207,15 @@ See also: dim-len dim-lo dim-step c-dims
 
 (define-inlinable (ra-root a)
   "
-ra-root ra -> v
-
-Return the root vector (or data vector) @var{v} of @var{ra}.
+Return the root vector of array @var{a}.
 "
   (%rastruct-ref a 2))
 
 (define-inlinable (ra-zero a)
   "
-ra-zero ra -> i
-
 Return the index @var{i} into the root vector of @var{ra} that corresponds to
-all array indices being 0. Note that I may be outside the range of the root
-vector, for example if @var{a} is empty or its lower bounds are positive.
+all array indices being 0. Note that @var{i} may be outside the range of the
+root vector, for example if @var{a} is empty or its lower bounds are positive.
 
 See also: ra-offset
 "
@@ -271,7 +267,7 @@ See also: ra-offset
         ((u8vector? v)  (values  'u8   u8vector-length   u8vector-ref   u8vector-set! ))
         ((string? v)    (values  'a    string-length     string-ref     string-set!   ))
         ((bitvector? v) (values  'b    bitvector-length  bitvector-ref  bitvector-set!))
-; TODO extend this idea to drag-along.
+; TODO extend this to drag-along.
         ((aseq? v)      (values  'd    (const #f)        aseq-ref       (cut throw 'no-aseq-set! <...>)))
         (else (throw 'bad-ra-root-type v))))
 
@@ -310,7 +306,7 @@ See also: ra-offset
   (case-lambda
    "
 Return the root vector index @var{i} that corresponds to all ra indices being
-equal to the lower bound of var{ra} in axes [@var{org} ... @var{org}+@var{k}).
+equal to the lower bound of @var{ra} in axes [@var{org} ... @var{org}+@var{k}).
 
 See also: ra-zero
 "
@@ -407,12 +403,10 @@ See also: ra-cell ra-slice ra-from
 
 (define (ra-slice ra . i)
    "
-ra-slice a i ...
-
 Return the prefix cell of ra @var{a} determined by indices @var{i}. The number
 of indices must be no larger than the rank of @var{a}.
 
-This function always returns an ra, even if the number of indices is equal to
+This function always returns an array, even if the number of indices is equal to
 the rank of @var{a}.
 
 For example:
@@ -531,12 +525,13 @@ make-ra-root root -> ra
 make-ra-root root dims -> ra
 make-ra-root root dims zero -> ra
 
-Make new ra RA from root vector ROOT, zero index ZERO and dim-vector DIMS.
+Make new array from root vector @var{root}, zero index @var{zero} and dim-vector
+@var{dims}.
 
-If ZERO is absent, compute it so that the first element of RA is the first
-element of the root, that is, (ra-offset RA) is 0.
+By default, @var{zero} is computed so that the first element of the result is the
+first element of the root, that is, @code{(ra-offset ra)} is 0.
 
-If DIMS is absent, make a rank-1 ra with the full length of ROOT.
+If @var{dims} is absent, make a rank-1 array with the full length of @var{root}.
 
 See also: ra-root ra-zero ra-dims
 "
@@ -563,8 +558,6 @@ See also: ra-root ra-zero ra-dims
 
 (define (c-dims . d)
   "
-c-dims d ...
-
 Compute dim-vector for C-order (row-major) array of bounds @var{d} ...
 
 Each of the @var{d} ... may be @var{len}, or a bounds pair (@var{lo}
@@ -602,9 +595,7 @@ See also: make-ra-root make-ra-new
 
 (define (make-ra-new type value dims)
   "
-make-ra-new type value dims -> ra
-
-Make new ra @var{ra} of @var{type} from dim-vector @var{dims}, and fill it with
+Make new array of @var{type} from dim-vector @var{dims}, and fill it with
 @var{value}. @var{value} may be @code{*unspecified*}.
 
 See also: make-dim ra-dims make-ra-root c-dims

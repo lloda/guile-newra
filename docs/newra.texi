@@ -7,7 +7,7 @@
 @c last [ma112]
 
 @set VERSION 1
-@set UPDATED 2021 August 9
+@set UPDATED 2021 August 11
 
 @copying
 @code{newra} (version @value{VERSION}, updated @value{UPDATED})
@@ -175,6 +175,7 @@ A: [[A(0, 0): [A(0, 0, 0), A(0, 0, 1) ...], A(0, 1): [A(0, 1, 0), A(0, 1, 1) ...
 @end quotation
 
 @cindex order, row-major
+@cindex order, C
 This way to lay out an array in memory is called @dfn{row-major order} or @dfn{C-order}, since it's the default order for built-in arrays in C. A row-major array A with lengths (l₀, l₁, ... lᵣ₋₁) can be looked up like this:
 
 @anchor{x-steps}
@@ -1602,7 +1603,7 @@ See also: @ref{x-ra->array,@code{ra->array}}.
 @deffn @w{Function} c-dims bounds ...
 
 @cindex packed array
-Create dims for C-order array (packed elements, last dimension changing fastest).
+Create dims for row-major order array (packed elements, last dimension changing fastest).
 
 Each of the bounds may be a pair of bounds (@var{lo} @var{hi}) or a single length @var{len}, which implies zero @var{lo}.
 @example
@@ -2059,8 +2060,8 @@ See also: @ref{x-ra-format,@code{ra-format}}, @ref{Writing and reading}.
 
 @cindex @code{ra-ravel}
 @anchor{x-ra-ravel}
-@deffn @w{Function} ra-ravel a [n [org]]
-Ravel axes [@var{org} ... @var{org}+@var{n}) of array @var{a} in C order. @var{n} defaults to the rank of @var{a} and @var{org} defaults to 0.
+@deffn @w{Function} ra-ravel a [n [org]] @result{} b
+Ravel axes [@var{org} ... @var{org}+@var{n}) of array @var{a} in row-major order. @var{n} defaults to the rank of @var{a} and @var{org} defaults to 0.
 
 For example:
 @example
@@ -2139,14 +2140,13 @@ See also: @ref{x-ra-reshape,@code{ra-reshape}}, @ref{x-ra-tile,@code{ra-tile}}, 
 
 @cindex @code{ra-ravel-copy}
 @anchor{x-ra-ravel-copy}
-@deffn @w{Function} ra-ravel-copy a [n [org]]
+@deffn @w{Function} ra-ravel-copy a [n [org]] @result{} b
 
-Same as @code{ra-ravel}, but always return a newly allocated array. This is equivalent to @code{(ra-copy (ra-ravel a ...))}, but it doesn't incur a second copy in case @code{ra-ravel} already allocates a new array.
+Like @code{ra-ravel}, but always return a newly allocated array. This is equivalent to @code{(ra-copy (ra-ravel a ...))}, but it doesn't incur a second copy in case @code{ra-ravel} already allocates a new array.
 
 See also: @ref{x-ra-ravel,@code{ra-ravel}}.
 
 @end deffn
-
 
 @cindex @code{ra-reshape}
 @anchor{x-ra-reshape}
@@ -2562,14 +2562,14 @@ See also @ref{x-ra-copy!,@code{ra-copy!}} @ref{x-ra-amend!,@code{ra-amend!}} @re
 
 @cindex @code{ra-swap!}
 @anchor{x-ra-swap!}
-@deffn @w{Function} ra-swap! a b
+@deffn @w{Function} ra-swap! a b @result{} a
 Swap the contents of @var{a} and @var{b}. The swap is executed in unspecified order, so the effect on @var{a} and @var{b} is undefined if @var{a} and @var{b} share storage.
 @end deffn
 
 @cindex @code{ra-swap-in-order!}
 @anchor{x-ra-swap-in-order!}
-@deffn @w{Function} ra-swap-in-order! a b
-Swap the contents of @var{a} and @var{b}. The swap is executed in row major order.
+@deffn @w{Function} ra-swap-in-order! a b @result{} a
+Swap the contents of @var{a} and @var{b}. The swap is executed in row-major order.
 @end deffn
 
 @cindex @code{ra-fill!}
@@ -2616,7 +2616,7 @@ See also: @ref{x-ra-set!,@code{ra-set!}}, @ref{x-ra-copy!,@code{ra-copy!}}, @ref
 @cindex @code{ra-order-c?}
 @anchor{x-ra-order-c?}
 @deffn @w{Function} ra-order-c? a [n [org]]
-Check whether axes [@var{org} ... @var{org}+@var{n}) of @var{a} are in C-order. By default, check that the whole array is in C-order, and additionally that the step on the last axis is 1 (i.e. the array is ‘packed’).
+Check whether axes [@var{org} ... @var{org}+@var{n}) of @var{a} are in row-major order. By default, check that the whole array is in row-major order, and additionally that the step on the last axis is 1 (i.e. the array is ‘packed’).
 
 @code{(ra-order-c? a n org)} implies @code{(eq? (ra-root a) (ra-root (@ref{x-ra-ravel, @code{ra-ravel}} a n org)))}. Note that the stronger condition @code{(ra-order-c? a)} is not necessary for @code{(eq? (ra-root a) (ra-root (ra-ravel a)))} to hold.
 
@@ -2757,7 +2757,7 @@ b(j₀₀ j₀₁ ... j₁₀ j₁₁ ...) = a(i₀(j₀₀ j₀₁ ...) i₁(j�
 
 where @var{i} : @var{i₀} @var{i₁} ... The special value @code{#t} is understood as the full range of @var{a} on that axis.
 
-Additionally, if each @var{i} ... is one of
+Additionally, if each of the @var{i} ... is one of
 @itemize
 @item @code{#t}
 @item an array of type @code{d}
@@ -2819,7 +2819,7 @@ Unbounded indices aren't treated especially, so they are only valid if the relev
 @end verbatim
 @end example
 
-If the result would have rank 0, then an array element is returned, and not a 0-rank view of @var{a}. Use @ref{x-ra-amend!,@code{ra-amend!}} to assign to cells of an array regardless of whether they are of 0-rank or higher.
+@i{If the result would have rank 0, then an array element is returned, and not a 0-rank view of @var{a}. Use @ref{x-ra-amend!,@code{ra-amend!}} to assign to cells of an array regardless of whether they are of 0-rank or higher.}
 
 The type of @var{b} is the same as that of @var{a}, with the only exception that if the type of @var{a} is @code{d} and the root of @var{b} cannot be shared with the root of @var{a}, then the type of @var{b} is @code{#t}.
 
@@ -2829,9 +2829,9 @@ See also: @ref{x-ra-cell,@code{ra-cell}}, @ref{x-ra-ref,@code{ra-ref}}, @ref{x-r
 
 @cindex @code{ra-from-copy}
 @anchor{x-ra-from-copy}
-@deffn @w{Function} ra-from-copy a i ... → b
+@deffn @w{Function} ra-from-copy a i ... @result{} b
 
-Same as @code{ra-from}, but always return a newly allocated array. This is equivalent to @code{(ra-copy (ra-from a i ...))}, but it doesn't incur a second copy in case @code{ra-from} already allocates a new array.
+Like @code{ra-from}, but always return a newly allocated array. This is equivalent to @code{(ra-copy (ra-from a i ...))}, but it doesn't incur a second copy in case @code{ra-from} already allocates a new array.
 
 See also: @ref{x-ra-from,@code{ra-from}}.
 
@@ -2840,7 +2840,6 @@ See also: @ref{x-ra-from,@code{ra-from}}.
 @cindex @code{ra-amend!}
 @anchor{x-ra-amend!}
 @deffn @w{Function} ra-amend! a c i ... → a
-
 Copy @var{c} to the outer product slice of @var{a} by indices @var{i} ...
 
 @example

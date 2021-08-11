@@ -1288,6 +1288,12 @@
 ; when size is 0, just print the prefix
 (ra-format (ra-i 3 0 4))
 
+; when size is unbounded, just print the prefix. Not ideal...
+(ra-format (ra-i #t 3 4))
+
+; when there are dead axes, print the result of ra-singletonize, except for the prefix. Not ideal...
+(ra-format (ra-i 3 #f 4))
+
 
 ; -----------------------
 ; the end.

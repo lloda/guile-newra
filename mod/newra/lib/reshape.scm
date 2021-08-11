@@ -216,7 +216,7 @@ See also: ra-reshape ra-transpose ra-from ra-order-c?
 
 (define* (ra-ravel-copy ra #:optional (n (ra-rank ra)) (org 0))
   "
-Like @code{(ra-reshape ra ...)}, but always return a newly allocated array.
+Like @code{(ra-ravel ra ...)}, but always return a newly allocated array.
 
 See also: ra-ravel
 "
