@@ -1909,19 +1909,9 @@ element
 <p>To ravel other combinations of axes, use <a href="#Transposition">Transposition</a>.
 </p>
 <span id="index-packed-array-1"></span>
-<p>The full ravel of an array doesn&rsquo;t necessarily result in a rank-1 &lsquo;packed&rsquo; array, that is, one where the step is 1. If that is required, one can use <code>(ra-ravel (ra-copy ra))</code>, since <a href="#x_002dra_002dorder_002dc_003f"><code>ra-order-c?</code></a> is always true for the result of <code>ra-copy</code><a id="DOCF10" href="#FOOT10"><sup>10</sup></a> .
+<p>The full ravel of an array doesn&rsquo;t necessarily result in a rank-1 &lsquo;packed&rsquo; array, that is, one where the step is 1. If that is required, one can use <code>(ra-ravel (ra-copy ra))</code>. <a id="DOCF10" href="#FOOT10"><sup>10</sup></a>.
 </p>
 <p>See also: <a href="#x_002dra_002dreshape"><code>ra-reshape</code></a>, <a href="#x_002dra_002dtile"><code>ra-tile</code></a>, <a href="#Reshaping">Reshaping</a>.
-</p>
-</dd></dl>
-
-<span id="index-ra_002dravel_002dcopy"></span>
-<span id="x_002dra_002dravel_002dcopy"></span><dl>
-<dt id="index-ra_002dravel_002dcopy-1">Function<!-- /@w -->: <strong>ra-ravel-copy</strong> <em>a [n [org]] &rArr; b</em></dt>
-<dd>
-<p>Like <code>ra-ravel</code>, but always return a newly allocated array. This is equivalent to <code>(ra-copy (ra-ravel a ...))</code>, but it doesn&rsquo;t incur a second copy in case <code>ra-ravel</code> already allocates a new array.
-</p>
-<p>See also: <a href="#x_002dra_002dravel"><code>ra-ravel</code></a>.
 </p>
 </dd></dl>
 
@@ -2832,7 +2822,6 @@ Previous: <a href="#Sources" accesskey="p" rel="prev">Sources</a>, Up: <a href="
 <tr><td></td><td valign="top"><a href="#index-ra_002dorder_002dc_003f"><code>ra-order-c?</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-ra_002dprint_002dprefix"><code>ra-print-prefix</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-ra_002dravel"><code>ra-ravel</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
-<tr><td></td><td valign="top"><a href="#index-ra_002dravel_002dcopy"><code>ra-ravel-copy</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-ra_002dref"><code>ra-ref</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-ra_002dreshape"><code>ra-reshape</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-ra_002dreverse"><code>ra-reverse</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
@@ -2950,7 +2939,7 @@ Previous: <a href="#Sources" accesskey="p" rel="prev">Sources</a>, Up: <a href="
 <p>Cf. <code>array-index</code> from [<a href="#Sources">SRFI-164</a>]
 .</p>
 <h5><a id="FOOT10" href="#DOCF10">(10)</a></h3>
-<p>Note that the ravel operation in <code>(ra-ravel (ra-copy ra))</code> is free, while it might not be in <code>(ra-copy (ra-ravel ra))</code>, so it is preferable, in principle, to copy first.</p>
+<p>This works because <a href="#x_002dra_002dorder_002dc_003f"><code>ra-order-c?</code></a> is always true for the result of <code>ra-copy</code>. Note that the ravel operation in <code>(ra-ravel (ra-copy ra))</code> is free, while it might not be in <code>(ra-copy (ra-ravel ra))</code>, so it is preferable, in principle, to copy first.</p>
 <h5><a id="FOOT11" href="#DOCF11">(11)</a></h3>
 <p>Cf. <code>array-index-ref</code> from [<a href="#Sources">SRFI-164</a>]
 .</p>

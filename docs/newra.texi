@@ -2132,19 +2132,9 @@ Ravel axes 1..2:
 To ravel other combinations of axes, use @ref{Transposition}.
 
 @cindex packed array
-The full ravel of an array doesn't necessarily result in a rank-1 `packed' array, that is, one where the step is 1. If that is required, one can use @code{(ra-ravel (ra-copy ra))}, since @ref{x-ra-order-c?, @code{ra-order-c?}} is always true for the result of @code{ra-copy}@footnote{Note that the ravel operation in @code{(ra-ravel (ra-copy ra))} is free, while it might not be in @code{(ra-copy (ra-ravel ra))}, so it is preferable, in principle, to copy first.} .
+The full ravel of an array doesn't necessarily result in a rank-1 `packed' array, that is, one where the step is 1. If that is required, one can use @code{(ra-ravel (ra-copy ra))}. @footnote{This works because @ref{x-ra-order-c?, @code{ra-order-c?}} is always true for the result of @code{ra-copy}. Note that the ravel operation in @code{(ra-ravel (ra-copy ra))} is free, while it might not be in @code{(ra-copy (ra-ravel ra))}, so it is preferable, in principle, to copy first.}.
 
 See also: @ref{x-ra-reshape,@code{ra-reshape}}, @ref{x-ra-tile,@code{ra-tile}}, @ref{Reshaping}.
-
-@end deffn
-
-@cindex @code{ra-ravel-copy}
-@anchor{x-ra-ravel-copy}
-@deffn @w{Function} ra-ravel-copy a [n [org]] @result{} b
-
-Like @code{ra-ravel}, but always return a newly allocated array. This is equivalent to @code{(ra-copy (ra-ravel a ...))}, but it doesn't incur a second copy in case @code{ra-ravel} already allocates a new array.
-
-See also: @ref{x-ra-ravel,@code{ra-ravel}}.
 
 @end deffn
 

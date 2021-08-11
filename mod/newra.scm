@@ -37,7 +37,7 @@
            ra-i ra-iota
            ra-copy
            ra-reverse ra-transpose ra-untranspose ra-order-c?
-           ra-ravel ra-ravel-copy ra-reshape ra-tile
+           ra-ravel ra-reshape ra-tile
            ra-fold ra-fold*
            ra-rotate!
 

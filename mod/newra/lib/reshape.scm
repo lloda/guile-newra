@@ -12,7 +12,7 @@
 
 (define-module (newra lib reshape)
   #:export (ra-reverse ra-transpose ra-untranspose ra-order-c?
-            ra-ravel ra-ravel-copy ra-reshape ra-tile
+            ra-ravel ra-reshape ra-tile
             ra-singletonize))
 
 (import (newra base) (newra map) (newra vector)
@@ -212,18 +212,6 @@ See also: ra-reshape ra-transpose ra-from ra-order-c?
      (ra-copy! (make-ra-new (match (%%ra-type ra) ('d #t) (x x))
                                *unspecified* (apply c-dims (ra-dimensions ra)))
                ra))
-   n org))
-
-(define* (ra-ravel-copy ra #:optional (n (ra-rank ra)) (org 0))
-  "
-Like @code{(ra-ravel ra ...)}, but always return a newly allocated array.
-
-See also: ra-ravel
-"
-  (pure-ravel
-   (ra-copy! (make-ra-new (match (%%ra-type ra) ('d #t) (x x))
-                          *unspecified* (apply c-dims (ra-dimensions ra)))
-             ra)
    n org))
 
 ; cf https://www.jsoftware.com/papers/APLDictionary1.htm#rho
