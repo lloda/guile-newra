@@ -108,6 +108,9 @@ Help: [C-uc .] insert timestamp [C-cc] flip checkbox [C-uucc] partial flip check
     - [ ] handle unbounded axes
     - [ ] auto truncation
 
+* TODO other [0/1]
+  * [ ] review definition of (ra-untranspose a i ...). Does it make sense to allow any i < (rank a) ?
+
 * TODO replace Guile arrays [0/5]
   * [ ] truncated-print support
   * [ ] equal? support

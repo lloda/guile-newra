@@ -100,6 +100,8 @@ See also: make-ra-root make-ra-new
              (throw 'bad-lo))
            odim))))))
 
+; TODO Does it make sense to define this so rank ra = len axes, allow repeats?
+
 (define (ra-untranspose rb . axes_)
   "
 Transpose @var{axes} of @var{rb} to matching destination axes 0, 1, ... of the

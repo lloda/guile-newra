@@ -541,6 +541,7 @@ Create an arithmetic sequence [@code{org, org+inc, org+2·inc, ...}]. The defaul
 (The example above can be written @code{(@ref{x-ra-iota, ra-iota} 10 0 3)}).
 @end deffn
 
+@cindex @code{d}
 @code{aseq} roots are immutable. The type tag of @code{aseq} roots is @code{d}. Arrays with integer-valued @code{aseq} roots have a few special uses; one of them is as arguments in @ref{Slicing, slicing}.
 
 @cindex infinite axes
@@ -1960,6 +1961,8 @@ If any of the lengths of @var{ra} is 0, only the prefix is printed.
 
 This function doesn't handle large arrays in any particular way. User beware!
 
+See also: @ref{x-ra-print,@code{ra-print}}, @ref{x-star-ra-print-star, @code{*ra-print*}}.
+
 @end deffn
 
 @cindex @code{ra-i}
@@ -1968,7 +1971,7 @@ This function doesn't handle large arrays in any particular way. User beware!
 
 Create multidimensional index array with the given bounds.
 
-The root is of type @code{<aseq>}. The first upper bound that isn't @code{#f} may be @code{#t}; this creates an unbounded axis.
+The root is of type @code{d}. The first upper bound that isn't @code{#f} may be @code{#t}; this creates an unbounded axis.
 
 @example
 @verbatim
@@ -1986,7 +1989,7 @@ See also: @ref{x-ra-iota,@code{ra-iota}}, @ref{x-ra-index-map!,@code{ra-index-ma
 @deffn @w{Function} ra-iota len [lo [step]]
 @deffnx @w{Function} ra-iota
 
-Create rank-1 index array. The root is of type @code{<aseq>}. @var{lo} defaults to 0 and @var{step} to 1.
+Create rank-1 index array. The root is of type @code{d}. @var{lo} defaults to 0 and @var{step} to 1.
 
 @example
 @verbatim
@@ -2030,6 +2033,18 @@ This function always produces a new array, of the type given. If @var{type} is @
 See also: @ref{x-ra-scat,@code{ra-scat}}, @ref{x-ra-tile,@code{ra-tile}},  @ref{Concatenation}.
 
 @end deffn
+
+@cindex @code{ra-print}
+@anchor{x-ra-print}
+@deffn @w{Function} ra-print ra [port]
+
+Print an array to @var{port}. @var{port} defaults to @code{(current-output-port)}.
+
+This is the default array printer. The result is meant to be back-readable, although some special arrays are not supported yet.
+
+See also: @ref{x-ra-format,@code{ra-format}}, @ref{x-star-ra-print-star,@code{*ra-print*}}, @ref{x-star-ra-parenthesized-rank-zero-star, @code{*ra-parenthesized-rank-zero*}}.
+@end deffn
+
 
 @cindex @code{print prefix}
 @cindex @code{ra-print-prefix}
@@ -2871,7 +2886,7 @@ indices that match those elements. @code{newra} will @emph{not} check that each 
 
 This function returns the modified array @var{a}.
 
-See also: @ref{x-ra-from,@code{ra-from}}, @ref{x-ra-copy!,@code{ra-copy!}} @ref{x-ra-cell,@code{ra-cell}} @ref{x-ra-ref,@code{ra-ref}} @ref{x-ra-slice,@code{ra-slice}} @ref{x-ra-from,@code{ra-from}} @ref{x-ra-set!,@code{ra-set!}}.
+See also: @ref{x-ra-from,@code{ra-from}}, @ref{x-ra-copy!,@code{ra-copy!}} @ref{x-ra-cell,@code{ra-cell}} @ref{x-ra-ref,@code{ra-ref}} @ref{x-ra-slice,@code{ra-slice}} @ref{x-ra-set!,@code{ra-set!}}.
 
 @end deffn
 

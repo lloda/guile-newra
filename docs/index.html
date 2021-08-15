@@ -578,6 +578,7 @@ Next: <a href="#Writing-and-reading" accesskey="n" rel="next">Writing and readin
 <p>(The example above can be written <code>(<a href="#x_002dra_002diota">ra-iota</a> 10 0 3)</code>).
 </p></dd></dl>
 
+<span id="index-d"></span>
 <p><code>aseq</code> roots are immutable. The type tag of <code>aseq</code> roots is <code>d</code>. Arrays with integer-valued <code>aseq</code> roots have a few special uses; one of them is as arguments in <a href="#Slicing">slicing</a>.
 </p>
 <span id="index-infinite-axes"></span>
@@ -1765,6 +1766,8 @@ element
 </p>
 <p>This function doesn&rsquo;t handle large arrays in any particular way. User beware!
 </p>
+<p>See also: <a href="#x_002dra_002dprint"><code>ra-print</code></a>, <a href="#x_002dstar_002dra_002dprint_002dstar"><code>*ra-print*</code></a>.
+</p>
 </dd></dl>
 
 <span id="index-ra_002di"></span>
@@ -1773,7 +1776,7 @@ element
 <dd>
 <p>Create multidimensional index array with the given bounds.
 </p>
-<p>The root is of type <code>&lt;aseq&gt;</code>. The first upper bound that isn&rsquo;t <code>#f</code> may be <code>#t</code>; this creates an unbounded axis.
+<p>The root is of type <code>d</code>. The first upper bound that isn&rsquo;t <code>#f</code> may be <code>#t</code>; this creates an unbounded axis.
 </p>
 <div class="example">
 <pre class="verbatim">(ra-i 2 3 4)
@@ -1789,7 +1792,7 @@ element
 <dt id="index-ra_002diota-1">Function<!-- /@w -->: <strong>ra-iota</strong> <em>len [lo [step]]</em></dt>
 <dt id="index-ra_002diota-2">Function<!-- /@w -->: <strong>ra-iota</strong></dt>
 <dd>
-<p>Create rank-1 index array. The root is of type <code>&lt;aseq&gt;</code>. <var>lo</var> defaults to 0 and <var>step</var> to 1.
+<p>Create rank-1 index array. The root is of type <code>d</code>. <var>lo</var> defaults to 0 and <var>step</var> to 1.
 </p>
 <div class="example">
 <pre class="verbatim">(ra-iota 4 3 -1)
@@ -1825,6 +1828,18 @@ element
 <p>See also: <a href="#x_002dra_002dscat"><code>ra-scat</code></a>, <a href="#x_002dra_002dtile"><code>ra-tile</code></a>,  <a href="#Concatenation">Concatenation</a>.
 </p>
 </dd></dl>
+
+<span id="index-ra_002dprint"></span>
+<span id="x_002dra_002dprint"></span><dl>
+<dt id="index-ra_002dprint-1">Function<!-- /@w -->: <strong>ra-print</strong> <em>ra [port]</em></dt>
+<dd>
+<p>Print an array to <var>port</var>. <var>port</var> defaults to <code>(current-output-port)</code>.
+</p>
+<p>This is the default array printer. The result is meant to be back-readable, although some special arrays are not supported yet.
+</p>
+<p>See also: <a href="#x_002dra_002dformat"><code>ra-format</code></a>, <a href="#x_002dstar_002dra_002dprint_002dstar"><code>*ra-print*</code></a>, <a href="#x_002dstar_002dra_002dparenthesized_002drank_002dzero_002dstar"><code>*ra-parenthesized-rank-zero*</code></a>.
+</p></dd></dl>
+
 
 <span id="index-print-prefix"></span>
 <span id="index-ra_002dprint_002dprefix"></span>
@@ -2540,7 +2555,7 @@ indices that match those elements. <code>newra</code> will <em>not</em> check th
 
 <p>This function returns the modified array <var>a</var>.
 </p>
-<p>See also: <a href="#x_002dra_002dfrom"><code>ra-from</code></a>, <a href="#x_002dra_002dcopy_0021"><code>ra-copy!</code></a> <a href="#x_002dra_002dcell"><code>ra-cell</code></a> <a href="#x_002dra_002dref"><code>ra-ref</code></a> <a href="#x_002dra_002dslice"><code>ra-slice</code></a> <a href="#x_002dra_002dfrom"><code>ra-from</code></a> <a href="#x_002dra_002dset_0021"><code>ra-set!</code></a>.
+<p>See also: <a href="#x_002dra_002dfrom"><code>ra-from</code></a>, <a href="#x_002dra_002dcopy_0021"><code>ra-copy!</code></a> <a href="#x_002dra_002dcell"><code>ra-cell</code></a> <a href="#x_002dra_002dref"><code>ra-ref</code></a> <a href="#x_002dra_002dslice"><code>ra-slice</code></a> <a href="#x_002dra_002dset_0021"><code>ra-set!</code></a>.
 </p>
 </dd></dl>
 
@@ -2744,6 +2759,7 @@ Previous: <a href="#Sources" accesskey="p" rel="prev">Sources</a>, Up: <a href="
 <tr><td></td><td valign="top"><a href="#index-concatenation">concatenation</a>:</td><td>&nbsp;</td><td valign="top"><a href="#Concatenation">Concatenation</a></td></tr>
 <tr><td colspan="4"> <hr></td></tr>
 <tr><th id="Indices_cp_letter-D">D</th><td></td><td></td></tr>
+<tr><td></td><td valign="top"><a href="#index-d"><code>d</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Special-arrays">Special arrays</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-dead-axes">dead axes</a>:</td><td>&nbsp;</td><td valign="top"><a href="#Special-arrays">Special arrays</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-default"><code>default</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Writing-and-reading">Writing and reading</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-diagonal">diagonal</a>:</td><td>&nbsp;</td><td valign="top"><a href="#Transposition">Transposition</a></td></tr>
@@ -2820,6 +2836,7 @@ Previous: <a href="#Sources" accesskey="p" rel="prev">Sources</a>, Up: <a href="
 <tr><td></td><td valign="top"><a href="#index-ra_002diota"><code>ra-iota</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-ra_002dmap_0021"><code>ra-map!</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-ra_002dorder_002dc_003f"><code>ra-order-c?</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
+<tr><td></td><td valign="top"><a href="#index-ra_002dprint"><code>ra-print</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-ra_002dprint_002dprefix"><code>ra-print-prefix</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-ra_002dravel"><code>ra-ravel</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-ra_002dref"><code>ra-ref</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
