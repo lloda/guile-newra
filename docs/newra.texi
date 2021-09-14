@@ -432,7 +432,23 @@ These problems are solved if the built-in type is replaced with a new type defin
 
 An array can be created anew (@ref{x-make-ra-new, @code{make-ra-new}}, @ref{x-make-ra, @code{make-ra}}, @ref{x-make-typed-ra, @code{make-typed-ra}}), or over an existing root (@ref{x-make-ra-root, @code{make-ra-root}}).
 
-@ref{x-make-ra-new, @code{make-ra-new}} takes an array type, a fill value, and a dim vector. @ref{x-c-dims, @code{c-dims}} can be used to create the dim vector.
+@ref{x-make-ra, @code{make-ra}} or @ref{x-make-typed-ra, @code{make-typed-ra}} take array lengths and use row-major order by default.
+
+@example
+@verbatim
+(make-ra 99 2 3)
+@end verbatim
+@result{} #%2:3:2((9 9) (9 9) (9 9))
+@end example
+
+@example
+@verbatim
+(make-typed-ra 'f64 99 2 3)
+@end verbatim
+@result{} #%2f64:3:2((9.0 9.0) (9.0 9.0) (9.0 9.0))
+@end example
+
+@ref{x-make-ra-new, @code{make-ra-new}} takes an array type, a fill value, and a dim vector. @ref{x-c-dims, @code{c-dims}} can be used to create a row-major dim vector.
 
 @example
 @verbatim
@@ -447,22 +463,6 @@ An array can be created anew (@ref{x-make-ra-new, @code{make-ra-new}}, @ref{x-ma
 (make-ra-new 'f32 0.0 (c-dims 3 2))
 @end verbatim
 @result{} #%2f32:3:2((0.0 0.0) (0.0 0.0) (0.0 0.0))
-@end example
-
-@ref{x-make-ra, @code{make-ra}} or @ref{x-make-typed-ra, @code{make-typed-ra}} take array lengths and use @code{c-dims} by default.
-
-@example
-@verbatim
-(make-ra 99 2 3)
-@end verbatim
-@result{} #%2:3:2((9 9) (9 9) (9 9))
-@end example
-
-@example
-@verbatim
-(make-typed-ra 'f64 99 2 3)
-@end verbatim
-@result{} #%2f64:3:2((9.0 9.0) (9.0 9.0) (9.0 9.0))
 @end example
 
 @ref{x-make-ra-root, @code{make-ra-root}} takes the type from the root vector.

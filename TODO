@@ -28,7 +28,7 @@ Help: [C-uc .] insert timestamp [C-cc] flip checkbox [C-uucc] partial flip check
   * [ ] return roots for trivial rank-1 views on roots
 
 * TODO whole array functions [8/15]
-  * [X] ra-fold ra-fold*
+  * [X] ra-fold
   * [X] ra-any ra-every
   * [X] raw prefix matching
   * [X] generalized prefix matching

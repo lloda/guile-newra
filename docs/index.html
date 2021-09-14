@@ -483,7 +483,19 @@ Next: <a href="#Special-arrays" accesskey="n" rel="next">Special arrays</a>, Up:
 
 <p>An array can be created anew (<a href="#x_002dmake_002dra_002dnew"><code>make-ra-new</code></a>, <a href="#x_002dmake_002dra"><code>make-ra</code></a>, <a href="#x_002dmake_002dtyped_002dra"><code>make-typed-ra</code></a>), or over an existing root (<a href="#x_002dmake_002dra_002droot"><code>make-ra-root</code></a>).
 </p>
-<p><a href="#x_002dmake_002dra_002dnew"><code>make-ra-new</code></a> takes an array type, a fill value, and a dim vector. <a href="#x_002dc_002ddims"><code>c-dims</code></a> can be used to create the dim vector.
+<p><a href="#x_002dmake_002dra"><code>make-ra</code></a> or <a href="#x_002dmake_002dtyped_002dra"><code>make-typed-ra</code></a> take array lengths and use row-major order by default.
+</p>
+<div class="example">
+<pre class="verbatim">(make-ra 99 2 3)
+</pre><pre class="example">&rArr; #%2:3:2((9 9) (9 9) (9 9))
+</pre></div>
+
+<div class="example">
+<pre class="verbatim">(make-typed-ra 'f64 99 2 3)
+</pre><pre class="example">&rArr; #%2f64:3:2((9.0 9.0) (9.0 9.0) (9.0 9.0))
+</pre></div>
+
+<p><a href="#x_002dmake_002dra_002dnew"><code>make-ra-new</code></a> takes an array type, a fill value, and a dim vector. <a href="#x_002dc_002ddims"><code>c-dims</code></a> can be used to create a row-major dim vector.
 </p>
 <div class="example">
 <pre class="verbatim">(make-ra-new #t 'x (vector (make-dim 3 0 2) (make-dim 2 0 1))) ; more simply
@@ -494,18 +506,6 @@ Next: <a href="#Special-arrays" accesskey="n" rel="next">Special arrays</a>, Up:
 <div class="example">
 <pre class="verbatim">(make-ra-new 'f32 0.0 (c-dims 3 2))
 </pre><pre class="example">&rArr; #%2f32:3:2((0.0 0.0) (0.0 0.0) (0.0 0.0))
-</pre></div>
-
-<p><a href="#x_002dmake_002dra"><code>make-ra</code></a> or <a href="#x_002dmake_002dtyped_002dra"><code>make-typed-ra</code></a> take array lengths and use <code>c-dims</code> by default.
-</p>
-<div class="example">
-<pre class="verbatim">(make-ra 99 2 3)
-</pre><pre class="example">&rArr; #%2:3:2((9 9) (9 9) (9 9))
-</pre></div>
-
-<div class="example">
-<pre class="verbatim">(make-typed-ra 'f64 99 2 3)
-</pre><pre class="example">&rArr; #%2f64:3:2((9.0 9.0) (9.0 9.0) (9.0 9.0))
 </pre></div>
 
 <p><a href="#x_002dmake_002dra_002droot"><code>make-ra-root</code></a> takes the type from the root vector.

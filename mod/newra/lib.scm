@@ -16,9 +16,9 @@
             array->ra ra->array as-ra
             ra-i ra-iota
             ra-copy
-            ra-fold ra-fold*))
+            ra-fold))
 
-(import (only (srfi :1) fold every any iota drop) (srfi :26) (srfi :71)
+(import (only (srfi :1) fold every any iota drop xcons) (srfi :26) (srfi :71)
         (ice-9 control) (ice-9 match) (only (rnrs base) vector-map vector-for-each)
         (newra base) (newra map)
         (newra lib reshape))
@@ -30,59 +30,31 @@
 
 ; ----------------
 ; fold - probably better ways to do this by fixing or extending (newra map)
-; FIXME consider (KONS KNIL ...) which is in some SRFI and it's just the better way :-/
 ; ----------------
 
 (define-inlinable-case ra-fold
   (case-lambda
    "
-ra-fold kons knil ra ...
-
-Reduce ra RA by (... (KONS RA1 ... (KONS RA0 ... KNIL)) ...) where
-(RA0 ...), (RA1 ...) is some sequence of the elements of RA ....
-
-See also: ra-fold* ra-map! ra-for-each ra-slice-for-each
-"
-   ((op init)
-    init)
-   ((op init a0)
-    (ra-for-each (lambda (x0) (set! init (op x0 init))) a0)
-    init)
-   ((op init a0 a1)
-    (ra-for-each (lambda (x0 x1) (set! init (op x0 x1 init))) a0 a1)
-    init)
-   ((op init a0 a1 a2)
-    (ra-for-each (lambda (x0 x1 x2) (set! init (op x0 x1 x2 init))) a0 a1 a2)
-    init)
-   ((op init . args)
-    (apply ra-for-each (lambda x (set! init (apply op (append! x (list init))))) args)
-    init)))
-
-; really prefer this order, possibly get rid of (ra-fold).
-(define-inlinable-case ra-fold*
-  (case-lambda
-   "
-ra-fold* kons knil ra ...
-
-Reduce ra RA by (... (KONS (KONS KNIL RA0 ...) RA1 ... ) ...) where
-(RA0 ...), (RA1 ...) is some sequence of the elements of RA ....
+Reduce arrays @var{a} by (... (@var{kons} (@var{cons} @var{knil} @var{a}0 ...)
+@var{a}1 ... ) ...) where (@var{a}0 ...), (@var{a}1 ...) is the row-major ravel
+of @var{a}...
 
 See also: ra-fold ra-map! ra-for-each ra-slice-for-each
 "
-   ((op init)
-    init)
-   ((op init a0)
-    (ra-for-each (lambda (x0) (set! init (op init x0))) a0)
-    init)
-   ((op init a0 a1)
-    (ra-for-each (lambda (x0 x1) (set! init (op init x0 x1))) a0 a1)
-    init)
-   ((op init a0 a1 a2)
-    (ra-for-each (lambda (x0 x1 x2) (set! init (op init x0 x1 x2))) a0 a1 a2)
-    init)
-   ((op init . args)
-    (apply ra-for-each (lambda x (set! init (apply op init x))) args)
-    init)))
+   ((kons knil)
+    knil)
+   ((kons knil a0)
+    (ra-for-each (lambda (x0) (set! knil (kons knil x0))) a0)
+    knil)
+   ((kons knil a0 a1)
+    (ra-for-each (lambda (x0 x1) (set! knil (kons knil x0 x1))) a0 a1)
+    knil)
+   ((kons knil a0 a1 a2)
+    (ra-for-each (lambda (x0 x1 x2) (set! knil (kons knil x0 x1 x2))) a0 a1 a2)
+    knil)
+   ((kons knil . args)
+    (apply ra-for-each (lambda x (set! knil (apply kons knil x))) args)
+    knil)))
 
 
 ; ----------------
@@ -201,7 +173,7 @@ See also: as-ra
           (cond
            ((= 1 (%%ra-rank ra))
             (if (> (dim-len dimk) 20)
-              (ra-fold cons '() ra)
+              (ra-fold xcons '() ra)
               (let loop-dim ((l '()) (i (dim-lo dimk)))
                 (if (> i (dim-hi dimk))
                   l

@@ -69,7 +69,7 @@
     (ra-map! (ra-from DA .. 3) (lambda (a b) (/ (- a b) -2 δ)) (⌽ 1 3 A) (⌽ -1 3 A))
 
     (format #t "'LORENTZ CONDITION: MAX|DIV| = 0? ~a'\n"
-            (ra-fold (lambda (a b) (max (magnitude a) b))
+            (ra-fold (lambda (a b) (max a (magnitude b)))
                      0 (ra-map! divA + divA (⍉ DA 0 1 2 3 4 4))))
 
     (ra-map! F - (⍉ DA 0 1 2 3 5 4) DA)
