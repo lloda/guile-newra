@@ -7,7 +7,7 @@
 @c last [ma112]
 
 @set VERSION 1
-@set UPDATED 2021 August 11
+@set UPDATED 2021 September 14
 
 @copying
 @code{newra} (version @value{VERSION}, updated @value{UPDATED})

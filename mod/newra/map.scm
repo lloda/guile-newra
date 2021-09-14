@@ -22,7 +22,7 @@
         (only (srfi :1) fold every)
         (only (rnrs base) vector-map vector-for-each)
         (only (srfi :43) vector-copy! vector-fill! vector-every)
-        (only (rnrs bytevectors) bytevector-copy! bytevector?))
+        (only (rnrs bytevectors) bytevector-copy! bytevector-fill! bytevector?))
 
 ; These tables are used to inline specific type combinations in %dispatch.
 ; We handle fewer types with 2 & 3 arguments to limit the explosion in compile time.
@@ -553,7 +553,7 @@ This function returns the filled array @var{ra}.
 
 See also: ra-copy! ra-map!
 "
-; These only support step 1. Also (FIXME) bytevector-fill! is too limited to be used here.
+; These only support step 1. bytevector-fill! can be used after Guile 3.0.8 (check).
 ; Other options are bli_?setv from BLIS or (contorted) ?axpy from CBLAS.
   (define (line! t)
     (match t
@@ -563,6 +563,9 @@ See also: ra-copy! ra-map!
       ('s
        (lambda (fill dst dstart len)
          (string-fill! dst fill dstart (+ dstart len))))
+      ('u8
+       (lambda (fill dst dstart len)
+         (bytevector-fill! dst fill dstart (+ dstart len))))
       ('d (throw 'cannot-fill-type 'd))
       (t #f)))
 

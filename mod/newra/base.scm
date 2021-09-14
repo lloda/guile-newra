@@ -162,11 +162,11 @@ See also: dim-len dim-lo dim-step c-dims
 
 (define-inlinable (dim-check dim i)
   (if (and i
-           (let ((len (dim-len dim))
-                 (lo (dim-lo dim)))
+           (let ((lo (dim-lo dim)))
              (and
               (or (not lo) (>= i lo))
-              (or (not len) (< i (+ len lo)))))) ; len implies lo
+              (let ((len (dim-len dim)))
+                (or (not len) (< i (+ len lo))))))) ; len implies lo
     i
     (throw 'dim-check-out-of-range dim i)))
 
@@ -521,15 +521,11 @@ See also: ra-ref ra-slice ra-from
 (define make-ra-root
   (case-lambda
    "
-make-ra-root root -> ra
-make-ra-root root dims -> ra
-make-ra-root root dims zero -> ra
-
 Make new array from root vector @var{root}, zero index @var{zero} and dim-vector
 @var{dims}.
 
-By default, @var{zero} is computed so that the first element of the result is the
-first element of the root, that is, @code{(ra-offset ra)} is 0.
+If @var{zero} is absent, it is computed so that the first element of the result
+is the first element of the root, that is, @code{(ra-offset ra)} is 0.
 
 If @var{dims} is absent, make a rank-1 array with the full length of @var{root}.
 
