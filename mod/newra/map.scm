@@ -28,46 +28,39 @@
 ; We handle fewer types with 2 & 3 arguments to limit the explosion in compile time.
 
 (eval-when (expand load eval)
+  (define (pick-ref-set type)
+    (case type
+      ((#t)  (values #'vector-ref     #'vector-set!   ))
+      ((c64) (values #'c64vector-ref  #'c64vector-set!))
+      ((c32) (values #'c32vector-ref  #'c32vector-set!))
+      ((f64) (values #'f64vector-ref  #'f64vector-set!))
+      ((f32) (values #'f32vector-ref  #'f32vector-set!))
+      ((s64) (values #'s64vector-ref  #'s64vector-set!))
+      ((s32) (values #'s32vector-ref  #'s32vector-set!))
+      ((s16) (values #'s16vector-ref  #'s16vector-set!))
+      ((s8)  (values #'s8vector-ref   #'s8vector-set! ))
+      ((u64) (values #'u64vector-ref  #'u64vector-set!))
+      ((u32) (values #'u32vector-ref  #'u32vector-set!))
+      ((u16) (values #'u16vector-ref  #'u16vector-set!))
+      ((u8)  (values #'u8vector-ref   #'u8vector-set! ))
+      ((a)   (values #'string-ref     #'string-set!   ))
+      ((b)   (values #'bitvector-ref  #'bitvector-set!))
+      ((d)   (values #'aseq-ref       #'(cut throw 'no-aseq-set! <...>)))
+      (else (throw 'bad-ra-root-type type))))
+
   (define syntax-accessors-1
-    (list (list #'d   #'aseq-ref       #'(cut throw 'no-aseq-set! <...>))
-          (list #'#t  #'vector-ref     #'vector-set!                   )
-          (list #'f64 #'f64vector-ref  #'f64vector-set!                )
-          (list #'u8  #'u8vector-ref   #'u8vector-set!                 )
-          ;; (list #'f32 #'f32vector-ref  #'f32vector-set!                )
-          ;; (list #'c64 #'c64vector-ref  #'c64vector-set!                )
-          ;; (list #'c32 #'c32vector-ref  #'c32vector-set!                )
-          ;; (list #'s64 #'s64vector-ref  #'s64vector-set!                )
-          ;; (list #'s32 #'s32vector-ref  #'s32vector-set!                )
-          ;; (list #'s16 #'s16vector-ref  #'s16vector-set!                )
-          ;; (list #'s8  #'s8vector-ref   #'s8vector-set!                 )
-          ;; (list #'u64 #'u64vector-ref  #'u64vector-set!                )
-          ;; (list #'u32 #'u32vector-ref  #'u32vector-set!                )
-          ;; (list #'u16 #'u16vector-ref  #'u16vector-set!                )
-          ;; (list #'a   #'string-ref     #'string-set!                   )
-          ;; (list #'b   #'bitvector-ref  #'bitvector-set!                )
+    (list #'#t #'f64 #'d #'u8 ;; #'f32 #'c64 #'c32 #'s64 #'s32 #'s16 #'s8 #'u64 #'u32 #'u16 #'a #'b
           ))
   (define syntax-accessors-2
-    (list (list #'d   #'aseq-ref       #'(cut throw 'no-aseq-set! <...>))
-          (list #'#t  #'vector-ref     #'vector-set!                   )
-          (list #'f64 #'f64vector-ref  #'f64vector-set!                )
-          (list #'u8  #'u8vector-ref   #'u8vector-set!                 )
-          ;; (list #'f32 #'f32vector-ref  #'f32vector-set!                )
-          ;; (list #'s64 #'s64vector-ref  #'s64vector-set!                )
-          ;; (list #'c64 #'c64vector-ref  #'c64vector-set!                )
-          ;; (list #'c32 #'c32vector-ref  #'c32vector-set!                )
+    (list #'#t #'f64 #'d #'u8 ;; #'f32 #'c64 #'c32 #'s64 #'s32 #'s16 #'s8 #'u64 #'u32 #'u16 #'a #'b
           ))
   (define syntax-accessors-3
-    (list (list #'#t  #'vector-ref     #'vector-set!                   )
-          (list #'f64 #'f64vector-ref  #'f64vector-set!                )
-          ;; (list #'s64 #'s64vector-ref  #'s64vector-set!                )
-          ;; (list #'c64 #'c64vector-ref  #'c64vector-set!                )
+    (list #'#t #'f64 ;; #'d #'u8 #'f32 #'c64 #'c32 #'s64 #'s32 #'s16 #'s8 #'u64 #'u32 #'u16 #'a #'b
           )))
 
 
 ; ----------------
-; ----------------
 ; ra-slice-for-each, several versions
-; ----------------
 ; ----------------
 
 ; ra-slice-for-each-1/2/3/4 do the same thing at increasing levels of inlining
@@ -329,9 +322,7 @@
 
 
 ; ----------------
-; ----------------
 ; special rank-0 versions, ra-for-each, ra-map!, ra-copy!, ra-equal?
-; ----------------
 ; ----------------
 
 ; If op-loop takes 2 args as a rest list, here we must do that as well.
@@ -428,51 +419,55 @@
       ((_ %sloop %typed-op %op ra)
        #`(case (ra-type ra)
            #,@(map (match-lambda
-                     ((tag-ra vref-ra vset!-ra)
-                      #`((#,tag-ra)
-                         (%%subop %typed-op %sloop
-                                  (#,vref-ra #,vset!-ra ra)))))
+                     (tag-ra
+                      (let ((vref-ra vset!-ra (pick-ref-set (syntax->datum tag-ra))))
+                        #`((#,tag-ra)
+                           (%%subop %typed-op %sloop
+                                    (#,vref-ra #,vset!-ra ra))))))
                 syntax-accessors-1)
            (else (%sloop (%op) ra))))
       ((_ %sloop %typed-op %op ra rb)
        #`(case (ra-type ra)
            #,@(map (match-lambda
-                     ((tag-ra vref-ra vset!-ra)
-                      #`((#,tag-ra)
-                         (case (ra-type rb)
-                           #,@(map (match-lambda
-                                     ((tag-rb vref-rb vset!-rb)
-                                      #`((#,tag-rb)
-                                         (%%subop %typed-op %sloop
-                                                  (#,vref-ra #,vset!-ra ra)
-                                                  (#,vref-rb #,vset!-rb rb)))))
-                                syntax-accessors-2)
-                           (else (%sloop (%op) ra rb)))
-                         rb)))
+                     (tag-ra
+                      (let ((vref-ra vset!-ra (pick-ref-set (syntax->datum tag-ra))))
+                        #`((#,tag-ra)
+                           (case (ra-type rb)
+                             #,@(map (match-lambda
+                                       (tag-rb
+                                        (let ((vref-rb vset!-rb (pick-ref-set (syntax->datum tag-rb))))
+                                          #`((#,tag-rb)
+                                             (%%subop %typed-op %sloop
+                                                      (#,vref-ra #,vset!-ra ra)
+                                                      (#,vref-rb #,vset!-rb rb))))))
+                                  syntax-accessors-2)
+                             (else (%sloop (%op) ra rb)))))))
                 syntax-accessors-2)
            (else (%sloop (%op) ra rb))))
       ((_ %sloop %typed-op %op ra rb rc)
        #`(case (ra-type ra)
            #,@(map (match-lambda
-                     ((tag-ra vref-ra vset!-ra)
-                      #`((#,tag-ra)
-                         (case (ra-type rb)
-                           #,@(map (match-lambda
-                                     ((tag-rb vref-rb vset!-rb)
-                                      #`((#,tag-rb)
-                                         (case (ra-type rc)
-                                           #,@(map (match-lambda
-                                                     ((tag-rc vref-rc vset!-rc)
-                                                      #`((#,tag-rc)
-                                                         (%%subop %typed-op %sloop
-                                                                  (#,vref-ra #,vset!-ra ra)
-                                                                  (#,vref-rb #,vset!-rb rb)
-                                                                  (#,vref-rc #,vset!-rc rc)))))
-                                                syntax-accessors-3)
-                                           (else (%sloop (%op) ra rb rc))))))
-                                syntax-accessors-3)
-                           (else (%sloop (%op) ra rb rc)))
-                         rb)))
+                     (tag-ra
+                      (let ((vref-ra vset!-ra (pick-ref-set (syntax->datum tag-ra))))
+                        #`((#,tag-ra)
+                           (case (ra-type rb)
+                             #,@(map (match-lambda
+                                       (tag-rb
+                                        (let ((vref-rb vset!-rb (pick-ref-set (syntax->datum tag-rb))))
+                                          #`((#,tag-rb)
+                                             (case (ra-type rc)
+                                               #,@(map (match-lambda
+                                                         (tag-rc
+                                                          (let ((vref-rc vset!-rc (pick-ref-set (syntax->datum tag-rc))))
+                                                            #`((#,tag-rc)
+                                                               (%%subop %typed-op %sloop
+                                                                        (#,vref-ra #,vset!-ra ra)
+                                                                        (#,vref-rb #,vset!-rb rb)
+                                                                        (#,vref-rc #,vset!-rc rc))))))
+                                                    syntax-accessors-3)
+                                               (else (%sloop (%op) ra rb rc)))))))
+                                  syntax-accessors-3)
+                             (else (%sloop (%op) ra rb rc)))))))
                 syntax-accessors-3)
            (else (%sloop (%op) ra rb rc)))))))
 

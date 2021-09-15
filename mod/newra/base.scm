@@ -23,7 +23,7 @@
             bytevector-type-size
             define-inlinable-case
             <aseq> <dim> make-dim* dim-check
-            <ra-vtable> pick-root-functions pick-make-root
+            <ra-vtable> pick-functions pick-make
             %%ra-root %%ra-zero %%ra-type %%ra-rank
             %%ra-zero-set! %%ra-dims %%ra-vlen %%ra-vref %%ra-vset! %%ra-step
             ra-shape ra-dimensions ra-len ra-lo ra-size))
@@ -230,7 +230,7 @@ See also: ra-offset
 
 (define-inlinable (%%ra-step a k) (dim-step (vector-ref (%%ra-dims a) k)))
 
-(define (pick-make-root type)
+(define (pick-make type)
   (case type
     ((#t) make-vector)
     ((c64) make-c64vector)
@@ -247,11 +247,10 @@ See also: ra-offset
     ((u8) make-u8vector)
     ((a) make-string)
     ((b) make-bitvector)
-; TODO extend this idea to drag-along
     ((d) (throw 'no-dim-make))
     (else (throw 'bad-ra-root-type type))))
 
-(define (pick-root-functions v)
+(define (pick-functions v)
   (cond ((vector? v)    (values  #t    vector-length     vector-ref     vector-set!   ))
         ((c64vector? v) (values  'c64  c64vector-length  c64vector-ref  c64vector-set!))
         ((c32vector? v) (values  'c32  c32vector-length  c32vector-ref  c32vector-set!))
@@ -269,7 +268,7 @@ See also: ra-offset
         ((bitvector? v) (values  'b    bitvector-length  bitvector-ref  bitvector-set!))
 ; TODO extend this to drag-along.
         ((aseq? v)      (values  'd    (const #f)        aseq-ref       (cut throw 'no-aseq-set! <...>)))
-        (else (throw 'bad-ra-root-type v))))
+        (else (throw 'bad-ra-root v))))
 
 
 ; ----------------
@@ -536,7 +535,7 @@ See also: ra-root ra-zero ra-dims
       (unless (vector? dims) (throw 'bad-dims dims))
       (vector-for-each (lambda (dim) (unless (dim? dim) (throw 'bad-dim dim))) dims))
 ; after check
-    (let ((type vlen vref vset! (pick-root-functions root)))
+    (let ((type vlen vref vset! (pick-functions root)))
       (make-ra* root zero
                 (or dims (vector (make-dim (vlen root))))
                 type vlen vref vset!)))
@@ -601,7 +600,7 @@ See also: make-dim ra-dims make-ra-root c-dims
                  (* c (let ((len (dim-len a)))
                         (or len (if (zero? (dim-step a)) 1 (throw 'cannot-make-new-ra-with-dims dims))))))
                1 dims))
-        (make (pick-make-root type)))
+        (make (pick-make type)))
     (make-ra-root (if (unspecified? value) (make size) (make size value))
                   dims
                   (- (ra-offset 0 dims)))))

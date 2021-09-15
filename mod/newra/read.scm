@@ -42,23 +42,23 @@
     (cond ((char-whitespace? c) (get-char port) (loop (lookahead-char port)))
           (else c))))
 
-(define pick-root-functions (@ (newra base) pick-root-functions))
-(define pick-make-root (@ (newra base) pick-make-root))
+(define pick-functions (@ (newra base) pick-functions))
+(define pick-make (@ (newra base) pick-make))
 
 (define (make-root type size)
-  ((pick-make-root type) size))
+  ((pick-make type) size))
 
 (define (root-type root)
-  (let ((type vlen vref vset! (pick-root-functions root))) type))
+  (let ((type vlen vref vset! (pick-functions root))) type))
 
 (define (root-length root)
-  (let ((type vlen vref vset! (pick-root-functions root))) (vlen root)))
+  (let ((type vlen vref vset! (pick-functions root))) (vlen root)))
 
 (define (root-ref root i)
-  (let ((type vlen vref vset! (pick-root-functions root))) (vref root i)))
+  (let ((type vlen vref vset! (pick-functions root))) (vref root i)))
 
 (define (root-set! root o i)
-  (let ((type vlen vref vset! (pick-root-functions root))) (vset! root i o)))
+  (let ((type vlen vref vset! (pick-functions root))) (vset! root i o)))
 
 ; Don't resize but make a list of vectors and cat once at the end.
 (define (root-resize old newsize)
