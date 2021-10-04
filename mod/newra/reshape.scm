@@ -10,7 +10,7 @@
 ;; Library for Newra - manipulation of the dim vector
 ;;; Code:
 
-(define-module (newra lib reshape)
+(define-module (newra reshape)
   #:export (ra-reverse ra-transpose ra-untranspose ra-order-c?
             ra-ravel ra-reshape ra-tile
             ra-singletonize))

@@ -18,7 +18,7 @@
 
 (import (rnrs io ports) (rnrs base) (srfi :1) (srfi :4 gnu) (srfi :26) (srfi :71)
         (ice-9 match) (ice-9 control)
-        (newra base) (newra map) (newra cat) (newra from) (newra lib))
+        (newra base) (newra map) (newra cat) (newra from) (newra lib) (newra reshape))
 
 (define *ra-print*
   (make-parameter #f

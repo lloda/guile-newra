@@ -2,15 +2,15 @@
 
 Help: [C-uc .] insert timestamp [C-cc] flip checkbox [C-uucc] partial flip checkbox [C-ct] flip TODO.
 
-* TODO bugs [4/8]
+* TODO bugs [5/8]
   * [X] (call-with-input-string "#3()" read) vs (call-with-input-string "#%3()" read)
   * [X] reader loses type when reading rank 0 arrays
   * [X] ra-equal? errors out with mismatched shapes
   * [X] zero lengths break ra-format
+  * [X] (ra-dimensions (ra-iota))
   * [ ] ra-slice-for-each shouldn't return anything
   * [ ] (ra-from (list->ra 2 '((a b c) (x y z))) 1 1) => #%0(y) contradicts doc
   * [ ] docstrings don't work for define-inlinable-case
-  * [ ] (ra-dimensions (ra-iota))
 
 * TODO documentation [1/1]
   * [X] actually explain rank extension / prefix matching in the manual
@@ -36,7 +36,7 @@ Help: [C-uc .] insert timestamp [C-cc] flip checkbox [C-uucc] partial flip check
     - [X] ra-from
     - [X] ra-amend!
     - [X] (ldots)
-    - [ ] axis insertion
+    - [ ] axis insertion (?)
   * [X] ra-ravel
     - [X] (ra-ravel a [n])
     - [X] (ra-order-c? a [n [org]])
@@ -68,8 +68,10 @@ Help: [C-uc .] insert timestamp [C-cc] flip checkbox [C-uucc] partial flip check
   * [X] unsized index vectors
   * [X] tensor indices
   * [X] broadcasting
-  * [ ] ways to control iteration (dim loop order, direction, etc.)
-  * [ ] a solution for (ra-amend! dst (RA-MAP OP (ra-from dst i ...)) i ...)
+  * [ ] ways to control iteration (in order, dim loop order, direction, etc.)
+  * [ ] a solution for (ra-amend! dst (RA-MAP OP (ra-from dst i ...)) i ...). Lenses?
+
+* TODO ra the array language [/]
   * [ ] drag-along facility / lazy ops
     - [ ] verbs
     - [ ] rank conjunction

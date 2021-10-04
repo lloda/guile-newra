@@ -20,12 +20,7 @@
 
 (import (only (srfi :1) fold every any iota drop xcons) (srfi :26) (srfi :71)
         (ice-9 control) (ice-9 match) (only (rnrs base) vector-map vector-for-each)
-        (newra base) (newra map)
-        (newra lib reshape))
-
-(re-export ra-reverse ra-transpose ra-untranspose ra-order-c?
-           ra-ravel ra-reshape ra-tile
-           ra-singletonize)
+        (newra base) (newra map) (newra reshape))
 
 
 ; ----------------

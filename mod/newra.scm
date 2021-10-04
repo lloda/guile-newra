@@ -13,7 +13,7 @@
 (define-module (newra))
 
 (import (newra base) (newra map) (newra print) (newra read) (newra from)
-        (newra cat) (newra lib))
+        (newra cat) (newra reshape) (newra lib))
 
 (re-export ra?
            make-ra-root ra-root ra-zero ra-dims ra-vlen ra-vref ra-vset!
