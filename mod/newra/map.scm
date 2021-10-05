@@ -134,7 +134,7 @@
   (for-each (lambda (ra frame) (%stepk k n (ra frame))) ra frame))
 
 ; Extracted from %slice-loop to be specialized for each combination of argument types.
-; FIXME only the %op needs to be specialized for types...
+; FIXME only %op needs to be specialized for types...
 (define-syntax %op-loop
   (lambda (stx)
     (syntax-case stx ()
@@ -223,23 +223,8 @@
 ; special rank-0 versions, ra-for-each, ra-map!, ra-copy!, ra-equal?
 ; ----------------
 
-; If op-loop takes 2 args as a rest list, here we must do that as well.
-(define-inlinable-case slice-loop-fun
-  (case-lambda
-   ((op-once op-loop r0)
-    (%slice-loop (ra-rank r0)
-                 op-once op-loop %list %let r0))
-   ((op-once op-loop r0 r1)
-    (%slice-loop (max (ra-rank r0) (ra-rank r1))
-                 op-once op-loop %list %let r0 r1))
-   ((op-once op-loop r0 r1 r2)
-    (%slice-loop (max (ra-rank r0) (ra-rank r1) (ra-rank r2))
-                 op-once op-loop %list %let r0 r1 r2))
-   ((op-once op-loop . r)
-    (%slice-loop (fold (lambda (a b) (max b (ra-rank a))) 0 r)
-                 op-once op-loop %apply-list %apply-let r))))
-
-; This variant of %op-loop avoids updating/rolling back %%ra-zero and instead keeps indices on the stack. The improvement is somewhat unreasonable...
+; Variant of %op-loop that avoids updating/rolling back %%ra-zero and instead keeps indices on the stack. The improvement is somewhat unreasonable...
+; Fixed nargs only (%list, %let could be replaced by %apply-list etc. but %%ra-zero, %%ra-step are used directly)
 
 (define-syntax %sloop
   (lambda (stx)
@@ -251,7 +236,8 @@
                      [(step ...) (generate-temporaries #'(ra_ ...))]
                      [(z ...) (generate-temporaries #'(ra_ ...))]
                      [(d ...) (generate-temporaries #'(ra_ ...))])
-         #'(slice-loop-fun
+         #'(%slice-loop
+            (max (ra-rank ra_) ...)
             (lambda (ra ...)
               (%op0 (ra (%%ra-root ra) (%%ra-zero ra)) ...))
             (lambda (lens lenm u ra ... frame ... step ...)
@@ -263,6 +249,7 @@
                       (loop-rank (+ k 1) z ...)
                       (unless (zero? i)
                         (loop-dim (- i 1) (+ z (%%ra-step-prefix frame k)) ...)))))))
+            %list %let
             ra_ ...)))
 ; if not, provide default. FIXME why is let-syntax inside #'() here?
       ((_ (%op0) ra_ ...)
@@ -276,18 +263,19 @@
                       (loop (- i 1) (+ z step) …)))))))
            (%sloop (%op0 %op1) ra_ ...))))))
 
+; Rest list version. This is slow no matter what.
+
+(define-syntax-rule (%apply-sloop %apply-op ra_)
+  (let ((ra ra_))
+    (%slice-loop (fold (lambda (a b) (max b (ra-rank a))) 0 ra)
+                 (lambda ra (%apply-op ra))
+                 (%op-loop %apply-op %apply-stepu %apply-stepk ra)
+                 %apply-list %apply-let ra)))
+
 ; Use this for %op0 when there's no valid %op0. That may happen when %op1 isn't generic enough (e.g. it only works with step 1) so %sloop is used for %op1 alone.
 
 (define-syntax-rule (%pass ra ...)
   (throw 'bad-usage ra ...))
-
-; FIXME (maybe?) doesn't work for rest list ra (%%ra-zero / %%ra-step are used directly). However, rest list ra cases are slow anyway.
-
-(define-syntax-rule (%apply-sloop %apply-op ra)
-  (apply slice-loop-fun
-    (lambda ra (%apply-op ra))
-    (%op-loop %apply-op %apply-stepu %apply-stepk ra)
-    ra))
 
 
 ; -------------------
