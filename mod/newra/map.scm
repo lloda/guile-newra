@@ -229,7 +229,7 @@
 (define-syntax %sloop
   (lambda (stx)
     (syntax-case stx ()
-; can supply special rank-1 op.
+; can supply rank-1 op.
       ((_ (%op0 %op1) ra_ ...)
        (with-syntax ([(ra ...) (generate-temporaries #'(ra_ ...))]
                      [(frame ...) (generate-temporaries #'(ra_ ...))]
@@ -249,9 +249,8 @@
                       (loop-rank (+ k 1) z ...)
                       (unless (zero? i)
                         (loop-dim (- i 1) (+ z (%%ra-step-prefix frame k)) ...)))))))
-            %list %let
-            ra_ ...)))
-; if not, provide default. FIXME why is let-syntax inside #'() here?
+            %list %let ra_ ...)))
+; if not, provide default.
       ((_ (%op0) ra_ ...)
        #'(let-syntax
              ((%op1
@@ -268,7 +267,7 @@
 (define-syntax-rule (%apply-sloop %apply-op ra_)
   (let ((ra ra_))
     (%slice-loop (fold (lambda (a b) (max b (ra-rank a))) 0 ra)
-                 (lambda ra (%apply-op ra))
+                 %apply-op
                  (%op-loop %apply-op %apply-stepu %apply-stepk ra)
                  %apply-list %apply-let ra)))
 
