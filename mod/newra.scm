@@ -26,7 +26,6 @@
            ra-slice ra-cell ra-ref ra-set!
 
            ra-slice-for-each ra-slice-for-each-in-order
-           ra-slice-for-each-1 ra-slice-for-each-2 ra-slice-for-each-3 ra-slice-for-each-4
            ra-fill! ra-copy! ra-swap! ra-swap-in-order! ra-map! ra-map-in-order! ra-for-each
            ra-equal? ra-any ra-every
 
