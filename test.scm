@@ -530,7 +530,7 @@
    (,(cut ra-map*! ra-slice-for-each-4  <...>) "fe4")
    (,ra-map! "ra-map!")))
 
-; test with enough args to hit the arglist version.
+; test with enough args to hit the rest list version.
 (for-each
  (match-lambda
    ((ra-map! name)
