@@ -36,6 +36,7 @@ Compared with the old arrays, `newra` offers a growing list of features:
 * Generalized slicing with `ra-from`, `ra-amend!`: index arguments can have any rank, and use of lazy index vectors (of any rank!) results in a shared array. A stretch index object `(ldots)` is supported; e.g. `(ra-from A (ldots) 0)` will produce the slice `A[..., 0]` for an array of any rank.
 * Generalized array concatenation (`ra-cat`, `ra-scat`).
 * Utilities such as `ra-reverse`, `ra-any`, `ra-every`, `ra-fold`, `ra-ravel`, `ra-reshape`, `ra-tile`.
+* An array pretty printer in the style of SRFI-163 (`ra-format`).
 * Since `newra` is written entirely in Scheme, if a `newra` operation takes too long, you can actually interrupt it, which is not always the case in the old system.
 
 Originally I wanted `newra` to be a drop-in replacement for the old array system, reusing the same function names and all. Now I think it's better to have a parallel system where some of the flaws of old system can be cleaned up. Still it's important that programs can be easily ported to the new system.

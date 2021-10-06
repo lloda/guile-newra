@@ -7,7 +7,7 @@
 @c last [ma112]
 
 @set VERSION 1
-@set UPDATED 2021 October 5
+@set UPDATED 2021 October 6
 
 @copying
 @code{newra} (version @value{VERSION}, updated @value{UPDATED})
@@ -1788,7 +1788,7 @@ Pretty print array @var{ra}.
 
 Each element @var{x} of @var{ra} is converted to a string using @code{(fmt x)}, or @code{(format #f fmt x)}@footnote{@url{https://www.gnu.org/software/guile/manual/html_node/Formatted-Output.html,@code{(ice-9 format)}}} if @var{fmt} is a string. @var{fmt} defauts to @code{"~a"}. Elements that are arrays are formatted using @code{ra-format} recursively.
 
-If @var{port} is @code{#f}, nothing is printed; instead, the function returns a rank-2 character array @var{sc} with the result of the printing. Otherwise the array is printed to @var{port} and the function returns an unspecified value. The default for @var{port} is @code{#t}, which works as @code{current-output-port}.
+If @var{port} is @code{#f}, nothing is printed; instead, the function returns a rank-2 character array @var{sc} with the result of the printing. Otherwise the array is printed to @var{port} and the function returns unspecified values. The default for @var{port} is @code{#t}, which works as @code{current-output-port}.
 
 If @var{prefix?} is true, the array print prefix @ref{x-ra-print-prefix,@code{ra-print-prefix}} is printed over the first line of the printout if the rank of @var{ra} is 2 or greater, else it is printed on a separate line above the printout.
 
@@ -2019,7 +2019,7 @@ See also: @ref{x-ra-i,@code{ra-i}}.
 @anchor{x-ra-cat}
 @deffn @w{Function} ra-cat type i a ...  @result{} b
 
-Concatenate arrays @var{a} ... along axis @var{i}. The arguments are prefix-matched and rank extended before concatenation. All axes must match, except possibly the concatenation axis.
+Concatenate arrays @var{a} ... along axis @var{i}. The arguments are prefix-matched and rank extended before concatenation. All axes must match, other than the concatenation axis.
 
 This function always produces a new array, of the type given. If @var{type} is @code{#f} then the type of the first @var{a} is used, unless that is @code{d}, in which case @code{#t} is used. The lower bound in the concatenation axis of the result is 0; the lower bounds of the arguments in the concatenation axis are ignored.
 
@@ -2303,7 +2303,7 @@ See also: @ref{x-ra-rotate,@code{ra-rotate}}, @ref{x-ra-reverse,@code{ra-reverse
 @anchor{x-ra-scat}
 @deffn @w{Function} ra-scat type i a ... @result{} b
 
-Concatenate @var{i}-items of arrays @var{a} ... . The arguments are suffix-matched and rank extended before concatenation. All axes must match, except possibly the concatenation axis.
+Concatenate @var{i}-items of arrays @var{a} ... . The arguments are suffix-matched and rank extended before concatenation. All axes must match, other than the concatenation axis.
 
 This function always produces a new array, of the type given. If @var{type} is @code{#f} then the type of the first @var{a} is used, unless that is @code{d}, in which case @code{#t} is used. The lower bound in the concatenation axis of the result is 0; the lower bounds of the arguments in the concatenation axis are ignored.
 
@@ -2569,6 +2569,18 @@ See also @ref{x-ra-copy!,@code{ra-copy!}} @ref{x-ra-amend!,@code{ra-amend!}} @re
 @anchor{x-ra-swap!}
 @deffn @w{Function} ra-swap! a b @result{} a
 Swap the contents of @var{a} and @var{b}. The swap is executed in unspecified order, so the effect on @var{a} and @var{b} is undefined if @var{a} and @var{b} share storage.
+
+@example
+@verbatim
+(ra-swap! (make-ra 2 3) (make-typed-ra 'f64 -1 3))
+@end verbatim
+@result{}
+@verbatim
+#%1:3(-1.0 -1.0 -1.0)
+@end verbatim
+@end example
+
+See also @ref{x-ra-swap-in-order!,@code{ra-swap-in-order!}} @ref{x-ra-copy!,@code{ra-copy!}}.
 @end deffn
 
 @cindex @code{ra-swap-in-order!}

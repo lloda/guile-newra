@@ -23,38 +23,6 @@
         (only (srfi :43) vector-copy! vector-fill! vector-every)
         (only (rnrs bytevectors) bytevector-copy! bytevector-fill! bytevector?))
 
-; These tables are used to inline specific type combinations in %dispatch.
-; We handle fewer types with 2 & 3 arguments to limit the explosion in compile time.
-
-(eval-when (expand load eval)
-  (define (pick-ref-set type)
-    (case (syntax->datum type)
-      ((#t)  (values #'vector-ref     #'vector-set!   ))
-      ((c64) (values #'c64vector-ref  #'c64vector-set!))
-      ((c32) (values #'c32vector-ref  #'c32vector-set!))
-      ((f64) (values #'f64vector-ref  #'f64vector-set!))
-      ((f32) (values #'f32vector-ref  #'f32vector-set!))
-      ((s64) (values #'s64vector-ref  #'s64vector-set!))
-      ((s32) (values #'s32vector-ref  #'s32vector-set!))
-      ((s16) (values #'s16vector-ref  #'s16vector-set!))
-      ((s8)  (values #'s8vector-ref   #'s8vector-set! ))
-      ((u64) (values #'u64vector-ref  #'u64vector-set!))
-      ((u32) (values #'u32vector-ref  #'u32vector-set!))
-      ((u16) (values #'u16vector-ref  #'u16vector-set!))
-      ((u8)  (values #'u8vector-ref   #'u8vector-set! ))
-      ((a)   (values #'string-ref     #'string-set!   ))
-      ((b)   (values #'bitvector-ref  #'bitvector-set!))
-      ((d)   (values #'aseq-ref       #'(cut throw 'no-aseq-set! <...>)))
-      (else (throw 'bad-ra-root-type type))))
-
-  (define syntax-accessors
-    (list (list #'#t #'f64 #'d #'u8 ;; #'f32 #'c64 #'c32 #'s64 #'s32 #'s16 #'s8 #'u64 #'u32 #'u16 #'a #'b
-                )
-          (list #'#t #'f64 #'d ;; #'u8 #'f32 #'c64 #'c32 #'s64 #'s32 #'s16 #'s8 #'u64 #'u32 #'u16 #'a #'b
-                )
-          (list #'#t #'f64 ;; #'d #'u8 #'f32 #'c64 #'c32 #'s64 #'s32 #'s16 #'s8 #'u64 #'u32 #'u16 #'a #'b
-                ))))
-
 
 ; ----------------
 ; ra-slice-for-each
@@ -281,6 +249,38 @@
 ; dispatch type combinations
 ; -------------------
 
+; These tables are used to inline specific type combinations in %dispatch.
+; We handle fewer types with 2 & 3 arguments to limit the explosion in compile time.
+
+(eval-when (expand load eval)
+  (define (pick-ref-set type)
+    (case (syntax->datum type)
+      ((#t)  (values #'vector-ref     #'vector-set!   ))
+      ((c64) (values #'c64vector-ref  #'c64vector-set!))
+      ((c32) (values #'c32vector-ref  #'c32vector-set!))
+      ((f64) (values #'f64vector-ref  #'f64vector-set!))
+      ((f32) (values #'f32vector-ref  #'f32vector-set!))
+      ((s64) (values #'s64vector-ref  #'s64vector-set!))
+      ((s32) (values #'s32vector-ref  #'s32vector-set!))
+      ((s16) (values #'s16vector-ref  #'s16vector-set!))
+      ((s8)  (values #'s8vector-ref   #'s8vector-set! ))
+      ((u64) (values #'u64vector-ref  #'u64vector-set!))
+      ((u32) (values #'u32vector-ref  #'u32vector-set!))
+      ((u16) (values #'u16vector-ref  #'u16vector-set!))
+      ((u8)  (values #'u8vector-ref   #'u8vector-set! ))
+      ((a)   (values #'string-ref     #'string-set!   ))
+      ((b)   (values #'bitvector-ref  #'bitvector-set!))
+      ((d)   (values #'aseq-ref       #'(cut throw 'no-aseq-set! <...>)))
+      (else (throw 'bad-ra-root-type type))))
+
+  (define syntax-accessors
+    (list (list #'#t #'f64 #'d #'u8 ;; #'f32 #'c64 #'c32 #'s64 #'s32 #'s16 #'s8 #'u64 #'u32 #'u16 #'a #'b
+                )
+          (list #'#t #'f64 #'d ;; #'u8 #'f32 #'c64 #'c32 #'s64 #'s32 #'s16 #'s8 #'u64 #'u32 #'u16 #'a #'b
+                )
+          (list #'#t #'f64 ;; #'d #'u8 #'f32 #'c64 #'c32 #'s64 #'s32 #'s16 #'s8 #'u64 #'u32 #'u16 #'a #'b
+                ))))
+
 ; FIXME Compile cases on demand.
 
 (define-syntax %dispatch
@@ -326,6 +326,8 @@
 Apply @var{op} to each tuple of elements from arrays @var{rx} ... All the
 @var{rx} must have matching shapes.
 
+This function returns unspecified values.
+
 See also: ra-map! ra-slice-for-each ra-clip
 "
   (let-syntax
@@ -347,10 +349,10 @@ See also: ra-map! ra-slice-for-each ra-clip
 (define (ra-map! ra op . rx)
   "
 Apply @var{op} to each tuple of elements from arrays @var{rx} ... and store the
-result in the matching position of array @var{ra}. All the @var{rx} ... must
-have matching shapes with @var{ra}.
+result in the matching position of array @var{ra}. @var{ra} and all the @var{rx} ...
+must have matching shapes.
 
-Returns the updated array @var{ra}
+Returns the updated array @var{ra}.
 
 See also: ra-for-each ra-copy! ra-fill! ra-clip
 "
@@ -425,8 +427,8 @@ See also: ra-copy! ra-map!
 
 (define (ra-copy! ra rb)
   "
-Copy the contents of array @var{rb} into array @var{ra}. @var{ra} and @var{rb} must have matching
-shapes and be of compatible types.
+Copy the contents of array @var{rb} into array @var{ra}. @var{ra} and @var{rb}
+must have matching shapes and be of compatible types.
 
 This function returns the updated array @var{ra}.
 
@@ -483,8 +485,10 @@ See also: ra-fill! ra-map! ra-clip
   "
 ra-swap! ra rb
 
-Swap the contents of RB and RA. RA and RB must have matching shapes and be of
-compatible types.
+Swap the contents of @var{rb} and @var{ra}. @var{ra} and @var{rb} must have
+matching shapes and be of compatible types.
+
+This function returns the swapped array @var{ra}.
 
 See also: ra-copy! ra-fill! ra-map!
 "
@@ -506,8 +510,9 @@ See also: ra-copy! ra-fill! ra-map!
   "
 ra-every pred? rx ...
 
-RX must be RA of matching shapes. Return true if (PRED? RX ..) is true for every
-tuple of matching elements, otherwise return #f.
+@var{rx} must be arrays of matching shapes. Return true if @code{(pred? rxi ..)}
+is true for every tuple @var{rxi} ... of matching elements of @var{rx} ...,
+otherwise return @code{#f}.
 
 See also: ra-any ra-equal? ra-fold
 "
@@ -532,8 +537,9 @@ See also: ra-any ra-equal? ra-fold
   "
 ra-any pred? rx ...
 
-RX must be ra of matching shapes. Return (PRED? RXi ..) is that is true for some
-tuple RXi ... of matching elements, otherwise return #f.
+@var{rx} must be ra of matching shapes. Return @code{{pred? rxi ..)} is that is
+true for some tuple @var{rxi} ... of matching elements of @var{rx} ...,
+otherwise return @code{#f}.
 
 For example:
 
@@ -586,7 +592,7 @@ See also: ra-every ra-equal? ra-fold
   "
 ra-equal? rx ...
 
-Return #t if the arrays @var{rx} ... have the same shapes and types and their
+Return true if the arrays @var{rx} ... have the same shapes and types and their
 corresponding elements are @code{equal?}, or #f otherwise.
 
 See also: ra-map! ra-for-each

@@ -1654,7 +1654,7 @@ a
 </p>
 <p>Each element <var>x</var> of <var>ra</var> is converted to a string using <code>(fmt x)</code>, or <code>(format #f fmt x)</code><a id="DOCF8" href="#FOOT8"><sup>8</sup></a> if <var>fmt</var> is a string. <var>fmt</var> defauts to <code>&quot;~a&quot;</code>. Elements that are arrays are formatted using <code>ra-format</code> recursively.
 </p>
-<p>If <var>port</var> is <code>#f</code>, nothing is printed; instead, the function returns a rank-2 character array <var>sc</var> with the result of the printing. Otherwise the array is printed to <var>port</var> and the function returns an unspecified value. The default for <var>port</var> is <code>#t</code>, which works as <code>current-output-port</code>.
+<p>If <var>port</var> is <code>#f</code>, nothing is printed; instead, the function returns a rank-2 character array <var>sc</var> with the result of the printing. Otherwise the array is printed to <var>port</var> and the function returns unspecified values. The default for <var>port</var> is <code>#t</code>, which works as <code>current-output-port</code>.
 </p>
 <p>If <var>prefix?</var> is true, the array print prefix <a href="#x_002dra_002dprint_002dprefix"><code>ra-print-prefix</code></a> is printed over the first line of the printout if the rank of <var>ra</var> is 2 or greater, else it is printed on a separate line above the printout.
 </p>
@@ -1842,7 +1842,7 @@ element
 <span id="x_002dra_002dcat"></span><dl class="def">
 <dt id="index-ra_002dcat-1"><span class="category">Function<!-- /@w -->: </span><span><strong>ra-cat</strong> <em>type i a ...  &rArr; b</em><a href='#index-ra_002dcat-1' class='copiable-anchor'> &para;</a></span></dt>
 <dd>
-<p>Concatenate arrays <var>a</var> ... along axis <var>i</var>. The arguments are prefix-matched and rank extended before concatenation. All axes must match, except possibly the concatenation axis.
+<p>Concatenate arrays <var>a</var> ... along axis <var>i</var>. The arguments are prefix-matched and rank extended before concatenation. All axes must match, other than the concatenation axis.
 </p>
 <p>This function always produces a new array, of the type given. If <var>type</var> is <code>#f</code> then the type of the first <var>a</var> is used, unless that is <code>d</code>, in which case <code>#t</code> is used. The lower bound in the concatenation axis of the result is 0; the lower bounds of the arguments in the concatenation axis are ignored.
 </p>
@@ -2080,7 +2080,7 @@ a
 <span id="x_002dra_002dscat"></span><dl class="def">
 <dt id="index-ra_002dscat-1"><span class="category">Function<!-- /@w -->: </span><span><strong>ra-scat</strong> <em>type i a ... &rArr; b</em><a href='#index-ra_002dscat-1' class='copiable-anchor'> &para;</a></span></dt>
 <dd>
-<p>Concatenate <var>i</var>-items of arrays <var>a</var> ... . The arguments are suffix-matched and rank extended before concatenation. All axes must match, except possibly the concatenation axis.
+<p>Concatenate <var>i</var>-items of arrays <var>a</var> ... . The arguments are suffix-matched and rank extended before concatenation. All axes must match, other than the concatenation axis.
 </p>
 <p>This function always produces a new array, of the type given. If <var>type</var> is <code>#f</code> then the type of the first <var>a</var> is used, unless that is <code>d</code>, in which case <code>#t</code> is used. The lower bound in the concatenation axis of the result is 0; the lower bounds of the arguments in the concatenation axis are ignored.
 </p>
@@ -2306,6 +2306,14 @@ a
 <span id="x_002dra_002dswap_0021"></span><dl class="def">
 <dt id="index-ra_002dswap_0021-1"><span class="category">Function<!-- /@w -->: </span><span><strong>ra-swap!</strong> <em>a b &rArr; a</em><a href='#index-ra_002dswap_0021-1' class='copiable-anchor'> &para;</a></span></dt>
 <dd><p>Swap the contents of <var>a</var> and <var>b</var>. The swap is executed in unspecified order, so the effect on <var>a</var> and <var>b</var> is undefined if <var>a</var> and <var>b</var> share storage.
+</p>
+<div class="example">
+<pre class="verbatim">(ra-swap! (make-ra 2 3) (make-typed-ra 'f64 -1 3))
+</pre><pre class="example">&rArr;
+</pre><pre class="verbatim">#%1:3(-1.0 -1.0 -1.0)
+</pre></div>
+
+<p>See also <a href="#x_002dra_002dswap_002din_002dorder_0021"><code>ra-swap-in-order!</code></a> <a href="#x_002dra_002dcopy_0021"><code>ra-copy!</code></a>.
 </p></dd></dl>
 
 <span id="index-ra_002dswap_002din_002dorder_0021"></span>
