@@ -281,13 +281,12 @@
 ; dispatch type combinations
 ; -------------------
 
-; FIXME If I decide to do partial dispatch, cache (%%ra-vref ra) (%%ra-set! ra) for the not-typed cases.
 ; FIXME Compile cases on demand.
 
 (define-syntax %dispatch
   (lambda (stx)
     (syntax-case stx ()
-      ((_ %typed-op %op rr ...)
+      ((_ %op rr ...)
        #`(letrec-syntax
              ((loop
                (lambda (sty)
@@ -300,7 +299,7 @@
                               ((%op-op
                                 (syntax-rules ()
                                   ((_ (ra d z) …)
-                                   (%typed-op (vref-ra vset!-ra ra d z) …)))))
+                                   (%op (vref-ra vset!-ra ra d z) …)))))
                             (%sloop (%op-op) ra …))))
                      ((_ (%terms …) (sa sb …) ra rb …)
                       #`(case (%%ra-type ra)
@@ -311,7 +310,10 @@
                                          ;; (syntax->datum #'sa) ; n0×n1×n2 for 3 args
                                          (- (length #'(rr ...)) 1) ; n2×n2×n2 for 3 args
                                          ))
-                          (else (%sloop (%op) rr ...)))))))))
+                          (else
+                           (let ((vref (%%ra-vref ra))
+                                 (vset! (%%ra-vset! ra)))
+                             (loop (%terms … (vref vset! ra)) (sb …) rb …))))))))))
            (loop () #,(iota (length syntax-accessors)) rr ...))))))
 
 
@@ -327,22 +329,18 @@ Apply @var{op} to each tuple of elements from arrays @var{rx} ... All the
 See also: ra-map! ra-slice-for-each ra-clip
 "
   (let-syntax
-      ((%typed-op
+      ((%op
         (syntax-rules ()
           ((_ (vref-ra vset!-ra ra da za) ...)
            (op (vref-ra da za) ...))))
-       (%op
-        (syntax-rules ()
-          ((_ (ra da za) ...)
-           (op ((%%ra-vref ra) da za) ...))))
        (%apply-op
         (syntax-rules ()
           ((_ rx)
            (apply op (map (lambda (ra) ((%%ra-vref ra) (%%ra-root ra) (%%ra-zero ra))) rx))))))
     (apply (case-lambda
-            ((ra) (%dispatch %typed-op %op ra))
-            ((ra rb) (%dispatch %typed-op %op ra rb))
-            ((ra rb rc) (%dispatch %typed-op %op ra rb rc))
+            ((ra) (%dispatch %op ra))
+            ((ra rb) (%dispatch %op ra rb))
+            ((ra rb rc) (%dispatch %op ra rb rc))
             (rx (%apply-sloop %apply-op rx)))
       rx)))
 
@@ -357,23 +355,19 @@ Returns the updated array @var{ra}
 See also: ra-for-each ra-copy! ra-fill! ra-clip
 "
   (let-syntax
-      ((%typed-op
+      ((%op
         (syntax-rules ()
           ((_ (vref-ra vset!-ra ra da za) (vref-rx vset!-rx rx dx zx) ...)
            (vset!-ra da za (op (vref-rx dx zx) ...)))))
-       (%op
-        (syntax-rules ()
-          ((_ (ra da za) (rx dx zx) ...)
-           ((%%ra-vset! ra) da za (op ((%%ra-vref rx) dx zx) ...)))))
        (%apply-op
         (syntax-rules ()
           ((_ rx)
            ((%%ra-vset! (car rx)) (%%ra-root (car rx)) (%%ra-zero (car rx))
             (apply op (map (lambda (ra) ((%%ra-vref ra) (%%ra-root ra) (%%ra-zero ra))) (cdr rx))))))))
     (apply (case-lambda
-            (() (%dispatch %typed-op %op ra))
-            ((rb) (%dispatch %typed-op %op ra rb))
-            ((rb rc) (%dispatch %typed-op %op ra rb rc))
+            (() (%dispatch %op ra))
+            ((rb) (%dispatch %op ra rb))
+            ((rb rc) (%dispatch %op ra rb rc))
             (rx (%apply-sloop %apply-op (cons ra rx))))
       rx)
     ra))
@@ -422,15 +416,11 @@ See also: ra-copy! ra-map!
 ; general case
         (else
          (let-syntax
-             ((%typed-op
+             ((%op
                (syntax-rules ()
                  ((_ (vref-ra vset!-ra ra da za))
-                  (vset!-ra da za fill))))
-              (%op
-               (syntax-rules ()
-                 ((_ (ra da za))
-                  ((%%ra-vset! ra) da za fill)))))
-           (%dispatch %typed-op %op ra)
+                  (vset!-ra da za fill)))))
+           (%dispatch %op ra)
            ra))))
 
 (define (ra-copy! ra rb)
@@ -470,7 +460,7 @@ See also: ra-fill! ra-map! ra-clip
                 (and-let* ((line! (line! (%%ra-type rb))))
 ; FIXME refactor with the general case below
                   (let-syntax
-                       ((%copy!
+                      ((%copy!
                         (syntax-rules ()
                           ((_ len (ra da za stepa) (rb db zb stepb))
 ; FIXME this assumption depends on traversal order.
@@ -482,15 +472,11 @@ See also: ra-fill! ra-map! ra-clip
 ; general case
           (else
            (let-syntax
-               ((%typed-op
+               ((%op
                  (syntax-rules ()
                    ((_ (vref-ra vset!-ra ra da za) (vref-rb vset!-rb rb db zb))
-                    (vset!-ra da za (vref-rb db zb)))))
-                (%op
-                 (syntax-rules ()
-                   ((_ (ra da za) (rb db zb))
-                    ((%%ra-vset! ra) da za ((%%ra-vref rb) db zb))))))
-             (%dispatch %typed-op %op ra rb)
+                    (vset!-ra da za (vref-rb db zb))))))
+             (%dispatch %op ra rb)
              ra)))))
 
 (define (ra-swap! ra rb)
@@ -503,19 +489,13 @@ compatible types.
 See also: ra-copy! ra-fill! ra-map!
 "
   (let-syntax
-      ((%typed-op
+      ((%op
         (syntax-rules ()
           ((_ (vref-ra vset!-ra ra da za) (vref-rb vset!-rb rb db zb))
            (let ((c (vref-ra da za)))
              (vset!-ra da za (vref-rb db zb))
-             (vset!-rb db zb c)))))
-       (%op
-        (syntax-rules ()
-          ((_ (ra da za) (rb db zb))
-           (let ((c ((%%ra-vref ra) da za)))
-             ((%%ra-vset! ra) da za ((%%ra-vref rb) db zb))
-             ((%%ra-vset! rb) db zb c))))))
-    (%dispatch %typed-op %op ra rb)
+             (vset!-rb db zb c))))))
+    (%dispatch %op ra rb)
     ra))
 
 (define ra-swap-in-order! ra-swap!)
@@ -533,22 +513,17 @@ See also: ra-any ra-equal? ra-fold
 "
   (let/ec exit
     (let-syntax
-        ((%typed-op
+        ((%op
           (syntax-rules ()
             ((_ (vref-ra vset!-ra ra da za) ...)
              (unless (pred? (vref-ra da za) ...)
-               (exit #f)))))
-         (%op
-          (syntax-rules ()
-            ((_ (ra da za) ...)
-             (unless (pred? ((%%ra-vref ra) da za) ...)
                (exit #f))))))
       (or (null? rx)
           (begin
             (apply (case-lambda
-                    ((ra) (%dispatch %typed-op %op ra))
-                    ((ra rb) (%dispatch %typed-op %op ra rb))
-                    ((ra rb rc) (%dispatch %typed-op %op ra rb rc))
+                    ((ra) (%dispatch %op ra))
+                    ((ra rb) (%dispatch %op ra rb))
+                    ((ra rb rc) (%dispatch %op ra rb rc))
                     (rx (apply ra-for-each (lambda x (unless (apply pred? x) (exit #f))) rx)))
               rx)
             #t)))))
@@ -572,20 +547,16 @@ See also: ra-every ra-equal? ra-fold
 "
   (let/ec exit
     (let-syntax
-        ((%typed-op
+        ((%op
           (syntax-rules ()
             ((_ (vref-ra vset!-ra ra da za) ...)
-             (and=> (pred? (vref-ra da za) ...) exit))))
-         (%op
-          (syntax-rules ()
-            ((_ (ra da za) ...)
-             (and=> (pred? ((%%ra-vref ra) da za) ...) exit)))))
+             (and=> (pred? (vref-ra da za) ...) exit)))))
       (or (null? rx)
           (begin
             (apply (case-lambda
-                    ((ra) (%dispatch %typed-op %op ra))
-                    ((ra rb) (%dispatch %typed-op %op ra rb))
-                    ((ra rb rc) (%dispatch %typed-op %op ra rb rc))
+                    ((ra) (%dispatch %op ra))
+                    ((ra rb) (%dispatch %op ra rb))
+                    ((ra rb rc) (%dispatch %op ra rb rc))
                     (rx (apply ra-for-each (lambda x (and=> (apply pred? x) exit)) rx)))
               rx)
             #f)))))
@@ -622,15 +593,10 @@ See also: ra-map! ra-for-each
 "
   (let/ec exit
     (let-syntax
-        ((%typed-op
+        ((%op
           (syntax-rules ()
             ((_ (vref-ra vset!-ra ra da za) ...)
              (unless (equal? (vref-ra da za) ...)
-               (exit #f)))))
-         (%op
-          (syntax-rules ()
-            ((_ (ra da za) ...)
-             (unless (equal? ((%%ra-vref ra) da za) ...)
                (exit #f))))))
       (and (apply equal-shapes? rx)
 ; shortcut?
@@ -645,7 +611,7 @@ See also: ra-map! ra-for-each
 ; no, have to go element per element.
                (begin
                  (apply (case-lambda
-                         ((ra rb) (%dispatch %typed-op %op ra rb))
+                         ((ra rb) (%dispatch %op ra rb))
                          (rx (apply ra-for-each (lambda x (unless (apply equal? x) (exit #f))) rx)))
                    rx)
                  #t))))))
