@@ -34,7 +34,7 @@
            ra-dimensions ra-shape ra-offset
            array->ra ra->array as-ra
            ra-i ra-iota
-           ra-copy
+           ra-copy ra-map
            ra-reverse ra-transpose ra-untranspose ra-order-c?
            ra-ravel ra-reshape ra-tile
            ra-fold

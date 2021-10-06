@@ -15,7 +15,7 @@
             make-ra make-typed-ra make-ra-shared ra->list
             array->ra ra->array as-ra
             ra-i ra-iota
-            ra-copy
+            ra-copy ra-map
             ra-fold))
 
 (import (only (srfi :1) fold every any iota drop xcons) (srfi :26) (srfi :71)
@@ -272,9 +272,10 @@ If @var{src} has dead axes, those are preserved in the result.
 
 See also: ra-copy! as-ra
 "
-   ((ra) (ra-copy (match (ra-type ra) ('d #t) (t t)) ra))
+   ((ra) (ra-copy #f ra))
    ((type ra)
-    (let* ((shape (map (match-lambda
+    (let* ((type (or type (match (ra-type ra) ('d #t) (t t))))
+           (shape (map (match-lambda
                          (($ <dim> len lo step)
                           (let ((lo (or lo 0)))
                             (list lo
@@ -293,3 +294,22 @@ See also: ra-copy! as-ra
                       (vector-map (lambda (a b) (if (dim-len a) b a)) (ra-dims ra) (ra-dims rb))
                       (ra-zero rb))
         rb)))))
+
+(define (ra-map type op rx0 . rx)
+  "
+Same as @code{(ra-map! ra rx0 rx ...)}, except that the result is created from
+@var{type} and the shapes of @var{rx} ...
+
+If @var{type} is #f, then the type of the result is @code{(ra-type rx0)}, or
+@code{#t} if @code{(ra-type rx0)} is @code{'d}.
+
+See also: ra-map!
+"
+  (let* ((k (fold (lambda (a b) (max b (ra-rank a))) (ra-rank rx0) rx))
+; FIXME vector->list is ugly. Need to refine/formalize the 'arguments match' routine
+         (lo len (apply ra-slice-for-each-check k rx0 rx)))
+    (apply ra-map! (apply make-typed-ra (or type (match (ra-type rx0) ('d #t) (t t)))
+                          *unspecified*
+                          (map (lambda (lo len) (list lo (+ lo len -1)))
+                            (vector->list lo) (vector->list len)))
+           op rx0 rx)))

@@ -421,6 +421,7 @@ These problems are solved if the built-in type is replaced with a new type defin
 * Concatenation::
 * Transposition::
 * Other operations on arrays::
+* Automatic result arrays::
 * Foreign interface::
 * Compatibility with old Guile arrays::
 @end menu
@@ -1390,6 +1391,34 @@ The function @ref{x-ra-untranspose, @code{ra-untranspose}} takes its axis argume
 @section Other operations on arrays
 @c ------------------------------------------------
 
+@c ------------------------------------------------
+@node Automatic result arrays
+@section Automatic result arrays
+@c ------------------------------------------------
+
+Most of the functions of @code{newra} do not create arrays, but instead they expect result arrays to be passed as arguments. This means that they must have been allocated before. However, there are a few functions, such as @ref{x-ra-copy, @code{ra-copy}} or @ref{x-ra-map, @code{ra-map}}, that do create a result array. The type and shape of that result array is deduced from the source arguments, as follows.
+
+@itemize
+@item The default type of the result array is the type of the first of the source arguments. If that type is @code{'d}, however, the default type of the result array is @code{#t}. Usually, a function will allow this default to be overriden with an explicit argument. If that argument is required, then @code{#f} will select the default.
+@item The rank of the result array will be the rank of the source argument with the largest rank. On each dimension, the lower bound and the length of the result will match those of the source arguments, with the precision that if any of those is finite, then it will be finite in the result as well. (If there is only one source argument, as is the case for @code{ra-copy}, then it follows that that is the shape of the result.)
+@end itemize
+
+For example:
+
+@example
+@verbatim
+(ra-map #t *
+  ; shape '((0 1))
+  (ra-iota 2 1)
+  ; shape '((#f #f) (1 3))
+  (ra-transpose (make-ra 9 '(1 3)) 1))
+@end verbatim
+@result{}
+@verbatim
+; shape of result is '((0 1) (1 3))
+#%2:2@1:3((9 9 9) (18 18 18)
+@end verbatim
+@end example
 
 @c ------------------------------------------------
 @node Foreign interface
@@ -2537,7 +2566,34 @@ This is equivalent to
        dst a)
 @end verbatim
 
-See also: @ref{x-ra-for-each,@code{ra-for-each}}, @ref{x-ra-slice-for-each,@code{ra-slice-for-each}}, @ref{Iteration}.
+See also: @ref{x-ra-map,@code{ra-map}}, @ref{x-ra-for-each,@code{ra-for-each}}, @ref{x-ra-slice-for-each,@code{ra-slice-for-each}}, @ref{Iteration}.
+
+@end deffn
+
+@cindex @code{ra-map}
+@anchor{x-ra-map}
+@deffn @w{Function} ra-map type op a0 a ... @result{} dst
+Same as @ref{x-ra-map!,@code{ra-map!}}, but create the result array from the arguments. Unlike @code{ra-map!}, this function requires at least one source argument.
+
+The type of @var{dst} is @var{type} unless that is @code{#f}, in which case the type of @var{a0} is used,  unless that is @code{'d}, in which case the @code{#f} is used. For the computation of the shape of @var{dst} see @ref{Automatic result arrays}.
+
+@example
+@verbatim
+(ra-format (ra-map 'f64 + (ra-iota 3 1) (ra-i 3 4)))
+@end verbatim
+@result{}
+@verbatim
+#%2f64:3:4┬────┬────┐
+│ 1.0│ 2.0│ 3.0│ 4.0│
+├────┼────┼────┼────┤
+│ 6.0│ 7.0│ 8.0│ 9.0│
+├────┼────┼────┼────┤
+│11.0│12.0│13.0│14.0│
+└────┴────┴────┴────┘
+@end verbatim
+@end example
+
+See also: @ref{x-ra-map!,@code{ra-map!}}, @ref{x-ra-copy,@code{ra-copy}}.
 
 @end deffn
 
@@ -2560,7 +2616,7 @@ See also @ref{x-ra-copy,@code{ra-copy}} @ref{x-ra-amend!,@code{ra-amend!}} @ref{
 @anchor{x-ra-copy}
 @deffn @w{Function} ra-copy src @result{} dst
 @deffnx @w{Function} ra-copy type src @result{} dst
-Create a new array of type @var{type} and copy @var{src} into it. If @var{type} isn't given, use the type of @var{src}, unless that type is @code{d}, in which case the result is of type @code{#t}.
+Create a new array of type @var{type} and copy @var{src} into it. If @var{type} is @code{#f} or isn't given, use the type of @var{src}, unless that type is @code{d}, in which case the result is of type @code{#t}.
 
 See also @ref{x-ra-copy!,@code{ra-copy!}} @ref{x-ra-amend!,@code{ra-amend!}} @ref{x-ra-set!,@code{ra-set!}}.
 @end deffn

@@ -272,7 +272,6 @@
       ((b)   (values #'bitvector-ref  #'bitvector-set!))
       ((d)   (values #'aseq-ref       #'(cut throw 'no-aseq-set! <...>)))
       (else (throw 'bad-ra-root-type type))))
-
   (define syntax-accessors
     (list (list #'#t #'f64 #'d #'u8 ;; #'f32 #'c64 #'c32 #'s64 #'s32 #'s16 #'s8 #'u64 #'u32 #'u16 #'a #'b
                 )

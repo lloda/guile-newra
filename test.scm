@@ -1246,6 +1246,20 @@
 
 
 ; -----------------------
+; ra-map
+; -----------------------
+
+; this requires  ra-slice-for-each-check to fix axes where largest rank argument has dead
+(test-equal "#%2f64:3:4((1.0 2.0 3.0 4.0) (2.0 4.0 6.0 8.0) (3.0 6.0 9.0 12.0))"
+            (ra->string (ra-map 'f64 * (ra-iota 3 1) (ra-transpose (ra-iota 4 1) 1))))
+; lower bounds are respected
+(test-equal "#%2:2@1:3((9 9 9) (18 18 18))"
+            (ra->string (ra-map #t * (ra-iota 2 1) (ra-transpose (make-ra 9 '(1 3)) 1))))
+(test-equal "#%2:3:4((1 2 3 4) (6 7 8 9) (11 12 13 14))"
+            (ra->string (ra-map #f + (ra-iota 3 1) (ra-i 3 4))))
+
+
+; -----------------------
 ; demo of ra-format FIXME somehow check
 ; -----------------------
 
