@@ -2,7 +2,7 @@
 
 ## newra
 
-guile-newra (`newra`) wants to replace the old (≤ 3.0) Guile array system, which is almost entirely implemented in C.
+guile-newra (`newra`) wants to replace the current (3.0) Guile array system, which is almost entirely implemented in C.
 
 The new implementation should be at least as fast. I think this is feasible once the Scheme compiler goes native, because for the most part the array functions are used to call back to Scheme, and a Scheme implementation could get rid of the back and forth, optimize the type dispatches, etc.
 
@@ -24,7 +24,7 @@ To install the library just copy `mod/newra` somewhere in your Guile load path, 
 
 The old array compatibility layer is mostly finished, with only a naming change (`array-xxx` becomes `ra-xxx`). The `newra` versions of the `map` and `for-each` functions are significantly faster already, but the `-ref` / `-set!` functions are a bit slower, and some of the functions that have a fast path in C, such as `ra->list!`, can be several times slower in `newra`, depending on the types of the arguments.
 
-These issues seem fixable, and besides, the Scheme compiler is only improving as Guile 3.0 aproaches.
+These issues seem fixable, and besides, the Scheme compiler is only improving.
 
 Compared with the old arrays, `newra` offers a growing list of features:
 
