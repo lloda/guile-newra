@@ -10,7 +10,7 @@
 ;; Alternative implementations (both for ra and array) for testing and benchmarking.
 ;;; Code:
 
-(define-module (newra test)
+(define-module (newra test misc)
   #:export (ra-map*! array-map*! array-print* %ra-loop ra-loop array-loop))
 
 (import (newra base) (newra map)

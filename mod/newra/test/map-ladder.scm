@@ -10,7 +10,7 @@
 ;; Working up to ra-slice-for-each.
 ;;; Code:
 
-(define-module (newra map-ladder)
+(define-module (newra test map-ladder)
   #:export (ra-slice-for-each-1 ra-slice-for-each-2 ra-slice-for-each-3 ra-slice-for-each-4))
 
 (import (newra base) (srfi :26) (srfi :71) (ice-9 control)
