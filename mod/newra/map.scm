@@ -85,8 +85,8 @@
 
 (define-syntax-rule (%list a ...)
   (list a ...))
-(define-syntax-rule (%let ((a ...) (b ...) f) e ...)
-  (let ((a (f b)) ...) e ...))
+(define-syntax-rule (%let ((a x b) ...) e ...)
+  (let ((a b) ...) e ...))
 (define-syntax-rule (%stepu n (ra step) ...)
   (begin (%%ra-zero-set! ra (+ (%%ra-zero ra) (* n step))) ...))
 (define-syntax-rule (%stepk k n (ra frame) ...)
@@ -94,8 +94,8 @@
 
 (define-syntax-rule (%apply-list a)
   a)
-(define-syntax-rule (%apply-let ((a) (b) f) e ...)
-  (let ((a (map f b))) e ...))
+(define-syntax-rule (%apply-let ((a x b)) e ...)
+  (let ((a (map (lambda (x) b) x))) e ...))
 (define-syntax-rule (%apply-stepu n (ra step))
   (for-each (lambda (ra step) (%stepu n (ra step))) ra step))
 (define-syntax-rule (%apply-stepk k n (ra frame))
@@ -134,7 +134,7 @@
 (define-syntax %slice-loop
   (lambda (stx)
     (syntax-case stx ()
-      ((_ k_ op op-loop %list %let frame ...)
+      ((_ k_ %op %op-loop %list %let frame ...)
        (with-syntax ([(ra ...) (generate-temporaries #'(frame ...))]
                      [(step ...) (generate-temporaries #'(frame ...))]
                      [(s ...) (generate-temporaries #'(frame ...))]
@@ -143,29 +143,27 @@
          #`(let* ((k k_)
 ; create (rank(ra) - k) slices that we'll use to iterate by bumping their zeros.
                   (los lens (apply ra-slice-for-each-check k (%list frame ...))))
-             (%let ((ra ...) (frame ...) (cut make-ra-root-prefix <> k los))
+             (%let ((ra frame (make-ra-root-prefix frame k los)) ...)
 ; since we'll unroll, special case for rank 0
                (if (zero? k)
 ; no fresh slice descriptor like in array-slice-for-each. Should be all right b/c the descriptors can be copied.
-                 (op ra ...)
+                 (%op ra ...)
 ; check early so we can save a step in the loop later.
                  (when (vector-every positive? lens)
 ; we'll do a normal rank-loop in [0..u) and unroll dimensions [u..k); u must be searched.
                    (let ((u (- k 1)))
-                     (%let ((step ...) (frame ...)
-                            (lambda (frome) (%%ra-step-prefix frome u)))
+                     (%let ((step frame (%%ra-step-prefix frame u)) ...)
                        (let* ((u len (let loop ((u u) (len 1) (s step) ...)
                                        (let ((lenu (vector-ref lens u)))
                                          (if (zero? u)
                                            (values u (* len lenu))
-                                           (%let ((ss ...) (s ...) (cut * lenu <>))
-                                             (%let ((sm ...) (frame ...)
-                                                    (lambda (frome) (%%ra-step-prefix frome (- u 1))))
+                                           (%let ((ss s (* lenu s)) ...)
+                                             (%let ((sm frame (%%ra-step-prefix frame (- u 1))) ...)
                                                (if (and (equal? ss sm) ...)
                                                  (loop (- u 1) (* len lenu) ss ...)
                                                  (values u (* len lenu)))))))))
                               (lenm (- len 1)))
-                         (op-loop lens lenm u ra ... frame ... step ...)))))))))))))
+                         (%op-loop lens lenm u ra ... frame ... step ...)))))))))))))
 
 (define (ra-slice-for-each k op . rx)
   (let-syntax
@@ -193,34 +191,35 @@
 ; special rank-0 versions, ra-for-each, ra-map!, ra-copy!, ra-equal?
 ; ----------------
 
-; Variant of %op-loop that avoids updating/rolling back %%ra-zero and instead keeps indices on the stack. The improvement is somewhat unreasonable...
-; Fixed nargs only (%list, %let could be replaced by %apply-list etc. but %%ra-zero, %%ra-step are used directly)
+; Variant of %op-loop that avoids updating/rolling back %%ra-zero and instead keeps indices on the stack. The improvement is somewhat unreasonable... Not worth using with rest list, however (cf branch op-loop-elems-rest-list)
 
-(define-syntax %sloop
+(define-syntax %op-elems
   (lambda (stx)
     (syntax-case stx ()
-; can supply rank-1 op.
+      ((_ %op0 ra_ ...)
+       (with-syntax ([(ra ...) (generate-temporaries #'(ra_ ...))])
+         #'(lambda (ra ...)
+             (%op0 (ra (%%ra-root ra) (%%ra-zero ra)) ...)))))))
+
+(define-syntax %op-loop-elems
+  (lambda (stx)
+    (syntax-case stx ()
       ((_ (%op0 %op1) ra_ ...)
        (with-syntax ([(ra ...) (generate-temporaries #'(ra_ ...))]
                      [(frame ...) (generate-temporaries #'(ra_ ...))]
                      [(step ...) (generate-temporaries #'(ra_ ...))]
                      [(z ...) (generate-temporaries #'(ra_ ...))]
                      [(d ...) (generate-temporaries #'(ra_ ...))])
-         #'(%slice-loop
-            (max (ra-rank ra_) ...)
-            (lambda (ra ...)
-              (%op0 (ra (%%ra-root ra) (%%ra-zero ra)) ...))
-            (lambda (lens lenm u ra ... frame ... step ...)
-              (%let ((d ...) (ra ...) %%ra-root)
-                (let loop-rank ((k 0) (z (%%ra-zero ra)) ...)
-                  (if (= k u)
-                    (%op1 (+ 1 lenm) (ra d z step) ...)
-                    (let loop-dim ((i (- (vector-ref lens k) 1)) (z z) ...)
-                      (loop-rank (+ k 1) z ...)
-                      (unless (zero? i)
-                        (loop-dim (- i 1) (+ z (%%ra-step-prefix frame k)) ...)))))))
-            %list %let ra_ ...)))
-; if not, provide default.
+         #'(lambda (lens lenm u ra ... frame ... step ...)
+             (%let ((d ra (%%ra-root ra)) ...)
+               (%let ((z ra (%%ra-zero ra)) ...)
+                 (let loop-rank ((k 0) (z z) ...)
+                   (if (= k u)
+                     (%op1 (+ 1 lenm) (ra d z step) ...)
+                     (let loop-dim ((i (- (vector-ref lens k) 1)) (z z) ...)
+                       (loop-rank (+ k 1) z ...)
+                       (unless (zero? i)
+                         (loop-dim (- i 1) (+ z (%%ra-step-prefix frame k)) ...))))))))))
       ((_ (%op0) ra_ ...)
        #'(let-syntax
              ((%op1
@@ -230,16 +229,21 @@
                     (%op0 (ra d z) …)
                     (unless (zero? i)
                       (loop (- i 1) (+ z step) …)))))))
-           (%sloop (%op0 %op1) ra_ ...))))))
+           (%op-loop-elems (%op0 %op1) ra_ ...))))))
 
-; Rest list version. This is slow no matter what.
+(define-syntax-rule (%sloop (%op0 %op ...) ra ...)
+  (%slice-loop
+   (max (ra-rank ra) ...)
+   (%op-elems %op0 ra ...)
+   (%op-loop-elems (%op0 %op ...) ra ...)
+   %list %let ra ...))
 
-(define-syntax-rule (%apply-sloop %apply-op ra_)
-  (let ((ra ra_))
-    (%slice-loop (fold (lambda (a b) (max b (ra-rank a))) 0 ra)
-                 %apply-op
-                 (%op-loop %apply-op %apply-stepu %apply-stepk ra)
-                 %apply-list %apply-let ra)))
+(define-syntax-rule (%apply-sloop %apply-op ra)
+  (%slice-loop
+   (fold (lambda (a b) (max b (ra-rank a))) 0 ra)
+   %apply-op
+   (%op-loop %apply-op %apply-stepu %apply-stepk ra)
+   %apply-list %apply-let ra))
 
 ; Use this for %op0 when there's no valid %op0. That may happen when %op1 isn't generic enough (e.g. it only works with step 1) so %sloop is used for %op1 alone.
 
@@ -371,7 +375,7 @@ See also: ra-for-each ra-copy! ra-fill! ra-clip
             (() (%dispatch %op ra))
             ((rb) (%dispatch %op ra rb))
             ((rb rc) (%dispatch %op ra rb rc))
-            (rx (%apply-sloop %apply-op (cons ra rx))))
+            (rx (let ((ra (cons ra rx))) (%apply-sloop %apply-op ra))))
       rx)
     ra))
 
