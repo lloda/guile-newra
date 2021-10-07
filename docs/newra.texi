@@ -7,7 +7,7 @@
 @c last [ma112]
 
 @set VERSION 1
-@set UPDATED 2021 October 6
+@set UPDATED 2021 October 7
 
 @copying
 @code{newra} (version @value{VERSION}, updated @value{UPDATED})
@@ -50,14 +50,14 @@ Invariant Sections, no Front-Cover Texts, and no Back-Cover Texts.
 This document uses ‘array’ to refer both to the old built-in array type and to the new type introduced in @code{newra}. The distinction is made as necessary.
 
 @menu
-* Introduction::      Why Guile arrays need replacing.
-* Low level::         Arrays as data structures.
-* High level::        Guile as an array language.
-* Hazards::           User beware.
-* Reference::         Systematic list of types and functions.
-* Cheatsheet::        Asking for directions
-* @mybibnode{}::      It's been done before.
-* Indices::           Or try the search function.
+* Introduction::    Why Guile arrays need replacing.
+* Basic use::       Arrays as data structures.
+* High level::      Guile as an array language.
+* Hazards::         User beware.
+* Reference::       Systematic list of types and functions.
+* Cheatsheet::      Asking for directions
+* @mybibnode{}::    It's been done before.
+* Indices::         Or try the search function.
 @end menu
 
 @end ifnottex
@@ -263,7 +263,7 @@ As you can verify, the prefix agreement rule is distributive. Therefore it can b
 
 @cindex Numpy
 @cindex broadcasting, singleton, newaxis
-An weakness of prefix agreement is that the axes you want to match aren't always the prefix axes. Other array systems (e.g. @mybibcite{num17}) offer a feature similar to rank extension called ‘broadcasting’ that is a bit more flexible. For example an array of shape [A B 1 D] will match an array of shape [A B C D] for any value of C. The process of broadcasting consists in inserting so-called ‘singleton dimensions’ (axes with length one) to align the axes that one wishes to match. One may think of rank extension as a particular case of broadcasting where the singleton dimensions are added to the end of the shorter shapes automatically.
+A weakness of prefix agreement is that the axes you want to match aren't always the prefix axes. Other array systems (e.g. @mybibcite{num17}) offer a feature similar to rank extension called ‘broadcasting’ that is a bit more flexible. For example an array of shape [A B 1 D] will match an array of shape [A B C D] for any value of C. The process of broadcasting consists in inserting so-called ‘singleton dimensions’ (axes with length one) to align the axes that one wishes to match. One may think of rank extension as a particular case of broadcasting where the singleton dimensions are added to the end of the shorter shapes automatically.
 
 A drawback of singleton broadcasting is that it muddles the distinction between a scalar and a vector of length 1. Sometimes, an axis of length 1 is no more than that, and if 2≠3 is a size error, it isn't obvious why 1≠2 shouldn't be. For this reason @code{newra}'s support for explicit broadcasting is based on @ref{x-dead-axes,dead axes}.
 

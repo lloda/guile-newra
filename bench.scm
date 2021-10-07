@@ -44,7 +44,7 @@
 ; -----------------------
 
 (let ((m #e1e5))
-  (format #t "\nra-cell (applicable function) / array-ref\n==================\n")
+  (format #t "\nlookup\n==================\n")
   (for-each
       (lambda (type)
         (format #t "\n~a\n---------" type)
@@ -90,13 +90,13 @@
     '(#t f64)))
 
 (let ((m #e1e5))
-  (format #t "\nra-slice-for-each array-slice-for-each ra-map! array-map! ra-for-each array-for-each\n==================\n")
+  (format #t "\niteration\n==================\n")
   (for-each
       (lambda (type)
         (for-each
             (lambda (nargs)
               (format #t "\n~a ~a args\n---------" type nargs)
-              (format-header "ra*" "array*" "ra" "array")
+              (format-header "ra-sfe" "array-sfe" "ra-map" "array-map" "ra-fe" "array-fe")
               (for-each
                   (lambda (rank)
                     (let* ((n (inexact->exact (ceiling (expt m (/ rank)))))
@@ -106,15 +106,24 @@
                            (ra20 (make-ra-new type *unspecified* (apply c-dims nn)))
                            (ra21 (ra-map*! ra-slice-for-each (make-ra-new type 0 (apply c-dims nn)) (cut random n)))
                            (ra22 (ra-map*! ra-slice-for-each (make-ra-new type 0 (apply c-dims nn)) (cut random n)))
+                           (ra23 (ra-map*! ra-slice-for-each (make-ra-new type 0 (apply c-dims nn)) (cut random n)))
                            (a20 (ra->array ra20))
                            (a21 (ra->array ra21))
-                           (a22 (ra->array ra22)))
+                           (a22 (ra->array ra22))
+                           (a23 (ra->array ra23)))
                       (let-syntax ((feop
                                     (syntax-rules ()
                                       ((_ fe a ...)
                                        (let ((k 0)) (fe (lambda (a ...) (set! k (+ k a ...))) a ...))))))
                         (format #t "rank ~a ~a:" rank nn)
                         (case nargs
+                          ((4)
+                           (format-line (* scale (time (ra-map*! ra-slice-for-each ra20 - ra21 ra22 ra23)))
+                                        (* scale (time (array-map*! a20 - a21 a22 a23)))
+                                        (* scale (time (ra-map! ra20 - ra21 ra22 ra23)))
+                                        (* scale (time (array-map! a20 - a21 a22 a23)))
+                                        (* scale (time (feop ra-for-each ra20 ra21 ra22 ra23)))
+                                        (* scale (time (feop array-for-each a20 a21 a22 a23)))))
                           ((3)
                            (format-line (* scale (time (ra-map*! ra-slice-for-each ra20 - ra21 ra22)))
                                         (* scale (time (array-map*! a20 - a21 a22)))
@@ -137,11 +146,11 @@
                                         (* scale (time (feop ra-for-each ra20)))
                                         (* scale (time (feop array-for-each a20)))))))))
                 (iota 6 1)))
-          (iota 3 1)))
+          (iota 4 1)))
     '(#t f64)))
 
 (let ((m #e5e5))
-  (format #t "\nra-copy! array-copy!\n==================\n")
+  (format #t "\ncopy\n==================\n")
   (for-each
    (match-lambda
      ((typesrc typedst transposed?)

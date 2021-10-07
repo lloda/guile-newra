@@ -315,7 +315,7 @@ Next: <a href="#The-pieces-of-an-array" accesskey="n" rel="next">The pieces of a
 
 <span id="index-Numpy-1"></span>
 <span id="index-broadcasting_002c-singleton_002c-newaxis"></span>
-<p>An weakness of prefix agreement is that the axes you want to match aren&rsquo;t always the prefix axes. Other array systems (e.g. [<a href="#Sources">num17</a>]
+<p>A weakness of prefix agreement is that the axes you want to match aren&rsquo;t always the prefix axes. Other array systems (e.g. [<a href="#Sources">num17</a>]
 ) offer a feature similar to rank extension called ‘broadcasting’ that is a bit more flexible. For example an array of shape [A B 1 D] will match an array of shape [A B C D] for any value of C. The process of broadcasting consists in inserting so-called ‘singleton dimensions’ (axes with length one) to align the axes that one wishes to match. One may think of rank extension as a particular case of broadcasting where the singleton dimensions are added to the end of the shorter shapes automatically.
 </p>
 <p>A drawback of singleton broadcasting is that it muddles the distinction between a scalar and a vector of length 1. Sometimes, an axis of length 1 is no more than that, and if 2≠3 is a size error, it isn&rsquo;t obvious why 1≠2 shouldn&rsquo;t be. For this reason <code>newra</code>&rsquo;s support for explicit broadcasting is based on <a href="#x_002ddead_002daxes">dead axes</a>.
