@@ -83,9 +83,11 @@
       (dim-step (vector-ref dims k))
       0)))
 
+; Unify variable arity with rest list
+
 (define-syntax-rule (%list a ...)
   (list a ...))
-(define-syntax-rule (%let ((a x b) ...) e ...)
+(define-syntax-rule (%let ((a (x ...) b) ...) e ...)
   (let ((a b) ...) e ...))
 (define-syntax-rule (%stepu n (ra step) ...)
   (begin (%%ra-zero-set! ra (+ (%%ra-zero ra) (* n step))) ...))
@@ -94,8 +96,8 @@
 
 (define-syntax-rule (%apply-list a)
   a)
-(define-syntax-rule (%apply-let ((a x b)) e ...)
-  (let ((a (map (lambda (x) b) x))) e ...))
+(define-syntax-rule (%apply-let ((a (x ...) b)) e ...)
+  (let ((a (map (lambda (x ...) b) x ...))) e ...))
 (define-syntax-rule (%apply-stepu n (ra step))
   (for-each (lambda (ra step) (%stepu n (ra step))) ra step))
 (define-syntax-rule (%apply-stepk k n (ra frame))
@@ -143,7 +145,7 @@
          #`(let* ((k k_)
 ; create (rank(ra) - k) slices that we'll use to iterate by bumping their zeros.
                   (los lens (apply ra-slice-for-each-check k (%list frame ...))))
-             (%let ((ra frame (make-ra-root-prefix frame k los)) ...)
+             (%let ((ra (frame) (make-ra-root-prefix frame k los)) ...)
 ; since we'll unroll, special case for rank 0
                (if (zero? k)
 ; no fresh slice descriptor like in array-slice-for-each. Should be all right b/c the descriptors can be copied.
@@ -152,13 +154,13 @@
                  (when (vector-every positive? lens)
 ; we'll do a normal rank-loop in [0..u) and unroll dimensions [u..k); u must be searched.
                    (let ((u (- k 1)))
-                     (%let ((step frame (%%ra-step-prefix frame u)) ...)
+                     (%let ((step (frame) (%%ra-step-prefix frame u)) ...)
                        (let* ((u len (let loop ((u u) (len 1) (s step) ...)
                                        (let ((lenu (vector-ref lens u)))
                                          (if (zero? u)
                                            (values u (* len lenu))
-                                           (%let ((ss s (* lenu s)) ...)
-                                             (%let ((sm frame (%%ra-step-prefix frame (- u 1))) ...)
+                                           (%let ((ss (s) (* lenu s)) ...)
+                                             (%let ((sm (frame) (%%ra-step-prefix frame (- u 1))) ...)
                                                (if (and (equal? ss sm) ...)
                                                  (loop (- u 1) (* len lenu) ss ...)
                                                  (values u (* len lenu)))))))))
@@ -196,31 +198,36 @@
 (define-syntax %op-elems
   (lambda (stx)
     (syntax-case stx ()
-      ((_ %op0 ra_ ...)
-       (with-syntax ([(ra ...) (generate-temporaries #'(ra_ ...))])
+      ((_ %let %op0 ra_ ...)
+       (with-syntax ([(ra ...) (generate-temporaries #'(ra_ ...))]
+                     [(z ...) (generate-temporaries #'(ra_ ...))]
+                     [(d ...) (generate-temporaries #'(ra_ ...))])
          #'(lambda (ra ...)
-             (%op0 (ra (%%ra-root ra) (%%ra-zero ra)) ...)))))))
+             (%let ((d (ra) (%%ra-root ra)) ...)
+               (%let ((z (ra) (%%ra-zero ra)) ...)
+                 (%op0 (ra d z) ...)))))))))
 
 (define-syntax %op-loop-elems
   (lambda (stx)
     (syntax-case stx ()
-      ((_ (%op0 %op1) ra_ ...)
+      ((_ %let (%op0 %op1) ra_ ...)
        (with-syntax ([(ra ...) (generate-temporaries #'(ra_ ...))]
                      [(frame ...) (generate-temporaries #'(ra_ ...))]
                      [(step ...) (generate-temporaries #'(ra_ ...))]
                      [(z ...) (generate-temporaries #'(ra_ ...))]
                      [(d ...) (generate-temporaries #'(ra_ ...))])
          #'(lambda (lens lenm u ra ... frame ... step ...)
-             (%let ((d ra (%%ra-root ra)) ...)
-               (%let ((z ra (%%ra-zero ra)) ...)
-                 (let loop-rank ((k 0) (z z) ...)
+             (%let ((d (ra) (%%ra-root ra)) ...)
+               (%let ((z (ra) (%%ra-zero ra)) ...)
+                 (let loop-ronk ((k 0) (z z) ...)
                    (if (= k u)
                      (%op1 (+ 1 lenm) (ra d z step) ...)
                      (let loop-dim ((i (- (vector-ref lens k) 1)) (z z) ...)
-                       (loop-rank (+ k 1) z ...)
+                       (loop-ronk (+ k 1) z ...)
                        (unless (zero? i)
-                         (loop-dim (- i 1) (+ z (%%ra-step-prefix frame k)) ...))))))))))
-      ((_ (%op0) ra_ ...)
+                         (%let ((z (z frame) (+ z (%%ra-step-prefix frame k))) ...)
+                           (loop-dim (- i 1) z ...)))))))))))
+      ((_ %let (%op0) ra_ ...)
        #'(let-syntax
              ((%op1
                (syntax-rules … ()
@@ -228,21 +235,22 @@
                   (let loop ((i (- len 1)) (z z) …)
                     (%op0 (ra d z) …)
                     (unless (zero? i)
-                      (loop (- i 1) (+ z step) …)))))))
-           (%op-loop-elems (%op0 %op1) ra_ ...))))))
+                      (%let ((z (z step) (+ z step)) …)
+                        (loop (- i 1) z …))))))))
+           (%op-loop-elems %let (%op0 %op1) ra_ ...))))))
 
 (define-syntax-rule (%sloop (%op0 %op ...) ra ...)
   (%slice-loop
    (max (ra-rank ra) ...)
-   (%op-elems %op0 ra ...)
-   (%op-loop-elems (%op0 %op ...) ra ...)
+   (%op-elems %let %op0 ra ...)
+   (%op-loop-elems %let (%op0 %op ...) ra ...)
    %list %let ra ...))
 
 (define-syntax-rule (%apply-sloop %apply-op ra)
   (%slice-loop
    (fold (lambda (a b) (max b (ra-rank a))) 0 ra)
-   %apply-op
-   (%op-loop %apply-op %apply-stepu %apply-stepk ra)
+   (%op-elems %apply-let %apply-op ra)
+   (%op-loop-elems %apply-let (%apply-op) ra)
    %apply-list %apply-let ra))
 
 ; Use this for %op0 when there's no valid %op0. That may happen when %op1 isn't generic enough (e.g. it only works with step 1) so %sloop is used for %op1 alone.
@@ -342,8 +350,8 @@ See also: ra-map! ra-slice-for-each ra-clip
            (op (vref-ra da za) ...))))
        (%apply-op
         (syntax-rules ()
-          ((_ rx)
-           (apply op (map (lambda (ra) ((%%ra-vref ra) (%%ra-root ra) (%%ra-zero ra))) rx))))))
+          ((_ (rx d z))
+           (apply op (map (lambda (ra da za) ((%%ra-vref ra) da za)) rx d z))))))
     (apply (case-lambda
             ((ra) (%dispatch %op ra))
             ((ra rb) (%dispatch %op ra rb))
@@ -368,9 +376,9 @@ See also: ra-for-each ra-copy! ra-fill! ra-clip
            (vset!-ra da za (op (vref-rx dx zx) ...)))))
        (%apply-op
         (syntax-rules ()
-          ((_ rx)
-           ((%%ra-vset! (car rx)) (%%ra-root (car rx)) (%%ra-zero (car rx))
-            (apply op (map (lambda (ra) ((%%ra-vref ra) (%%ra-root ra) (%%ra-zero ra))) (cdr rx))))))))
+          ((_ (rx d z))
+           ((%%ra-vset! (car rx)) (car d) (car z)
+            (apply op (map (lambda (ra da za) ((%%ra-vref ra) da za)) (cdr rx) (cdr d) (cdr z))))))))
     (apply (case-lambda
             (() (%dispatch %op ra))
             ((rb) (%dispatch %op ra rb))

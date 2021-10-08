@@ -1313,6 +1313,6 @@
 ; the end.
 ; -----------------------
 
-(define error-count (test-runner-fail-count (test-runner-current)))
-(test-end "newra")
-(exit error-count)
+;; (define error-count (test-runner-fail-count (test-runner-current)))
+;; (test-end "newra")
+;; (exit error-count)
