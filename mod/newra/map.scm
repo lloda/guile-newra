@@ -199,7 +199,7 @@
       ((_ %op0 ra_ ...)
        (with-syntax ([(ra ...) (generate-temporaries #'(ra_ ...))])
          #'(lambda (ra ...)
-             (%op0 (ra (%%ra-root ra) (%%ra-zero ra)) ...)))))))
+             (%op0 ((%%ra-root ra) (%%ra-zero ra)) ...)))))))
 
 (define-syntax %op-loop-elems
   (lambda (stx)
@@ -214,7 +214,7 @@
              (let ((d (%%ra-root ra)) ...)
                (let loop-rank ((k 0) (z (%%ra-zero ra)) ...)
                  (if (= k u)
-                   (%op1 (+ 1 lenm) (ra d z step) ...)
+                   (%op1 (+ 1 lenm) (d z step) ...)
                    (let loop-dim ((i (- (vector-ref lens k) 1)) (z z) ...)
                      (loop-rank (+ k 1) z ...)
                      (unless (zero? i)
@@ -223,9 +223,9 @@
        #'(let-syntax
              ((%op1
                (syntax-rules … ()
-                 ((_ len (ra d z step) …)
+                 ((_ len (d z step) …)
                   (let loop ((i (- len 1)) (z z) …)
-                    (%op0 (ra d z) …)
+                    (%op0 (d z) …)
                     (unless (zero? i)
                       (loop (- i 1) (+ z step) …)))))))
            (%op-loop-elems (%op0 %op1) ra_ ...))))))
@@ -302,8 +302,8 @@
                         #'(let-syntax
                               ((%op-op
                                 (syntax-rules ()
-                                  ((_ (ra d z) …)
-                                   (%op (vref-ra vset!-ra ra d z) …)))))
+                                  ((_ (d z) …)
+                                   (%op (vref-ra vset!-ra d z) …)))))
                             (%sloop (%op-op) ra …))))
                      ((_ (%terms …) (sa sb …) ra rb …)
                       #`(case (%%ra-type ra)
@@ -337,7 +337,7 @@ See also: ra-map! ra-slice-for-each ra-clip
   (let-syntax
       ((%op
         (syntax-rules ()
-          ((_ (vref-ra vset!-ra ra da za) ...)
+          ((_ (vref-ra vset!-ra da za) ...)
            (op (vref-ra da za) ...))))
        (%apply-op
         (syntax-rules ()
@@ -363,7 +363,7 @@ See also: ra-for-each ra-copy! ra-fill! ra-clip
   (let-syntax
       ((%op
         (syntax-rules ()
-          ((_ (vref-ra vset!-ra ra da za) (vref-rx vset!-rx rx dx zx) ...)
+          ((_ (vref-ra vset!-ra da za) (vref-rx vset!-rx dx zx) ...)
            (vset!-ra da za (op (vref-rx dx zx) ...)))))
        (%apply-op
         (syntax-rules ()
@@ -412,7 +412,7 @@ See also: ra-copy! ra-map!
                 (let-syntax
                     ((%fill!
                       (syntax-rules ()
-                        ((_ len (ra da za stepa))
+                        ((_ len (da za stepa))
 ; FIXME this assumption depends on traversal order.
                          (if (= 1 stepa)
                            (line! fill da za len)
@@ -424,7 +424,7 @@ See also: ra-copy! ra-map!
          (let-syntax
              ((%op
                (syntax-rules ()
-                 ((_ (vref-ra vset!-ra ra da za))
+                 ((_ (vref-ra vset!-ra da za))
                   (vset!-ra da za fill)))))
            (%dispatch %op ra)
            ra))))
@@ -468,7 +468,7 @@ See also: ra-fill! ra-map! ra-clip
                   (let-syntax
                       ((%copy!
                         (syntax-rules ()
-                          ((_ len (ra da za stepa) (rb db zb stepb))
+                          ((_ len (da za stepa) (db zb stepb))
 ; FIXME this assumption depends on traversal order.
                            (if (= 1 stepa stepb)
                              (line! da za db zb len)
@@ -480,7 +480,7 @@ See also: ra-fill! ra-map! ra-clip
            (let-syntax
                ((%op
                  (syntax-rules ()
-                   ((_ (vref-ra vset!-ra ra da za) (vref-rb vset!-rb rb db zb))
+                   ((_ (vref-ra vset!-ra da za) (vref-rb vset!-rb db zb))
                     (vset!-ra da za (vref-rb db zb))))))
              (%dispatch %op ra rb)
              ra)))))
@@ -499,7 +499,7 @@ See also: ra-copy! ra-fill! ra-map!
   (let-syntax
       ((%op
         (syntax-rules ()
-          ((_ (vref-ra vset!-ra ra da za) (vref-rb vset!-rb rb db zb))
+          ((_ (vref-ra vset!-ra da za) (vref-rb vset!-rb db zb))
            (let ((c (vref-ra da za)))
              (vset!-ra da za (vref-rb db zb))
              (vset!-rb db zb c))))))
@@ -524,7 +524,7 @@ See also: ra-any ra-equal? ra-fold
     (let-syntax
         ((%op
           (syntax-rules ()
-            ((_ (vref-ra vset!-ra ra da za) ...)
+            ((_ (vref-ra vset!-ra da za) ...)
              (unless (pred? (vref-ra da za) ...)
                (exit #f))))))
       (or (null? rx)
@@ -559,7 +559,7 @@ See also: ra-every ra-equal? ra-fold
     (let-syntax
         ((%op
           (syntax-rules ()
-            ((_ (vref-ra vset!-ra ra da za) ...)
+            ((_ (vref-ra vset!-ra da za) ...)
              (and=> (pred? (vref-ra da za) ...) exit)))))
       (or (null? rx)
           (begin
@@ -605,7 +605,7 @@ See also: ra-map! ra-for-each
     (let-syntax
         ((%op
           (syntax-rules ()
-            ((_ (vref-ra vset!-ra ra da za) ...)
+            ((_ (vref-ra vset!-ra da za) ...)
              (unless (equal? (vref-ra da za) ...)
                (exit #f))))))
       (and (apply equal-shapes? rx)
