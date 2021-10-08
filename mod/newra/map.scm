@@ -193,14 +193,6 @@
 
 ; Variant of %op-loop that avoids updating/rolling back %%ra-zero and instead keeps indices on the stack. The improvement is somewhat unreasonable... Not worth using with rest list, however (cf branch op-loop-elems-rest-list)
 
-(define-syntax %op-elems
-  (lambda (stx)
-    (syntax-case stx ()
-      ((_ %op0 ra_ ...)
-       (with-syntax ([(ra ...) (generate-temporaries #'(ra_ ...))])
-         #'(lambda (ra ...)
-             (%op0 ((%%ra-root ra) (%%ra-zero ra)) ...)))))))
-
 (define-syntax %op-loop-elems
   (lambda (stx)
     (syntax-case stx ()
@@ -231,11 +223,16 @@
            (%op-loop-elems (%op0 %op1) ra_ ...))))))
 
 (define-syntax-rule (%sloop (%op0 %op ...) ra ...)
-  (%slice-loop
-   (max (ra-rank ra) ...)
-   (%op-elems %op0 ra ...)
-   (%op-loop-elems (%op0 %op ...) ra ...)
-   %list %let ra ...))
+  (let-syntax
+      ((%op-elems
+        (syntax-rules … ()
+          ((_ rx …)
+            (%op0 ((%%ra-root rx) (%%ra-zero rx)) …)))))
+    (%slice-loop
+     (max (ra-rank ra) ...)
+     %op-elems
+     (%op-loop-elems (%op0 %op ...) ra ...)
+     %list %let ra ...)))
 
 (define-syntax-rule (%apply-sloop %apply-op ra)
   (%slice-loop
@@ -307,13 +304,16 @@
                             (%sloop (%op-op) ra …))))
                      ((_ (%terms …) (sa sb …) ra rb …)
                       #`(case (%%ra-type ra)
-                          #,@(map (match-lambda
-                                    (tag (let ((vref-ra vset!-ra (pick-ref-set tag)))
-                                           #`((#,tag) (loop (%terms … (#,vref-ra #,vset!-ra ra)) (sb …) rb …)))))
-                               (list-ref syntax-accessors
-                                         ;; (syntax->datum #'sa) ; n0×n1×n2 for 3 args
-                                         (- (length #'(rr ...)) 1) ; n2×n2×n2 for 3 args
-                                         ))
+                          #,@(let* ((i ;; (syntax->datum #'sa) ; n0×n1×n2 for 3 args
+                                     (- (length #'(rr ...)) 1) ; n2×n2×n2 for 3 args
+                                     )
+                                    (tags (if (< i (length syntax-accessors)) ; handle default case indefinitely
+                                            (list-ref syntax-accessors i)
+                                            '())))
+                               (map (match-lambda
+                                      (tag (let ((vref-ra vset!-ra (pick-ref-set tag)))
+                                             #`((#,tag) (loop (%terms … (#,vref-ra #,vset!-ra ra)) (sb …) rb …)))))
+                                 tags))
                           (else
                            (let ((vref (%%ra-vref ra))
                                  (vset! (%%ra-vset! ra)))

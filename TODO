@@ -78,8 +78,8 @@ Help: [C-uc .] insert timestamp [C-cc] flip checkbox [C-uucc] partial flip check
     - [ ] each (cf array-curry in srfi-179 or the old Guile array-enclose).
   * [ ] output types
 
-* TODO performance [0/4]
-  * [ ] u8 ra-fill! vs native (see bench.scm)
+* TODO performance [1/4]
+  * [X] u8 ra-fill! vs native (see bench.scm) ok in 3.0.8 with partial bytevector-fill!
   * [ ] f64 ra-copy! vs native (see bench.scm)
   * [ ] ra-ref / ra-set! with 1 or 2 args vs built-in array-ref / array-set!
   * [ ] ra->list / list->ra vs built-in array->list / list->array. Maybe those can be reused?
