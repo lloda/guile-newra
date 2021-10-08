@@ -85,7 +85,7 @@
 
 (define-syntax-rule (%list a ...)
   (list a ...))
-(define-syntax-rule (%let ((a x b) ...) e ...)
+(define-syntax-rule (%let ((a [x ...] b) ...) e ...)
   (let ((a b) ...) e ...))
 (define-syntax-rule (%stepu n (ra step) ...)
   (begin (%%ra-zero-set! ra (+ (%%ra-zero ra) (* n step))) ...))
@@ -94,8 +94,8 @@
 
 (define-syntax-rule (%apply-list a)
   a)
-(define-syntax-rule (%apply-let ((a x b)) e ...)
-  (let ((a (map (lambda (x) b) x))) e ...))
+(define-syntax-rule (%apply-let ((a [x ...] b)) e ...)
+  (let ((a (map (lambda (x ...) b) x ...))) e ...))
 (define-syntax-rule (%apply-stepu n (ra step))
   (for-each (lambda (ra step) (%stepu n (ra step))) ra step))
 (define-syntax-rule (%apply-stepk k n (ra frame))
@@ -143,7 +143,7 @@
          #`(let* ((k k_)
 ; create (rank(ra) - k) slices that we'll use to iterate by bumping their zeros.
                   (los lens (apply ra-slice-for-each-check k (%list frame ...))))
-             (%let ((ra frame (make-ra-root-prefix frame k los)) ...)
+             (%let ((ra [frame] (make-ra-root-prefix frame k los)) ...)
 ; since we'll unroll, special case for rank 0
                (if (zero? k)
 ; no fresh slice descriptor like in array-slice-for-each. Should be all right b/c the descriptors can be copied.
@@ -152,13 +152,13 @@
                  (when (vector-every positive? lens)
 ; we'll do a normal rank-loop in [0..u) and unroll dimensions [u..k); u must be searched.
                    (let ((u (- k 1)))
-                     (%let ((step frame (%%ra-step-prefix frame u)) ...)
+                     (%let ((step [frame] (%%ra-step-prefix frame u)) ...)
                        (let* ((u len (let loop ((u u) (len 1) (s step) ...)
                                        (let ((lenu (vector-ref lens u)))
                                          (if (zero? u)
                                            (values u (* len lenu))
-                                           (%let ((ss s (* lenu s)) ...)
-                                             (%let ((sm frame (%%ra-step-prefix frame (- u 1))) ...)
+                                           (%let ((ss [s] (* lenu s)) ...)
+                                             (%let ((sm [frame] (%%ra-step-prefix frame (- u 1))) ...)
                                                (if (and (equal? ss sm) ...)
                                                  (loop (- u 1) (* len lenu) ss ...)
                                                  (values u (* len lenu)))))))))
@@ -211,15 +211,14 @@
                      [(z ...) (generate-temporaries #'(ra_ ...))]
                      [(d ...) (generate-temporaries #'(ra_ ...))])
          #'(lambda (lens lenm u ra ... frame ... step ...)
-             (%let ((d ra (%%ra-root ra)) ...)
-               (%let ((z ra (%%ra-zero ra)) ...)
-                 (let loop-rank ((k 0) (z z) ...)
-                   (if (= k u)
-                     (%op1 (+ 1 lenm) (ra d z step) ...)
-                     (let loop-dim ((i (- (vector-ref lens k) 1)) (z z) ...)
-                       (loop-rank (+ k 1) z ...)
-                       (unless (zero? i)
-                         (loop-dim (- i 1) (+ z (%%ra-step-prefix frame k)) ...))))))))))
+             (let ((d (%%ra-root ra)) ...)
+               (let loop-rank ((k 0) (z (%%ra-zero ra)) ...)
+                 (if (= k u)
+                   (%op1 (+ 1 lenm) (ra d z step) ...)
+                   (let loop-dim ((i (- (vector-ref lens k) 1)) (z z) ...)
+                     (loop-rank (+ k 1) z ...)
+                     (unless (zero? i)
+                       (loop-dim (- i 1) (+ z (%%ra-step-prefix frame k)) ...)))))))))
       ((_ (%op0) ra_ ...)
        #'(let-syntax
              ((%op1
