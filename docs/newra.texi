@@ -7,7 +7,7 @@
 @c last [ma112]
 
 @set VERSION 1
-@set UPDATED 2021 October 7
+@set UPDATED 2021 October 11
 
 @copying
 @code{newra} (version @value{VERSION}, updated @value{UPDATED})
@@ -3009,6 +3009,409 @@ Return an array with the same root and dimensions as @var{a}, except that dead a
 @node Cheatsheet
 @chapter Cheatsheet
 @c ------------------------------------------------
+
+@c https://cheatsheets.quantecon.org/
+@c https://hyperpolyglot.org/fortran
+
+The APL examples assume @code{⎕io←0}.
+
+Lines marked ∗ don't work at the moment because of lack of support by the compiler; there should be a working alternative listed, but the intent is that they work (eventually). For these and other examples that look poor, part of the purpose of this table is to encourage improvement...
+
+@multitable @columnfractions .2 .2 .2 .2 .2
+@item
+...
+@tab
+@code{newra}
+@tab
+APL
+@tab
+NumPy
+@tab
+Octave
+
+@item
+1×n array
+@tab
+@verbatim
+∗ #%2((1 2 3))
+(ra-reshape (list->ra 1 '(1 2 3)) 0 1 3)
+@end verbatim
+@tab
+@verbatim
+1 3 ⍴ 1 2 3
+@end verbatim
+@tab
+@verbatim
+np.array([1, 2, 3]).reshape(1, 3)
+@end verbatim
+@tab
+@verbatim
+[1 2 3]
+@end verbatim
+
+@item
+n×1 array
+@tab
+@verbatim
+∗ #%2((1) (2) (3))
+(ra-reshape (list->ra 1 '(1 2 3)) 0 3 1)
+@end verbatim
+@tab
+@verbatim
+3 1 ⍴ 1 2 3
+@end verbatim
+@tab
+@verbatim
+np.array([1, 2, 3]).reshape(3, 1)
+@end verbatim
+@tab
+@verbatim
+[1 2 3].'
+@end verbatim
+
+@item
+rank 1 array
+@tab
+@verbatim
+∗ #%(1 2 3)
+(list->ra 1 '(1 2 3))
+@end verbatim
+@tab
+@verbatim
+1 2 3
+@end verbatim
+@tab
+@verbatim
+np.array([1, 2, 3])
+@end verbatim
+@tab
+n/a
+
+@item
+integers from @var{a} to @var{b} with step size @var{k}
+@tab
+@verbatim
+(ra-iota (euclidean/ (- b a (- k)) k) a k)
+@end verbatim
+@tab
+tbf
+@tab
+@verbatim
+np.arange(a, b+1, k)
+@end verbatim
+@tab
+@verbatim
+j:k:n
+@end verbatim
+
+@item
+equispaced sequence [a .. b] with k points
+@tab
+@verbatim
+(ra-iota k a (/ (- b a) (- k 1)))
+@end verbatim
+@tab
+@verbatim
+a + ((b-a) ÷ (k-1)) × ι k
+@end verbatim
+@tab
+@verbatim
+np.linspace(a, b, k)
+@end verbatim
+@tab
+@verbatim
+linspace(a, b, k)
+@end verbatim
+
+@item
+integer sequence :p
+@tab
+@verbatim
+(ra-iota n a k)
+@end verbatim
+@tab
+@verbatim
+a + k × ι k
+@end verbatim
+@tab
+@verbatim
+np.arange(a, a+k*n, k)
+@end verbatim
+@tab
+@verbatim
+a:(a+k*(n-1)):k
+@end verbatim
+
+@item
+2x2 array
+@tab
+@verbatim
+∗ #%2((1 2) (3 4))
+(list->ra 2 '((1 2) (3 4)))
+@end verbatim
+@tab
+@verbatim
+2 2 ⍴ 1 2 3 4
+@end verbatim
+@tab
+@verbatim
+p.array([[1, 2], [3, 4]])
+@end verbatim
+@tab
+@verbatim
+[1, 2; 3, 4]
+@end verbatim
+
+@item
+array of zeros
+@tab
+@verbatim
+(make-ra 0 2 2)
+@end verbatim
+@tab
+@verbatim
+2 2 ⍴ 0
+@end verbatim
+@tab
+@verbatim
+np.zeros((2, 2))
+@end verbatim
+@tab
+@verbatim
+zeros(2, 2)
+@end verbatim
+
+@item
+array of ones
+@tab
+@verbatim
+(make-ra 1 2 2)
+@end verbatim
+@tab
+@verbatim
+2 2 ⍴ 1
+@end verbatim
+@tab
+@verbatim
+np.ones((2, 2))
+@end verbatim
+@tab
+@verbatim
+ones(2, 2)
+@end verbatim
+
+@item
+identity matrix
+@tab
+@verbatim
+(let ((a (make-ra 0 2 2)))
+  (ra-fill! (ra-transpose a 0 0) 1)
+  a)
+@end verbatim
+@tab
+@verbatim
+2 2 ⍴ 1 , 2 ⍴ 0
+@end verbatim
+@tab
+@verbatim
+np.eye(2)
+@end verbatim
+@tab
+@verbatim
+eye(2, 2)
+@end verbatim
+
+@item
+create diagonal matrix
+@tab
+@verbatim
+(let ((v #%(1 2 3))
+      (a (make-ra 0 (ra-len a) (ra-len a))))
+  (ra-copy! (ra-transpose a 0 0) v)
+  a)
+@end verbatim
+@tab
+tbf
+@tab
+@verbatim
+np.diag(2)
+@end verbatim
+@tab
+@verbatim
+diag(2, 2)
+@end verbatim
+
+@item
+transpose
+@tab
+@verbatim
+(ra-transpose A 1 0)
+@end verbatim
+@tab
+@cindex @code{⍉}, transpose
+@verbatim
+1 0 ⍉ A
+@end verbatim
+@tab
+@verbatim
+A.T
+@end verbatim
+@tab
+@verbatim
+A.'
+@end verbatim
+
+@item
+cat horizontally
+@tab
+@verbatim
+∗ (define a #%(1 2))
+(ra-cat #f 0 a a)
+@end verbatim
+@tab
+@verbatim
+a ← 1 2
+a , a
+@end verbatim
+@tab
+@verbatim
+a = np.array([1, 2])
+np.hstack((a, a))
+@end verbatim
+@tab
+@verbatim
+a = [1 2]
+[a a]
+@end verbatim
+
+@item
+cat vertically
+@tab
+@verbatim
+∗ (define a #%(1 2))
+(ra-cat #f -1 a a)
+@end verbatim
+@tab
+@verbatim
+a ← 1 2
+a ⍪ a
+@end verbatim
+@tab
+@verbatim
+a = np.array([1, 2])
+np.vstack((a, a))
+@end verbatim
+@tab
+@verbatim
+a = [1 2]
+[a; a]
+@end verbatim
+
+@item
+convert matrix to vector
+@tab
+@verbatim
+(ra-ravel a)
+@end verbatim
+@tab
+@verbatim
+, a
+@end verbatim
+@tab
+@verbatim
+a.flatten()
+@end verbatim
+@tab
+@verbatim
+a(:)
+@end verbatim
+
+@item
+flip matrix left/right
+@tab
+@c todo define a copy of np.tile's behavior
+@verbatim
+(ra-reverse a 1)
+@end verbatim
+@tab
+@cindex @code{⌽}, reverse
+@verbatim
+⌽ a
+@end verbatim
+@tab
+@verbatim
+np.fliplr(a)
+@end verbatim
+@tab
+@verbatim
+fliplr(a)
+@end verbatim
+
+@item
+flip matrix up/down
+@tab
+@c todo define a copy of np.tile's behavior
+@verbatim
+(ra-reverse a 0)
+@end verbatim
+@tab
+@cindex @code{⊖}, rowel
+@verbatim
+⊖ a
+@end verbatim
+@tab
+@verbatim
+np.flipud(a)
+@end verbatim
+@tab
+@verbatim
+flipud(a)
+@end verbatim
+
+@item
+broadcast a function over arrays
+@tab
+@verbatim
+(define (f x) (* x x))
+(define (g x y) (+ 2 x (* y y)))
+(define x (ra-iota 10 1))
+(define y (ra-iota 10 2))
+(ra-map #f f x)
+(ra-map #f g x y)
+@end verbatim
+@tab
+tbf
+@tab
+@verbatim
+def f(x): return x**2
+def g(x, y): return x + 2 + y**2
+x = np.arange(1, 11)
+y = np.arange(2, 12)
+f(x)
+g(x, y)
+@end verbatim
+@tab
+@verbatim
+f = @(x) x.^2
+g = @(x, y) x + 2 + y.^2
+x = 1:10
+y = 2:11
+f(x)
+g(x, y)
+@end verbatim
+
+@item
+...
+@tab
+...
+@tab
+...
+@tab
+...
+@tab
+...
+
+@end multitable
 
 @c ------------------------------------------------
 @node @mybibnode{}

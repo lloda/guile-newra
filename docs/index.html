@@ -3,7 +3,7 @@
 <!-- Created by GNU Texinfo 6.8, http://www.gnu.org/software/texinfo/ -->
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-<!-- newra (version 1, updated 2021 October 6)
+<!-- newra (version 1, updated 2021 October 7)
 
 (c) lloda 2017-2021
 
@@ -105,7 +105,7 @@ Next: <a href="#Introduction" accesskey="n" rel="next">Introduction</a> &nbsp; [
 </div>
 <span id="newra"></span><h1 class="top"><code>newra</code></h1>
 
-<p><code>newra</code> (version 1, updated 2021 October 6)
+<p><code>newra</code> (version 1, updated 2021 October 7)
 </p>
 <p>(c) lloda 2017&ndash;2021
 </p>
@@ -2693,6 +2693,137 @@ Next: <a href="#Sources" accesskey="n" rel="next">Sources</a>, Previous: <a href
 </div>
 <span id="Cheatsheet-1"></span><h2 class="chapter">6 Cheatsheet</h2>
 
+
+<p>The APL examples assume <code>⎕io←0</code>.
+</p>
+<p>Lines marked ∗ don&rsquo;t work at the moment because of lack of support by the compiler; there should be a working alternative listed, but the intent is that they work (eventually). For these and other examples that look poor, part of the purpose of this table is to encourage improvement...
+</p>
+<table>
+<tr><td width="20%">...</td><td width="20%"><code>newra</code></td><td width="20%">APL</td><td width="20%">NumPy</td><td width="20%">Octave</td></tr>
+<tr><td width="20%">1×n array</td><td width="20%"><pre class="verbatim">∗ #%2((1 2 3))
+(ra-reshape (list-&gt;ra 1 '(1 2 3)) 0 1 3)
+</pre></td><td width="20%"><pre class="verbatim">1 3 ⍴ 1 2 3
+</pre></td><td width="20%"><pre class="verbatim">np.array([1, 2, 3]).reshape(1, 3)
+</pre></td><td width="20%"><pre class="verbatim">[1 2 3]
+</pre></td></tr>
+<tr><td width="20%">n×1 array</td><td width="20%"><pre class="verbatim">∗ #%2((1) (2) (3))
+(ra-reshape (list-&gt;ra 1 '(1 2 3)) 0 3 1)
+</pre></td><td width="20%"><pre class="verbatim">3 1 ⍴ 1 2 3
+</pre></td><td width="20%"><pre class="verbatim">np.array([1, 2, 3]).reshape(3, 1)
+</pre></td><td width="20%"><pre class="verbatim">[1 2 3].'
+</pre></td></tr>
+<tr><td width="20%">rank 1 array</td><td width="20%"><pre class="verbatim">∗ #%(1 2 3)
+(list-&gt;ra 1 '(1 2 3))
+</pre></td><td width="20%"><pre class="verbatim">1 2 3
+</pre></td><td width="20%"><pre class="verbatim">np.array([1, 2, 3])
+</pre></td><td width="20%">n/a</td></tr>
+<tr><td width="20%">integers from <var>a</var> to <var>b</var> with step size <var>k</var></td><td width="20%"><pre class="verbatim">(ra-iota (euclidean/ (- b a (- k)) k) a k)
+</pre></td><td width="20%">tbf</td><td width="20%"><pre class="verbatim">np.arange(a, b+1, k)
+</pre></td><td width="20%"><pre class="verbatim">j:k:n
+</pre></td></tr>
+<tr><td width="20%">equispaced sequence [a .. b] with k points</td><td width="20%"><pre class="verbatim">(ra-iota k a (/ (- b a) (- k 1)))
+</pre></td><td width="20%"><pre class="verbatim">a + ((b-a) ÷ (k-1)) × ι k
+</pre></td><td width="20%"><pre class="verbatim">np.linspace(a, b, k)
+</pre></td><td width="20%"><pre class="verbatim">linspace(a, b, k)
+</pre></td></tr>
+<tr><td width="20%">integer sequence :p</td><td width="20%"><pre class="verbatim">(ra-iota n a k)
+</pre></td><td width="20%"><pre class="verbatim">a + k × ι k
+</pre></td><td width="20%"><pre class="verbatim">np.arange(a, a+k*n, k)
+</pre></td><td width="20%"><pre class="verbatim">a:(a+k*(n-1)):k
+</pre></td></tr>
+<tr><td width="20%">2x2 array</td><td width="20%"><pre class="verbatim">∗ #%2((1 2) (3 4))
+(list-&gt;ra 2 '((1 2) (3 4)))
+</pre></td><td width="20%"><pre class="verbatim">2 2 ⍴ 1 2 3 4
+</pre></td><td width="20%"><pre class="verbatim">p.array([[1, 2], [3, 4]])
+</pre></td><td width="20%"><pre class="verbatim">[1, 2; 3, 4]
+</pre></td></tr>
+<tr><td width="20%">array of zeros</td><td width="20%"><pre class="verbatim">(make-ra 0 2 2)
+</pre></td><td width="20%"><pre class="verbatim">2 2 ⍴ 0
+</pre></td><td width="20%"><pre class="verbatim">np.zeros((2, 2))
+</pre></td><td width="20%"><pre class="verbatim">zeros(2, 2)
+</pre></td></tr>
+<tr><td width="20%">array of ones</td><td width="20%"><pre class="verbatim">(make-ra 1 2 2)
+</pre></td><td width="20%"><pre class="verbatim">2 2 ⍴ 1
+</pre></td><td width="20%"><pre class="verbatim">np.ones((2, 2))
+</pre></td><td width="20%"><pre class="verbatim">ones(2, 2)
+</pre></td></tr>
+<tr><td width="20%">identity matrix</td><td width="20%"><pre class="verbatim">(let ((a (make-ra 0 2 2)))
+  (ra-fill! (ra-transpose a 0 0) 1)
+  a)
+</pre></td><td width="20%"><pre class="verbatim">2 2 ⍴ 1 , 2 ⍴ 0
+</pre></td><td width="20%"><pre class="verbatim">np.eye(2)
+</pre></td><td width="20%"><pre class="verbatim">eye(2, 2)
+</pre></td></tr>
+<tr><td width="20%">create diagonal matrix</td><td width="20%"><pre class="verbatim">(let ((v #%(1 2 3))
+      (a (make-ra 0 (ra-len a) (ra-len a))))
+  (ra-copy! (ra-transpose a 0 0) v)
+  a)
+</pre></td><td width="20%">tbf</td><td width="20%"><pre class="verbatim">np.diag(2)
+</pre></td><td width="20%"><pre class="verbatim">diag(2, 2)
+</pre></td></tr>
+<tr><td width="20%">transpose</td><td width="20%"><pre class="verbatim">(ra-transpose A 1 0)
+</pre></td><td width="20%"><span id="index-_005b_003f_005d_002c-transpose-1"></span>
+<pre class="verbatim">1 0 ⍉ A
+</pre></td><td width="20%"><pre class="verbatim">A.T
+</pre></td><td width="20%"><pre class="verbatim">A.'
+</pre></td></tr>
+<tr><td width="20%">cat horizontally</td><td width="20%"><pre class="verbatim">∗ (define a #%(1 2))
+(ra-cat #f 0 a a)
+</pre></td><td width="20%"><pre class="verbatim">a ← 1 2
+a , a
+</pre></td><td width="20%"><pre class="verbatim">a = np.array([1, 2])
+np.hstack((a, a))
+</pre></td><td width="20%"><pre class="verbatim">a = [1 2]
+[a a]
+</pre></td></tr>
+<tr><td width="20%">cat vertically</td><td width="20%"><pre class="verbatim">∗ (define a #%(1 2))
+(ra-cat #f -1 a a)
+</pre></td><td width="20%"><pre class="verbatim">a ← 1 2
+a ⍪ a
+</pre></td><td width="20%"><pre class="verbatim">a = np.array([1, 2])
+np.vstack((a, a))
+</pre></td><td width="20%"><pre class="verbatim">a = [1 2]
+[a; a]
+</pre></td></tr>
+<tr><td width="20%">convert matrix to vector</td><td width="20%"><pre class="verbatim">(ra-ravel a)
+</pre></td><td width="20%"><pre class="verbatim">, a
+</pre></td><td width="20%"><pre class="verbatim">a.flatten()
+</pre></td><td width="20%"><pre class="verbatim">a(:)
+</pre></td></tr>
+<tr><td width="20%">flip matrix left/right</td><td width="20%"><pre class="verbatim">(ra-reverse a 1)
+</pre></td><td width="20%"><span id="index-_005b_003f_005d_002c-reverse-1"></span>
+<pre class="verbatim">⌽ a
+</pre></td><td width="20%"><pre class="verbatim">np.fliplr(a)
+</pre></td><td width="20%"><pre class="verbatim">fliplr(a)
+</pre></td></tr>
+<tr><td width="20%">flip matrix up/down</td><td width="20%"><pre class="verbatim">(ra-reverse a 0)
+</pre></td><td width="20%"><span id="index-_005b_003f_005d_002c-rowel-1"></span>
+<pre class="verbatim">⊖ a
+</pre></td><td width="20%"><pre class="verbatim">np.flipud(a)
+</pre></td><td width="20%"><pre class="verbatim">flipud(a)
+</pre></td></tr>
+<tr><td width="20%">broadcast a function over arrays</td><td width="20%"><pre class="verbatim">(define (f x) (* x x))
+(define (g x y) (+ 2 x (* y y)))
+(define x (ra-iota 10 1))
+(define y (ra-iota 10 2))
+(ra-map #f f x)
+(ra-map #f g x y)
+</pre></td><td width="20%">tbf</td><td width="20%"><pre class="verbatim">def f(x): return x**2
+def g(x, y): return x + 2 + y**2
+x = np.arange(1, 11)
+y = np.arange(2, 12)
+f(x)
+g(x, y)
+</pre></td><td width="20%"><pre class="verbatim">f = @(x) x.^2
+g = @(x, y) x + 2 + y.^2
+x = 1:10
+y = 2:11
+f(x)
+g(x, y)
+</pre></td></tr>
+<tr><td width="20%">...</td><td width="20%">...</td><td width="20%">...</td><td width="20%">...</td><td width="20%">...</td></tr>
+</table>
+
 <hr>
 </div>
 <div class="chapter" id="Sources">
@@ -2819,13 +2950,16 @@ Previous: <a href="#Sources" accesskey="p" rel="prev">Sources</a>, Up: <a href="
 <tr><td colspan="4"> <hr></td></tr>
 <tr><th id="Indices_cp_symbol-4">⊖</th><td></td><td></td></tr>
 <tr><td></td><td valign="top"><a href="#index-_005b_003f_005d_002c-rowel"><code>⊖</code>, rowel</a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
+<tr><td></td><td valign="top"><a href="#index-_005b_003f_005d_002c-rowel-1"><code>⊖</code>, rowel</a>:</td><td>&nbsp;</td><td valign="top"><a href="#Cheatsheet">Cheatsheet</a></td></tr>
 <tr><td colspan="4"> <hr></td></tr>
 <tr><th id="Indices_cp_symbol-5">⌽</th><td></td><td></td></tr>
 <tr><td></td><td valign="top"><a href="#index-_005b_003f_005d_002c-reverse"><code>⌽</code>, reverse</a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
+<tr><td></td><td valign="top"><a href="#index-_005b_003f_005d_002c-reverse-1"><code>⌽</code>, reverse</a>:</td><td>&nbsp;</td><td valign="top"><a href="#Cheatsheet">Cheatsheet</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-_005b_003f_005d_002c-rotate"><code>⌽</code>, rotate</a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
 <tr><td colspan="4"> <hr></td></tr>
 <tr><th id="Indices_cp_symbol-6">⍉</th><td></td><td></td></tr>
 <tr><td></td><td valign="top"><a href="#index-_005b_003f_005d_002c-transpose"><code>⍉</code>, transpose</a>:</td><td>&nbsp;</td><td valign="top"><a href="#Transposition">Transposition</a></td></tr>
+<tr><td></td><td valign="top"><a href="#index-_005b_003f_005d_002c-transpose-1"><code>⍉</code>, transpose</a>:</td><td>&nbsp;</td><td valign="top"><a href="#Cheatsheet">Cheatsheet</a></td></tr>
 <tr><td colspan="4"> <hr></td></tr>
 <tr><th id="Indices_cp_symbol-7">⍋</th><td></td><td></td></tr>
 <tr><td></td><td valign="top"><a href="#index-_005b_003f_005d">⍋</a>:</td><td>&nbsp;</td><td valign="top"><a href="#Transposition">Transposition</a></td></tr>
