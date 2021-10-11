@@ -96,7 +96,8 @@ Help: [C-uc .] insert timestamp [C-cc] flip checkbox [C-uucc] partial flip check
   * [X] rank-1 (or higher!) cases in the unrolled section (e.g. bytevector-copy!, bytevector-fill!).
   * [ ] rank-1 (or higher!) cases for generating functions (e.g. array->list).
   * [ ] the reverse of ra-singletonize, find a good name (see 'differences with numpy' in the doc).
-  * [ ] make (set! (ra ...) o) work with slices just (ra ...).
+  * [ ] make (ra ...) work with generalized slices just like (ra-from ...).
+  * [ ] make (set! (ra ...) o) work with slices (now) or generalized slices (eventually) just like (ra ...).
   * [ ] refactor macros
   * [ ] bench tracking
   * [ ] move struct defs to (newra types)

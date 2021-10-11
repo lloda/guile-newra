@@ -3013,13 +3013,13 @@ Return an array with the same root and dimensions as @var{a}, except that dead a
 @c https://cheatsheets.quantecon.org/
 @c https://hyperpolyglot.org/fortran
 
-The APL examples assume @code{⎕io←0}.
-
 Lines marked ∗ don't work at the moment because of lack of support by the compiler; there should be a working alternative listed, but the intent is that they work (eventually). For these and other examples that look poor, part of the purpose of this table is to encourage improvement...
+
+The APL examples assume @code{⎕io←0}.
 
 @multitable @columnfractions .2 .2 .2 .2 .2
 @item
-...
+
 @tab
 @code{newra}
 @tab
@@ -3234,11 +3234,11 @@ create diagonal matrix
 tbf
 @tab
 @verbatim
-np.diag(2)
+np.diag([1, 2, 3])
 @end verbatim
 @tab
 @verbatim
-diag(2, 2)
+diag([1 2 3])
 @end verbatim
 
 @item
@@ -3398,6 +3398,188 @@ x = 1:10
 y = 2:11
 f(x)
 g(x, y)
+@end verbatim
+
+@item
+for matrix @code{a}, access one element
+@tab
+@verbatim
+(a 2 2)
+(ra-from a 2 2)
+@end verbatim
+@tab
+@verbatim
+a[2; 2]
+@end verbatim
+@tab
+@verbatim
+a[2, 2]
+@end verbatim
+@tab
+@verbatim
+a(2, 2)
+@end verbatim
+
+@item
+for matrix @code{a}, access row block
+@tab
+@verbatim
+(ra-from a (ra-iota 4 1))
+@end verbatim
+@tab
+@verbatim
+a[1 + ι 4; ]
+@end verbatim
+@tab
+@verbatim
+a[1:5, :]
+@end verbatim
+@tab
+@verbatim
+a(1:4, :)
+@end verbatim
+
+@item
+for matrix @code{a}, access column block
+@tab
+@verbatim
+(ra-from a #t (ra-iota 4 1))
+@end verbatim
+@tab
+@verbatim
+a[; 1 + ι 4]
+@end verbatim
+@tab
+@verbatim
+a[:, 1:5]
+@end verbatim
+@tab
+@verbatim
+a(:, 1:4)
+@end verbatim
+
+@item
+copy of matrix with row removed
+@tab
+@verbatim
+(ra-from a (list->ra 1 '(1 2 4)))
+@end verbatim
+@tab
+@verbatim
+a[1 2 4; ]
+@end verbatim
+@tab
+@verbatim
+a[[1 2 4], :]
+@end verbatim
+@tab
+@verbatim
+a([1 2 4], :)
+@end verbatim
+
+@item
+diagonal of matrix
+@tab
+@verbatim
+(ra-transpose a 0 0)
+@end verbatim
+@tab
+@verbatim
+0 0 ⍉ a
+@end verbatim
+@tab
+@verbatim
+np.diag(a)
+@end verbatim
+@tab
+@verbatim
+diag(a)
+@end verbatim
+
+@item
+dimensions
+@tab
+@verbatim
+(match (ra-dimensions a)
+  ((nrow ncol) ...))
+@end verbatim
+@tab
+@verbatim
+nrow ← (ρ a)[0]
+ncol ← (ρ a)[1]
+@end verbatim
+@tab
+@verbatim
+nrow, ncol = np.shape(A)
+@end verbatim
+@tab
+@verbatim
+[nrow ncol] = size(A)
+@end verbatim
+
+@item
+sum each column
+@tab
+@verbatim
+(define id 0/-inf.0/+inf.0)
+(define op +/max/min)
+(let ((b (make-ra id (ra-len a 1))))
+  (ra-map! b op b (ra-transpose 1 0)))
+@end verbatim
+@tab
+@verbatim
++ / ⍉ a
+@end verbatim
+@tab
+@verbatim
+np.sum(a, 0)
+@end verbatim
+@tab
+@verbatim
+np.sum(a, 1)
+@end verbatim
+
+@item
+sum each row
+@tab
+@verbatim
+(define id 0/-inf.0/+inf.0)
+(define op +/max/min)
+(let ((b (make-ra id (ra-len a 0))))
+  (ra-map! b op b a))
+@end verbatim
+@tab
+@verbatim
++ / a
+@end verbatim
+@tab
+@verbatim
+np.sum(a, 1)
+@end verbatim
+@tab
+@verbatim
+sum(a, 2)
+@end verbatim
+
+@item
+sum/max/min the whole matrix
+@tab
+@verbatim
+(define id 0/-inf.0/+inf.0)
+(define op +/max/min)
+(ra-fold op id a)
+@end verbatim
+@tab
+@verbatim
++ / , a
+@end verbatim
+@tab
+@verbatim
+np.sum(a)
+@end verbatim
+@tab
+@verbatim
+sum(a)
 @end verbatim
 
 @item
