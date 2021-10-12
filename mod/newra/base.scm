@@ -195,7 +195,7 @@ See also: dim-len dim-lo dim-step c-dims
 
 (define-inlinable (%%ra-root a) (struct-ref a 2))
 (define-inlinable (%%ra-zero a) (struct-ref a 3))
-(define-inlinable (%%ra-zero-set! a z) (struct-set! a 3 z)) ; set on iteration. FIXME immutable record?
+(define-inlinable (%%ra-zero-set! a z) (struct-set! a 3 z)) ; set on iteration. Everything else immutable.
 (define-inlinable (%%ra-dims a) (struct-ref a 4))
 (define-inlinable (%%ra-type a) (struct-ref a 5))
 (define-inlinable (%%ra-vlen a) (struct-ref a 6))
@@ -352,8 +352,6 @@ See also: ra-zero
 (define-inlinable-case ra-ref
   (case-lambda
    "
-ra-ref a i ...
-
 Return the element of ra @var{a} determined by indices @var{i}. The number of
 indices must be equal to the rank of @var{a}.
 

@@ -3,7 +3,7 @@
 <!-- Created by GNU Texinfo 6.8, http://www.gnu.org/software/texinfo/ -->
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-<!-- newra (version 1, updated 2021 October 11)
+<!-- newra (version 1, updated 2021 October 12)
 
 (c) lloda 2017-2021
 
@@ -105,7 +105,7 @@ Next: <a href="#Introduction" accesskey="n" rel="next">Introduction</a> &nbsp; [
 </div>
 <span id="newra"></span><h1 class="top"><code>newra</code></h1>
 
-<p><code>newra</code> (version 1, updated 2021 October 11)
+<p><code>newra</code> (version 1, updated 2021 October 12)
 </p>
 <p>(c) lloda 2017&ndash;2021
 </p>
@@ -1500,7 +1500,7 @@ Next: <a href="#Cheatsheet" accesskey="n" rel="next">Cheatsheet</a>, Previous: <
 <span id="x_002darray_002d_003era"></span><dl class="def">
 <dt id="index-array_002d_003era-1"><span class="category">Function<!-- /@w -->: </span><span><strong>array-&gt;ra</strong> <em>a</em><a href='#index-array_002d_003era-1' class='copiable-anchor'> &para;</a></span></dt>
 <dd>
-<p>Convert built-in Guile array <var>a</var> (anything that satisfies <code>array?</code>) into a (<code>newra)</code> array.
+<p>Convert built-in Guile array <var>a</var> (anything that satisfies <code>array?</code>) to a (<code>newra)</code> array.
 </p>
 <p>This function doesn&rsquo;t create a copy of the array, but reuses the root (<code>shared-array-root</code>) of <var>a</var>, that is, <code>(eq? (ra-root (array-&gt;ra a)) (shared-array-root a))</code> is <code>#t</code>.
 </p>
@@ -2650,11 +2650,11 @@ indices that match those elements. <code>newra</code> will <em>not</em> check th
 <span id="x_002dra_002d_003earray"></span><dl class="def">
 <dt id="index-ra_002d_003earray-1"><span class="category">Function<!-- /@w -->: </span><span><strong>ra-&gt;array</strong> <em>a</em><a href='#index-ra_002d_003earray-1' class='copiable-anchor'> &para;</a></span></dt>
 <dd>
-<p>Convert (<code>newra</code>) array <var>a</var> into built-in Guile array.
+<p>Convert (<code>newra</code>) array <var>a</var> to built-in Guile array.
 </p>
 <p>This function does not create a copy of the array, but reuses the root (<code>ra-root</code>) of <var>a</var>, that is, <code>(eq? (ra-root a) (shared-array-root (ra-&gt;array a)))</code> is <code>#t</code>.
 </p>
-<p>Not all arrays can be converted into built-in Guile arrays. For example, type <code>d</code> arrays, or arrays with unbounded axes, are not convertible.
+<p>Not all arrays can be converted to built-in Guile arrays. For example, type <code>d</code> arrays, or arrays with unbounded axes, are not convertible.
 </p>
 <div class="example">
 <pre class="verbatim">(ra-&gt;array (ra-i 3)) ; error, type d not convertible
@@ -2698,7 +2698,7 @@ Next: <a href="#Sources" accesskey="n" rel="next">Sources</a>, Previous: <a href
 </p>
 <p>The APL examples assume <code>⎕io←0</code>.
 </p>
-<p>The <code>newra</code> examples use <code>(define ⍉ ra-transpose)</code>, which <code>newra</code> itself doesn&rsquo;t provide.
+<p>The table assumes knowledge of Scheme. The <code>newra</code> examples use <code>(define ⍉ ra-transpose)</code>, which <code>newra</code> itself doesn&rsquo;t provide.
 </p>
 <table>
 <tr><td width="20%"></td><td width="20%"><code>newra</code></td><td width="20%">APL</td><td width="20%">NumPy</td><td width="20%">Octave</td></tr>

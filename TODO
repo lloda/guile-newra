@@ -71,6 +71,8 @@ Help: [C-uc .] insert timestamp [C-cc] flip checkbox [C-uucc] partial flip check
   * [ ] reader handles quasiquote
   * [ ] ways to control iteration (in order, dim loop order, direction, etc.)
   * [ ] a solution for (ra-amend! dst (RA-MAP OP (ra-from dst i ...)) i ...). Lenses?
+  * [ ] separate somehow the rank matching cases that can be done in parallel from those that
+    cannot, e.g. using lower rank dest arg to perform reductions.
 
 * TODO ra the array language [/]
   * [ ] drag-along facility / lazy ops
@@ -99,6 +101,7 @@ Help: [C-uc .] insert timestamp [C-cc] flip checkbox [C-uucc] partial flip check
   * [ ] the reverse of ra-singletonize, find a good name (see 'differences with numpy' in the doc).
   * [ ] make (ra ...) work with generalized slices just like (ra-from ...).
   * [ ] make (set! (ra ...) o) work with slices (now) or generalized slices (eventually) just like (ra ...).
+  * [ ] automatic handling of scalars (e.g. (ra-map #f + (ra-iota 3) 99) works).
   * [ ] refactor macros
   * [ ] bench tracking
   * [ ] move struct defs to (newra types)

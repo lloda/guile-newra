@@ -7,7 +7,7 @@
 ; later version.
 
 ;;; Commentary:
-;; Newra is a replacement for Guile's C-based arrays. This is the hub module.
+;; newra is a replacement for Guile's C-based arrays. This is the hub module.
 ;;; Code:
 
 (define-module (newra))

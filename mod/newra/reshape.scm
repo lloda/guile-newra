@@ -7,7 +7,7 @@
 ; later version.
 
 ;;; Commentary:
-;; Library for Newra - manipulation of the dim vector
+;; Library for newra - manipulation of the dim vector
 ;;; Code:
 
 (define-module (newra reshape)

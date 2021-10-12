@@ -7,7 +7,7 @@
 ; later version.
 
 ;;; Commentary:
-;; Concatenation procedures for Newra.
+;; Concatenation procedures for newra.
 ;;; Code:
 
 (define-module (newra cat)

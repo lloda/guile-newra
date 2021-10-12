@@ -7,7 +7,7 @@
 @c last [ma112]
 
 @set VERSION 1
-@set UPDATED 2021 October 11
+@set UPDATED 2021 October 12
 
 @copying
 @code{newra} (version @value{VERSION}, updated @value{UPDATED})
@@ -1606,7 +1606,7 @@ Differences with Octave:
 @anchor{x-array->ra}
 @deffn @w{Function} array->ra a
 
-Convert built-in Guile array @var{a} (anything that satisfies @code{array?}) into a (@code{newra)} array.
+Convert built-in Guile array @var{a} (anything that satisfies @code{array?}) to a (@code{newra)} array.
 
 This function doesn't create a copy of the array, but reuses the root (@code{shared-array-root}) of @var{a}, that is, @code{(eq? (ra-root (array->ra a)) (shared-array-root a))} is @code{#t}.
 
@@ -2963,11 +2963,11 @@ See also: @ref{x-ra-from,@code{ra-from}}, @ref{x-ra-copy!,@code{ra-copy!}} @ref{
 @anchor{x-ra->array}
 @deffn @w{Function} ra->array a
 
-Convert (@code{newra}) array @var{a} into built-in Guile array.
+Convert (@code{newra}) array @var{a} to built-in Guile array.
 
 This function does not create a copy of the array, but reuses the root (@code{ra-root}) of @var{a}, that is, @code{(eq? (ra-root a) (shared-array-root (ra->array a)))} is @code{#t}.
 
-Not all arrays can be converted into built-in Guile arrays. For example, type @code{d} arrays, or arrays with unbounded axes, are not convertible.
+Not all arrays can be converted to built-in Guile arrays. For example, type @code{d} arrays, or arrays with unbounded axes, are not convertible.
 
 @example
 @verbatim
@@ -3017,7 +3017,7 @@ Lines marked ∗ don't work at the moment because of lack of support by the comp
 
 The APL examples assume @code{⎕io←0}.
 
-The @code{newra} examples use @code{(define ⍉ ra-transpose)}, which @code{newra} itself doesn't provide.
+The table assumes knowledge of Scheme. The @code{newra} examples use @code{(define ⍉ ra-transpose)}, which @code{newra} itself doesn't provide.
 
 @multitable @columnfractions .2 .2 .2 .2 .2
 @item

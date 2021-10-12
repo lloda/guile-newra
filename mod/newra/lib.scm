@@ -7,7 +7,7 @@
 ; later version.
 
 ;;; Commentary:
-;; Library for Newra - hub, plus old arrays compatiblity & misc.
+;; Library for newra - hub, plus old arrays compatiblity & misc.
 ;;; Code:
 
 (define-module (newra lib)
@@ -74,11 +74,9 @@ See also: ra-fold ra-map! ra-for-each ra-slice-for-each
 
 (define (make-typed-ra type value . d)
   "
-make-typed-ra type value d ...
-
-Return a new ra of type TYPE and shape D. The ra will be initialized with
-VALUE. VALUE may be *unspecified*, in which case the ra may be left
-uninitialized.
+Return a new array of type @var{type} and shape @var{d}. The array will be
+initialized with @var{value}. @var{value} may be *unspecified*, in which case
+the array may be left uninitialized.
 
 See also: make-ra
 "
@@ -86,47 +84,46 @@ See also: make-ra
 
 (define (make-ra value . d)
   "
-make-ra value d ...
-
 Equivalent to (make-typed-ra #t value d ...).
 
 See also: make-typed-ra
 "
   (make-ra-new #t value (apply c-dims d)))
 
-(define (make-ra-shared oldra mapfunc . d)
+(define (make-ra-shared oldra mapf . d)
   "
-make-ra-shared oldra mapfunc ... d
+Return a shared array with shape @var{d} over the root of @var{oldra}. @var{mapf}
+is a function of the indices of the new array and must return a list of indices
+to @var{oldra}.
 
-Return a shared array with shape D over the root of OLDRA. MAPFUNC is a function
-of the indices of the new array and must return a list of indices to
-OLDRA.
-
-MAPFUNC is only called the minimum (+ 1 (length D)) times that are needed in
-order to determine an affine function from one set of indices to the other.
+@var{mapf} is only called the minimum (+ 1 (length d)) times that
+are needed in order to determine an affine function from one set of indices to
+the other.
 
 For example, to displace the bounds of an array without affecting its contents:
 
+@verbatim
 guile> (define x (ra-i 3 2))
 guile> x
 #%2d:3:2((0 1) (2 3) (4 5))
 guile> (make-ra-shared x (lambda (i j) (list (- i 2) (+ j 3))) '(2 4) '(-3 -2))
-#%2d@2:3@-3:2((0 1) (2 3) (4 5))
+#%2d@2:3@-3:2((0 1) (2 3) (4 5)
+@end verbatim
 
-See also: make-ra, FIXME ra-affine-map
+See also: make-ra
 "
 ; get lo & len, won't use step except if the result is empty.
   (let* ((oldra (ra-check oldra))
          (dims (apply c-dims d))
          (newrank (vector-length dims)))
-; if the result *is* empty then it has no valid indices, so we cannot call mapfunc.
+; if the result *is* empty then it has no valid indices, so we cannot call mapf.
     (let emptycheck ((k 0))
       (if (< k newrank)
         (if (positive? (dim-len (vector-ref dims k)))
           (emptycheck (+ 1 k))
           (make-ra-root (%%ra-root oldra) dims (%%ra-zero oldra)))
         (let* ((los (vector->list (vector-map dim-lo dims)))
-               (ref (apply ra-pos (%%ra-zero oldra) (%%ra-dims oldra) (apply mapfunc los)))
+               (ref (apply ra-pos (%%ra-zero oldra) (%%ra-dims oldra) (apply mapf los)))
                (dims (vector-map
                       (lambda (dim step) (make-dim (dim-len dim) (dim-lo dim) step))
                       dims
@@ -140,7 +137,7 @@ See also: make-ra, FIXME ra-affine-map
                              (if (positive? (dim-len (vector-ref dims k)))
                                (let ((ii (list-copy los)))
                                  (list-set! ii k (+ 1 (list-ref los k)))
-                                 (- (apply ra-pos (%%ra-zero oldra) (%%ra-dims oldra) (apply mapfunc ii)) ref))
+                                 (- (apply ra-pos (%%ra-zero oldra) (%%ra-dims oldra) (apply mapf ii)) ref))
                                0))
                             (loop (+ k 1)))))))))
           (make-ra-root (%%ra-root oldra) dims (- ref (ra-offset 0 dims))))))))
