@@ -3017,6 +3017,8 @@ Lines marked ∗ don't work at the moment because of lack of support by the comp
 
 The APL examples assume @code{⎕io←0}.
 
+The @code{newra} examples use @code{(define ⍉ ra-transpose)}, which @code{newra} itself doesn't provide.
+
 @multitable @columnfractions .2 .2 .2 .2 .2
 @item
 
@@ -3205,7 +3207,7 @@ identity matrix
 @tab
 @verbatim
 (let ((a (make-ra 0 2 2)))
-  (ra-fill! (ra-transpose a 0 0) 1)
+  (ra-fill! (⍉ a 0 0) 1)
   a)
 @end verbatim
 @tab
@@ -3227,11 +3229,16 @@ create diagonal matrix
 @verbatim
 (let ((v #%(1 2 3))
       (a (make-ra 0 (ra-len a) (ra-len a))))
-  (ra-copy! (ra-transpose a 0 0) v)
+  (ra-copy! (⍉ a 0 0) v)
   a)
 @end verbatim
 @tab
-tbf
+@verbatim
+n ← ⍴ 1 2 3
+a ← (n, n) ⍴ 0
+(0 0 ⍉ a) ← ⍳ n
+a
+@end verbatim
 @tab
 @verbatim
 np.diag([1, 2, 3])
@@ -3245,7 +3252,7 @@ diag([1 2 3])
 transpose
 @tab
 @verbatim
-(ra-transpose A 1 0)
+(⍉ A 1 0)
 @end verbatim
 @tab
 @cindex @code{⍉}, transpose
@@ -3289,7 +3296,7 @@ cat vertically
 @tab
 @verbatim
 ∗ (define a #%(1 2))
-(ra-cat #f -1 a a)
+(ra-scat #f 1 a a)
 @end verbatim
 @tab
 @verbatim
@@ -3481,7 +3488,7 @@ a([1 2 4], :)
 diagonal of matrix
 @tab
 @verbatim
-(ra-transpose a 0 0)
+(⍉ a 0 0)
 @end verbatim
 @tab
 @verbatim
@@ -3497,7 +3504,7 @@ diag(a)
 @end verbatim
 
 @item
-dimensions
+dimensions of matrix
 @tab
 @verbatim
 (match (ra-dimensions a)
@@ -3518,29 +3525,35 @@ nrow, ncol = np.shape(A)
 @end verbatim
 
 @item
-sum each column
+sum/max/min each column of matrix
 @tab
 @verbatim
 (define id 0/-inf.0/+inf.0)
 (define op +/max/min)
 (let ((b (make-ra id (ra-len a 1))))
-  (ra-map! b op b (ra-transpose 1 0)))
+  (ra-map! b op b (⍉ 1 0)))
 @end verbatim
 @tab
 @verbatim
 + / ⍉ a
+⌈ / ⍉ a
+⌊ / ⍉ a
 @end verbatim
 @tab
 @verbatim
 np.sum(a, 0)
+np.max(a, 0)
+np.min(a, 0)
 @end verbatim
 @tab
 @verbatim
-np.sum(a, 1)
+sum(a, 1)
+max(a, 1)
+min(a, 1)
 @end verbatim
 
 @item
-sum each row
+sum/max/min each row of matrix
 @tab
 @verbatim
 (define id 0/-inf.0/+inf.0)
@@ -3551,14 +3564,20 @@ sum each row
 @tab
 @verbatim
 + / a
+⌈ / a
+⌊ / a
 @end verbatim
 @tab
 @verbatim
 np.sum(a, 1)
+np.max(a, 1)
+np.min(a, 1)
 @end verbatim
 @tab
 @verbatim
 sum(a, 2)
+max(a, 2)
+min(a, 2)
 @end verbatim
 
 @item
@@ -3572,14 +3591,121 @@ sum/max/min the whole matrix
 @tab
 @verbatim
 + / , a
+⌈ / , a
+⌊ / , a
 @end verbatim
 @tab
 @verbatim
 np.sum(a)
+np.max(a)
+np.min(a)
 @end verbatim
 @tab
 @verbatim
 sum(a)
+max(a)
+min(a)
+@end verbatim
+
+@item
+dot product of vectors
+@tab
+@verbatim
+(ra-fold
+  (λ (c a b) (+ c (* a b)))
+  a b)
+@end verbatim
+@tab
+@verbatim
+a + . × b
+@end verbatim
+@tab
+@verbatim
+a @ b
+@end verbatim
+@tab
+@verbatim
+dot(a, b)
+@end verbatim
+
+@item
+matrix product
+@tab
+@verbatim
+(let ((c (make-ra 0 (ra-len a 0) (ra-len b 1))))
+  (ra-map! (⍉ c 0 2)
+    (λ (c a b) (+ c (* a b)))
+    (⍉ c 0 2) a (⍉ b 1))
+  c)
+@end verbatim
+@tab
+@verbatim
+a + . × b
+@end verbatim
+@tab
+@verbatim
+a @ b
+@end verbatim
+@tab
+@verbatim
+a * b
+@end verbatim
+
+@item
+elementwise product of matrices
+@tab
+@verbatim
+(ra-map #f * a b)
+@end verbatim
+@tab
+@verbatim
+a × b
+@end verbatim
+@tab
+@verbatim
+a * b
+@end verbatim
+@tab
+@verbatim
+a .* b
+@end verbatim
+
+@item
+multiply each element of vector by each row of matrix
+@tab
+@verbatim
+(ra-map #f * m v)
+@end verbatim
+@tab
+@verbatim
+m ×⍤1 0 v
+@end verbatim
+@tab
+@verbatim
+np.diag(v) * m
+@end verbatim
+@tab
+@verbatim
+diag(v) * m
+@end verbatim
+
+@item
+multiply each element of vector by each column of matrix
+@tab
+@verbatim
+(ra-map #f * m (⍉ v 1))
+@end verbatim
+@tab
+@verbatim
+m ×⍤1 1 v
+@end verbatim
+@tab
+@verbatim
+m * np.diag(v)
+@end verbatim
+@tab
+@verbatim
+m * diag(v)
 @end verbatim
 
 @item

@@ -68,6 +68,7 @@ Help: [C-uc .] insert timestamp [C-cc] flip checkbox [C-uucc] partial flip check
   * [X] unsized index vectors
   * [X] tensor indices
   * [X] broadcasting
+  * [ ] reader handles quasiquote
   * [ ] ways to control iteration (in order, dim loop order, direction, etc.)
   * [ ] a solution for (ra-amend! dst (RA-MAP OP (ra-from dst i ...)) i ...). Lenses?
 
