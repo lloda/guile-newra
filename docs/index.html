@@ -3,7 +3,7 @@
 <!-- Created by GNU Texinfo 6.8, http://www.gnu.org/software/texinfo/ -->
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-<!-- newra (version 1, updated 2021 October 12)
+<!-- newra (version 1, updated 2021 October 13)
 
 (c) lloda 2017-2021
 
@@ -105,7 +105,7 @@ Next: <a href="#Introduction" accesskey="n" rel="next">Introduction</a> &nbsp; [
 </div>
 <span id="newra"></span><h1 class="top"><code>newra</code></h1>
 
-<p><code>newra</code> (version 1, updated 2021 October 12)
+<p><code>newra</code> (version 1, updated 2021 October 13)
 </p>
 <p>(c) lloda 2017&ndash;2021
 </p>
@@ -682,19 +682,19 @@ s
 </p>
 <span id="index-_002ara_002dprint_002a"></span>
 <span id="x_002dstar_002dra_002dprint_002dstar"></span><dl class="def">
-<dt id="index-_002ara_002dprint_002a-1"><span class="category">Parameter<!-- /@w -->: </span><span><strong>*ra-print*</strong> <em>(lambda (array port) ...)</em><a href='#index-_002ara_002dprint_002a-1' class='copiable-anchor'> &para;</a></span></dt>
+<dt id="index-_002ara_002dprint_002a-1"><span class="category">Parameter<!-- /@w -->: </span><span><strong>*ra-print*</strong> <em>(λ (array port) ...)</em><a href='#index-_002ara_002dprint_002a-1' class='copiable-anchor'> &para;</a></span></dt>
 <dd>
 <p>Set the default printer for arrays. This parameter is available from <code>(newra print)</code>.
 </p>
 <span id="index-box"></span>
 <span id="index-box_002dcompact"></span>
 <span id="index-default"></span>
-<p>The parameter can be set to a function <code>(lambda (array port) ...)</code> or to one of the values <code>#f</code>, <code>'default</code>, <code>'box</code> or <code>'box-compact</code>.
+<p>The parameter can be set to a function <code>(λ (array port) ...)</code> or to one of the values <code>#f</code>, <code>'default</code>, <code>'box</code> or <code>'box-compact</code>.
 </p>
 <p>For example
 </p><div class="example">
 <pre class="verbatim">(import (newra print))
-(*ra-print* (lambda (ra o) (ra-print ra o #:dims? #f)))
+(*ra-print* (λ (ra o) (ra-print ra o #:dims? #f)))
 (ra-i 2 3)
 </pre><pre class="example">&rArr;
 </pre><pre class="verbatim">$1 = #%2d((0 1 2) (3 4 5))
@@ -703,7 +703,7 @@ s
 <p>or
 </p>
 <div class="example">
-<pre class="verbatim">(*ra-print* (lambda (ra o) (newline o) (ra-format ra o)))
+<pre class="verbatim">(*ra-print* (λ (ra o) (newline o) (ra-format ra o)))
 ; (*ra-print* 'box) ; same thing
 (ra-i 2 3)
 </pre><pre class="example">&rArr;
@@ -809,7 +809,7 @@ Next: <a href="#Slicing" accesskey="n" rel="next">Slicing</a>, Previous: <a href
 </p>
 <div class="example">
 <pre class="verbatim">(ra-slice-for-each 1
-  (lambda (xy angle)
+  (λ (xy angle)
 ; inside the op, xy is rank 1, angle is rank 0
     (ra-set! angle (atan (ra-ref xy 1) (ra-ref xy 0))))
   xys angles)
@@ -1215,7 +1215,7 @@ A
 <pre class="verbatim">(define A (list-&gt;ra 2 '((a b) (c d))))
 (define B (ra-i 2 2))
 (ra-format (ra-map! (make-ra #f 2 2 2 2)
-             (lambda i (format #f &quot;~{~a~}&quot; i))
+             (λ i (format #f &quot;~{~a~}&quot; i))
              A (ra-transpose B 2)))
 </pre><pre class="example">&rArr;
 </pre><pre class="verbatim">#%4:2:2:2:2═╗
@@ -1416,14 +1416,13 @@ Next: <a href="#Reference" accesskey="n" rel="next">Reference</a>, Previous: <a 
 
 <ul class="section-toc">
 <li><a href="#Differences-with_002e_002e_002e" accesskey="1">Differences with...</a></li>
-<li><a href="#Common-mistakes" accesskey="2">Common mistakes</a></li>
-<li><a href="#Performance-pitfalls" accesskey="3">Performance pitfalls</a></li>
+<li><a href="#Pitfalls-and-common-mistakes" accesskey="2">Pitfalls and common mistakes</a></li>
 </ul>
 <hr>
 <div class="section" id="Differences-with_002e_002e_002e">
 <div class="header">
 <p>
-Next: <a href="#Common-mistakes" accesskey="n" rel="next">Common mistakes</a>, Up: <a href="#Hazards" accesskey="u" rel="up">Hazards</a> &nbsp; [<a href="#Indices" title="Index" rel="index">Index</a>]</p>
+Next: <a href="#Pitfalls-and-common-mistakes" accesskey="n" rel="next">Pitfalls and common mistakes</a>, Up: <a href="#Hazards" accesskey="u" rel="up">Hazards</a> &nbsp; [<a href="#Indices" title="Index" rel="index">Index</a>]</p>
 </div>
 <span id="Differences-with_002e_002e_002e-1"></span><h3 class="section">4.1 Differences with...</h3>
 
@@ -1439,7 +1438,7 @@ Next: <a href="#Common-mistakes" accesskey="n" rel="next">Common mistakes</a>, U
 </p><ul>
 <li> The default lower bound (base index) in <code>newra</code> is 0, as in <code>⎕io←0</code>. The lower bound isn&rsquo;t global, but it may be different per axis.
 </li><li> <code>newra</code> arrays of size 1 are not equivalent to scalars and always retain their rank. For example, <code>(make-ra 99)</code>, <code>(make-ra 99 1)</code> and <code>(make-ra 99 1 1)</code> are all different from each other and from the scalar <code>99</code>, while in APL <code>99</code>, <code>(1 ⍴ 99)</code>, and <code>(1 1 ⍴ 99)</code> are all the same thing.
-</li><li> When a function takes multiple arguments, the meaning with multiple arguments is an extension of the meaning with a single argument. This contrasts with APL where the monadic and dyadic versions of a verb usually have a related but independent definition. For example <code>(ra-transpose a)</code>≡<code>(ra-transpose a 0)</code>≡<code>(ra-transpose a 0 1)</code>, but (assuming <code>a</code> is of rank 2) <code>⍉a</code>≡<code>2 1⍉a</code>. Please check the documentation for each function.
+</li><li> When a function takes multiple arguments, the meaning with multiple arguments is an extension of the meaning with a single argument. This contrasts with APL where the monadic and dyadic versions of a verb usually have a related but independent definition. For example <code>(ra-transpose a)</code>≡<code>(ra-transpose a 0)</code>≡<code>(ra-transpose a 0 1)</code>, but (assuming <code>a</code> is of rank 2) <code>⍉a</code>≡<code>1 0⍉a</code>. Please check the documentation for each function.
 </li></ul>
 
 <span id="index-Fortran"></span>
@@ -1454,7 +1453,7 @@ Next: <a href="#Common-mistakes" accesskey="n" rel="next">Common mistakes</a>, U
 <span id="index-NumPy"></span>
 <p>Differences with NumPy:
 </p><ul>
-<li> <code>newra</code> uses prefix matching for rank extension, while Numpy uses suffix matching. For example: FIXME.
+<li> <code>newra</code> uses prefix matching for rank extension, while Numpy uses suffix matching (<a href="#x_002dnumpy_002dexample_002d0">for example</a>).
 </li><li> <code>newra</code> doesn&rsquo;t use singleton broadcasting. Axes of length 1 only match axes of length 1. For example, <code>(ra-map! (make-ra 0 2) + (make-ra 90 1) (make-ra 7 2))</code> is an error because the shapes (2), (1), (2) don&rsquo;t agree.
 </li></ul>
 
@@ -1470,23 +1469,34 @@ Next: <a href="#Common-mistakes" accesskey="n" rel="next">Common mistakes</a>, U
 
 <hr>
 </div>
-<div class="section" id="Common-mistakes">
+<div class="section" id="Pitfalls-and-common-mistakes">
 <div class="header">
 <p>
-Next: <a href="#Performance-pitfalls" accesskey="n" rel="next">Performance pitfalls</a>, Previous: <a href="#Differences-with_002e_002e_002e" accesskey="p" rel="prev">Differences with...</a>, Up: <a href="#Hazards" accesskey="u" rel="up">Hazards</a> &nbsp; [<a href="#Indices" title="Index" rel="index">Index</a>]</p>
+Previous: <a href="#Differences-with_002e_002e_002e" accesskey="p" rel="prev">Differences with...</a>, Up: <a href="#Hazards" accesskey="u" rel="up">Hazards</a> &nbsp; [<a href="#Indices" title="Index" rel="index">Index</a>]</p>
 </div>
-<span id="Common-mistakes-1"></span><h3 class="section">4.2 Common mistakes</h3>
+<span id="Pitfalls-and-common-mistakes-1"></span><h3 class="section">4.2 Pitfalls and common mistakes</h3>
+
+<ul class="section-toc">
+<li><a href="#Using-rank-extension-or-dead-axes-for-reduction" accesskey="1">Using rank extension or dead axes for reduction</a></li>
+<li><a href="#Partial-application-in-outer-products" accesskey="2">Partial application in outer products</a></li>
+<li><a href="#Holding-onto-the-arguments-of-x_002dra_002dslice_002dfor_002deach_0027s-op" accesskey="3">Holding onto the arguments of <a href="#x_002dra_002dslice_002dfor_002deach"><code>ra-slice-for-each</code></a>&rsquo;s <var>op</var></a></li>
+</ul>
+<div class="subsection" id="Using-rank-extension-or-dead-axes-for-reduction">
+<h4 class="subsection">4.2.1 Using rank extension or dead axes for reduction</h4>
+
+</div>
+<div class="subsection" id="Partial-application-in-outer-products">
+<h4 class="subsection">4.2.2 Partial application in outer products</h4>
+
+</div>
+<div class="subsection" id="Holding-onto-the-arguments-of-x_002dra_002dslice_002dfor_002deach_0027s-op">
+<h4 class="subsection">4.2.3 Holding onto the arguments of <a href="#x_002dra_002dslice_002dfor_002deach"><code>ra-slice-for-each</code></a>&rsquo;s <var>op</var></h4>
+
+<p>TODO more...
+</p>
 
 <hr>
 </div>
-<div class="section" id="Performance-pitfalls">
-<div class="header">
-<p>
-Previous: <a href="#Common-mistakes" accesskey="p" rel="prev">Common mistakes</a>, Up: <a href="#Hazards" accesskey="u" rel="up">Hazards</a> &nbsp; [<a href="#Indices" title="Index" rel="index">Index</a>]</p>
-</div>
-<span id="Performance-pitfalls-1"></span><h3 class="section">4.3 Performance pitfalls</h3>
-
-<hr>
 </div>
 </div>
 <div class="chapter" id="Reference">
@@ -1543,7 +1553,7 @@ a
 <span id="x_002dmake_002dra"></span><dl class="def">
 <dt id="index-make_002dra-1"><span class="category">Function<!-- /@w -->: </span><span><strong>make-ra</strong> <em>val bounds ... &rArr; a</em><a href='#index-make_002dra-1' class='copiable-anchor'> &para;</a></span></dt>
 <dd>
-<p>Create an array of type <code>#t</code> with the given <var>bounds</var>, filled with <var>val</var>.
+<p>Create an array of type <code>#t</code> with the given <var>bounds</var>, filled with <var>val</var>. Each of the bounds may be an integer (a length) or a pair of integers (lower and upper bounds).
 </p>
 <div class="example">
 <pre class="verbatim">(make-ra 0 '(2 3) 4)
@@ -1683,7 +1693,7 @@ a
 </p>
 <p>Each element <var>x</var> of <var>ra</var> is converted to a string using <code>(fmt x)</code>, or <code>(format #f fmt x)</code><a id="DOCF8" href="#FOOT8"><sup>8</sup></a> if <var>fmt</var> is a string. <var>fmt</var> defauts to <code>&quot;~a&quot;</code>. Elements that are arrays are formatted using <code>ra-format</code> recursively.
 </p>
-<p>If <var>port</var> is <code>#f</code>, nothing is printed; instead, the function returns a rank-2 character array <var>sc</var> with the result of the printing. Otherwise the array is printed to <var>port</var> and the function returns unspecified values. The default for <var>port</var> is <code>#t</code>, which works as <code>current-output-port</code>.
+<p>If <var>port</var> is <code>#f</code>, nothing is printed; instead, the function returns a rank-2 character array <var>sc</var> with the result of the printing. Otherwise the array is printed to <var>port</var> and the function returns unspecified values. The default for <var>port</var> is <code>#t</code>, which works as <code>(current-output-port)</code>.
 </p>
 <p>If <var>prefix?</var> is true, the array print prefix <a href="#x_002dra_002dprint_002dprefix"><code>ra-print-prefix</code></a> is printed over the first line of the printout if the rank of <var>ra</var> is 2 or greater, else it is printed on a separate line above the printout.
 </p>
@@ -1801,10 +1811,10 @@ element
 <p>Using a custom element formatter:
 </p><div class="example">
 <pre class="verbatim">(ra-format (ra-map! (make-ra #f 4 4) sqrt (ra-reshape (ra-iota 20 -10) 0 4 4))
-           #:fmt (lambda (x) (format #f (cond ((real? x) &quot;~4,2f&quot;)
-                                              ((complex? x) &quot;~4,2i&quot;)
-                                              (else &quot;~a&quot;))
-                                     x)))
+           #:fmt (λ (x) (format #f (cond ((real? x) &quot;~4,2f&quot;)
+                                          ((complex? x) &quot;~4,2i&quot;)
+                                          (else &quot;~a&quot;))
+                                x)))
 </pre><pre class="example">&rArr;
 </pre><pre class="verbatim">#%2:4:4────┬──────────┬──────────┬──────────┐
 │0.00+3.16i│0.00+3.00i│0.00+2.83i│0.00+2.65i│
@@ -1829,7 +1839,7 @@ element
 <span id="x_002dra_002di"></span><dl class="def">
 <dt id="index-ra_002di-1"><span class="category">Function<!-- /@w -->: </span><span><strong>ra-i</strong> <em>bounds ...</em><a href='#index-ra_002di-1' class='copiable-anchor'> &para;</a></span></dt>
 <dd>
-<p>Create multidimensional index array with the given bounds.
+<p>Create a multidimensional index array with the given <var>bounds</var>. Each of the bounds may be an integer (a length) or a pair of integers (lower and upper bounds).
 </p>
 <p>The root is of type <code>d</code>. The first upper bound that isn&rsquo;t <code>#f</code> may be <code>#t</code>; this creates an unbounded axis.
 </p>
@@ -2269,13 +2279,13 @@ a
 <span id="index-ra_002dslice_002dfor_002deach"></span>
 <span id="x_002dra_002dslice_002dfor_002deach"></span><dl class="def">
 <dt id="index-ra_002dslice_002dfor_002deach-1"><span class="category">Function<!-- /@w -->: </span><span><strong>ra-slice-for-each</strong> <em>k op a ...</em><a href='#index-ra_002dslice_002dfor_002deach-1' class='copiable-anchor'> &para;</a></span></dt>
-<dd><p>Iterate over the <var>k</var>-frames of arrays <var>a</var> ..., applying <var>op</var> to the respective slices. The arguments <var>a</var> ... must have matching shapes over their <var>k</var>-frames.
+<dd><p>Iterate over the <var>k</var>-frames of arrays <var>a</var> ..., applying <var>op</var> to the respective slices. The arguments <var>a</var> ... must have matching <var>k</var>-frames.
 </p>
 <p>Note that it isn&rsquo;t necessary for arguments <var>a</var> to have rank ≥ <var>k</var>. Arguments with rank &lt; <var>k</var> are rank-extended and the corresponding arguments are 0-cells. For example:
 </p>
 <div class="example">
 <pre class="verbatim">(ra-slice-for-each 1
-  (lambda (a b) (display (list (a) (b))))
+  (λ (a b) (display (list (a) (b))))
   (make-ra-root #(a b))
   (ra-i 2 3))
 </pre><pre class="example">&rArr; <code>(a #%1d:3(0 1 2))(b #%1d:3(3 4 5))</code>
@@ -2283,7 +2293,7 @@ a
 
 <div class="example">
 <pre class="verbatim">(ra-slice-for-each 2
-  (lambda (a b) (display (list (a) (b))))
+  (λ (a b) (display (list (a) (b))))
   (make-ra-root #(a b))
   (ra-i 2 3))
 </pre><pre class="example">&rArr; <code>(a 0)(a 1)(a 2)(b 3)(b 4)(b 5)</code>
@@ -2301,7 +2311,7 @@ a
 <p>This is equivalent to
 </p><pre class="verbatim">(apply ra-slice-for-each
        (rank dst)
-       (lambda (dst . a)
+       (λ (dst . a)
          (ra-set! dst (apply op (map ra-ref a))))
        dst a)
 </pre>
@@ -2384,7 +2394,7 @@ a
 <pre class="verbatim">(ra-map! dst (const value))
 (ra-copy! dst (make-ra value))
 (ra-amend! dst (make-ra value))
-(ra-amend! dst value) ; as long as value isn't an array
+(ra-amend! dst value) ; when value isn't an array
 </pre></div>
 
 <p>Compare
@@ -2408,7 +2418,9 @@ a
 <span id="index-ra_002dorder_002dc_003f"></span>
 <span id="x_002dra_002dorder_002dc_003f"></span><dl class="def">
 <dt id="index-ra_002dorder_002dc_003f-1"><span class="category">Function<!-- /@w -->: </span><span><strong>ra-order-c?</strong> <em>a [n [org]]</em><a href='#index-ra_002dorder_002dc_003f-1' class='copiable-anchor'> &para;</a></span></dt>
-<dd><p>Check whether axes [<var>org</var> ... <var>org</var>+<var>n</var>) of <var>a</var> are in row-major order. By default, check that the whole array is in row-major order, and additionally that the step on the last axis is 1 (i.e. the array is ‘packed’).
+<dd><p>Check whether axes [<var>org</var> ... <var>org</var>+<var>n</var>) of <var>a</var> are in row-major order. <var>org</var> defaults to 0.
+</p>
+<p>If <var>n</var> isn&rsquo;t given, check that the whole array is in row-major order, and additionally that the step on the last axis is 1 (i.e. the array is ‘packed’).
 </p>
 <p><code>(ra-order-c? a n org)</code> implies <code>(eq? (ra-root a) (ra-root (<a href="#x_002dra_002dravel"><code>ra-ravel</code></a> a n org)))</code>. Note that the stronger condition <code>(ra-order-c? a)</code> is not necessary for <code>(eq? (ra-root a) (ra-root (ra-ravel a)))</code> to hold.
 </p>
@@ -2420,7 +2432,7 @@ a
 <dd>
 <p>Look up array element. It is an error if the number of <var>i ...</var> doesn&rsquo;t match the rank of <var>a</var>.
 </p>
-<p>See also: <a href="#x_002dra_002dcell"><code>ra-cell</code></a>, <a href="#x_002dra_002dslice"><code>ra-slice</code></a>, <a href="#x_002dra_002dfrom"><code>ra-from</code></a>, <a href="#x_002dra_002dset_0021"><code>ra-set!</code></a>.
+<p>See also: <a href="#x_002dra_002dcell"><code>ra-cell</code></a>, <a href="#x_002dra_002dslice"><code>ra-slice</code></a>, <a href="#x_002dra_002dfrom"><code>ra-from</code></a>, <a href="#x_002dra_002dset_0021"><code>ra-set!</code></a>, <a href="#Slicing">Slicing</a>.
 </p>
 </dd></dl>
 
@@ -2430,7 +2442,7 @@ a
 <dd>
 <p>Assign array element. It is an error if the number of <var>i ...</var> doesn&rsquo;t match the rank of <var>a</var>.
 </p>
-<p>See also: <a href="#x_002dra_002damend_0021"><code>ra-amend!</code></a>, <a href="#x_002dra_002dref"><code>ra-ref</code></a>.
+<p>See also: <a href="#x_002dra_002damend_0021"><code>ra-amend!</code></a>, <a href="#x_002dra_002dref"><code>ra-ref</code></a>, <a href="#Slicing">Slicing</a>.
 </p>
 </dd></dl>
 
@@ -2484,7 +2496,7 @@ corresponding elements are all <code>equal?</code> to each other, or <code>#f</c
 </p>
 <div class="example">
 <pre class="verbatim">(import (ice-9 control))
-(define (ra-equal?* . a) (let/ec exit (apply ra-for-each (lambda a (unless (apply equal? a) (exit #f))) a) #t))
+(define (ra-equal? . a) (let/ec exit (apply ra-for-each (λ a (unless (apply equal? a) (exit #f))) a) #t))
 </pre></div>
 
 <p>See also: <a href="#x_002dra_002dfor_002deach"><code>ra-for-each</code></a>, <a href="#x_002dra_002dfold"><code>ra-fold</code></a>, <a href="#x_002dra_002devery"><code>ra-every</code></a>, <a href="#x_002dra_002dany"><code>ra-any</code></a>.
@@ -2694,27 +2706,29 @@ Next: <a href="#Sources" accesskey="n" rel="next">Sources</a>, Previous: <a href
 <span id="Cheatsheet-1"></span><h2 class="chapter">6 Cheatsheet</h2>
 
 
-<p>Lines marked ∗ don&rsquo;t work at the moment because of lack of support by the compiler; there should be a working alternative listed, but the intent is that they work (eventually). For these and other examples that look poor, part of the purpose of this table is to encourage improvement...
+<p>Lines marked ∗ don&rsquo;t work at the moment because of lack of support by the compiler; there should be a alternative listed, but the intent is that they work (eventually). For these and other examples that look poor, part of the purpose of this table is to encourage improvement...
 </p>
-<p>The APL examples assume <code>⎕io←0</code>.
-</p>
-<p>The table assumes knowledge of Scheme. The <code>newra</code> examples use <code>(define ⍉ ra-transpose)</code>, which <code>newra</code> itself doesn&rsquo;t provide.
+<p>The APL examples assume <code>⎕io←0</code>. The <code>newra</code> examples use <code>(define ⍉ ra-transpose)</code>, which <code>newra</code> itself doesn&rsquo;t provide.
 </p>
 <table>
-<tr><td width="20%"></td><td width="20%"><code>newra</code></td><td width="20%">APL</td><td width="20%">NumPy</td><td width="20%">Octave</td></tr>
+<tr><td width="20%"></td><td width="20%"><code>newra</code></td><td width="20%">APL</td><td width="20%"><span id="index-Numpy-2"></span>
+NumPy</td><td width="20%">Octave</td></tr>
 <tr><td width="20%">1×n array</td><td width="20%"><pre class="verbatim">∗ #%2((1 2 3))
+────
 (ra-reshape (list-&gt;ra 1 '(1 2 3)) 0 1 3)
 </pre></td><td width="20%"><pre class="verbatim">1 3 ⍴ 1 2 3
 </pre></td><td width="20%"><pre class="verbatim">np.array([1, 2, 3]).reshape(1, 3)
 </pre></td><td width="20%"><pre class="verbatim">[1 2 3]
 </pre></td></tr>
 <tr><td width="20%">n×1 array</td><td width="20%"><pre class="verbatim">∗ #%2((1) (2) (3))
+────
 (ra-reshape (list-&gt;ra 1 '(1 2 3)) 0 3 1)
 </pre></td><td width="20%"><pre class="verbatim">3 1 ⍴ 1 2 3
 </pre></td><td width="20%"><pre class="verbatim">np.array([1, 2, 3]).reshape(3, 1)
 </pre></td><td width="20%"><pre class="verbatim">[1 2 3].'
 </pre></td></tr>
 <tr><td width="20%">rank 1 array</td><td width="20%"><pre class="verbatim">∗ #%(1 2 3)
+────
 (list-&gt;ra 1 '(1 2 3))
 </pre></td><td width="20%"><pre class="verbatim">1 2 3
 </pre></td><td width="20%"><pre class="verbatim">np.array([1, 2, 3])
@@ -2828,6 +2842,7 @@ f(x)
 g(x, y)
 </pre></td></tr>
 <tr><td width="20%">for matrix <code>a</code>, access one element</td><td width="20%"><pre class="verbatim">(a 2 2)
+────
 (ra-from a 2 2)
 </pre></td><td width="20%"><pre class="verbatim">a[2; 2]
 </pre></td><td width="20%"><pre class="verbatim">a[2, 2]
@@ -2908,10 +2923,10 @@ min(a)
 </pre></td><td width="20%"><pre class="verbatim">a @ b
 </pre></td><td width="20%"><pre class="verbatim">dot(a, b)
 </pre></td></tr>
-<tr><td width="20%">matrix product</td><td width="20%"><pre class="verbatim">(let ((c (make-ra 0 (ra-len a 0) (ra-len b 1))))
-  (ra-map! (⍉ c 0 2)
-    (λ (c a b) (+ c (* a b)))
-    (⍉ c 0 2) a (⍉ b 1))
+<tr><td width="20%">matrix product</td><td width="20%"><pre class="verbatim">(let* ((c (make-ra 0 (ra-len a 0) (ra-len b 1)))
+       (cc (⍉ c 0 2)))
+  (ra-map! cc (λ (c a b) (+ c (* a b)))
+    cc a (⍉ b 1))
   c)
 </pre></td><td width="20%"><pre class="verbatim">a + . × b
 </pre></td><td width="20%"><pre class="verbatim">a @ b
@@ -2921,15 +2936,22 @@ min(a)
 </pre></td><td width="20%"><pre class="verbatim">a × b
 </pre></td><td width="20%"><pre class="verbatim">a * b
 </pre></td><td width="20%"><pre class="verbatim">a .* b
-</pre></td></tr>
+</pre>
+<span id="x_002dnumpy_002dexample_002d0"></span></td></tr>
 <tr><td width="20%">multiply each element of vector by each row of matrix</td><td width="20%"><pre class="verbatim">(ra-map #f * m v)
 </pre></td><td width="20%"><pre class="verbatim">m ×⍤1 0 v
-</pre></td><td width="20%"><pre class="verbatim">np.diag(v) * m
+</pre></td><td width="20%"><pre class="verbatim">m * v[:, np.newaxis]
+────
+np.diag(v) * m
 </pre></td><td width="20%"><pre class="verbatim">diag(v) * m
 </pre></td></tr>
 <tr><td width="20%">multiply each element of vector by each column of matrix</td><td width="20%"><pre class="verbatim">(ra-map #f * m (⍉ v 1))
 </pre></td><td width="20%"><pre class="verbatim">m ×⍤1 1 v
-</pre></td><td width="20%"><pre class="verbatim">m * np.diag(v)
+</pre></td><td width="20%"><pre class="verbatim">m * v
+────
+m * v[np.newaxis, :]
+────
+m * np.diag(v)
 </pre></td><td width="20%"><pre class="verbatim">m * diag(v)
 </pre></td></tr>
 <tr><td width="20%">...</td><td width="20%">...</td><td width="20%">...</td><td width="20%">...</td><td width="20%">...</td></tr>
@@ -2963,6 +2985,8 @@ Next: <a href="#Indices" accesskey="n" rel="next">Indices</a>, Previous: <a href
 <tr><td width="10%"><span id="J-S"></span>[J S]</td><td width="90%">J Primer. J Software, <a href="https://www.jsoftware.com/help/primer/contents.htm">https://www.jsoftware.com/help/primer/contents.htm</a>, November 2017.</td></tr>
 <tr><td width="10%"></td></tr>
 <tr><td width="10%"><span id="Mat"></span>[Mat]</td><td width="90%">MathWorks. MATLAB documentation, <a href="https://www.mathworks.com/help/matlab/">https://www.mathworks.com/help/matlab/</a>, November 2017.</td></tr>
+<tr><td width="10%"></td></tr>
+<tr><td width="10%"><span id="Octave"></span>[Octave]</td><td width="90%">GNU Octave documentation (version 6.3.0), <a href="https://octave.org/doc/v6.3.0">https://octave.org/doc/v6.3.0</a>, 2020.</td></tr>
 <tr><td width="10%"></td></tr>
 <tr><td width="10%"><span id="num17"></span>[num17]</td><td width="90%">NumPy. <a href="http://www.numpy.org">http://www.numpy.org</a>, November 2017.</td></tr>
 <tr><td width="10%"></td></tr>
@@ -3132,6 +3156,7 @@ Previous: <a href="#Sources" accesskey="p" rel="prev">Sources</a>, Up: <a href="
 <tr><td></td><td valign="top"><a href="#index-Numpy">Numpy</a>:</td><td>&nbsp;</td><td valign="top"><a href="#Rank-extension">Rank extension</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-Numpy-1">Numpy</a>:</td><td>&nbsp;</td><td valign="top"><a href="#Rank-extension">Rank extension</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-NumPy">NumPy</a>:</td><td>&nbsp;</td><td valign="top"><a href="#Differences-with_002e_002e_002e">Differences with...</a></td></tr>
+<tr><td></td><td valign="top"><a href="#index-Numpy-2">Numpy</a>:</td><td>&nbsp;</td><td valign="top"><a href="#Cheatsheet">Cheatsheet</a></td></tr>
 <tr><td colspan="4"> <hr></td></tr>
 <tr><th id="Indices_cp_letter-O">O</th><td></td><td></td></tr>
 <tr><td></td><td valign="top"><a href="#index-Octave">Octave</a>:</td><td>&nbsp;</td><td valign="top"><a href="#Differences-with_002e_002e_002e">Differences with...</a></td></tr>
@@ -3273,7 +3298,7 @@ Previous: <a href="#Sources" accesskey="p" rel="prev">Sources</a>, Up: <a href="
 
 <h5><a id="FOOT1" href="#DOCF1">(1)</a></h5>
 <pre class="verbatim">(import (newra))
-(define element (lambda i (format #f &quot;A(~{~a~^, ~})&quot; i)))
+(define element (λ i (format #f &quot;A(~{~a~^, ~})&quot; i)))
 (define (ti k) (ra-transpose (ra-iota) k))
 (ra-format (ra-map! (make-ra #f 3 3)  element (ti 0) (ti 1)) #:prefix? #f)
 (ra-format (ra-map! (make-ra #f 2 '(2 5) '(-2 0))  element (ti 0) (ti 1) (ti 2)) #:prefix? #f)

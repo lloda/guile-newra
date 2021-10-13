@@ -8,6 +8,7 @@ Help: [C-uc .] insert timestamp [C-cc] flip checkbox [C-uucc] partial flip check
   * [X] ra-equal? errors out with mismatched shapes
   * [X] zero lengths break ra-format
   * [X] (ra-dimensions (ra-iota))
+  * [X] (ra-reshape (ra-iota) ...) doesn't work
   * [ ] ra-slice-for-each shouldn't return anything
   * [ ] (ra-from (list->ra 2 '((a b c) (x y z))) 1 1) => #%0(y) contradicts doc
   * [ ] docstrings don't work for define-inlinable-case

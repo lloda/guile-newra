@@ -14,6 +14,8 @@
         (only (srfi :43) vector-copy! vector-fill!)
         (only (rnrs bytevectors) bytevector-copy! bytevector-fill!))
 
+(define ⍉ ra-transpose)
+
 
 ; -----------------------
 ; lazy ops
@@ -112,29 +114,31 @@ Then any shape op on arrays needs to be beatable on the args to avoid having to 
 
 ; guile-newra - pure scheme, Guile 2.9
 
-(define B (ra-copy #t(ra-i 100 100)))
-(define C (ra-copy #t (ra-i 100 100)))
+(define n 100)
+(define B (ra-copy #t (ra-i n n)))
+(define C (ra-copy #t (ra-i n n)))
 
 ; Guile newra doesn't define gemm so we make it up on the spot. A few versions...
 
-,time (define A0 (let* ((A (make-typed-ra #t 0 100 100))
-                        (X (ra-transpose A 0 2)))
-                   (ra-map! X (lambda (a b c) (+ a (* b c))) X B (ra-transpose C 1))
+,time (define A0 (let* ((A (make-typed-ra #t 0 n n))
+                        (X (⍉ A 0 2)))
+                   (ra-map! X (lambda (a b c) (+ a (* b c))) X B (⍉ C 1))
                    A))
-,time (define A1 (let* ((A (make-typed-ra #t 0 100 100))
-                        (X (ra-transpose A 0 2)))
-                   (ra-slice-for-each 3 (lambda (a b c) (set! (a) (+ (a) (* (b) (c))))) X B (ra-transpose C 1))
+,time (define A1 (let* ((A (make-typed-ra #t 0 n n))
+                        (X (⍉ A 0 2)))
+                   (ra-slice-for-each 3 (lambda (a b c) (set! (a) (+ (a) (* (b) (c))))) X B (⍉ C 1))
                    A))
-,time (define A2 (let* ((A (make-typed-ra #t 0 100 100)))
+,time (define A2 (let* ((A (make-typed-ra #t 0 n n)))
                    (ra-slice-for-each 2
-                     (lambda (A B C) (set! (A) (ra-fold (lambda (b c a) (+ (* b c) a)) 0 B C)))
-                     A (ra-transpose B 0 2) (ra-transpose C 2 1))
+                     (lambda (A B C) (set! (A) (ra-fold (lambda (a b c) (+ (* b c) a)) 0 B C)))
+                     A (⍉ B 0 2) (⍉ C 2 1))
                    A))
 
 ; check result
 (ra-equal? A0 A1 A2)
 (ra-fold + 0 A0)
-250032502500000
+250032502500000 ; n 100
+3205173202000000 ; n 200
 
 (define B (i/t. 'f64 100 100))
 (define C (i/t. 'f64 100 100))
@@ -143,15 +147,15 @@ Then any shape op on arrays needs to be beatable on the args to avoid having to 
 ;; 0.015948s real time, 0.029959s run time.  0.020600s spent in GC.
 
 ; check result
-(over max (ravel A))
+(over + (ravel A))
 2.500325025e14
 
-(define x (ra-copy 'f64 (ra-iota #e1e3)))
+(define x (ra-copy 'f64 (ra-iota #e1e6)))
 ,time (ra-fold + 0 x)
 ,time (let ((a 0.)) (ra-for-each (lambda (x) (set! a (+ a x))) x) a)
 ,time (let ((a 0.)) (ra-slice-for-each 1 (lambda (x) (set! a (+ a (x)))) x) a)
 
-(define N #e1e7
+(define N #e1e7)
 (define y (ra-copy 'f64 (ra-iota N)))
 ,time (ra-fold + 0 y)    ;  ~ 4.7s for #e1e8, 1.7s for #e1e7
 
