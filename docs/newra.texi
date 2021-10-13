@@ -7,7 +7,7 @@
 @c last [ma112]
 
 @set VERSION 1
-@set UPDATED 2021 October 13
+@set UPDATED 2021 October 14
 
 @copying
 @code{newra} (version @value{VERSION}, updated @value{UPDATED})
@@ -1361,7 +1361,7 @@ Another use is the creation of ‘index placeholders’, e.g.
 @end verbatim
 @end example
 
-@cindex ⍋
+@cindex ⍋, grade
 @cindex grade
 The function @ref{x-ra-untranspose, @code{ra-untranspose}} takes its axis arguments the other way from @code{ra-transpose}; the value of each argument is the axis of the original array and the position in the argument list is the axis of the result array. This is less flexible than @code{ra-transpose}, but can be used to reverse an application of @code{ra-transpose} without having to sort (‘grade’) the original axis arguments.
 
@@ -1396,7 +1396,7 @@ The function @ref{x-ra-untranspose, @code{ra-untranspose}} takes its axis argume
 @section Automatic result arrays
 @c ------------------------------------------------
 
-Most of the functions of @code{newra} do not create arrays, but instead they expect result arrays to be passed as arguments. This means that they must have been allocated before. However, there are a few functions, such as @ref{x-ra-copy, @code{ra-copy}} or @ref{x-ra-map, @code{ra-map}}, that do create a result array. The type and shape of that result array is deduced from the source arguments, as follows.
+Most of the functions of @code{newra} do not create arrays, but instead they expect result arrays to be passed as arguments. This means that they must have been allocated in advance. However, there are a few functions, such as @ref{x-ra-copy, @code{ra-copy}} or @ref{x-ra-map, @code{ra-map}}, that do create a result array. The type and shape of that result array is deduced from the source arguments, as follows.
 
 @itemize
 @item The default type of the result array is the type of the first of the source arguments. If that type is @code{'d}, however, the default type of the result array is @code{#t}. Usually, a function will allow this default to be overriden with an explicit argument. If that argument is required, then @code{#f} will select the default.
@@ -2190,7 +2190,8 @@ See also: @ref{x-ra-reshape,@code{ra-reshape}}, @ref{x-ra-tile,@code{ra-tile}}, 
 @deffn @w{Function} ra-reshape a k bounds ... @result{} b
 Reshape axis @var{k} of array @var{a} to @var{bounds}.
 
-Each of the bounds may be an integer (a length) or a pair of integers (lower and upper bounds).
+Each of @var{bounds} may be an integer (a length) or a pair of integers (lower and upper bounds), or @code{#f}. No more than one of @var{bounds} may be @code{#f}.
+
 @example
 @verbatim
 (define a (ra-i 4 3))
@@ -2221,7 +2222,21 @@ Each of the bounds may be an integer (a length) or a pair of integers (lower and
 @end verbatim
 @end example
 
-The result of @code{ra-reshape} always shares the root of @var{a}.
+If one of @var{bounds} is @code{#f}, the missing length is computed as @code{(/ (ra-len ra k) n)} where @var{n} is the total size of the @var{bounds} that are not @code{#f}. It is an error if this isn't a non-negative integer.
+
+@example
+@verbatim
+(ra-reshape (ra-iota 12) 0 2 2 #f) ; #f will be 3 = 12/(2*2)
+@end verbatim
+@result{} @code{#%3d:2:2:3(((0 1 2) (3 4 5)) ((6 7 8) (9 10 11)))}
+@end example
+
+@example
+@verbatim
+(ra-reshape (ra-iota 7) 0 3 #f)
+@end verbatim
+@result{} @code{error ; bad-placeholder 7/3}
+@end example
 
 It is an error if the product of the lengths in @var{bounds} exceeds the length of axis @var{k} of @var{a}. For example
 
@@ -2266,6 +2281,8 @@ It is an error if the product of the lengths in @var{bounds} exceeds the length 
 └─┴─┴─┘
 @end verbatim
 @end example
+
+The result of @code{ra-reshape} always shares the root of @var{a}.
 
 See also: @ref{x-ra-ravel,@code{ra-ravel}}, @ref{x-ra-tile,@code{ra-tile}}, @ref{Reshaping}.
 
@@ -3041,6 +3058,8 @@ Octave
 @verbatim
 ∗ #%2((1 2 3))
 ────
+(list->ra 2 '((1 2 3)))
+────
 (ra-reshape (list->ra 1 '(1 2 3)) 0 1 3)
 @end verbatim
 @tab
@@ -3061,6 +3080,8 @@ n×1 array
 @tab
 @verbatim
 ∗ #%2((1) (2) (3))
+────
+(list->ra 2 '((1) (2) (3)))
 ────
 (ra-reshape (list->ra 1 '(1 2 3)) 0 3 1)
 @end verbatim

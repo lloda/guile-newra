@@ -18,7 +18,7 @@
 (import (newra base) (newra map) (newra vector)
         (ice-9 match) (ice-9 control) (srfi :8) (srfi :26)
         (only (srfi :43) vector-copy!)
-        (only (srfi :1) fold every any iota drop)
+        (only (srfi :1) fold every any iota drop first second)
         (only (rnrs base) vector-map vector-for-each))
 
 (define (ra-reverse ra . k)
@@ -228,8 +228,6 @@ See also: ra-reshape ra-transpose ra-from ra-order-c?
 
 (define (ra-reshape ra k . s)
   "
-ra-reshape ra k s ... -> rb
-
 Reshape axis @var{k} of @var{ra} into shape @var{s} ... Each of the @var{s} is
 either a list of two integers @code{(lo hi)} or an integer @code{len}.
 
@@ -240,16 +238,38 @@ is the shape of @var{ra}, the shape of the result is
 [t(0) ... t(k-1) s(0) ... t(k+1) ...]
 @end example
 
+At most one of the @var{s} may be @code{#f}. In that case, the missing length is
+computed as @code{(/ (ra-len ra k) n)} where @var{n} is the total size of the
+@var{s} that are not @code{#f}. It is an error if this isn't an integer ≥ 0.
+
 The result shares the root of @var{ra}.
 
 See also: ra-ravel ra-tile ra-transpose ra-from ra-order-c? c-dims make-ra-new
 "
   (unless (positive? (ra-rank ra))
     (throw 'bad-rank-for-reshape (ra-rank ra)))
-  (let ((sdims (apply c-dims s)))
+  (let* ((ph (fold (lambda (s c)
+                     (match s
+                       ((? integer? len)
+                        (list (* len (first c)) (second c)))
+                       (((? integer? lo) (? integer? hi))
+                        (list (* (- hi lo -1) (first c)) (second c)))
+                       (#f (if (second c)
+                             (throw 'too-many-placeholders s)
+                             (list (first c) #t)))))
+                   '(1 #f) s))
+         (s (if (second ph)
+              (if (not (ra-len ra k))
+                (throw 'cannot-use-placeholder-with-undefined-size ra s)
+                (let ((len (/ (ra-len ra k) (first ph))))
+                  (if (integer? len)
+                    (map (lambda (s) (or s len)) s)
+                    (throw 'bad-placeholder (ra-len ra k) (first ph) len))))
+              s))
+         (sdims (apply c-dims s)))
     (let ((ssize (vector-fold (lambda (d c) (* c (dim-len d))) 1 sdims)))
-      (when (and (ra-len ra) (> ssize (ra-len ra)))
-        (throw 'bad-size-for-reshape ssize (ra-len ra))))
+      (when (and (ra-len ra k) (> ssize (ra-len ra k)))
+        (throw 'bad-size-for-reshape ssize (ra-len ra k))))
     (match (vector-ref (%%ra-dims ra) k)
       (($ <dim> ilen ilo istep)
        (let ((sdims (vector-map (lambda (d) (make-dim (dim-len d) (dim-lo d) (* (dim-step d) istep))) sdims)))

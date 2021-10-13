@@ -28,7 +28,7 @@ Help: [C-uc .] insert timestamp [C-cc] flip checkbox [C-uucc] partial flip check
   * [ ] root vectors are equivalent to rank-1 newra objects
   * [ ] return roots for trivial rank-1 views on roots
 
-* TODO whole array functions [8/15]
+* TODO whole array functions [9/15]
   * [X] ra-fold
   * [X] ra-any ra-every
   * [X] raw prefix matching
@@ -49,10 +49,10 @@ Help: [C-uc .] insert timestamp [C-cc] flip checkbox [C-uucc] partial flip check
     - [X] implementation
     - [X] tests
     - [X] tests with non-zero base indices
-  * [-] ra-reshape [2/3]
+  * [X] ra-reshape [3/3]
     - [X] basic function
     - [X] accept arbitrary axis
-    - [ ] placeholder
+    - [X] placeholder
   * [X] ra-clip
   * [ ] ra-grade
   * [-] ra-rotate [1/2]
@@ -106,6 +106,7 @@ Help: [C-uc .] insert timestamp [C-cc] flip checkbox [C-uucc] partial flip check
   * [ ] refactor macros
   * [ ] bench tracking
   * [ ] move struct defs to (newra types)
+  * [ ] an ffi to Fortran based on iso_c_binding, be able to pass arrays & scalars at least (https://gcc.gnu.org/onlinedocs/gfortran/Further-Interoperability-of-Fortran-with-C.html#Further-Interoperability-of-Fortran-with-C)
   * [X] parameters to control print format (eg print sizes/strides, truncate...)
     - [X] CL/SRFI-163 style rank-0 (e.g. '#0 x' instead of '#0(x)').
     - [X] print sizes in prefix

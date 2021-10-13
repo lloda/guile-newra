@@ -1102,6 +1102,14 @@
   (test-equal 9 (ra-ref b 2))
   (test-equal 10 (ra-ref b 3)))
 
+; reshape with placeholders
+
+(test-reshape 0 (ra-iota 8) '(#f 2) '((0 3) (0 1)))
+(test-reshape 0 (ra-iota 8) '(2 #f) '((0 1) (0 3)))
+(test-reshape 0 (ra-iota 8) '((1 4) #f) '((1 4) (0 1)))
+(test-reshape 1 (ra-i 5 12) '(2 #f 2) '((0 4) (0 1) (0 2) (0 1)))
+(test-reshape 0 (ra-i 12 5) '(2 #f 2) '((0 1) (0 2) (0 1) (0 4)))
+
 
 ; -----------------------
 ; ra-tile
