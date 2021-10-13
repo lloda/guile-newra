@@ -9,7 +9,7 @@
 
 ; Run with $GUILE -L mod test.scm
 
-(import (newra) (newra tools) (newra read) (newra test misc) (newra test map-ladder)
+(import (newra) (newra tools) (newra read) (test misc) (test map-ladder)
         (srfi :64) (srfi :26) (srfi :8) (only (srfi :1) fold iota drop)
         (ice-9 match) (only (rnrs base) vector-map vector-for-each))
 
@@ -30,7 +30,7 @@
 (test-equal
   #(2 3) ((@ (newra vector) vector-copy) #(1 2 3 4) 1 3))
 
-; loop-fun from (newra test misc) FIXME may become ra-index-map!
+; loop-fun from (test misc) FIXME may become ra-index-map!
 
 (define ra0 (make-ra-root (make-aseq) (c-dims)))
 (define ra1 (make-ra-root (make-aseq) (c-dims 2)))
