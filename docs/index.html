@@ -1356,7 +1356,7 @@ Next: <a href="#Hazards" accesskey="n" rel="next">Hazards</a>, Previous: <a href
 
 <p>NOTE This section is about a facility that hasn&rsquo;t been implemented yet.
 </p>
-<p>In array languages such as APL, scalar operations are implicitly extended to work on arrays, so one can just write (the equivalent of) <code>(+ A B)</code> instead of <code>(ra-map! (make-ra ...) + A B)</code>. The basic <code>newra</code> iteration operations such as <code>ra-map!</code> already perform rank extension of their arguments (so <code>A</code> or <code>B</code> can have a different rank from the result, as long as the prefix axes match). We still need ways to:
+<p>In array languages such as APL, scalar operations are implicitly extended to work on arrays, so one can just write (the equivalent of) <code>(+ A B)</code> instead of <code>(ra-map #f + A B)</code>. The basic <code>newra</code> iteration operations such as <code>ra-map</code> already perform rank extension of their arguments (so <code>A</code> or <code>B</code> can have a different rank from the result, as long as the prefix axes match). We still need ways to:
 </p>
 <ul>
 <li> associate an operation to the ranks of their arguments, so that the right frame of iteration can be chosen.
@@ -1434,8 +1434,8 @@ Next: <a href="#Pitfalls-and-common-mistakes" accesskey="n" rel="next">Pitfalls 
 <span id="index-NumPy-2"></span>
 <p>Differences with NumPy:
 </p><ul>
-<li> <code>newra</code> uses prefix matching for rank extension, while NumPy uses suffix matching (<a href="#x_002dnumpy_002dexample_002d0">for example</a>).
-</li><li> <code>newra</code> doesn&rsquo;t use singleton broadcasting. Axes of length 1 only match axes of length 1. For example, <code>(ra-map! (make-ra 0 2) + (make-ra 90 1) (make-ra 7 2))</code> is an error because the shapes (2), (1), (2) don&rsquo;t agree.
+<li> <code>newra</code> uses prefix matching for rank extension, while NumPy uses suffix matching (<a href="#x_002dnumpy_002dexample_002d0">example</a>).
+</li><li> <code>newra</code> doesn&rsquo;t support singleton broadcasting. Axes of length 1 only match either axes of length 1, or <a href="#x_002ddead_002daxes">dead axes</a>. For example, <code>(ra-map #f + (make-ra 90 1) (make-ra 7 2))</code> is an error because the shapes (2), (1), (2) don&rsquo;t agree.
 </li></ul>
 
 <span id="index-Octave"></span>
@@ -1443,7 +1443,7 @@ Next: <a href="#Pitfalls-and-common-mistakes" accesskey="n" rel="next">Pitfalls 
 <p>Differences with Octave:
 </p><ul>
 <li> The default lower bound (base index) in <code>newra</code> is 0, not 1. Lower bounds may be 1 on a particular array (or particular axes of an array), but not globally.
-</li><li> In Octave, any array of rank ≤ 2 is implicity a matrix (an array of rank 2). This isn&rsquo;t true in <code>newra</code>, so, for example, an array of rank 1 isn&rsquo;t equivalent to an array of rank 2 with a single row (a ‘row vector’).
+</li><li> In Octave, the lowest rank an array can be is 2. This isn&rsquo;t true in <code>newra</code>, so, for example, an array of rank 1 isn&rsquo;t equivalent to an array of rank 2 with a single row (a ‘row vector’).
 </li><li> Unlike Octave, the default element order in arrays is row-major, or ‘last index changes fastest’. It&rsquo;s possible to define and manipulate arrays in any other order, including Octave&rsquo;s default. However, some functions (such as <code>ra-ravel</code>) only support row-major order.
 </li><li> <code>newra</code> uses prefix matching for rank extension on arguments on any rank, while Octave only performs rank extension on scalar arguments.
 </li></ul>
@@ -1459,23 +1459,62 @@ Previous: <a href="#Differences-with_002e_002e_002e" accesskey="p" rel="prev">Di
 
 <ul class="section-toc">
 <li><a href="#Using-rank-extension-or-dead-axes-for-reduction" accesskey="1">Using rank extension or dead axes for reduction</a></li>
-<li><a href="#Partial-application-in-outer-products" accesskey="2">Partial application in outer products</a></li>
-<li><a href="#Holding-onto-the-arguments-of-x_002dra_002dslice_002dfor_002deach_0027s-op" accesskey="3">Holding onto the arguments of <a href="#x_002dra_002dslice_002dfor_002deach"><code>ra-slice-for-each</code></a>&rsquo;s <var>op</var></a></li>
+<li><a href="#Holding-onto-the-arguments-of-x_002dra_002dslice_002dfor_002deach_0027s-op" accesskey="2">Holding onto the arguments of <a href="#x_002dra_002dslice_002dfor_002deach"><code>ra-slice-for-each</code></a>&rsquo;s <var>op</var></a></li>
+<li><a href="#Partial-application-in-outer-products" accesskey="3">Partial application in outer products</a></li>
 </ul>
 <div class="subsection" id="Using-rank-extension-or-dead-axes-for-reduction">
 <h4 class="subsection">4.2.1 Using rank extension or dead axes for reduction</h4>
 
-</div>
-<div class="subsection" id="Partial-application-in-outer-products">
-<h4 class="subsection">4.2.2 Partial application in outer products</h4>
+<p>The use of rank extension for reduction inhibits parallelization and is dependent on the order in which the array arguments are traversed, which is generally unspecified. In principle, it&rsquo;s possible for <code>newra</code> to look at the strides of the destination arguments and figure out whether some array positions are referenced more than once, so that the meaning of <code>ra-for-each</code> or <code>ra-map!</code> can be preserved even if (when?) those operations are actually implemented in parallel. However, that still leaves the order of traversal unspecified.
+</p>
+<p>In that light, the following reduction should be alright when <var>op</var> is <code>+</code>, but it&rsquo;s better avoided it if <var>op</var> is <code>-</code>, even if it happens to do what you expect on the current version of <code>newra</code>.
+</p>
+<div class="example">
+<pre class="verbatim">(let ((sum (make-ra 0)))
+  (ra-map! sum op sum (list-&gt;ra 1 '(1 2 3 4 5)))
+  (sum))
+</pre><pre class="example">&rArr; <code>15</code>
+</pre></div>
 
+<p>For cases where it matters, it&rsquo;s better to use a function which specifies the order of evaluation, such as <code>ra-fold</code>.
+</p>
+<span id="index-ra_002dslice_002dfor_002deach"></span>
 </div>
 <div class="subsection" id="Holding-onto-the-arguments-of-x_002dra_002dslice_002dfor_002deach_0027s-op">
-<h4 class="subsection">4.2.3 Holding onto the arguments of <a href="#x_002dra_002dslice_002dfor_002deach"><code>ra-slice-for-each</code></a>&rsquo;s <var>op</var></h4>
+<h4 class="subsection">4.2.2 Holding onto the arguments of <a href="#x_002dra_002dslice_002dfor_002deach"><code>ra-slice-for-each</code></a>&rsquo;s <var>op</var></h4>
 
-<p>TODO more...
+<p><a href="#x_002dra_002dslice_002dfor_002deach"><code>ra-slice-for-each</code></a> may reuse the same array object for different calls to <var>op</var>. For example
 </p>
+<div class="example">
+<pre class="verbatim">; `keep the last row that begins with 3' (wrong)
+(let ((a #f))
+  (ra-slice-for-each 1
+    (lambda (row) (when (= 3 (row 0)) (set! a row)))
+    (list-&gt;ra 2 '((2 3) (3 5) (3 a) (1 2))))
+  a)
+</pre><pre class="example">&rArr; <code>#%1:2(2 3)</code> ; ?? could be anything
+</pre></div>
 
+<p>For this to work reliably, you need to copy the array descriptor, which can be done with <a href="#x_002dra_002dslice"><code>ra-slice</code></a>.
+</p>
+<div class="example">
+<pre class="verbatim">; `keep the last row that begins with 3' (fixed)
+(let ((a #f))
+  (ra-slice-for-each 1
+    (lambda (row) (when (= 3 (row 0)) (set! a (ra-slice row))))
+    (list-&gt;ra 2 '((2 3) (3 5) (3 a) (1 2))))
+  a)
+</pre><pre class="example">&rArr; <code>#%1:2(3 a)</code>
+</pre></div>
+
+<p>Of course, if it suits your purpose, you can also copy <var>row</var> into a new array, with its own storage, using <a href="#x_002dra_002dcopy"><code>ra-copy</code></a>.
+</p>
+</div>
+<div class="subsection" id="Partial-application-in-outer-products">
+<h4 class="subsection">4.2.3 Partial application in outer products</h4>
+
+<p>TODO
+</p>
 <hr>
 </div>
 </div>
@@ -2270,9 +2309,9 @@ a
 </p>
 </dd></dl>
 
-<span id="index-ra_002dslice_002dfor_002deach"></span>
+<span id="index-ra_002dslice_002dfor_002deach-1"></span>
 <span id="x_002dra_002dslice_002dfor_002deach"></span><dl class="def">
-<dt id="index-ra_002dslice_002dfor_002deach-1"><span class="category">Function<!-- /@w -->: </span><span><strong>ra-slice-for-each</strong> <em>k op a ...</em><a href='#index-ra_002dslice_002dfor_002deach-1' class='copiable-anchor'> &para;</a></span></dt>
+<dt id="index-ra_002dslice_002dfor_002deach-2"><span class="category">Function<!-- /@w -->: </span><span><strong>ra-slice-for-each</strong> <em>k op a ...</em><a href='#index-ra_002dslice_002dfor_002deach-2' class='copiable-anchor'> &para;</a></span></dt>
 <dd><p>Iterate over the <var>k</var>-frames of arrays <var>a</var> ..., applying <var>op</var> to the respective slices. The arguments <var>a</var> ... must have matching <var>k</var>-frames.
 </p>
 <p>Note that it isn&rsquo;t necessary for arguments <var>a</var> to have rank ≥ <var>k</var>. Arguments with rank &lt; <var>k</var> are rank-extended and the corresponding arguments are 0-cells. For example:
@@ -3210,7 +3249,8 @@ Previous: <a href="#Sources" accesskey="p" rel="prev">Sources</a>, Up: <a href="
 <tr><td></td><td valign="top"><a href="#index-ra_002dshape"><code>ra-shape</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-ra_002dsingletonize"><code>ra-singletonize</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-ra_002dslice"><code>ra-slice</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
-<tr><td></td><td valign="top"><a href="#index-ra_002dslice_002dfor_002deach"><code>ra-slice-for-each</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
+<tr><td></td><td valign="top"><a href="#index-ra_002dslice_002dfor_002deach"><code>ra-slice-for-each</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Pitfalls-and-common-mistakes">Pitfalls and common mistakes</a></td></tr>
+<tr><td></td><td valign="top"><a href="#index-ra_002dslice_002dfor_002deach-1"><code>ra-slice-for-each</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-ra_002dswap_0021"><code>ra-swap!</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-ra_002dswap_002din_002dorder_0021"><code>ra-swap-in-order!</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-ra_002dtile"><code>ra-tile</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>

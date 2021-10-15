@@ -1471,7 +1471,7 @@ a
 
 NOTE This section is about a facility that hasn't been implemented yet.
 
-In array languages such as APL, scalar operations are implicitly extended to work on arrays, so one can just write (the equivalent of) @code{(+ A B)} instead of @code{(ra-map! (make-ra ...) + A B)}. The basic @code{newra} iteration operations such as @code{ra-map!} already perform rank extension of their arguments (so @code{A} or @code{B} can have a different rank from the result, as long as the prefix axes match). We still need ways to:
+In array languages such as APL, scalar operations are implicitly extended to work on arrays, so one can just write (the equivalent of) @code{(+ A B)} instead of @code{(ra-map #f + A B)}. The basic @code{newra} iteration operations such as @code{ra-map} already perform rank extension of their arguments (so @code{A} or @code{B} can have a different rank from the result, as long as the prefix axes match). We still need ways to:
 
 @itemize
 @item associate an operation to the ranks of their arguments, so that the right frame of iteration can be chosen.
@@ -1526,8 +1526,8 @@ Differences with Fortran:
 @cindex NumPy
 Differences with NumPy:
 @itemize
-@item @code{newra} uses prefix matching for rank extension, while NumPy uses suffix matching (@ref{x-numpy-example-0,for example}).
-@item @code{newra} doesn't use singleton broadcasting. Axes of length 1 only match axes of length 1. For example, @code{(ra-map! (make-ra 0 2) + (make-ra 90 1) (make-ra 7 2))} is an error because the shapes (2), (1), (2) don't agree.
+@item @code{newra} uses prefix matching for rank extension, while NumPy uses suffix matching (@ref{x-numpy-example-0,example}).
+@item @code{newra} doesn't support singleton broadcasting. Axes of length 1 only match either axes of length 1, or @ref{x-dead-axes,dead axes}. For example, @code{(ra-map #f + (make-ra 90 1) (make-ra 7 2))} is an error because the shapes (2), (1), (2) don't agree.
 @end itemize
 
 @cindex Octave
@@ -1535,7 +1535,7 @@ Differences with NumPy:
 Differences with Octave:
 @itemize
 @item The default lower bound (base index) in @code{newra} is 0, not 1. Lower bounds may be 1 on a particular array (or particular axes of an array), but not globally.
-@item In Octave, any array of rank ≤ 2 is implicity a matrix (an array of rank 2). This isn't true in @code{newra}, so, for example, an array of rank 1 isn't equivalent to an array of rank 2 with a single row (a ‘row vector’).
+@item In Octave, the lowest rank an array can be is 2. This isn't true in @code{newra}, so, for example, an array of rank 1 isn't equivalent to an array of rank 2 with a single row (a ‘row vector’).
 @item Unlike Octave, the default element order in arrays is row-major, or ‘last index changes fastest’. It's possible to define and manipulate arrays in any other order, including Octave's default. However, some functions (such as @code{ra-ravel}) only support row-major order.
 @item @code{newra} uses prefix matching for rank extension on arguments on any rank, while Octave only performs rank extension on scalar arguments.
 @end itemize
@@ -1547,12 +1547,57 @@ Differences with Octave:
 
 @subsection Using rank extension or dead axes for reduction
 
-@subsection Partial application in outer products
+The use of rank extension for reduction inhibits parallelization and is dependent on the order in which the array arguments are traversed, which is generally unspecified. In principle, it's possible for @code{newra} to look at the strides of the destination arguments and figure out whether some array positions are referenced more than once, so that the meaning of @code{ra-for-each} or @code{ra-map!} can be preserved even if (when?) those operations are actually implemented in parallel. However, that still leaves the order of traversal unspecified.
 
+In that light, the following reduction should be alright when @var{op} is @code{+}, but it's better avoided it if @var{op} is @code{-}, even if it happens to do what you expect on the current version of @code{newra}.
+
+@example
+@verbatim
+(let ((sum (make-ra 0)))
+  (ra-map! sum op sum (list->ra 1 '(1 2 3 4 5)))
+  (sum))
+@end verbatim
+@result{} @code{15}
+@end example
+
+For cases where it matters, it's better to use a function which specifies the order of evaluation, such as @code{ra-fold}.
+
+@cindex @code{ra-slice-for-each}
 @subsection Holding onto the arguments of @ref{x-ra-slice-for-each,@code{ra-slice-for-each}}'s @var{op}
 
-TODO more...
+@ref{x-ra-slice-for-each,@code{ra-slice-for-each}} may reuse the same array object for different calls to @var{op}. For example
 
+@example
+@verbatim
+; `keep the last row that begins with 3' (wrong)
+(let ((a #f))
+  (ra-slice-for-each 1
+    (lambda (row) (when (= 3 (row 0)) (set! a row)))
+    (list->ra 2 '((2 3) (3 5) (3 a) (1 2))))
+  a)
+@end verbatim
+@result{} @code{#%1:2(2 3)} ; ?? could be anything
+@end example
+
+For this to work reliably, you need to copy the array descriptor, which can be done with @ref{x-ra-slice,@code{ra-slice}}.
+
+@example
+@verbatim
+; `keep the last row that begins with 3' (fixed)
+(let ((a #f))
+  (ra-slice-for-each 1
+    (lambda (row) (when (= 3 (row 0)) (set! a (ra-slice row))))
+    (list->ra 2 '((2 3) (3 5) (3 a) (1 2))))
+  a)
+@end verbatim
+@result{} @code{#%1:2(3 a)}
+@end example
+
+Of course, if it suits your purpose, you can also copy @var{row} into a new array, with its own storage, using @ref{x-ra-copy,@code{ra-copy}}.
+
+@subsection Partial application in outer products
+
+TODO
 
 @c ------------------------------------------------
 @node Reference
