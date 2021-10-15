@@ -3,14 +3,8 @@
 <!-- Created by GNU Texinfo 6.8, http://www.gnu.org/software/texinfo/ -->
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-<!-- newra (version 1, updated 2021 October 14)
-
-(c) lloda 2017-2021
-
-Permission is granted to copy, distribute and/or modify this document
-under the terms of the GNU Free Documentation License, Version 1.3 or
-any later version published by the Free Software Foundation; with no
-Invariant Sections, no Front-Cover Texts, and no Back-Cover Texts. -->
+<!-- Version 1, updated 2021 October 15
+ -->
 <title>newra — An alternative array library for Guile 3</title>
 
 <meta name="description" content="newra — An alternative array library for Guile 3">
@@ -105,28 +99,19 @@ Next: <a href="#Introduction" accesskey="n" rel="next">Introduction</a> &nbsp; [
 </div>
 <span id="newra"></span><h1 class="top"><code>newra</code></h1>
 
-<p><code>newra</code> (version 1, updated 2021 October 14)
+<p>Version 1, updated 2021 October 15
+<a id="DOCF1" href="#FOOT1"><sup>1</sup></a>
 </p>
-<p>(c) lloda 2017&ndash;2021
-</p>
-<div class="display">
-<pre class="display">Permission is granted to copy, distribute and/or modify this document
-under the terms of the GNU Free Documentation License, Version 1.3 or
-any later version published by the Free Software Foundation; with no
-Invariant Sections, no Front-Cover Texts, and no Back-Cover Texts.
-</pre></div>
-
 <p><code>newra</code> is a pure Scheme replacement for the built-in C-based array facility in Guile 3.0.
 </p>
 <p>This document uses ‘array’ to refer both to the old built-in array type and to the new type introduced in <code>newra</code>. The distinction is made as necessary.
 </p>
 
 
-
 <ul class="section-toc">
 <li><a href="#Introduction" accesskey="1">Introduction</a></li>
-<li><a href="#Low-level" accesskey="2">Low level</a></li>
-<li><a href="#High-level" accesskey="3">High level</a></li>
+<li><a href="#The-array-library" accesskey="2">The array library</a></li>
+<li><a href="#The-array-language" accesskey="3">The array language</a></li>
 <li><a href="#Hazards" accesskey="4">Hazards</a></li>
 <li><a href="#Reference" accesskey="5">Reference</a></li>
 <li><a href="#Cheatsheet" accesskey="6">Cheatsheet</a></li>
@@ -137,7 +122,7 @@ Invariant Sections, no Front-Cover Texts, and no Back-Cover Texts.
 <div class="chapter" id="Introduction">
 <div class="header">
 <p>
-Next: <a href="#Low-level" accesskey="n" rel="next">Low level</a>, Previous: <a href="#Top" accesskey="p" rel="prev"><code>newra</code></a>, Up: <a href="#Top" accesskey="u" rel="up"><code>newra</code></a> &nbsp; [<a href="#Indices" title="Index" rel="index">Index</a>]</p>
+Next: <a href="#The-array-library" accesskey="n" rel="next">The array library</a>, Previous: <a href="#Top" accesskey="p" rel="prev"><code>newra</code></a>, Up: <a href="#Top" accesskey="u" rel="up"><code>newra</code></a> &nbsp; [<a href="#Indices" title="Index" rel="index">Index</a>]</p>
 </div>
 <span id="Introduction-1"></span><h2 class="chapter">1 Introduction</h2>
 
@@ -153,7 +138,7 @@ Next: <a href="#Low-level" accesskey="n" rel="next">Low level</a>, Previous: <a 
 │A(2, 0)│A(2, 1)│A(2, 2)│
 └───────┴───────┴───────┘
 </pre>
-<p>This is a 3-array with bounds [0, 1] on axis 0, [2, 5] on axis 1, bounds [-2, 0] on axis 2:<a id="DOCF1" href="#FOOT1"><sup>1</sup></a>
+<p>This is a 3-array with bounds [0, 1] on axis 0, [2, 5] on axis 1, bounds [-2, 0] on axis 2:<a id="DOCF2" href="#FOOT2"><sup>2</sup></a>
 </p><pre class="verbatim">║───────────┬───────────┬──────────║───────────┬───────────┬──────────║
 ║A(0, 2, -2)│A(0, 2, -1)│A(0, 2, 0)║A(1, 2, -2)│A(1, 2, -1)│A(1, 2, 0)║
 ║───────────┼───────────┼──────────║───────────┼───────────┼──────────║
@@ -168,9 +153,8 @@ Next: <a href="#Low-level" accesskey="n" rel="next">Low level</a>, Previous: <a 
 </p>
 <p>Arrays (in the form of <em>matrices</em>, <em>vectors</em>, or <em>tensors</em>) are very common objects in math and programming, and it is very useful to be able to manipulate arrays as individual entities rather than as aggregates — that is one of the main purposes of <code>newra</code>.
 </p>
-<p>The rest of this section discusses the motivation for <code>newra</code> in more detail. To start using the library, please jump ahead to <a href="#Low-level">Low level</a>.
+<p>The rest of this section discusses the motivation for <code>newra</code> in more detail. To start using the library, please jump ahead to <a href="#The-array-library">The array library</a>.
 </p>
-
 <ul class="section-toc">
 <li><a href="#Rank-polymorphism" accesskey="1">Rank polymorphism</a></li>
 <li><a href="#Rank-extension" accesskey="2">Rank extension</a></li>
@@ -236,7 +220,7 @@ A(2)
 <p>A(i₀, i₁, ...) = (storage-of-A) [(((i₀l₁ + i₁)l₂ + i₂)l₃ + ...)+iᵣ₋₁] = (storage-of-A) [o + s₀·i₀ + s₁·i₁ +  ...]
 </p></blockquote>
 
-<p>where the numbers (s₀, s₁, ...) are called the <em>steps</em><a id="DOCF2" href="#FOOT2"><sup>2</sup></a>. Note that the ‘linear’ or ‘raveled’ address [o + s₀·i₀ + s₁·i₁ +  ...] is an affine function of (i₀, i₁, ...). If we represent an array as a tuple
+<p>where the numbers (s₀, s₁, ...) are called the <em>steps</em><a id="DOCF3" href="#FOOT3"><sup>3</sup></a>. Note that the ‘linear’ or ‘raveled’ address [o + s₀·i₀ + s₁·i₁ +  ...] is an affine function of (i₀, i₁, ...). If we represent an array as a tuple
 </p>
 <blockquote>
 <p>A ≡ ((storage-of-A), o, (s₀, s₁, ...))
@@ -292,9 +276,9 @@ Next: <a href="#The-pieces-of-an-array" accesskey="n" rel="next">The pieces of a
 
 <span id="index-shape-agreement_002c-prefix"></span>
 <span id="index-shape-agreement_002c-suffix"></span>
-<span id="index-Numpy"></span>
+<span id="index-NumPy"></span>
 <p>This rank extension rule is used by the J language [<a href="#Sources">J S</a>]
- and is known as <em>prefix agreement</em>. The opposite rule of <em>suffix agreement</em> is used, for example, in Numpy [<a href="#Sources">num17</a>]
+ and is known as <em>prefix agreement</em>. The opposite rule of <em>suffix agreement</em> is used, for example, in NumPy [<a href="#Sources">num17</a>]
 .
 </p>
 <p>As you can verify, the prefix agreement rule is distributive. Therefore it can be applied to nested expressions or to expressions with any number of arguments. It is applied systematically throughout <code>newra</code>, even in assignments. For example,
@@ -313,7 +297,7 @@ Next: <a href="#The-pieces-of-an-array" accesskey="n" rel="next">The pieces of a
 </pre><pre class="example">&rArr; <code>#%1:3(3 7 11)</code>
 </pre></div>
 
-<span id="index-Numpy-1"></span>
+<span id="index-NumPy-1"></span>
 <span id="index-broadcasting_002c-singleton_002c-newaxis"></span>
 <p>A weakness of prefix agreement is that the axes you want to match aren&rsquo;t always the prefix axes. Other array systems (e.g. [<a href="#Sources">num17</a>]
 ) offer a feature similar to rank extension called ‘broadcasting’ that is a bit more flexible. For example an array of shape [A B 1 D] will match an array of shape [A B C D] for any value of C. The process of broadcasting consists in inserting so-called ‘singleton dimensions’ (axes with length one) to align the axes that one wishes to match. One may think of rank extension as a particular case of broadcasting where the singleton dimensions are added to the end of the shorter shapes automatically.
@@ -443,7 +427,7 @@ Previous: <a href="#The-pieces-of-an-array" accesskey="p" rel="prev">The pieces 
 </p>
 <p>First, the built-in library offers a single function to manipulate array dims, <code>make-shared-array</code>. Although this is a sufficient interface, it is excessively generic, and also very cumbersome and inefficient. The array dims cannot be manipulated directly from Scheme, so any alternative interface written in Scheme is forced to go through <code>make-shared-array</code>.
 </p>
-<p>Second, the C stubs create a barrier to optimization by the Scheme compiler. The main loop of an operation such as <code>(array-map! c + a b)</code> has to be implemented in C (for the reasons given above) and then it has to call back to Scheme on each iteration in order to apply <code>+</code>. Since the Scheme compiler doesn&rsquo;t have any special support for <code>array-map!</code>, it doesn&rsquo;t know what the types of the arguments are, etc. and those checks and dispatches are repeated over and over. <a id="DOCF3" href="#FOOT3"><sup>3</sup></a>
+<p>Second, the C stubs create a barrier to optimization by the Scheme compiler. The main loop of an operation such as <code>(array-map! c + a b)</code> has to be implemented in C (for the reasons given above) and then it has to call back to Scheme on each iteration in order to apply <code>+</code>. Since the Scheme compiler doesn&rsquo;t have any special support for <code>array-map!</code>, it doesn&rsquo;t know what the types of the arguments are, etc. and those checks and dispatches are repeated over and over. <a id="DOCF4" href="#FOOT4"><sup>4</sup></a>
 </p>
 <p>Third, some of the the larger functions of the array interface, such as <code>array-map!</code>, etc. are not interruptible. This is especially inconvenient when operating on large arrays.
 </p>
@@ -452,13 +436,12 @@ Previous: <a href="#The-pieces-of-an-array" accesskey="p" rel="prev">The pieces 
 <hr>
 </div>
 </div>
-<div class="chapter" id="Low-level">
+<div class="chapter" id="The-array-library">
 <div class="header">
 <p>
-Next: <a href="#High-level" accesskey="n" rel="next">High level</a>, Previous: <a href="#Introduction" accesskey="p" rel="prev">Introduction</a>, Up: <a href="#Top" accesskey="u" rel="up"><code>newra</code></a> &nbsp; [<a href="#Indices" title="Index" rel="index">Index</a>]</p>
+Next: <a href="#The-array-language" accesskey="n" rel="next">The array language</a>, Previous: <a href="#Introduction" accesskey="p" rel="prev">Introduction</a>, Up: <a href="#Top" accesskey="u" rel="up"><code>newra</code></a> &nbsp; [<a href="#Indices" title="Index" rel="index">Index</a>]</p>
 </div>
-<span id="Low-level-1"></span><h2 class="chapter">2 Low level</h2>
-
+<span id="The-array-library-1"></span><h2 class="chapter">2 The array library</h2>
 
 <ul class="section-toc">
 <li><a href="#Creating-and-accessing-arrays" accesskey="1">Creating and accessing arrays</a></li>
@@ -478,7 +461,7 @@ Next: <a href="#High-level" accesskey="n" rel="next">High level</a>, Previous: <
 <div class="section" id="Creating-and-accessing-arrays">
 <div class="header">
 <p>
-Next: <a href="#Special-arrays" accesskey="n" rel="next">Special arrays</a>, Up: <a href="#Low-level" accesskey="u" rel="up">Low level</a> &nbsp; [<a href="#Indices" title="Index" rel="index">Index</a>]</p>
+Next: <a href="#Special-arrays" accesskey="n" rel="next">Special arrays</a>, Up: <a href="#The-array-library" accesskey="u" rel="up">The array library</a> &nbsp; [<a href="#Indices" title="Index" rel="index">Index</a>]</p>
 </div>
 <span id="Creating-and-accessing-arrays-1"></span><h3 class="section">2.1 Creating and accessing arrays</h3>
 
@@ -546,7 +529,7 @@ Next: <a href="#Special-arrays" accesskey="n" rel="next">Special arrays</a>, Up:
 <div class="section" id="Special-arrays">
 <div class="header">
 <p>
-Next: <a href="#Writing-and-reading" accesskey="n" rel="next">Writing and reading</a>, Previous: <a href="#Creating-and-accessing-arrays" accesskey="p" rel="prev">Creating and accessing arrays</a>, Up: <a href="#Low-level" accesskey="u" rel="up">Low level</a> &nbsp; [<a href="#Indices" title="Index" rel="index">Index</a>]</p>
+Next: <a href="#Writing-and-reading" accesskey="n" rel="next">Writing and reading</a>, Previous: <a href="#Creating-and-accessing-arrays" accesskey="p" rel="prev">Creating and accessing arrays</a>, Up: <a href="#The-array-library" accesskey="u" rel="up">The array library</a> &nbsp; [<a href="#Indices" title="Index" rel="index">Index</a>]</p>
 </div>
 <span id="Special-arrays-1"></span><h3 class="section">2.2 Special arrays</h3>
 
@@ -616,7 +599,7 @@ Next: <a href="#Writing-and-reading" accesskey="n" rel="next">Writing and readin
 <div class="section" id="Writing-and-reading">
 <div class="header">
 <p>
-Next: <a href="#Iteration" accesskey="n" rel="next">Iteration</a>, Previous: <a href="#Special-arrays" accesskey="p" rel="prev">Special arrays</a>, Up: <a href="#Low-level" accesskey="u" rel="up">Low level</a> &nbsp; [<a href="#Indices" title="Index" rel="index">Index</a>]</p>
+Next: <a href="#Iteration" accesskey="n" rel="next">Iteration</a>, Previous: <a href="#Special-arrays" accesskey="p" rel="prev">Special arrays</a>, Up: <a href="#The-array-library" accesskey="u" rel="up">The array library</a> &nbsp; [<a href="#Indices" title="Index" rel="index">Index</a>]</p>
 </div>
 <span id="Writing-and-reading-1"></span><h3 class="section">2.3 Writing and reading</h3>
 
@@ -783,7 +766,7 @@ s
 <div class="section" id="Iteration">
 <div class="header">
 <p>
-Next: <a href="#Slicing" accesskey="n" rel="next">Slicing</a>, Previous: <a href="#Writing-and-reading" accesskey="p" rel="prev">Writing and reading</a>, Up: <a href="#Low-level" accesskey="u" rel="up">Low level</a> &nbsp; [<a href="#Indices" title="Index" rel="index">Index</a>]</p>
+Next: <a href="#Slicing" accesskey="n" rel="next">Slicing</a>, Previous: <a href="#Writing-and-reading" accesskey="p" rel="prev">Writing and reading</a>, Up: <a href="#The-array-library" accesskey="u" rel="up">The array library</a> &nbsp; [<a href="#Indices" title="Index" rel="index">Index</a>]</p>
 </div>
 <span id="Iteration-1"></span><h3 class="section">2.4 Iteration</h3>
 
@@ -794,7 +777,7 @@ Next: <a href="#Slicing" accesskey="n" rel="next">Slicing</a>, Previous: <a href
 </pre><pre class="example">&rArr; #%1:3(-1 -2 -3)
 </pre></div>
 
-<p>It is common to need the indices of the elements during array iteration. <code>newra</code> iteration operations do not keep track of those indices<a id="DOCF4" href="#FOOT4"><sup>4</sup></a> because that has a cost. You need to pass the indices you need as arguments, but it&rsquo;s easy to do so by using an unbounded index vector together with <a href="#x_002dra_002dtranspose"><code>ra-transpose</code></a>.
+<p>It is common to need the indices of the elements during array iteration. <code>newra</code> iteration operations do not keep track of those indices<a id="DOCF5" href="#FOOT5"><sup>5</sup></a> because that has a cost. You need to pass the indices you need as arguments, but it&rsquo;s easy to do so by using an unbounded index vector together with <a href="#x_002dra_002dtranspose"><code>ra-transpose</code></a>.
 </p>
 <div class="example">
 <pre class="verbatim">(define i0 (ra-iota))
@@ -836,7 +819,7 @@ Next: <a href="#Slicing" accesskey="n" rel="next">Slicing</a>, Previous: <a href
 <div class="section" id="Slicing">
 <div class="header">
 <p>
-Next: <a href="#Reshaping" accesskey="n" rel="next">Reshaping</a>, Previous: <a href="#Iteration" accesskey="p" rel="prev">Iteration</a>, Up: <a href="#Low-level" accesskey="u" rel="up">Low level</a> &nbsp; [<a href="#Indices" title="Index" rel="index">Index</a>]</p>
+Next: <a href="#Reshaping" accesskey="n" rel="next">Reshaping</a>, Previous: <a href="#Iteration" accesskey="p" rel="prev">Iteration</a>, Up: <a href="#The-array-library" accesskey="u" rel="up">The array library</a> &nbsp; [<a href="#Indices" title="Index" rel="index">Index</a>]</p>
 </div>
 <span id="Slicing-1"></span><h3 class="section">2.5 Slicing</h3>
 
@@ -890,7 +873,7 @@ Next: <a href="#Reshaping" accesskey="n" rel="next">Reshaping</a>, Previous: <a 
 <pre class="verbatim">(ra-from a i₀ ...) ⇒ b
 </pre></blockquote>
 
-<p>Each of the <code>i₀...</code> is either 1. an integer; 2. an array of integers; 3. the special value <code>#t</code>. Integer arguments contain indices into the respective axis of <code>a</code>. <code>#t</code> for <code>iₖ</code> is a shortcut for ‘the whole of axis <code>k</code>’<a id="DOCF5" href="#FOOT5"><sup>5</sup></a>. The result <code>b</code> has rank equal to the sum of all the ranks of the <code>i₀...</code>, and is defined as
+<p>Each of the <code>i₀...</code> is either 1. an integer; 2. an array of integers; 3. the special value <code>#t</code>. Integer arguments contain indices into the respective axis of <code>a</code>. <code>#t</code> for <code>iₖ</code> is a shortcut for ‘the whole of axis <code>k</code>’<a id="DOCF6" href="#FOOT6"><sup>6</sup></a>. The result <code>b</code> has rank equal to the sum of all the ranks of the <code>i₀...</code>, and is defined as
 </p>
 <blockquote>
 <pre class="verbatim">(ra-ref b j₀ ...) = (ra-ref a (ra-ref i₀ j₀ ...) ...)
@@ -969,7 +952,7 @@ Next: <a href="#Reshaping" accesskey="n" rel="next">Reshaping</a>, Previous: <a 
 <div class="section" id="Reshaping">
 <div class="header">
 <p>
-Next: <a href="#Concatenation" accesskey="n" rel="next">Concatenation</a>, Previous: <a href="#Slicing" accesskey="p" rel="prev">Slicing</a>, Up: <a href="#Low-level" accesskey="u" rel="up">Low level</a> &nbsp; [<a href="#Indices" title="Index" rel="index">Index</a>]</p>
+Next: <a href="#Concatenation" accesskey="n" rel="next">Concatenation</a>, Previous: <a href="#Slicing" accesskey="p" rel="prev">Slicing</a>, Up: <a href="#The-array-library" accesskey="u" rel="up">The array library</a> &nbsp; [<a href="#Indices" title="Index" rel="index">Index</a>]</p>
 </div>
 <span id="Reshaping-1"></span><h3 class="section">2.6 Reshaping</h3>
 
@@ -1001,7 +984,7 @@ Next: <a href="#Concatenation" accesskey="n" rel="next">Concatenation</a>, Previ
 <div class="section" id="Concatenation">
 <div class="header">
 <p>
-Next: <a href="#Transposition" accesskey="n" rel="next">Transposition</a>, Previous: <a href="#Reshaping" accesskey="p" rel="prev">Reshaping</a>, Up: <a href="#Low-level" accesskey="u" rel="up">Low level</a> &nbsp; [<a href="#Indices" title="Index" rel="index">Index</a>]</p>
+Next: <a href="#Transposition" accesskey="n" rel="next">Transposition</a>, Previous: <a href="#Reshaping" accesskey="p" rel="prev">Reshaping</a>, Up: <a href="#The-array-library" accesskey="u" rel="up">The array library</a> &nbsp; [<a href="#Indices" title="Index" rel="index">Index</a>]</p>
 </div>
 <span id="Concatenation-1"></span><h3 class="section">2.7 Concatenation</h3>
 
@@ -1083,7 +1066,7 @@ Next: <a href="#Transposition" accesskey="n" rel="next">Transposition</a>, Previ
 </pre><pre class="example">&rArr; error ; axes 0 don't match
 </pre></div>
 
-<p>Here <a href="#x_002dra_002dreshape"><code>ra-reshape</code></a> is used to move axis 0 of the second argument into agreement.<a id="DOCF6" href="#FOOT6"><sup>6</sup></a>
+<p>Here <a href="#x_002dra_002dreshape"><code>ra-reshape</code></a> is used to move axis 0 of the second argument into agreement.<a id="DOCF7" href="#FOOT7"><sup>7</sup></a>
 </p>
 <div class="example">
 <pre class="verbatim">(ra-cat #t 1 (make-ra 'a '(1 1) '(1 4))
@@ -1144,7 +1127,7 @@ Next: <a href="#Transposition" accesskey="n" rel="next">Transposition</a>, Previ
 <div class="section" id="Transposition">
 <div class="header">
 <p>
-Next: <a href="#Other-operations-on-arrays" accesskey="n" rel="next">Other operations on arrays</a>, Previous: <a href="#Concatenation" accesskey="p" rel="prev">Concatenation</a>, Up: <a href="#Low-level" accesskey="u" rel="up">Low level</a> &nbsp; [<a href="#Indices" title="Index" rel="index">Index</a>]</p>
+Next: <a href="#Other-operations-on-arrays" accesskey="n" rel="next">Other operations on arrays</a>, Previous: <a href="#Concatenation" accesskey="p" rel="prev">Concatenation</a>, Up: <a href="#The-array-library" accesskey="u" rel="up">The array library</a> &nbsp; [<a href="#Indices" title="Index" rel="index">Index</a>]</p>
 </div>
 <span id="Transposition-1"></span><h3 class="section">2.8 Transposition</h3>
 
@@ -1262,7 +1245,7 @@ A
 <div class="section" id="Other-operations-on-arrays">
 <div class="header">
 <p>
-Next: <a href="#Automatic-result-arrays" accesskey="n" rel="next">Automatic result arrays</a>, Previous: <a href="#Transposition" accesskey="p" rel="prev">Transposition</a>, Up: <a href="#Low-level" accesskey="u" rel="up">Low level</a> &nbsp; [<a href="#Indices" title="Index" rel="index">Index</a>]</p>
+Next: <a href="#Automatic-result-arrays" accesskey="n" rel="next">Automatic result arrays</a>, Previous: <a href="#Transposition" accesskey="p" rel="prev">Transposition</a>, Up: <a href="#The-array-library" accesskey="u" rel="up">The array library</a> &nbsp; [<a href="#Indices" title="Index" rel="index">Index</a>]</p>
 </div>
 <span id="Other-operations-on-arrays-1"></span><h3 class="section">2.9 Other operations on arrays</h3>
 
@@ -1271,7 +1254,7 @@ Next: <a href="#Automatic-result-arrays" accesskey="n" rel="next">Automatic resu
 <div class="section" id="Automatic-result-arrays">
 <div class="header">
 <p>
-Next: <a href="#Foreign-interface" accesskey="n" rel="next">Foreign interface</a>, Previous: <a href="#Other-operations-on-arrays" accesskey="p" rel="prev">Other operations on arrays</a>, Up: <a href="#Low-level" accesskey="u" rel="up">Low level</a> &nbsp; [<a href="#Indices" title="Index" rel="index">Index</a>]</p>
+Next: <a href="#Foreign-interface" accesskey="n" rel="next">Foreign interface</a>, Previous: <a href="#Other-operations-on-arrays" accesskey="p" rel="prev">Other operations on arrays</a>, Up: <a href="#The-array-library" accesskey="u" rel="up">The array library</a> &nbsp; [<a href="#Indices" title="Index" rel="index">Index</a>]</p>
 </div>
 <span id="Automatic-result-arrays-1"></span><h3 class="section">2.10 Automatic result arrays</h3>
 
@@ -1300,7 +1283,7 @@ Next: <a href="#Foreign-interface" accesskey="n" rel="next">Foreign interface</a
 <div class="section" id="Foreign-interface">
 <div class="header">
 <p>
-Next: <a href="#Compatibility-with-old-Guile-arrays" accesskey="n" rel="next">Compatibility with old Guile arrays</a>, Previous: <a href="#Automatic-result-arrays" accesskey="p" rel="prev">Automatic result arrays</a>, Up: <a href="#Low-level" accesskey="u" rel="up">Low level</a> &nbsp; [<a href="#Indices" title="Index" rel="index">Index</a>]</p>
+Next: <a href="#Compatibility-with-old-Guile-arrays" accesskey="n" rel="next">Compatibility with old Guile arrays</a>, Previous: <a href="#Automatic-result-arrays" accesskey="p" rel="prev">Automatic result arrays</a>, Up: <a href="#The-array-library" accesskey="u" rel="up">The array library</a> &nbsp; [<a href="#Indices" title="Index" rel="index">Index</a>]</p>
 </div>
 <span id="Foreign-interface-1"></span><h3 class="section">2.11 Foreign interface</h3>
 
@@ -1315,7 +1298,7 @@ Next: <a href="#Compatibility-with-old-Guile-arrays" accesskey="n" rel="next">Co
 <div class="section" id="Compatibility-with-old-Guile-arrays">
 <div class="header">
 <p>
-Previous: <a href="#Foreign-interface" accesskey="p" rel="prev">Foreign interface</a>, Up: <a href="#Low-level" accesskey="u" rel="up">Low level</a> &nbsp; [<a href="#Indices" title="Index" rel="index">Index</a>]</p>
+Previous: <a href="#Foreign-interface" accesskey="p" rel="prev">Foreign interface</a>, Up: <a href="#The-array-library" accesskey="u" rel="up">The array library</a> &nbsp; [<a href="#Indices" title="Index" rel="index">Index</a>]</p>
 </div>
 <span id="Compatibility-with-old-Guile-arrays-1"></span><h3 class="section">2.12 Compatibility with old Guile arrays</h3>
 
@@ -1349,7 +1332,7 @@ a
 </pre><pre class="example">&rArr; <code>#%4d:1:2:1:3((((0 1 2)) ((3 4 5))))</code>
 </pre></div>
 
-<p>One important difference between the built-in array functions and <code>newra</code> is that bounds matching in <code>newra</code> is strict: finite bounds must be identical for axes to match, while for <code>array-map!</code>, <code>array-for-each</code>, <code>array-copy!</code>, etc. the iteration range is the intersection of the ranges of the arguments<a id="DOCF7" href="#FOOT7"><sup>7</sup></a>. <code>newra</code> provides <a href="#x_002dra_002dclip"><code>ra-clip</code></a> to match ranges easily.
+<p>One important difference between the built-in array functions and <code>newra</code> is that bounds matching in <code>newra</code> is strict: finite bounds must be identical for axes to match, while for <code>array-map!</code>, <code>array-for-each</code>, <code>array-copy!</code>, etc. the iteration range is the intersection of the ranges of the arguments<a id="DOCF8" href="#FOOT8"><sup>8</sup></a>. <code>newra</code> provides <a href="#x_002dra_002dclip"><code>ra-clip</code></a> to match ranges easily.
 </p>
 <div class="example">
 <pre class="verbatim">(define a (make-ra-root (vector 'a 'b 'c 'd 'e 'f 'g))) ; range is 0..6
@@ -1364,12 +1347,12 @@ a
 <hr>
 </div>
 </div>
-<div class="chapter" id="High-level">
+<div class="chapter" id="The-array-language">
 <div class="header">
 <p>
-Next: <a href="#Hazards" accesskey="n" rel="next">Hazards</a>, Previous: <a href="#Low-level" accesskey="p" rel="prev">Low level</a>, Up: <a href="#Top" accesskey="u" rel="up"><code>newra</code></a> &nbsp; [<a href="#Indices" title="Index" rel="index">Index</a>]</p>
+Next: <a href="#Hazards" accesskey="n" rel="next">Hazards</a>, Previous: <a href="#The-array-library" accesskey="p" rel="prev">The array library</a>, Up: <a href="#Top" accesskey="u" rel="up"><code>newra</code></a> &nbsp; [<a href="#Indices" title="Index" rel="index">Index</a>]</p>
 </div>
-<span id="High-level-1"></span><h2 class="chapter">3 High level</h2>
+<span id="The-array-language-1"></span><h2 class="chapter">3 The array language</h2>
 
 <p>NOTE This section is about a facility that hasn&rsquo;t been implemented yet.
 </p>
@@ -1381,7 +1364,6 @@ Next: <a href="#Hazards" accesskey="n" rel="next">Hazards</a>, Previous: <a href
 </li><li> handle scalar (non-array) arguments.
 </li></ul>
 
-
 <ul class="section-toc">
 <li><a href="#Verbs" accesskey="1">Verbs</a></li>
 <li><a href="#Reductions" accesskey="2">Reductions</a></li>
@@ -1390,7 +1372,7 @@ Next: <a href="#Hazards" accesskey="n" rel="next">Hazards</a>, Previous: <a href
 <div class="section" id="Verbs">
 <div class="header">
 <p>
-Next: <a href="#Reductions" accesskey="n" rel="next">Reductions</a>, Up: <a href="#High-level" accesskey="u" rel="up">High level</a> &nbsp; [<a href="#Indices" title="Index" rel="index">Index</a>]</p>
+Next: <a href="#Reductions" accesskey="n" rel="next">Reductions</a>, Up: <a href="#The-array-language" accesskey="u" rel="up">The array language</a> &nbsp; [<a href="#Indices" title="Index" rel="index">Index</a>]</p>
 </div>
 <span id="Verbs-1"></span><h3 class="section">3.1 Verbs</h3>
 
@@ -1399,7 +1381,7 @@ Next: <a href="#Reductions" accesskey="n" rel="next">Reductions</a>, Up: <a href
 <div class="section" id="Reductions">
 <div class="header">
 <p>
-Previous: <a href="#Verbs" accesskey="p" rel="prev">Verbs</a>, Up: <a href="#High-level" accesskey="u" rel="up">High level</a> &nbsp; [<a href="#Indices" title="Index" rel="index">Index</a>]</p>
+Previous: <a href="#Verbs" accesskey="p" rel="prev">Verbs</a>, Up: <a href="#The-array-language" accesskey="u" rel="up">The array language</a> &nbsp; [<a href="#Indices" title="Index" rel="index">Index</a>]</p>
 </div>
 <span id="Reductions-1"></span><h3 class="section">3.2 Reductions</h3>
 
@@ -1409,10 +1391,9 @@ Previous: <a href="#Verbs" accesskey="p" rel="prev">Verbs</a>, Up: <a href="#Hig
 <div class="chapter" id="Hazards">
 <div class="header">
 <p>
-Next: <a href="#Reference" accesskey="n" rel="next">Reference</a>, Previous: <a href="#High-level" accesskey="p" rel="prev">High level</a>, Up: <a href="#Top" accesskey="u" rel="up"><code>newra</code></a> &nbsp; [<a href="#Indices" title="Index" rel="index">Index</a>]</p>
+Next: <a href="#Reference" accesskey="n" rel="next">Reference</a>, Previous: <a href="#The-array-language" accesskey="p" rel="prev">The array language</a>, Up: <a href="#Top" accesskey="u" rel="up"><code>newra</code></a> &nbsp; [<a href="#Indices" title="Index" rel="index">Index</a>]</p>
 </div>
 <span id="Hazards-1"></span><h2 class="chapter">4 Hazards</h2>
-
 
 <ul class="section-toc">
 <li><a href="#Differences-with_002e_002e_002e" accesskey="1">Differences with...</a></li>
@@ -1450,10 +1431,10 @@ Next: <a href="#Pitfalls-and-common-mistakes" accesskey="n" rel="next">Pitfalls 
 </li></ul>
 
 <span id="index-Python"></span>
-<span id="index-NumPy"></span>
+<span id="index-NumPy-2"></span>
 <p>Differences with NumPy:
 </p><ul>
-<li> <code>newra</code> uses prefix matching for rank extension, while Numpy uses suffix matching (<a href="#x_002dnumpy_002dexample_002d0">for example</a>).
+<li> <code>newra</code> uses prefix matching for rank extension, while NumPy uses suffix matching (<a href="#x_002dnumpy_002dexample_002d0">for example</a>).
 </li><li> <code>newra</code> doesn&rsquo;t use singleton broadcasting. Axes of length 1 only match axes of length 1. For example, <code>(ra-map! (make-ra 0 2) + (make-ra 90 1) (make-ra 7 2))</code> is an error because the shapes (2), (1), (2) don&rsquo;t agree.
 </li></ul>
 
@@ -1691,7 +1672,7 @@ a
 <dd>
 <p>Pretty print array <var>ra</var>.
 </p>
-<p>Each element <var>x</var> of <var>ra</var> is converted to a string using <code>(fmt x)</code>, or <code>(format #f fmt x)</code><a id="DOCF8" href="#FOOT8"><sup>8</sup></a> if <var>fmt</var> is a string. <var>fmt</var> defauts to <code>&quot;~a&quot;</code>. Elements that are arrays are formatted using <code>ra-format</code> recursively.
+<p>Each element <var>x</var> of <var>ra</var> is converted to a string using <code>(fmt x)</code>, or <code>(format #f fmt x)</code><a id="DOCF9" href="#FOOT9"><sup>9</sup></a> if <var>fmt</var> is a string. <var>fmt</var> defauts to <code>&quot;~a&quot;</code>. Elements that are arrays are formatted using <code>ra-format</code> recursively.
 </p>
 <p>If <var>port</var> is <code>#f</code>, nothing is printed; instead, the function returns a rank-2 character array <var>sc</var> with the result of the printing. Otherwise the array is printed to <var>port</var> and the function returns unspecified values. The default for <var>port</var> is <code>#t</code>, which works as <code>(current-output-port)</code>.
 </p>
@@ -1848,7 +1829,7 @@ element
 </pre><pre class="example">&rArr; #%3d:2:3:4(((0 1 2 3) (4 5 6 7) (8 9 10 11)) ((12 13 14 15) (16 17 18 19) (20 21 22 23)))
 </pre></div>
 
-<p>See also: <a href="#x_002dra_002diota"><code>ra-iota</code></a>, <a href="#x_002dra_002dindex_002dmap_0021"><code>ra-index-map!</code></a>. <a id="DOCF9" href="#FOOT9"><sup>9</sup></a>
+<p>See also: <a href="#x_002dra_002diota"><code>ra-iota</code></a>, <a href="#x_002dra_002dindex_002dmap_0021"><code>ra-index-map!</code></a>. <a id="DOCF10" href="#FOOT10"><sup>10</sup></a>
 </p>
 </dd></dl>
 
@@ -1989,7 +1970,7 @@ element
 <p>To ravel other combinations of axes, use <a href="#Transposition">Transposition</a>.
 </p>
 <span id="index-packed-array-1"></span>
-<p>The full ravel of an array doesn&rsquo;t necessarily result in a rank-1 &lsquo;packed&rsquo; array, that is, one where the step is 1. If that is required, one can use <code>(ra-ravel (ra-copy ra))</code>. <a id="DOCF10" href="#FOOT10"><sup>10</sup></a>.
+<p>The full ravel of an array doesn&rsquo;t necessarily result in a rank-1 &lsquo;packed&rsquo; array, that is, one where the step is 1. If that is required, one can use <code>(ra-ravel (ra-copy ra))</code>. <a id="DOCF11" href="#FOOT11"><sup>11</sup></a>.
 </p>
 <p>See also: <a href="#x_002dra_002dreshape"><code>ra-reshape</code></a>, <a href="#x_002dra_002dtile"><code>ra-tile</code></a>, <a href="#Reshaping">Reshaping</a>.
 </p>
@@ -2614,7 +2595,7 @@ b
 </p>
 <p>The type of <var>b</var> is the same as that of <var>a</var>, with the only exception that if the type of <var>a</var> is <code>d</code> and the root of <var>b</var> cannot be shared with the root of <var>a</var>, then the type of <var>b</var> is <code>#t</code>.
 </p>
-<p>See also: <a href="#x_002dra_002dcell"><code>ra-cell</code></a>, <a href="#x_002dra_002dref"><code>ra-ref</code></a>, <a href="#x_002dra_002dslice"><code>ra-slice</code></a>, <a href="#x_002dra_002damend_0021"><code>ra-amend!</code></a>, <a href="#Slicing">Slicing</a>.<a id="DOCF11" href="#FOOT11"><sup>11</sup></a>
+<p>See also: <a href="#x_002dra_002dcell"><code>ra-cell</code></a>, <a href="#x_002dra_002dref"><code>ra-ref</code></a>, <a href="#x_002dra_002dslice"><code>ra-slice</code></a>, <a href="#x_002dra_002damend_0021"><code>ra-amend!</code></a>, <a href="#Slicing">Slicing</a>.<a id="DOCF12" href="#FOOT12"><sup>12</sup></a>
 </p>
 </dd></dl>
 
@@ -2724,7 +2705,7 @@ Next: <a href="#Sources" accesskey="n" rel="next">Sources</a>, Previous: <a href
 <p>The APL examples assume <code>⎕io←0</code>. The <code>newra</code> examples use <code>(define ⍉ ra-transpose)</code>, which <code>newra</code> itself doesn&rsquo;t provide.
 </p>
 <table>
-<tr><td width="20%"></td><td width="20%"><code>newra</code></td><td width="20%">APL</td><td width="20%"><span id="index-Numpy-2"></span>
+<tr><td width="20%"></td><td width="20%"><code>newra</code></td><td width="20%">APL</td><td width="20%"><span id="index-NumPy-3"></span>
 NumPy</td><td width="20%">Octave</td></tr>
 <tr><td width="20%">1×n array</td><td width="20%"><pre class="verbatim">∗ #%2((1 2 3))
 ────
@@ -3170,10 +3151,10 @@ Previous: <a href="#Sources" accesskey="p" rel="prev">Sources</a>, Up: <a href="
 <tr><td colspan="4"> <hr></td></tr>
 <tr><th id="Indices_cp_letter-N">N</th><td></td><td></td></tr>
 <tr><td></td><td valign="top"><a href="#index-new-array">new array</a>:</td><td>&nbsp;</td><td valign="top"><a href="#The-pieces-of-an-array">The pieces of an array</a></td></tr>
-<tr><td></td><td valign="top"><a href="#index-Numpy">Numpy</a>:</td><td>&nbsp;</td><td valign="top"><a href="#Rank-extension">Rank extension</a></td></tr>
-<tr><td></td><td valign="top"><a href="#index-Numpy-1">Numpy</a>:</td><td>&nbsp;</td><td valign="top"><a href="#Rank-extension">Rank extension</a></td></tr>
-<tr><td></td><td valign="top"><a href="#index-NumPy">NumPy</a>:</td><td>&nbsp;</td><td valign="top"><a href="#Differences-with_002e_002e_002e">Differences with...</a></td></tr>
-<tr><td></td><td valign="top"><a href="#index-Numpy-2">Numpy</a>:</td><td>&nbsp;</td><td valign="top"><a href="#Cheatsheet">Cheatsheet</a></td></tr>
+<tr><td></td><td valign="top"><a href="#index-NumPy">NumPy</a>:</td><td>&nbsp;</td><td valign="top"><a href="#Rank-extension">Rank extension</a></td></tr>
+<tr><td></td><td valign="top"><a href="#index-NumPy-1">NumPy</a>:</td><td>&nbsp;</td><td valign="top"><a href="#Rank-extension">Rank extension</a></td></tr>
+<tr><td></td><td valign="top"><a href="#index-NumPy-2">NumPy</a>:</td><td>&nbsp;</td><td valign="top"><a href="#Differences-with_002e_002e_002e">Differences with...</a></td></tr>
+<tr><td></td><td valign="top"><a href="#index-NumPy-3">NumPy</a>:</td><td>&nbsp;</td><td valign="top"><a href="#Cheatsheet">Cheatsheet</a></td></tr>
 <tr><td colspan="4"> <hr></td></tr>
 <tr><th id="Indices_cp_letter-O">O</th><td></td><td></td></tr>
 <tr><td></td><td valign="top"><a href="#index-Octave">Octave</a>:</td><td>&nbsp;</td><td valign="top"><a href="#Differences-with_002e_002e_002e">Differences with...</a></td></tr>
@@ -3314,32 +3295,38 @@ Previous: <a href="#Sources" accesskey="p" rel="prev">Sources</a>, Up: <a href="
 <h4 class="footnotes-heading">Footnotes</h4>
 
 <h5><a id="FOOT1" href="#DOCF1">(1)</a></h5>
+<p>(c) lloda 2017&ndash;2021. Permission is granted to copy, distribute and/or modify this document
+under the terms of the GNU Free Documentation License, Version 1.3 or
+any later version published by the Free Software Foundation; with no
+Invariant Sections, no Front-Cover Texts, and no Back-Cover Texts.
+</p>
+<h5><a id="FOOT2" href="#DOCF2">(2)</a></h5>
 <pre class="verbatim">(import (newra))
 (define element (λ i (format #f &quot;A(~{~a~^, ~})&quot; i)))
 (define (ti k) (ra-transpose (ra-iota) k))
 (ra-format (ra-map! (make-ra #f 3 3)  element (ti 0) (ti 1)) #:prefix? #f)
 (ra-format (ra-map! (make-ra #f 2 '(2 5) '(-2 0))  element (ti 0) (ti 1) (ti 2)) #:prefix? #f)
 </pre>
-<h5><a id="FOOT2" href="#DOCF2">(2)</a></h5>
-<p>Cf. <a href="https://en.wikipedia.org/wiki/Dope_vector"><em>dope vector</em></a></p>
 <h5><a id="FOOT3" href="#DOCF3">(3)</a></h5>
-<p>Guile (before v1.8) used to offer dedicated operations to sum arrays, etc. but obviously that isn&rsquo;t any kind of solution.</p>
+<p>Cf. <a href="https://en.wikipedia.org/wiki/Dope_vector"><em>dope vector</em></a></p>
 <h5><a id="FOOT4" href="#DOCF4">(4)</a></h5>
-<p>An exception is <a href="#x_002dra_002dindex_002dmap_0021"><code>ra-index-map!</code></a>, where passing the indices is the purpose.</p>
+<p>Guile (before v1.8) used to offer dedicated operations to sum arrays, etc. but obviously that isn&rsquo;t any kind of solution.</p>
 <h5><a id="FOOT5" href="#DOCF5">(5)</a></h5>
-<p>Note that this is not the same as <code>(let ((d (vector-ref (ra-dims a) k))) (ra-iota (dim-len d) (dim-lo d)))</code>, because the lower bound of <code>(ra-iota ...)</code> (<em>not</em> its content) is 0, not <code>(dim-lo d)</code>, so the corresponding lower bound on the result array would also be 0, while <code>#t</code> preserves the lower bound of <code>a</code>.</p>
+<p>An exception is <a href="#x_002dra_002dindex_002dmap_0021"><code>ra-index-map!</code></a>, where passing the indices is the purpose.</p>
 <h5><a id="FOOT6" href="#DOCF6">(6)</a></h5>
-<p>An example of how using lower bounds other than 0 is generally worthless trouble, not least for the library author.</p>
+<p>Note that this is not the same as <code>(let ((d (vector-ref (ra-dims a) k))) (ra-iota (dim-len d) (dim-lo d)))</code>, because the lower bound of <code>(ra-iota ...)</code> (<em>not</em> its content) is 0, not <code>(dim-lo d)</code>, so the corresponding lower bound on the result array would also be 0, while <code>#t</code> preserves the lower bound of <code>a</code>.</p>
 <h5><a id="FOOT7" href="#DOCF7">(7)</a></h5>
-<p>I decided against this approach for <code>newra</code> because in my experience it results in errors going undetected much more often than it saves any work.</p>
+<p>An example of how using lower bounds other than 0 is generally worthless trouble, not least for the library author.</p>
 <h5><a id="FOOT8" href="#DOCF8">(8)</a></h5>
-<p><a href="https://www.gnu.org/software/guile/manual/html_node/Formatted-Output.html"><code>(ice-9 format)</code></a></p>
+<p>I decided against this approach for <code>newra</code> because in my experience it results in errors going undetected much more often than it saves any work.</p>
 <h5><a id="FOOT9" href="#DOCF9">(9)</a></h5>
+<p><a href="https://www.gnu.org/software/guile/manual/html_node/Formatted-Output.html"><code>(ice-9 format)</code></a></p>
+<h5><a id="FOOT10" href="#DOCF10">(10)</a></h5>
 <p>Cf. <code>array-index</code> from [<a href="#Sources">SRFI-164</a>]
 .</p>
-<h5><a id="FOOT10" href="#DOCF10">(10)</a></h5>
-<p>This works because <a href="#x_002dra_002dorder_002dc_003f"><code>ra-order-c?</code></a> is always true for the result of <code>ra-copy</code>. Note that the ravel operation in <code>(ra-ravel (ra-copy ra))</code> is free, while it might not be in <code>(ra-copy (ra-ravel ra))</code>, so it is preferable, in principle, to copy first.</p>
 <h5><a id="FOOT11" href="#DOCF11">(11)</a></h5>
+<p>This works because <a href="#x_002dra_002dorder_002dc_003f"><code>ra-order-c?</code></a> is always true for the result of <code>ra-copy</code>. Note that the ravel operation in <code>(ra-ravel (ra-copy ra))</code> is free, while it might not be in <code>(ra-copy (ra-ravel ra))</code>, so it is preferable, in principle, to copy first.</p>
+<h5><a id="FOOT12" href="#DOCF12">(12)</a></h5>
 <p>Cf. <code>array-index-ref</code> from [<a href="#Sources">SRFI-164</a>]
 .</p>
 </div>
