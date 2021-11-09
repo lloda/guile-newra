@@ -3,7 +3,7 @@
 <!-- Created by GNU Texinfo 6.8, http://www.gnu.org/software/texinfo/ -->
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-<!-- Version 1, updated 2021 October 15
+<!-- Version 1, updated 2021 November 9
  -->
 <title>newra — An alternative array library for Guile 3</title>
 
@@ -99,7 +99,7 @@ Next: <a href="#Introduction" accesskey="n" rel="next">Introduction</a> &nbsp; [
 </div>
 <span id="newra"></span><h1 class="top"><code>newra</code></h1>
 
-<p>Version 1, updated 2021 October 15
+<p>Version 1, updated 2021 November 9
 <a id="DOCF1" href="#FOOT1"><sup>1</sup></a>
 </p>
 <p><code>newra</code> is a pure Scheme replacement for the built-in C-based array facility in Guile 3.0.
@@ -1465,7 +1465,7 @@ Previous: <a href="#Differences-with_002e_002e_002e" accesskey="p" rel="prev">Di
 <div class="subsection" id="Using-rank-extension-or-dead-axes-for-reduction">
 <h4 class="subsection">4.2.1 Using rank extension or dead axes for reduction</h4>
 
-<p>The use of rank extension for reduction inhibits parallelization and is dependent on the order in which the array arguments are traversed, which is generally unspecified. In principle, it&rsquo;s possible for <code>newra</code> to look at the strides of the destination arguments and figure out whether some array positions are referenced more than once, so that the meaning of <code>ra-for-each</code> or <code>ra-map!</code> can be preserved even if (when?) those operations are actually implemented in parallel. However, that still leaves the order of traversal unspecified.
+<p>The use of rank extension for reduction inhibits parallelization and may be dependent on the order in which the array arguments are traversed, which is generally unspecified. In principle, it&rsquo;s possible for <code>newra</code> to look at the strides of the destination arguments and figure out whether some array positions are referenced more than once, so that the meaning of <code>ra-for-each</code> or <code>ra-map!</code> can be preserved even if (when?) those operations are actually implemented in parallel. However, that still leaves the order of traversal unspecified.
 </p>
 <p>In that light, the following reduction should be alright when <var>op</var> is <code>+</code>, but it&rsquo;s better avoided it if <var>op</var> is <code>-</code>, even if it happens to do what you expect on the current version of <code>newra</code>.
 </p>
@@ -1555,7 +1555,7 @@ a
 <span id="index-packed-array"></span>
 <p>Create dims for row-major order array (packed elements, last dimension changing fastest).
 </p>
-<p>Each of the bounds may be a pair of bounds (<var>lo</var> <var>hi</var>) or a single length <var>len</var>, which implies zero <var>lo</var>.
+<p>Each of the <var>bounds</var> may be an integer (a length) or a pair of integers (lower and upper bounds).
 </p><div class="example">
 <pre class="verbatim">(c-dims 2 3)
 </pre><pre class="example">&rArr; <code>#(#&lt;&lt;dim&gt; len: 2 lo: 0 step: 3&gt; #&lt;&lt;dim&gt; len: 3 lo: 0 step: 1&gt;)</code>

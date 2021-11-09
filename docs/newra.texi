@@ -7,7 +7,7 @@
 @c last [ma112]
 
 @set VERSION 1
-@set UPDATED 2021 October 15
+@set UPDATED 2021 November 9
 
 @copying
 Version @value{VERSION}, updated @value{UPDATED}
@@ -1547,7 +1547,7 @@ Differences with Octave:
 
 @subsection Using rank extension or dead axes for reduction
 
-The use of rank extension for reduction inhibits parallelization and is dependent on the order in which the array arguments are traversed, which is generally unspecified. In principle, it's possible for @code{newra} to look at the strides of the destination arguments and figure out whether some array positions are referenced more than once, so that the meaning of @code{ra-for-each} or @code{ra-map!} can be preserved even if (when?) those operations are actually implemented in parallel. However, that still leaves the order of traversal unspecified.
+The use of rank extension for reduction inhibits parallelization and may be dependent on the order in which the array arguments are traversed, which is generally unspecified. In principle, it's possible for @code{newra} to look at the strides of the destination arguments and figure out whether some array positions are referenced more than once, so that the meaning of @code{ra-for-each} or @code{ra-map!} can be preserved even if (when?) those operations are actually implemented in parallel. However, that still leaves the order of traversal unspecified.
 
 In that light, the following reduction should be alright when @var{op} is @code{+}, but it's better avoided it if @var{op} is @code{-}, even if it happens to do what you expect on the current version of @code{newra}.
 
@@ -1637,7 +1637,7 @@ See also: @ref{x-ra->array,@code{ra->array}}.
 @cindex packed array
 Create dims for row-major order array (packed elements, last dimension changing fastest).
 
-Each of the bounds may be a pair of bounds (@var{lo} @var{hi}) or a single length @var{len}, which implies zero @var{lo}.
+Each of the @var{bounds} may be an integer (a length) or a pair of integers (lower and upper bounds).
 @example
 @verbatim
 (c-dims 2 3)

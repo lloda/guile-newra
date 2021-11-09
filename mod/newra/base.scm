@@ -28,9 +28,10 @@
             %%ra-zero-set! %%ra-dims %%ra-vlen %%ra-vref %%ra-vset! %%ra-step
             ra-shape ra-dimensions ra-len ra-lo ra-size))
 
-(import (srfi :9) (srfi srfi-9 gnu) (only (srfi :1) fold every) (srfi :71)
-        (srfi srfi-4 gnu) (srfi :26) (srfi :2) (ice-9 match) (ice-9 control)
-        (newra vector) (only (rnrs base) vector-for-each))
+(import (srfi 26) (srfi 2) (srfi 71) (srfi srfi-4 gnu) (srfi srfi-9 gnu)
+        (only (srfi 1) fold every) (ice-9 match) (ice-9 control)
+        (rnrs bytevectors) (only (rnrs base) vector-for-each)
+        (newra vector))
 
 ; for internal (newra) use, don't re-export from (newra)
 
@@ -245,6 +246,7 @@ See also: ra-offset
     ((u32) make-u32vector)
     ((u16) make-u16vector)
     ((u8) make-u8vector)
+    ((vu8) make-u8vector)
     ((a) make-string)
     ((b) make-bitvector)
     ((d) (throw 'no-dim-make))
@@ -264,6 +266,7 @@ See also: ra-offset
         ((u32vector? v) (values  'u32  u32vector-length  u32vector-ref  u32vector-set!))
         ((u16vector? v) (values  'u16  u16vector-length  u16vector-ref  u16vector-set!))
         ((u8vector? v)  (values  'u8   u8vector-length   u8vector-ref   u8vector-set! ))
+        ((bytevector? v)  (values  'u8   u8vector-length   u8vector-ref   u8vector-set!))
         ((string? v)    (values  'a    string-length     string-ref     string-set!   ))
         ((bitvector? v) (values  'b    bitvector-length  bitvector-ref  bitvector-set!))
 ; TODO extend this to drag-along.
