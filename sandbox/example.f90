@@ -1,5 +1,5 @@
 ! (example.f90) -*- coding: utf-8; mode: f90 -*-
-! example for guile-newra Fortran ffi
+! examples/tests for guile-newra Fortran ffi
 
 ! $FORTRAN -shared -fPIC -o libexample.so example.f90 -std=f2018 -fcheck=all
 
