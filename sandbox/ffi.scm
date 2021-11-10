@@ -100,6 +100,9 @@ CFI_cdesc
 
 (define libexample (load-foreign-library "./libexample"))
 (define lookup-xy (foreign-library-function libexample "lookup_xy" #:return-type double #:arg-types '(* * *)))
+(define ranker (foreign-library-function libexample "ranker" #:return-type int32 #:arg-types '(*)))
+(define valuer (foreign-library-function libexample "valuer" #:return-type double #:arg-types '(*)))
+(define lbounder (foreign-library-function libexample "lbounder" #:return-type int32 #:arg-types '(*)))
 
 (define (make-1 type x) (make-c-struct (list type) (list x)))
 (define CFI_index_t ptrdiff_t)
@@ -107,21 +110,13 @@ CFI_cdesc
 (define CFI_attribute_t int8)
 (define CFI_type_t int16)
 
-(define x 1.)
-(define y 2.)
-(define theversion 1)
-(define theattribute CFI_attribute_pointer)
-(define table (ra-copy 'f64 (ra-i 3 4)))
-
 (define (ra->fortran a)
-  (let ((rank (ra-rank table))
-        (bytestep (bytevector-type-size (ra-type table))))
-; FIXME doc says that 0 means scalar not array (?)
-    (unless (<= 1 rank CFI_MAX_RANK)
+  (define theversion 1)
+  (define theattribute CFI_attribute_pointer)
+  (let ((rank (ra-rank a))
+        (elemsize (bytevector-type-size (ra-type a))))
+    (unless (<= 0 rank CFI_MAX_RANK)
       (throw 'bad-rank rank))
-; FIXME need to displace base_addr
-    (unless (zero? (ra-offset a))
-      (throw 'non-zero-offset-not-supported-yet))
     (make-c-struct
      (append (list '*                            ; 0
                    size_t                        ; 8
@@ -130,32 +125,51 @@ CFI_cdesc
                    CFI_attribute_t               ; 21
                    CFI_type_t)                   ; 22
              (make-list (* 3 rank) CFI_index_t)) ; 24
-; FIXME need ra-offset here
-     (append (list (bytevector->pointer (ra-root table)) ; 0
-                   bytestep                              ; 8
+     (append (list (bytevector->pointer (ra-root a) (* elemsize (ra-offset a))) ; 0
+                   elemsize                              ; 8
                    theversion                            ; 16
                    rank                                  ; 20
                    theattribute                          ; 21
-                   (CFI-type (ra-type table)))           ; 22
+                   (CFI-type (ra-type a)))               ; 22
              (append-map                                 ; 24
               (lambda (dim)
-; FIXME not sure what  gfortran is doing with these, seems they're always 1
-                (list (let ((lbound (dim-lo dim)))
-                        (unless (zero? lbound)
-                          (throw 'only-zero-lbound-supported lbound))
-                        lbound)
+; lbound is always 1 fortranside. FIXME warn?
+                (list (dim-lo dim)
                       (dim-len dim)
-                      (* bytestep (dim-step dim))))
-              (vector->list (ra-dims table)))))))
+                      (* elemsize (dim-step dim))))
+              (vector->list (ra-dims a)))))))
 
-(display (lookup-xy (make-1 double 1) (make-1 double 2) (ra->fortran table))) (newline)
+(define x 1.)
+(define y 2.)
+
+(define table0 (ra-copy 'f64 (ra-i 3 4)))
+
+(define table1
+  (let* ((bigtable (make-typed-ra 'f64 0. 10 10))
+         (table (ra-from bigtable (ra-iota 3 2) (ra-iota 4 3))))
+    (ra-copy! table (ra-i 3 4))
+    table))
+
+(define table2 (ra-reshape (ra-reshape (ra-copy 'f64 (ra-i 3 4)) 0 '(2 4)) 1 '(2 5)))
+
+
+(lookup-xy (make-1 double 1) (make-1 double 2) (ra->fortran table0)) ; 6.
+(lookup-xy (make-1 double 1) (make-1 double 2) (ra->fortran table1)) ; 6.
+(lookup-xy (make-1 double 1) (make-1 double 2) (ra->fortran table2)) ; 6. :-\
+(ranker (ra->fortran (make-typed-ra 'f64 0))) ; 0
+(ranker (ra->fortran (make-typed-ra 'f64 0 2 2))) ; 2
+(ranker (ra->fortran (make-typed-ra 'f64 0 1))) ; 1
+(valuer (ra->fortran (make-typed-ra 'f64 7))) ; 7
+(valuer (ra->fortran (make-typed-ra 'f64 7 1))) ; 99
+(lbounder (ra->fortran (make-typed-ra 'f64 1. 3))) ; 1
+(lbounder (ra->fortran (ra-reshape (make-typed-ra 'f64 1. 3) 0 '(3 5)))) ; 1 :-\
 
 #|
-[ ] fix rank 0
-[ ] fix non-zero ra-offset
-[ ] verify behavior of lbounds
+[x] fix rank 0
+[x] fix non-zero ra-offset
+[x] verify behavior of lbounds
+[ ] define something like fortran-library-function
 [ ] support in/out/inout
 [ ] fix alignment assumptions (seems there's padding in some versions of ISO_Fortran_binding.h :-/)
-[ ] define something like fortran-library-function
 [ ] modulize, doc, etc.
 |#

@@ -35,4 +35,37 @@ contains
 
   end function lookup_xy
 
+  integer(C_INT32_T) function ranker(arg) &
+       bind(c, name='ranker') &
+       result(z)
+
+    real(C_DOUBLE), intent(in), dimension(..) :: arg
+
+    z = rank(arg)
+
+  end function ranker
+
+  integer(C_INT32_T) function lbounder(arg) &
+       bind(c, name='lbounder') &
+       result(z)
+
+    real(C_DOUBLE), intent(in), dimension(:) :: arg
+
+    z = lbound(arg, 1)
+
+  end function lbounder
+
+  real(C_DOUBLE) function valuer(arg) &
+       bind(c, name='valuer') &
+       result(z)
+
+    real(C_DOUBLE), intent(in), dimension(..) :: arg
+
+    select rank(arg)
+    rank(0) ; z = arg
+    rank default ; z = 99
+    end select
+
+  end function valuer
+
 end module example

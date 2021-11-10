@@ -39,19 +39,6 @@ main()
     pcdesc->dim[0] = { .lower_bound = 0, .extent = n0, .sm = n1*sizeof(double) };
     pcdesc->dim[1] = { .lower_bound = 0, .extent = n1, .sm = 1*sizeof(double) };
 
-    cout << "type value " << pcdesc->type << endl;
-
-    cout << pcdesc << endl;
-    cout << "base_addr " << ((char*)(&(pcdesc->base_addr)) - (char *)(pcdesc)) << endl;
-    cout << "elem_len " << ((char*)(&(pcdesc->elem_len)) - (char *)(pcdesc)) << endl;
-    cout << "version " << ((char*)(&(pcdesc->version)) - (char *)(pcdesc)) << endl;
-    cout << "rank " << ((char*)(&(pcdesc->rank)) - (char *)(pcdesc)) << endl;
-    cout << "attribute " << ((char*)(&(pcdesc->attribute)) - (char *)(pcdesc)) << endl;
-    cout << "type " << ((char*)(&(pcdesc->type)) - (char *)(pcdesc)) << endl;
-    cout << "dim0 " << ((char*)(&(pcdesc->dim[0])) - (char *)(pcdesc)) << endl;
-    cout << "dim1 " << ((char*)(&(pcdesc->dim[1])) - (char *)(pcdesc)) << endl;
-
-    cout << pcdesc->rank << endl;
     double x(1);
     double y(2);
     cout << lookup_xy(&x, &y, pcdesc) << endl;
