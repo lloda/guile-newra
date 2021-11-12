@@ -35,6 +35,42 @@ contains
 
   end function lookup_xy
 
+
+  complex(C_DOUBLE_COMPLEX) function lookup_xy_complex(x, y, table) &
+       bind(c, name='lookup_xy_complex') &
+       result(z)
+
+    real(C_DOUBLE), intent(in) :: x, y
+    complex(C_DOUBLE_COMPLEX), intent(in), dimension(:, :) :: table
+
+    real(C_DOUBLE) :: dx, dy
+    integer :: ix, iy
+
+    ix = max(0, min(size(table, 1)-2, int(floor(x))))     ! x = end-of-table will use dx = 1.
+    iy = max(0, min(size(table, 2)-2, int(floor(y))))     ! y = end-of-table will use dy = 1.
+    dx = x-ix
+    dy = y-iy
+
+    z =  &
+         + table(ix+1, iy+1)*(1-dx)*(1-dy) &
+         + table(ix+2, iy+1)*dx*(1-dy) &
+         + table(ix+1, iy+2)*(1-dx)*dy &
+         + table(ix+2, iy+2)*dx*dy
+
+  end function lookup_xy_complex
+
+
+  complex(C_DOUBLE_COMPLEX) function conjugate(w) &
+       bind(c, name='conjugate') &
+       result(z)
+
+    complex(C_DOUBLE_COMPLEX), intent(in) :: w
+
+    z = conjg(w)
+
+  end function conjugate
+
+
   integer(C_INT32_T) function ranker(arg) &
        bind(c, name='ranker') &
        result(z)
@@ -45,6 +81,7 @@ contains
 
   end function ranker
 
+
   integer(C_INT32_T) function lbounder(arg) &
        bind(c, name='lbounder') &
        result(z)
@@ -54,6 +91,7 @@ contains
     z = lbound(arg, 1)
 
   end function lbounder
+
 
   real(C_DOUBLE) function valuer(arg) &
        bind(c, name='valuer') &

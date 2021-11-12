@@ -11,7 +11,7 @@
 ;;; Code:
 
 (define-module (newra ffi)
-  #:export (ra->fortran))
+  #:export (ra->fortran fortran-library-function))
 
 (import (srfi 8) (srfi 26) (srfi 71) (srfi 1) (ice-9 match) (ice-9 format) (rnrs bytevectors)
         (system foreign) (system foreign-library)
@@ -128,3 +128,62 @@ CFI_cdesc
                       (dim-len dim)
                       (* elemsize (dim-step dim))))
               (vector->list (ra-dims a)))))))
+
+(define (ra->ffi-type t)
+  (case t
+    ((vu8 u8) uint8)
+    ((u16) uint16)
+    ((u32) uint32)
+    ((u64) uint64)
+    ((s8) int8)
+    ((s16) int16)
+    ((s32) int32)
+    ((s64) int64)
+    ((f32) float)
+    ((f64) double)
+    ((c32) complex-float)
+    ((c64) complex-double)
+    (else (throw 'no-ffi-type-for t))))
+
+(define (symbol->ffi-type t)
+  (case t
+    ((uint8) uint8)
+    ((uint16) uint16)
+    ((uint32) uint32)
+    ((uint64) uint64)
+    ((int8) int8)
+    ((int16) int16)
+    ((int32) int32)
+    ((int64) int64)
+    ((float) float)
+    ((double) double)
+    ((complex-float) complex-float)
+    ((complex-double) complex-double)
+    (else (throw 'no-ffi-type-for t))))
+
+(define* (fortran-library-function lib name return-type arg-types)
+  (let ((f (foreign-library-function
+            lib name #:return-type return-type
+            #:arg-types (make-list (length arg-types) '*))))
+    (lambda args
+      (apply f
+        (map (match-lambda*
+               ((arg (type-symbol dims ...))
+                (unless (eqv? (symbol->ffi-type type-symbol) (ra->ffi-type (ra-type arg)))
+                  (throw 'bad-type type-symbol (ra-type arg)))
+                (ra->fortran
+                 (let ((ndims (length dims)))
+                   (if (and (= ndims 1) (eq? '.. (car dims)))
+                     arg
+                     (if (and (= ndims (ra-rank arg))
+                              (every (lambda (lohi dim)
+                                       (or (eq? ': dim) (equal? lohi dim)))
+                                     (ra-dimensions arg) dims))
+                       arg
+                       (throw 'bad-sizes (ra-dimensions arg) dims))))))
+               ((arg '*)
+                arg)
+               ((arg type-symbol)
+                (make-c-struct (list (symbol->ffi-type type-symbol)) (list arg))))
+          args
+          arg-types)))))

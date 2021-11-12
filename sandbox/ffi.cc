@@ -43,5 +43,8 @@ main()
     double y(2);
     cout << lookup_xy(&x, &y, pcdesc) << endl;
 
+    cout << "CFI_type_float_Complex " << CFI_type_float_Complex << endl;
+    cout << "CFI_type_double_Complex " << CFI_type_double_Complex << endl;
+
     return 0;
 }
