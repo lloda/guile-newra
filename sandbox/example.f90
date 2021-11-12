@@ -12,12 +12,13 @@ contains
   ! Bilinear interpolate in x, y table. x and y are indices in the sizes of the table
   ! [0 ... n], so the steps of x and y are accounted for in the caller.
 
-  real(C_DOUBLE) function lookup_xy(x, y, table) &
+  function lookup_xy(x, y, table) &
        bind(c, name='lookup_xy') &
        result(z)
 
     real(C_DOUBLE), intent(in) :: x, y
-    real(C_DOUBLE), intent(in), dimension(:, :) :: table
+    real(C_DOUBLE), intent(in) :: table(:, :)
+    real(C_DOUBLE) :: z
 
     real(C_DOUBLE) :: dx, dy
     integer :: ix, iy
@@ -36,12 +37,13 @@ contains
   end function lookup_xy
 
 
-  complex(C_DOUBLE_COMPLEX) function lookup_xy_complex(x, y, table) &
+  function lookup_xy_complex(x, y, table) &
        bind(c, name='lookup_xy_complex') &
        result(z)
 
     real(C_DOUBLE), intent(in) :: x, y
-    complex(C_DOUBLE_COMPLEX), intent(in), dimension(:, :) :: table
+    complex(C_DOUBLE_COMPLEX), intent(in) :: table(:, :)
+    complex(C_DOUBLE_COMPLEX) :: z
 
     real(C_DOUBLE) :: dx, dy
     integer :: ix, iy
@@ -60,44 +62,48 @@ contains
   end function lookup_xy_complex
 
 
-  complex(C_DOUBLE_COMPLEX) function conjugate(w) &
+  function conjugate(w) &
        bind(c, name='conjugate') &
        result(z)
 
     complex(C_DOUBLE_COMPLEX), intent(in) :: w
+    complex(C_DOUBLE_COMPLEX) :: z
 
     z = conjg(w)
 
   end function conjugate
 
 
-  integer(C_INT32_T) function ranker(arg) &
+  function ranker(arg) &
        bind(c, name='ranker') &
        result(z)
 
-    real(C_DOUBLE), intent(in), dimension(..) :: arg
+    real(C_DOUBLE), intent(in) :: arg(..)
+    integer(C_INT32_T) :: z
 
     z = rank(arg)
 
   end function ranker
 
 
-  integer(C_INT32_T) function lbounder(arg) &
+  function lbounder(arg) &
        bind(c, name='lbounder') &
        result(z)
 
-    real(C_DOUBLE), intent(in), dimension(:) :: arg
+    real(C_DOUBLE), intent(in) :: arg(:)
+    integer(C_INT32_T) :: z
 
     z = lbound(arg, 1)
 
   end function lbounder
 
 
-  real(C_DOUBLE) function valuer(arg) &
+  function valuer(arg) &
        bind(c, name='valuer') &
        result(z)
 
-    real(C_DOUBLE), intent(in), dimension(..) :: arg
+    real(C_DOUBLE), intent(in) :: arg(..)
+    real(C_DOUBLE) :: z
 
     select rank(arg)
     rank(0) ; z = arg
@@ -105,5 +111,29 @@ contains
     end select
 
   end function valuer
+
+
+  ! FIXME it seems pointer in w coming in isn't used
+
+  subroutine dgemv(a, v, w) &
+       bind(c, name='dgemv')
+
+    real(C_DOUBLE), intent(in) :: a(:, :)
+    real(C_DOUBLE), intent(in) :: v(:)
+    real(C_DOUBLE), intent(out) :: w(size(a, 1))
+
+    integer :: i
+    integer :: n
+
+    n = size(v)
+
+    w = 0.0
+    do i = 1, n
+       w = w + v(i) * a(:, i)
+    end do
+
+    write (*, *) "w: ", w
+
+  end subroutine dgemv
 
 end module example

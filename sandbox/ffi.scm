@@ -68,6 +68,16 @@
 (lbounder* (ra-reshape (make-typed-ra 'f64 1. 3) 0 '(3 5))) ; 1 :-\
 (conjg* 3+9i) ; 3.0-9.0i
 
+; FIXME not sure how it works for intent(out) args. It seems Fortran allocates it, so we need to recover it from the pointer somehow? and who frees it?
+
+(define dgemv* (fortran-library-function libexample "dgemv" void '((double : :) (double :) *)))
+
+(let ((a (ra-copy 'f64 (ra-i 4 3)))
+      (v (make-ra-root #f64(1 2 3)))
+      (w (make-c-struct (list 3) (list double))))
+  (dgemv* a v w)
+  w)
+
 #|
 [x] fix rank 0
 [x] fix non-zero ra-offset
@@ -75,6 +85,7 @@
 [ ]fortran-library-function
   [x] c32/c64
   [x] fix arg-types format
+  [ ] support intent(out) array args
   [ ] bool
   [ ] support out args, e.g. with boxes (?)
 [ ] fix alignment assumptions (seems there's padding in some versions of ISO_Fortran_binding.h :-/)

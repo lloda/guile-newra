@@ -166,24 +166,25 @@ CFI_cdesc
             lib name #:return-type return-type
             #:arg-types (make-list (length arg-types) '*))))
     (lambda args
-      (apply f
-        (map (match-lambda*
-               ((arg (type-symbol dims ...))
-                (unless (eqv? (symbol->ffi-type type-symbol) (ra->ffi-type (ra-type arg)))
-                  (throw 'bad-type type-symbol (ra-type arg)))
-                (ra->fortran
-                 (let ((ndims (length dims)))
-                   (if (and (= ndims 1) (eq? '.. (car dims)))
-                     arg
-                     (if (and (= ndims (ra-rank arg))
-                              (every (lambda (lohi dim)
-                                       (or (eq? ': dim) (equal? lohi dim)))
-                                     (ra-dimensions arg) dims))
-                       arg
-                       (throw 'bad-sizes (ra-dimensions arg) dims))))))
-               ((arg '*)
-                arg)
-               ((arg type-symbol)
-                (make-c-struct (list (symbol->ffi-type type-symbol)) (list arg))))
-          args
-          arg-types)))))
+      (let ((fargs
+             (map (match-lambda*
+                    ((arg (type-symbol dims ...))
+                     (unless (eqv? (symbol->ffi-type type-symbol) (ra->ffi-type (ra-type arg)))
+                       (throw 'bad-type type-symbol (ra-type arg)))
+                     (ra->fortran
+                      (let ((ndims (length dims)))
+                        (if (and (= ndims 1) (eq? '.. (car dims)))
+                          arg
+                          (if (and (= ndims (ra-rank arg))
+                                   (every (lambda (lohi dim)
+                                            (or (eq? ': dim) (equal? lohi dim)))
+                                          (ra-dimensions arg) dims))
+                            arg
+                            (throw 'bad-sizes (ra-dimensions arg) dims))))))
+                    ((arg '*)
+                     arg)
+                    ((arg type-symbol)
+                     (make-c-struct (list (symbol->ffi-type type-symbol)) (list arg))))
+               args
+               arg-types)))
+      (apply f fargs)))))
