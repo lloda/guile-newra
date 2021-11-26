@@ -1268,25 +1268,27 @@
 
 
 ; -----------------------
-; demo of ra-format FIXME somehow check
+; ra-format
 ; -----------------------
+
+(define port #f) ; no real test, but at least check that they run. Use #t to demo
 
 (let* ((ra (ra-i 1 8 9 3))
        (ra (ra-map! (ra-copy #t ra) sqrt ra)))
-  (ra-format ra #:fmt "~4,2f"))
+  (ra-format ra port #:fmt "~4,2f"))
 
 (let ((ra (ra-set! (ra-set! (ra-copy #t (ra-i 3 4 3))
                             (ra-i 2 3) 1 2 1)
                    (make-ra-root #(hello world of ras) (c-dims 2 2))
                    2 1 2)))
-  (ra-format ra #:fmt "~a"))
+  (ra-format ra port #:fmt "~a"))
 
 (let ((ra (ra-i 2 2 2 2 2 2 2 2)))
-  (ra-format ra #:compact? #t))
+  (ra-format ra port #:compact? #t))
 
 (let* ((ra (ra-set! (ra-copy #t (ra-i 7)) (make-ra-root #(hello world of ras) (c-dims 2 2)) 3))
        (ra (ra-tile ra (ra-rank ra) 1)))
-  (ra-format ra))
+  (ra-format ra port))
 
 ; example from srfi-163.
 (let* ((arr
@@ -1294,27 +1296,27 @@
                    (#(42 43) #2((8 7 6)) #2((90 91) (100 101)))))
        (ra (array->ra arr))
        (ra (ra-map! (ra-copy ra) (lambda (x) (if (array? x) (array->ra x) x)) ra)))
-  (ra-format ra #:prefix? #t #:compact? #t)
-  (ra-format ra #:prefix? #t #:compact? #f))
+  (ra-format ra port #:prefix? #t #:compact? #t)
+  (ra-format ra port #:prefix? #t #:compact? #f))
 
 (let ((ra (array->ra #2@1:2@1:3((1 2 3) (4 5 6)))))
-  (ra-format ra))
+  (ra-format ra port))
 
 (let ((ra (make-ra 'zero)))
-  (ra-format ra))
+  (ra-format ra port))
 
 ; shorter than the prefix; was a bug
 (let ((ra (make-ra 'x)))
-  (ra-format ra))
+  (ra-format ra port))
 
 ; when size is 0, just print the prefix
-(ra-format (ra-i 3 0 4))
+(ra-format (ra-i 3 0 4) port)
 
 ; when size is unbounded, just print the prefix. Not ideal...
-(ra-format (ra-i #t 3 4))
+(ra-format (ra-i #t 3 4) port)
 
 ; when there are dead axes, print the result of ra-singletonize, except for the prefix. Not ideal...
-(ra-format (ra-i 3 #f 4))
+(ra-format (ra-i 3 #f 4) port)
 
 
 ; -----------------------

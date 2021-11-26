@@ -446,7 +446,7 @@ See also: ra-fill! ra-map! ra-clip
        (lambda (dst dstart src sstart len)
          (vector-copy! dst dstart src sstart (+ sstart len))))
       ((or 'u8 's8 'u16 's16 'u32 's32 'f32 'c32 'u64 's64 'f64 'c64)
-       (let ((bs (bytevector-type-size t)))
+       (let ((bs (srfi-4-type-size t)))
          (lambda (dst dstart src sstart len)
            (bytevector-copy! src (* bs sstart) dst (* bs dstart) (* bs len)))))
       ('s
