@@ -7,7 +7,7 @@
 ; later version.
 
 ;;; Commentary:
-;; FFI featuring newra types
+;; Fortran FFI featuring newra types
 ;;; Code:
 
 (define-module (newra ffi)
@@ -17,10 +17,10 @@
         (system foreign) (system foreign-library)
         (newra) (newra base))
 
+; https://gcc.gnu.org/onlinedocs/gfortran/Further-Interoperability-of-Fortran-with-C.html
 ; https://github.com/gcc-mirror/gcc/blob/master/libgfortran/ISO_Fortran_binding.h
-; https://www.ibm.com/docs/en/xl-fortran-aix/16.1.0?topic=29113-type-definitions-structures
-#|
 
+#|
 /* CFI type definitions. */
 typedef ptrdiff_t CFI_index_t;
 typedef int8_t CFI_rank_t;

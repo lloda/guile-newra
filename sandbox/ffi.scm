@@ -73,19 +73,3 @@
   (unless (zero? (dgemv a v w)) (throw 'error))
   (display w) (newline) ; #%1f64:4(8.0 26.0 44.0 62.0)
   w)
-
-#|
-[x] fix rank 0
-[x] fix non-zero ra-offset
-[x] verify behavior of lbounds
-[ ]fortran-library-function
-  [x] c32/c64
-  [x] fix arg-types format
-  [x] working example with intent(inout)
-  [ ] value [like real(C_FLOAT), value :: x] arguments
-  [ ] support intent(out) array args
-  [ ] bool
-  [ ] support out args, e.g. with boxes (?)
-[ ] fix alignment assumptions (seems there's padding in some versions of ISO_Fortran_binding.h :-/)
-[ ] modulize, doc, etc.
-|#

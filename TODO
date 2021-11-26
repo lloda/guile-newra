@@ -96,7 +96,7 @@ Help: [C-uc .] insert timestamp [C-cc] flip checkbox [C-uucc] partial flip check
   * [ ] reading of arrays with inf axes
   * [ ] reading of arrays with dead axes
 
-* TODO quality of life [2/9]
+* TODO quality of life [2/13]
   * [X] rank-1 (or higher!) cases in the unrolled section (e.g. bytevector-copy!, bytevector-fill!).
   * [ ] rank-1 (or higher!) cases for generating functions (e.g. array->list).
   * [ ] the reverse of ra-singletonize, find a good name (see 'differences with numpy' in the doc).
@@ -115,7 +115,20 @@ Help: [C-uc .] insert timestamp [C-cc] flip checkbox [C-uucc] partial flip check
     - [X] compact mode
     - [ ] handle unbounded axes
     - [ ] auto truncation
-  * [ ] an ffi to Fortran based on iso_c_binding, be able to pass arrays & scalars at least (https://gcc.gnu.org/onlinedocs/gfortran/Further-Interoperability-of-Fortran-with-C.html#Further-Interoperability-of-Fortran-with-C, https://github.com/gcc-mirror/gcc/blob/master/libgfortran/ISO_Fortran_binding.h)
+  * [-] an ffi to Fortran based on iso_c_binding, be able to pass arrays & scalars at least
+    - [X] fix rank 0
+    - [X] fix non-zero ra-offset
+    - [X] verify behavior of lbounds
+    - [-] fortran-library-function
+      + [X] c32/c64
+      + [X] fix arg-types format
+      + [X] working example with intent(inout)
+      + [ ] support intent(out) array args (need array-mutable?)
+      + [ ] logical <-> bool (need libffi / Guile ffi support)
+      + [ ] value, arguments, like real(C_FLOAT), value :: x
+      + [ ] support out args, e.g. with boxes (?)
+    - [ ] fix alignment assumptions (seems there's padding in some versions of ISO_Fortran_binding.h :-/)
+    - [ ] modulize, test, doc, etc.
   * [ ] connections to other libraries
     - [ ] BLIS
     - [ ] fftw
