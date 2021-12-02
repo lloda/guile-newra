@@ -18,7 +18,7 @@
             ra-copy ra-map
             ra-fold))
 
-(import (only (srfi :1) fold every any iota drop xcons) (srfi :26) (srfi :71)
+(import (only (srfi 1) fold every any iota drop xcons) (srfi 26) (srfi 71)
         (ice-9 control) (ice-9 match) (only (rnrs base) vector-map vector-for-each)
         (newra base) (newra map) (newra reshape))
 

@@ -16,9 +16,9 @@
             ra-singletonize))
 
 (import (newra base) (newra map) (newra vector)
-        (ice-9 match) (ice-9 control) (srfi :8) (srfi :26)
-        (only (srfi :43) vector-copy!)
-        (only (srfi :1) fold every any iota drop first second)
+        (ice-9 match) (ice-9 control) (srfi 8) (srfi 26)
+        (only (srfi 43) vector-copy!)
+        (only (srfi 1) fold every any iota drop first second)
         (only (rnrs base) vector-map vector-for-each))
 
 (define (ra-reverse ra . k)

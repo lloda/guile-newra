@@ -12,8 +12,8 @@
 ;; FIXME Redo with lazy ops.
 ;;; Code:
 
-(import (newra) (srfi :64) (ice-9 format)
-        (only (srfi :43) vector-swap!)
+(import (newra) (srfi 64) (ice-9 format)
+        (only (srfi 43) vector-swap!)
         (only (rnrs base) exact))
 
 ; transpose/untranspose isn't convenient here :-\

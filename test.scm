@@ -10,7 +10,7 @@
 ; Run with $GUILE -L mod test.scm
 
 (import (newra) (newra tools) (newra read) (test misc) (test map-ladder)
-        (srfi :64) (srfi :26) (srfi :8) (only (srfi :1) fold iota drop)
+        (srfi 64) (srfi 26) (srfi 8) (only (srfi 1) fold iota drop)
         (ice-9 match) (only (rnrs base) vector-map vector-for-each))
 
 (define (ra->string ra) (call-with-output-string (cut display ra <>)))

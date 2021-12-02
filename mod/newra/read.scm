@@ -18,7 +18,7 @@
         (only (newra print) *ra-parenthesized-rank-zero*)
         (ice-9 match) (ice-9 rdelim)
         (rnrs io ports) (only (rnrs base) vector-map)
-        (srfi :71) (srfi :26) (only (srfi :1) fold unzip2 car+cdr))
+        (srfi 71) (srfi 26) (only (srfi 1) fold unzip2 car+cdr))
 
 (re-export *ra-parenthesized-rank-zero*)
 
