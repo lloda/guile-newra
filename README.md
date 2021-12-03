@@ -13,8 +13,8 @@ Except for the tests and for the pair of functions `ra->array` / `array->ra`, `n
 Run the test or the benchmark with
 
 ```
-> $GUILE -L mod test.scm
-> $GUILE -L mod bench.scm
+> $GUILE -L mod test/test.scm
+> $GUILE -L mod bench/bench.scm
 ```
 
 The manual is at ([lloda.github.io/guile-newra](https://lloda.github.io/guile-newra)), and you can find some larger examples in `examples/`.

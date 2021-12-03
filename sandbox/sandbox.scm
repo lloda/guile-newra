@@ -17,50 +17,6 @@
 
 
 ; -----------------------
-; bench vs ffi blis shows one or all of these
-; * need for (better) loop order heuristic in %slice-loop etc
-; * need for strided rank-1 or rank-2 basic ops
-; -----------------------
-
-(import (newra) (ffi blis) (ice-9 match))
-
-(define (bench-copym m n)
-  (define A (make-typed-array 'f64 1 m n))
-  (define At (transpose-array A 1 0))
-  (define B (make-typed-array 'f64 1 m n))
-  (define Bt (transpose-array B 1 0))
-  (define Ct (make-typed-array 'f64 1 n m))
-  (define C (transpose-array Ct 1 0))
-  (define discard (const #f))
-  (define bench
-    `((,(time (array-copy! A B))
-       ,(time (discard (ra-copy! (array->ra B) (array->ra A))))
-       ,(time (discard (blis-dcopym! 0 BLIS_NONUNIT_DIAG BLIS_DENSE BLIS_NO_TRANSPOSE A B))))
-      (,(time (array-copy! At Bt))
-       ,(time (discard (ra-copy! (array->ra Bt) (array->ra At))))
-       ,(time (discard (blis-dcopym! 0 BLIS_NONUNIT_DIAG BLIS_DENSE BLIS_NO_TRANSPOSE At Bt))))
-      (,(time (array-copy! A C))
-       ,(time (discard (ra-copy! (array->ra C) (array->ra A))))
-       ,(time (discard (blis-dcopym! 0 BLIS_NONUNIT_DIAG BLIS_DENSE BLIS_NO_TRANSPOSE A C))))))
-
-  (let* ((b (list->ra 2 bench))
-         (ref (ra-fold max -inf.0 b))
-         (b (ra-map #f / (make-ra ref) b)))
-    (format #t "ref/t m ~a n ~a for ref ≈ ~4,3f s.\n" m n ref)
-    (ra-format (ra-scat #f 1 (list->ra 1 '(guile newra blis)) b)
-               #:compact? #t
-               #:fmt (lambda (x) (if (real? x) (format #f "~5,1f" x) (format #f "~a" x))))))
-
-(for-each (match-lambda ((m n) (bench-copym m n)))
-  '((10 5)
-    (100 50)
-    (1000 500)
-    (10000 5000)
-    (100000 50)
-    (10 500000)))
-
-
-; -----------------------
 ; goops (?)
 ; -----------------------
 

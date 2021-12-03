@@ -4,7 +4,7 @@ Help: [C-uc .] insert timestamp [C-cc] flip checkbox [C-uucc] partial flip check
 
 * TODO bugs [5/8]
   * [X] (call-with-input-string "#3()" read) vs (call-with-input-string "#%3()" read)
-  * [X] reader loses type when reading rank 0 arrays
+  * [X] reader loses type when reading rank-0 arrays
   * [X] ra-equal? errors out with mismatched shapes
   * [X] zero lengths break ra-format
   * [X] (ra-dimensions (ra-iota))
@@ -96,8 +96,9 @@ Help: [C-uc .] insert timestamp [C-cc] flip checkbox [C-uucc] partial flip check
   * [ ] reading of arrays with inf axes
   * [ ] reading of arrays with dead axes
 
-* TODO quality of life [2/13]
-  * [X] rank-1 (or higher!) cases in the unrolled section (e.g. bytevector-copy!, bytevector-fill!).
+* TODO quality of life [2/14]
+  * [X] rank-1 ops in the unrolled section (e.g. bytevector-copy!, bytevector-fill!).
+  * [ ] rank-2 ops or higher in the unrolled section (e.g. blis-dcopym!, blis-dsetm!).
   * [ ] rank-1 (or higher!) cases for generating functions (e.g. array->list).
   * [ ] the reverse of ra-singletonize, find a good name (see 'differences with numpy' in the doc).
   * [ ] make (ra ...) work with generalized slices just like (ra-from ...).
