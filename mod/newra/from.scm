@@ -13,7 +13,7 @@
 ; FIXME Simplify...
 
 (define-module (newra from)
-  #:export (ldots
+  #:export (dots
             ra-from ra-from-copy ra-amend! ra-clip
             ra-rotate!
             fromb fromu amendu!))
@@ -23,14 +23,14 @@
         (only (srfi 43) vector-copy)
         (only (rnrs base) vector-map vector-for-each))
 
-(define-immutable-record-type <ldots>
-  (ldots* n) ldots?
-  (n ldots-n))
+(define-immutable-record-type <dots>
+  (dots* n) dots?
+  (n dots-n))
 
-(define* (ldots #:optional n)
+(define* (dots #:optional n)
   (if (or (not n) (and (>= n 0) (exact-integer? n)))
-    (ldots* n)
-    (throw 'bad-argument-to-ldots)))
+    (dots* n)
+    (throw 'bad-argument-to-dots)))
 
 ; -----------------------
 ; this is the pure beaten section.
@@ -41,7 +41,7 @@
   (fold (lambda (x n)
           (+ n
              (match x
-               ((? ldots? x) (or (ldots-n x) (throw 'expanding-ldots-used-more-than-once)))
+               ((? dots? x) (or (dots-n x) (throw 'expanding-dots-used-more-than-once)))
                (else 1))))
         0 x))
 
@@ -61,10 +61,10 @@
          ((? integer? z)
           (let ((dimA (vector-ref (%%ra-dims A) j)))
             (loopj (+ j 1) irest (+ zero (* (dim-step dimA) (dim-check dimA z))) bdims)))
-         (($ <ldots> n)
+         (($ <dots> n)
           (let ((jnext (+ j n)))
             (unless (<= jnext (%%ra-rank A))
-              (throw 'ldots-n-at-j-too-large-for-rank n j (%%ra-rank A)))
+              (throw 'dots-n-at-j-too-large-for-rank n j (%%ra-rank A)))
             (loopj jnext irest zero (cons (vector-copy (%%ra-dims A) j jnext) bdims))))
          ((? ra? i)
           (let ((dimA (vector-ref (%%ra-dims A) j))
@@ -179,11 +179,11 @@
     (match ii
       ((i0 . irest)
        (match i0
-         (($ <ldots> n)
+         (($ <dots> n)
           (let* ((k (or n (- (ra-rank A) j (count-axes-left irest))))
                  (idest (iota k m)))
             (loop (+ j k) (+ m k) irest
-                  (cons (ldots k) ib) (fold cons ibi (iota k j)) (fold cons tb idest)
+                  (cons (dots k) ib) (fold cons ibi (iota k j)) (fold cons tb idest)
                   iu iui tu)))
          (i0
           (let* ((k (index-rank i0))

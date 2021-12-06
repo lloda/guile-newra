@@ -911,17 +911,17 @@
        (ref1 (ra-from a 0 (ra-iota 3) 1))
        (ref2 (ra-from a 0 (ra-iota 3) (ra-iota 4) (ra-iota 5) 2)))
   (test-assert (ra-equal? a (ra-from a #t)))
-  (test-assert (ra-equal? a (ra-from a (ldots 1))))
+  (test-assert (ra-equal? a (ra-from a (dots 1))))
   (test-assert (ra-equal? a (ra-from a #t #t #t #t #t)))
-  (test-assert (ra-equal? a (ra-from a (ldots))))
+  (test-assert (ra-equal? a (ra-from a (dots))))
   (test-assert (ra-equal? ref0 (ra-from a 0 #t)))
-  (test-assert (ra-equal? ref0 (ra-from a 0 (ldots 1))))
-  (test-assert (ra-equal? ref0 (ra-from a 0 (ldots 0))))
+  (test-assert (ra-equal? ref0 (ra-from a 0 (dots 1))))
+  (test-assert (ra-equal? ref0 (ra-from a 0 (dots 0))))
   (test-assert (ra-equal? ref1 (ra-from a 0 #t 1)))
-  (test-assert (ra-equal? ref1 (ra-from a 0 (ldots 1) 1)))
+  (test-assert (ra-equal? ref1 (ra-from a 0 (dots 1) 1)))
   (test-assert (ra-equal? ref2 (ra-from a 0 #t #t #t 2)))
-  (test-assert (ra-equal? ref2 (ra-from a 0 (ldots 3) 2)))
-  (test-assert (ra-equal? ref2 (ra-from a 0 (ldots) 2))))
+  (test-assert (ra-equal? ref2 (ra-from a 0 (dots 3) 2)))
+  (test-assert (ra-equal? ref2 (ra-from a 0 (dots) 2))))
 
 
 ; ------------------------
@@ -999,7 +999,7 @@
 
 ; with placeholders
 (test-equal "#%3:4:3:2(((0 x) (2 x) (4 x)) ((6 x) (8 x) (10 x)) ((12 x) (14 x) (16 x)) ((18 x) (20 x) (22 x)))"
-            (amend-case (ra-I 4 3 2) 'x (ldots) 1))
+            (amend-case (ra-I 4 3 2) 'x (dots) 1))
 
 
 ; -----------------------

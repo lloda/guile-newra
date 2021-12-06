@@ -390,7 +390,7 @@ This function returns the filled array @var{ra}.
 See also: ra-copy! ra-map!
 "
 ; These only support step 1. bytevector-fill! can be used after Guile 3.0.8 (check).
-; Other options are bli_?setv from BLIS or (contorted) ?axpy from CBLAS.
+; Or we could use bli_?setv / bli_?setm from BLIS.
   (define (line! t)
     (match t
       (#t
@@ -439,7 +439,7 @@ This function returns the updated array @var{ra}.
 See also: ra-fill! ra-map! ra-clip
 "
 ; These only support step 1.
-; Other options are bli_?copyv from BLIS or (contorted) ?axpy from CBLAS.
+; Or we could use bli_?copyv / bli_?copym from BLIS.
   (define (line! t)
     (match t
       (#t

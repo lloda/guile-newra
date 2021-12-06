@@ -42,7 +42,7 @@
 
            ra-singletonize ra-clip
 
-           ra-from ra-from-copy ra-amend! ldots
+           ra-from ra-from-copy ra-amend! dots
 
            ra-cat ra-scat
 

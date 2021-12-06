@@ -148,7 +148,7 @@
 ; FIXME handle border entirely here
         (when (and compact? (> (ra-rank l) 0))
 ; FIXME need ra-hi
-          (let ((ll (ra-from l (ldots) (dim-hi (vector-ref (ra-dims l) (- (ra-rank l) 1))))))
+          (let ((ll (ra-from l (dots) (dim-hi (vector-ref (ra-dims l) (- (ra-rank l) 1))))))
             (ra-map! ll (cut + <> 1) ll)))
         l))
     (define l0 (lengths dim0 dim1 0 compact?))

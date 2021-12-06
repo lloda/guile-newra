@@ -27,8 +27,8 @@
 
 (define I (ra-iota)) ; index for the first dimension
 (define ⍉ ra-transpose)
-(define .. (ldots))
-(define : (ldots 1))
+(define .. (dots))
+(define : (dots 1))
 
 (define (draw t F)
   (show t "Ey" (ra-from F t : 0 0 2 0))

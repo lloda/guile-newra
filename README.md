@@ -10,7 +10,7 @@ The C API shouldn't be affected. Once you get an array handle it makes no sense 
 
 Except for the tests and for the pair of functions `ra->array` / `array->ra`, `newra` is independent of the old array system.
 
-Run the test or the benchmark with
+`newra` tracks the Guile main branch as of 2021/12/03 and might not work with earlier revisions. Run the test or the benchmark with
 
 ```
 > $GUILE -L mod test/test.scm
@@ -35,7 +35,7 @@ Compared with the old arrays, `newra` offers a growing list of features:
 * Lazy index vectors (`ra-iota`, `ra-i`). These may be infinite: `((ra-iota #f 1) (- #e1e20 1))` returns `100000000000000000000`.
 * Rank extension by prefix matching: `(ra-map! (make-ra 'x 2 3) + (ra-i 2 3) (ra-iota 2 0 10))` returns `#%2:2:3((0 1 2) (13 14 15))`. Prefix matching supports undefined dimensions; the previous expression and `(ra-map! (make-ra 'x 2 3) + (ra-i #f 3) (ra-iota #f 0 10))` are equivalent.
 * Generalized transpose: axes not mentioned in the transposed axis list become axes with undefined size and zero step (‘dead’ axes). This can be used for broadcasting. For example, given `(define I (ra-iota))` and `(define J (ra-transpose (ra-iota) 1))`, then `(ra-map! (make-ra 'x 10 10) * I J)` is a multiplication table.
-* Generalized slicing with `ra-from`, `ra-amend!`: index arguments can have any rank, and use of lazy index vectors (of any rank!) results in a shared array. A stretch index object `(ldots)` is supported; e.g. `(ra-from A (ldots) 0)` will produce the slice `A[..., 0]` for an array of any rank.
+* Generalized slicing with `ra-from`, `ra-amend!`: index arguments can have any rank, and use of lazy index vectors (of any rank!) results in a shared array. A stretch index object `(dots)` is supported; e.g. `(ra-from A (dots) 0)` will produce the slice `A[..., 0]` for an array of any rank.
 * Generalized array concatenation (`ra-cat`, `ra-scat`).
 * Utilities such as `ra-reverse`, `ra-any`, `ra-every`, `ra-fold`, `ra-ravel`, `ra-reshape`, `ra-tile`.
 * An array pretty printer in the style of SRFI-163 (`ra-format`).
