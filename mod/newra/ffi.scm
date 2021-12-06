@@ -104,7 +104,7 @@ CFI_cdesc
   (define theversion 1)
   (define theattribute CFI_attribute_pointer)
   (let ((rank (ra-rank a))
-        (elemsize (srfi-4-type-size (ra-type a))))
+        (elemsize (srfi-4-vector-type-size (ra-root a))))
     (unless (<= 0 rank CFI_MAX_RANK)
       (throw 'bad-rank rank))
     (make-c-struct

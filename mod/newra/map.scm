@@ -440,20 +440,19 @@ See also: ra-fill! ra-map! ra-clip
 "
 ; These only support step 1.
 ; Or we could use bli_?copyv / bli_?copym from BLIS.
-  (define (line! t)
-    (match t
-      (#t
-       (lambda (dst dstart src sstart len)
-         (vector-copy! dst dstart src sstart (+ sstart len))))
-      ((or 'u8 's8 'u16 's16 'u32 's32 'f32 'c32 'u64 's64 'f64 'c64)
-       (let ((bs (srfi-4-type-size t)))
-         (lambda (dst dstart src sstart len)
-           (bytevector-copy! src (* bs sstart) dst (* bs dstart) (* bs len)))))
-      ('s
-       (lambda (dst dstart src sstart len)
-         (string-copy! dst dstart src sstart (+ sstart len))))
-      ('d (throw 'cannot-copy-type 'd))
-      (t #f)))
+  (define (line! root)
+    (cond ((vector? root)
+           (lambda (dst dstart src sstart len)
+             (vector-copy! dst dstart src sstart (+ sstart len))))
+          ((string? root)
+           (lambda (dst dstart src sstart len)
+             (string-copy! dst dstart src sstart (+ sstart len))))
+          ((bytevector? root)
+           (let ((bs (srfi-4-vector-type-size root)))
+             (lambda (dst dstart src sstart len)
+               (bytevector-copy! src (* bs sstart) dst (* bs dstart) (* bs len)))))
+          ((aseq? root) (throw 'cannot-copy!-type 'd))
+          (else #f)))
 
   (let ((rankb (ra-rank rb)))
 ; optimization 1
@@ -463,7 +462,7 @@ See also: ra-fill! ra-map! ra-clip
           ((and (positive? (ra-rank ra))
                 (eq? (%%ra-type ra) (%%ra-type rb))
                 (= 1 (%%ra-step ra (- rankb 1)) (%%ra-step rb (- rankb 1)))
-                (and-let* ((line! (line! (%%ra-type rb))))
+                (and-let* ((line! (line! (%%ra-root rb))))
 ; FIXME refactor with the general case below
                   (let-syntax
                       ((%copy!

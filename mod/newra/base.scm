@@ -20,7 +20,6 @@
             ra-pos ra-offset
             ra-slice ra-cell ra-ref ra-set!
 ; for internal (newra) use, don't re-export from (newra)
-            srfi-4-type-size
             define-inlinable-case
             <aseq> <dim> make-dim* dim-check
             <ra-vtable> pick-functions pick-make
@@ -62,15 +61,6 @@
 ; ----------------
 ; misc - FIXME remove if unused
 ; ----------------
-
-(define (srfi-4-type-size type)
-  (case type
-    ((u8 s8 vu8) 1)
-    ((f16 s16 u16) 2)
-    ((f32 s32 u32) 4)
-    ((f64 c32) 8)
-    ((c64) 16)
-    (else (throw 'bad-srfi-4-type-type type))))
 
 ; cf https://www.scheme.com/tspl4/syntax.html - define-integrable
 ; cf guile/module/ice-9/boot.scm - define-inlinable
