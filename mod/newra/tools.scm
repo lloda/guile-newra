@@ -14,6 +14,8 @@
   #:export (define-constant
             time walltime repeat syntax->list throws-exception?))
 
+; FIXME Maybe move these to test modules, not really part of newra.
+
 (define-syntax time
   (syntax-rules ()
     ((_ e0 ...)

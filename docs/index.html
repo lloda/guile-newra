@@ -393,7 +393,7 @@ Each dim consists of a length (<em>len</em>), a lower bound (<em>lo</em>), and a
 
 <span id="index-shared-root"></span>
 <span id="index-new-array"></span>
-<p>It is often important to know whether an operation on an array returns a different view of its argument, or instead it allocates a new root which can be modified without affecting the original argument. When we say that a function &lsquo;creates a new array&rsquo;, we mean that it allocates a new root.
+<p>It is often important to know whether an operation on an array returns a different view of its argument, or instead it allocates a new root which can be modified without affecting the original argument. When we say that a function ‘creates a new array’, we mean that it allocates a new root.
 </p>
 <p>Generally a given function will always do one or the other, e.g. the result of <a href="#x_002dra_002dtile"><code>ra-tile</code></a> always shares the root of its argument, while <a href="#x_002dra_002dcopy"><code>ra-copy</code></a> always creates a new array. Some functions, like <a href="#x_002dra_002dravel"><code>ra-ravel</code></a> or <a href="#x_002dra_002dfrom"><code>ra-from</code></a>, may do either, depending on their arguments. For example, the result of
 </p>

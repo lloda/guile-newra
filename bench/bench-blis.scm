@@ -8,7 +8,7 @@
 
 ; Benchmark basic ops vs guile-ffi-blis. Obviously that's required.
 
-(import (newra) (ice-9 match) (ffi blis))
+(import (newra) (ice-9 match) (ffi blis) (only (newra tools) repeat))
 
 
 ; -----------------------
@@ -32,17 +32,19 @@
   (define rCt (array->ra Ct))
   (define rC (array->ra C))
 
+  (define rp (ceiling (/ 5000000 (* m n))))
+
   (define discard (const #f))
   (define bench
-    `((,(time (array-copy! A B))
-       ,(time (discard (ra-copy! rB rA)))
-       ,(time (discard (blis-dcopym! 0 BLIS_NONUNIT_DIAG BLIS_DENSE BLIS_NO_TRANSPOSE A B))))
-      (,(time (array-copy! At Bt))
-       ,(time (discard (ra-copy! rBt rAt)))
-       ,(time (discard (blis-dcopym! 0 BLIS_NONUNIT_DIAG BLIS_DENSE BLIS_NO_TRANSPOSE At Bt))))
-      (,(time (array-copy! A C))
-       ,(time (discard (ra-copy! rC rA)))
-       ,(time (discard (blis-dcopym! 0 BLIS_NONUNIT_DIAG BLIS_DENSE BLIS_NO_TRANSPOSE A C))))))
+    `((,(time (repeat rp (array-copy! A B)))
+       ,(time (repeat rp (discard (ra-copy! rB rA))))
+       ,(time (repeat rp (discard (blis-dcopym! 0 BLIS-NONUNIT-DIAG BLIS-DENSE BLIS-NO-TRANSPOSE A B)))))
+      (,(time (repeat rp (array-copy! At Bt)))
+       ,(time (repeat rp (discard (ra-copy! rBt rAt))))
+       ,(time (repeat rp (discard (blis-dcopym! 0 BLIS-NONUNIT-DIAG BLIS-DENSE BLIS-NO-TRANSPOSE At Bt)))))
+      (,(time (repeat rp (array-copy! A C)))
+       ,(time (repeat rp (discard (ra-copy! rC rA))))
+       ,(time (repeat rp (discard (blis-dcopym! 0 BLIS-NONUNIT-DIAG BLIS-DENSE BLIS-NO-TRANSPOSE A C)))))))
 
   (let* ((b (list->ra 2 bench))
          (ref (ra-fold max -inf.0 b))
@@ -72,14 +74,16 @@
   (define rBt (array->ra Bt))
 
   (define discard (const #f))
+  (define rp (ceiling (/ 5000000 (* m n))))
+
   (define fill 3.)
   (define bench
-    `((,(time (array-fill! A fill))
-       ,(time (discard (ra-fill! rA fill)))
-       ,(time (discard (blis-dsetm! BLIS_NO_CONJUGATE 0 BLIS_NONUNIT_DIAG BLIS_DENSE fill A))))
-      (,(time (array-fill! B fill))
-       ,(time (discard (ra-fill! rB fill)))
-       ,(time (discard (blis-dsetm! BLIS_NO_CONJUGATE 0 BLIS_NONUNIT_DIAG BLIS_DENSE fill B))))))
+    `((,(time (repeat rp (array-fill! A fill)))
+       ,(time (repeat rp (discard (ra-fill! rA fill))))
+       ,(time (repeat rp (discard (blis-dsetm! BLIS-NO-CONJUGATE 0 BLIS-NONUNIT-DIAG BLIS-DENSE fill A)))))
+      (,(time (repeat rp (array-fill! B fill)))
+       ,(time (repeat rp (discard (ra-fill! rB fill))))
+       ,(time (repeat rp (discard (blis-dsetm! BLIS-NO-CONJUGATE 0 BLIS-NONUNIT-DIAG BLIS-DENSE fill B)))))))
 
   (let* ((b (list->ra 2 bench))
          (ref (ra-fold max -inf.0 b))
