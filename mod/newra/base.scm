@@ -25,7 +25,8 @@
             <ra-vtable> pick-functions pick-make
             %%ra-root %%ra-zero %%ra-type %%ra-rank
             %%ra-zero-set! %%ra-dims %%ra-vlen %%ra-vref %%ra-vset! %%ra-step
-            ra-shape ra-dimensions ra-len ra-lo ra-size))
+            ra-shape ra-dimensions ra-len ra-lo ra-size
+            have-blis?))
 
 (import (srfi 26) (srfi 2) (srfi 71) (srfi srfi-4 gnu) (srfi srfi-9 gnu)
         (only (srfi 1) fold every) (ice-9 match) (ice-9 control)
@@ -56,6 +57,9 @@
 ;; slice:       an ra, as a piece of another ra
 ;; cell:        (also prefix-cell) slice obtained by fixing the first k indices into an ra.
 ;; item:        slice obtained by fixing the first index into an ra; a (rank - 1)-cell.
+
+(eval-when (expand load eval)
+  (define have-blis? (catch #t (lambda () (import (ffi blis)) #t) (const #f))))
 
 
 ; ----------------
@@ -421,7 +425,6 @@ contains a fresh copy of the dim vector of @var{ra}.
 
 See also: ra-ref ra-cell ra-from
 "
-
   (let ((ra (ra-check ra)))
     (make-ra-root (%%ra-root ra)
                   (vector-drop (%%ra-dims ra) (length i))

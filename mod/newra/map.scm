@@ -1,6 +1,6 @@
 ; -*- mode: scheme; coding: utf-8 -*-
 
-; (c) Daniel Llorens - 2016-2019, 2021
+; (c) Daniel Llorens - 2016-2019, 2021-2022
 ; This library is free software; you can redistribute it and/or modify it under
 ; the terms of the GNU General Public License as published by the Free
 ; Software Foundation; either version 3 of the License, or (at your option) any
@@ -22,6 +22,9 @@
         (only (rnrs base) vector-map vector-for-each)
         (only (srfi 43) vector-copy! vector-fill! vector-every)
         (only (rnrs bytevectors) bytevector-copy! bytevector-fill! bytevector?))
+
+(eval-when (expand load eval)
+  (if have-blis? (import (ffi blis) (system foreign))))
 
 
 ; ----------------
@@ -389,34 +392,45 @@ This function returns the filled array @var{ra}.
 
 See also: ra-copy! ra-map!
 "
-; These only support step 1. bytevector-fill! can be used after Guile 3.0.8 (check).
-; Or we could use bli_?setv / bli_?setm from BLIS.
-  (define (line! t)
+  (define (line! t step)
     (match t
+; These only support step 1. bytevector-fill! can be used after Guile 3.0.8 (check).
       (#t
-       (lambda (fill dst dstart len)
-         (vector-fill! dst fill dstart (+ dstart len))))
+       (and (= step 1)
+            (lambda (da len za stepa)
+              (unless (= 1 stepa) (throw 'bad-assumption-in-ra-fill!)) ; FIXME depends on traversal order.
+              (vector-fill! da fill za (+ za len)))))
       ('s
-       (lambda (fill dst dstart len)
-         (string-fill! dst fill dstart (+ dstart len))))
-      ('u8
-       (lambda (fill dst dstart len)
-         (bytevector-fill! dst fill dstart (+ dstart len))))
+       (and (= step 1)
+            (lambda (da len za stepa)
+              (unless (= 1 stepa) (throw 'bad-assumption-in-ra-fill!)) ; FIXME depends on traversal order.
+              (string-fill! da fill za (+ za len)))))
+      ((or 'u8 's8 'vu8)
+       (and (= step 1)
+            (lambda (da len za stepa)
+              (unless (= 1 stepa) (throw 'bad-assumption-in-ra-fill!)) ; FIXME depends on traversal order.
+              (bytevector-fill! da fill za (+ za len)))))
+      ((or 's32 'u32 'f32 's64 'u64 'f64 'c32 'c64)
+;  FIXME needs further size heuristic, can be slower than general case when len is small. We should have len here.
+       (and have-blis?
+            (let ((fill* (bytevector->pointer (make-typed-array t fill 1)))
+                  (fun type-size (match t
+                                   ((or 's32 'u32 'f32) (values bli_ssetv 4))
+                                   ((or 's64 'u64 'f64 'c32) (values bli_dsetv 8))
+                                   ('c64 (values bli_zsetv 16)))))
+              (lambda (da len za stepa)
+                (fun BLIS_NO_CONJUGATE len fill* (bytevector->pointer da (* type-size za)) stepa)))))
       ('d (throw 'cannot-fill-type 'd))
       (t #f)))
 
 ; optimization 1
   (cond ((and (positive? (ra-rank ra))
-              (= 1 (%%ra-step ra (- (%%ra-rank ra) 1)))
-              (and-let* ((line! (line! (%%ra-type ra))))
+              (and-let* ((line! (line! (%%ra-type ra) (%%ra-step ra (- (%%ra-rank ra) 1)))))
                 (let-syntax
                     ((%fill!
                       (syntax-rules ()
                         ((_ len (da za stepa))
-; FIXME this assumption depends on traversal order.
-                         (if (= 1 stepa)
-                           (line! fill da za len)
-                           (throw 'bad-assumption-in-ra-fill!))))))
+                         (line! da len za stepa))))) ; FIXME really only za is necessary.
                   (%sloop (%pass %fill!) ra)
                   ra))))
 ; general case

@@ -99,6 +99,8 @@ Help: [C-uc .] insert timestamp [C-cc] flip checkbox [C-uucc] partial flip check
 
 * TODO quality of life [2/14]
   * [X] rank-1 ops in the unrolled section (e.g. bytevector-copy!, bytevector-fill!).
+  * [ ] precompute fixed parameters of rank-1 ops (len, step).
+    - These can be used to improve the rank-1 op choice heuristic, and also not to rely on iteration order assumption.
   * [ ] rank-2 ops or higher in the unrolled section (e.g. blis-dcopym!, blis-dsetm!).
   * [ ] rank-1 (or higher!) cases for generating functions (e.g. array->list).
   * [ ] the reverse of ra-singletonize, find a good name (see 'differences with numpy' in the doc).
@@ -131,8 +133,9 @@ Help: [C-uc .] insert timestamp [C-cc] flip checkbox [C-uucc] partial flip check
       + [ ] support out args, e.g. with boxes (?)
     - [ ] fix alignment assumptions (seems there's padding in some versions of ISO_Fortran_binding.h :-/)
     - [ ] modulize, test, doc, etc.
-  * [ ] connections to other libraries
-    - [ ] BLIS
+  * [-] connections to other libraries
+    - [X] BLIS
+      + [ ] fix unbound variable compilation warnings when (import (ffi blis)) fails.
     - [ ] fftw
 
 * TODO other [0/1]

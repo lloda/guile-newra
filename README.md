@@ -21,6 +21,7 @@ The manual is at ([lloda.github.io/guile-newra](https://lloda.github.io/guile-ne
 
 To install the library, copy `mod/newra` and `mod/newra.scm` to somewhere in your Guile load path, and use it with `(import (newra))`.
 
+`newra` can use [`guile-ffi-blis`](https://github.com/lloda/guile-ffi-blis) for some functions (`ra-fill!` in the current version), which can provide a considerable speed up for operations with arrays of types `s32`, `u32`, `f32`, `s64`, `u64`, `f64`, `c32`, or `c64` (it can also be slower -- there isn't a good heuristic yet). `newra` will test at runtime whether `guile-ffi-blis` is available.
 
 ## Status
 
