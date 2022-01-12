@@ -554,17 +554,19 @@ See also: ra-any ra-equal? ra-fold
   "
 ra-any pred? rx ...
 
-@var{rx} must be ra of matching shapes. Return @code{{pred? rxi ..)} is that is
+@var{rx} must be arrays of matching shapes. Return @code{{pred? rxi ..)} is that is
 true for some tuple @var{rxi} ... of matching elements of @var{rx} ...,
 otherwise return @code{#f}.
 
 For example:
 
-; find i, j such that A(i, j) is true
+@lisp
+; find some i, j such that A(i, j) is true
 
 (define I (ra-iota #f))
 (define J (ra-transpose (ra-iota #f) 1))
 (ra-any (lambda (a i j) (and a (vector i j))) A I J)
+@end lisp
 
 See also: ra-every ra-equal? ra-fold
 "

@@ -1028,7 +1028,7 @@ Next: <a href="#Transposition" accesskey="n" rel="next">Transposition</a>, Previ
 </p>
 <div class="example">
 <pre class="verbatim">(r₀ |r₁| r₂)
-(r₀ | 1| r₂)
+(r₀ | 1| s₀)
 </pre></div>
 
 <p>for a result
@@ -1409,13 +1409,24 @@ Next: <a href="#Pitfalls-and-common-mistakes" accesskey="n" rel="next">Pitfalls 
 
 <p>If you come to <code>newra</code> from another array language or library, you may want to be aware of some of these differences. See also the <a href="#Cheatsheet">Cheatsheet</a>.
 </p>
-<p>Differences with built-in Guile arrays:
+<p>Differences with built-in Guile arrays
 </p><ul>
 <li> <code>newra</code> map operations are rank-extending but require exact agreement of bounds, unlike operations on built-in arrays, which require exact rank agreement but admit overlapping bounds.
 </li></ul>
 
+<p>Differences with array SRFIs
+</p>
+<p>For the most part these differences stem from <code>newra</code> following the conventions of Guile&rsquo;s built in array API.
+</p>
+<ul>
+<li> SRFI-25 uses <code>[)</code> array bounds, while <code>newra</code> uses <code>[]</code> array bounds like Guile&rsquo;s built arrays.
+</li><li> SRFI-25 uses arrays as shape arguments, while <code>newra</code> uses lists like in Guile&rsquo;s built in array functions.
+</li><li> SRFI-163 uses <code>#</code><var>RANK</var><code>a</code> for literal arrays of Scheme values, while <code>newra</code> uses <code>#%</code><var>RANK</var> instead (<code>#%</code><var>RANK</var><code>a</code> is used for literal arrays of characters, following Guile&rsquo;s built in <code>#</code><var>RANK</var><code>a</code>).
+</li><li> SRFI-163 uses <code>#0 x</code> for a literal rank-0 array, while <code>newra</code> uses <code>#0(x)</code> (this is configurable with <a href="#x_002dstar_002dra_002dparenthesized_002drank_002dzero_002dstar"><code>*ra-parenthesized-rank-zero*</code></a>).
+</li></ul>
+
 <span id="index-APL-1"></span>
-<p>Differences with APL:
+<p>Differences with APL
 </p><ul>
 <li> The default lower bound (base index) in <code>newra</code> is 0, as in <code>⎕io←0</code>. The lower bound isn&rsquo;t global, but it may be different per axis.
 </li><li> <code>newra</code> arrays of size 1 are not equivalent to scalars and always retain their rank. For example, <code>(make-ra 99)</code>, <code>(make-ra 99 1)</code> and <code>(make-ra 99 1 1)</code> are all different from each other and from the scalar <code>99</code>, while in APL <code>99</code>, <code>(1 ⍴ 99)</code>, and <code>(1 1 ⍴ 99)</code> are all the same thing.
@@ -1423,7 +1434,7 @@ Next: <a href="#Pitfalls-and-common-mistakes" accesskey="n" rel="next">Pitfalls 
 </li></ul>
 
 <span id="index-Fortran"></span>
-<p>Differences with Fortran:
+<p>Differences with Fortran
 </p><ul>
 <li> The default lower bound (base index) in <code>newra</code> is 0, not 1. Like in Fortran, the lower bound may be different for each axis of each array.
 </li><li> Unlike Fortran, the default element order in arrays is row-major, or ‘last index changes fastest’. It&rsquo;s possible to define and manipulate arrays in any other order, including Fortran&rsquo;s default. However, some functions (such as <code>ra-ravel</code>) only support row-major order.
@@ -1432,7 +1443,7 @@ Next: <a href="#Pitfalls-and-common-mistakes" accesskey="n" rel="next">Pitfalls 
 
 <span id="index-Python"></span>
 <span id="index-NumPy-2"></span>
-<p>Differences with NumPy:
+<p>Differences with NumPy
 </p><ul>
 <li> <code>newra</code> uses prefix matching for rank extension, while NumPy uses suffix matching (<a href="#x_002dnumpy_002dexample_002d0">example</a>).
 </li><li> <code>newra</code> doesn&rsquo;t support singleton broadcasting. Axes of length 1 only match either axes of length 1, or <a href="#x_002ddead_002daxes">dead axes</a>. For example, <code>(ra-map #f + (make-ra 90 1) (make-ra 7 2))</code> is an error because the shapes (2), (1), (2) don&rsquo;t agree.
@@ -1440,7 +1451,7 @@ Next: <a href="#Pitfalls-and-common-mistakes" accesskey="n" rel="next">Pitfalls 
 
 <span id="index-Octave"></span>
 <span id="index-Matlab"></span>
-<p>Differences with Octave:
+<p>Differences with Octave
 </p><ul>
 <li> The default lower bound (base index) in <code>newra</code> is 0, not 1. Lower bounds may be 1 on a particular array (or particular axes of an array), but not globally.
 </li><li> In Octave, the lowest rank an array can be is 2. This isn&rsquo;t true in <code>newra</code>, so, for example, an array of rank 1 isn&rsquo;t equivalent to an array of rank 2 with a single row (a ‘row vector’).

@@ -1079,7 +1079,7 @@ and suffix-matched (s₀ and r₂ must match)
 @example
 @verbatim
 (r₀ |r₁| r₂)
-(r₀ | 1| r₂)
+(r₀ | 1| s₀)
 @end verbatim
 @end example
 
@@ -1501,13 +1501,24 @@ In array languages such as APL, scalar operations are implicitly extended to wor
 
 If you come to @code{newra} from another array language or library, you may want to be aware of some of these differences. See also the @ref{Cheatsheet}.
 
-Differences with built-in Guile arrays:
+Differences with built-in Guile arrays
 @itemize
 @item @code{newra} map operations are rank-extending but require exact agreement of bounds, unlike operations on built-in arrays, which require exact rank agreement but admit overlapping bounds.
 @end itemize
 
+Differences with array SRFIs
+
+For the most part these differences stem from @code{newra} following the conventions of Guile's built in array API.
+
+@itemize
+@item SRFI-25 uses @code{[)} array bounds, while @code{newra} uses @code{[]} array bounds like Guile's built arrays.
+@item SRFI-25 uses arrays as shape arguments, while @code{newra} uses lists like in Guile's built in array functions.
+@item SRFI-163 uses @code{#}@var{RANK}@code{a} for literal arrays of Scheme values, while @code{newra} uses @code{#%}@var{RANK} instead (@code{#%}@var{RANK}@code{a} is used for literal arrays of characters, following Guile's built in @code{#}@var{RANK}@code{a}).
+@item SRFI-163 uses @code{#0 x} for a literal rank-0 array, while @code{newra} uses @code{#0(x)} (this is configurable with @ref{x-star-ra-parenthesized-rank-zero-star, @code{*ra-parenthesized-rank-zero*}}).
+@end itemize
+
 @cindex APL
-Differences with APL:
+Differences with APL
 @itemize
 @item The default lower bound (base index) in @code{newra} is 0, as in @code{⎕io←0}. The lower bound isn't global, but it may be different per axis.
 @item @code{newra} arrays of size 1 are not equivalent to scalars and always retain their rank. For example, @code{(make-ra 99)}, @code{(make-ra 99 1)} and @code{(make-ra 99 1 1)} are all different from each other and from the scalar @code{99}, while in APL @code{99}, @code{(1 ⍴ 99)}, and @code{(1 1 ⍴ 99)} are all the same thing.
@@ -1515,7 +1526,7 @@ Differences with APL:
 @end itemize
 
 @cindex Fortran
-Differences with Fortran:
+Differences with Fortran
 @itemize
 @item The default lower bound (base index) in @code{newra} is 0, not 1. Like in Fortran, the lower bound may be different for each axis of each array.
 @item Unlike Fortran, the default element order in arrays is row-major, or ‘last index changes fastest’. It's possible to define and manipulate arrays in any other order, including Fortran's default. However, some functions (such as @code{ra-ravel}) only support row-major order.
@@ -1524,7 +1535,7 @@ Differences with Fortran:
 
 @cindex Python
 @cindex NumPy
-Differences with NumPy:
+Differences with NumPy
 @itemize
 @item @code{newra} uses prefix matching for rank extension, while NumPy uses suffix matching (@ref{x-numpy-example-0,example}).
 @item @code{newra} doesn't support singleton broadcasting. Axes of length 1 only match either axes of length 1, or @ref{x-dead-axes,dead axes}. For example, @code{(ra-map #f + (make-ra 90 1) (make-ra 7 2))} is an error because the shapes (2), (1), (2) don't agree.
@@ -1532,7 +1543,7 @@ Differences with NumPy:
 
 @cindex Octave
 @cindex Matlab
-Differences with Octave:
+Differences with Octave
 @itemize
 @item The default lower bound (base index) in @code{newra} is 0, not 1. Lower bounds may be 1 on a particular array (or particular axes of an array), but not globally.
 @item In Octave, the lowest rank an array can be is 2. This isn't true in @code{newra}, so, for example, an array of rank 1 isn't equivalent to an array of rank 2 with a single row (a ‘row vector’).
