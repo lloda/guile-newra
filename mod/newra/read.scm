@@ -289,6 +289,6 @@ See also: list->ra ra->list ra-copy ra-copy! as-ra
                 ((= i lenk)
                  (unless (null? l) (throw 'mismatched-list-length-dim (- rank 1 (length len)))))
               (loop-rank len (car l)))))))))
-; FIXME c-dims takes len | (lo hi) as in Guile, but I'd prefer len | (len lo)
+; FIXME c-dims takes len | (lo hi) as in Guile, but I'd prefer len | (len lo) as in ra-iota
     (make-ra-root
      temp (apply c-dims (map (lambda (lo len) (list lo (+ lo len -1))) lo len))))) ; FIXME

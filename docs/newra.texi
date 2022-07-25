@@ -3793,6 +3793,7 @@ m * diag(v)
 @item @mybibitem{SRFI-25} @tab Jussi Piitulainen. SRFI-25: Multi-dimensional array primitives, May 2002. @url{https://srfi.schemers.org/srfi-25/srfi-25.html}
 @item @mybibitem{SRFI-122} @tab Bradley J. Lucier. SRFI-122: Nonempty intervals and generalized arrays, December 2016. @url{https://srfi.schemers.org/srfi-122/srfi-122.html}
 @item @mybibitem{SRFI-160} @tab John Cowan and Shiro Kawai. SRFI-160: Homogeneous numeric vector libraries, November 2020. @url{https://srfi.schemers.org/srfi-160/srfi-160.html}
+@item @mybibitem{S7} @tab S7 Scheme: Multidimensional vectors. Accessed June 2022. @url{https://ccrma.stanford.edu/software/snd/snd/s7.html#multidimensionalvectors}
 @item @mybibitem{SRFI-163} @tab Per Bothner. SRFI-163: Enhanced array literals, January 2019. @url{https://srfi.schemers.org/srfi-163/srfi-163.html}
 @item @mybibitem{SRFI-164} @tab Per Bothner. SRFI-164: Enhanced multi-dimensional arrays, August  2019. @url{https://srfi.schemers.org/srfi-164/srfi-164.html}
 @end multitable
