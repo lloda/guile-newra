@@ -37,7 +37,7 @@ Compared with the old arrays, `newra` offers a growing list of features:
 * Rank extension by prefix matching: `(ra-map! (make-ra 'x 2 3) + (ra-i 2 3) (ra-iota 2 0 10))` returns `#%2:2:3((0 1 2) (13 14 15))`. Prefix matching supports undefined dimensions; the previous expression and `(ra-map! (make-ra 'x 2 3) + (ra-i #f 3) (ra-iota #f 0 10))` are equivalent.
 * Generalized transpose: axes not mentioned in the transposed axis list become axes with undefined size and zero step (‘dead’ axes). This can be used for broadcasting. For example, given `(define I (ra-iota))` and `(define J (ra-transpose (ra-iota) 1))`, then `(ra-map! (make-ra 'x 10 10) * I J)` is a multiplication table.
 * Generalized slicing with `ra-from`, `ra-amend!`: index arguments can have any rank, and use of lazy index vectors (of any rank!) results in a shared array. A stretch index object `(dots)` is supported; e.g. `(ra-from A (dots) 0)` will produce the slice `A[..., 0]` for an array of any rank.
-* Generalized array concatenation (`ra-cat`, `ra-scat`).
+* Generalized array concatenation (`ra-cat`, `ra-cats`).
 * Utilities such as `ra-reverse`, `ra-any`, `ra-every`, `ra-fold`, `ra-ravel`, `ra-reshape`, `ra-tile`.
 * An array pretty printer in the style of SRFI-163 (`ra-format`).
 * Since `newra` is written entirely in Scheme, if a `newra` operation takes too long, you can actually interrupt it, which is not always the case in the old system.
@@ -50,7 +50,7 @@ With that in mind, here is what you'd have to change. Note that the `ra-` names 
 
 * The new system matches sizes strictly. For instance `(array-map! (make-array #f 2) - (make-array #t 3))` succeeds, but `(ra-map! (make-ra #f 2) - (make-ra #t 3))` fails with a shape mismatch error.
 
-* The new system still supports non-zero base indices, but I'd advise against using them, because they aren't worth what they cost and I'm tempted to get rid of them.
+* The new system still supports non-zero base indices, but I'd advise against using them.
 
 * For most of the old functions `array-xxx`, the equivalent function in `newra` is `ra-xxx`. Exceptions:
 

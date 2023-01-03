@@ -233,7 +233,7 @@ See also: @code{ra-iota} @code{ra-i}
 
 ; FIXME partial implementation.
 
-(define* (as-ra ra #:key (type (ra-type ra)) (new? #f))
+(define* (as-ra ra #:key type new? rank)
   (cond ((and (eq? (ra-type ra) type) (not new?)) ra)
         (else (ra-copy! (make-ra-new
                          type *unspecified*

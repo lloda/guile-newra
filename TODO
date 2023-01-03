@@ -46,7 +46,7 @@ Help: [C-uc .] insert timestamp [C-cc] flip checkbox [C-uucc] partial flip check
   * [X] ra-tile [2/2]
     - [X] accept arbitrary axis
     - [X] can produce dead axes
-  * [X] ra-cat (ra-cat, ra-scat)
+  * [X] ra-cat (ra-cat, ra-cats)
     - [X] implementation
     - [X] tests
     - [X] tests with non-zero base indices

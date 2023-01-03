@@ -500,8 +500,6 @@ See also: ra-fill! ra-map! ra-clip
 
 (define (ra-swap! ra rb)
   "
-ra-swap! ra rb
-
 Swap the contents of @var{rb} and @var{ra}. @var{ra} and @var{rb} must have
 matching shapes and be of compatible types.
 
@@ -525,8 +523,6 @@ See also: ra-copy! ra-fill! ra-map!
 
 (define (ra-every pred? . rx)
   "
-ra-every pred? rx ...
-
 @var{rx} must be arrays of matching shapes. Return true if @code{(pred? rxi ..)}
 is true for every tuple @var{rxi} ... of matching elements of @var{rx} ...,
 otherwise return @code{#f}.
@@ -552,8 +548,6 @@ See also: ra-any ra-equal? ra-fold
 
 (define (ra-any pred? . rx)
   "
-ra-any pred? rx ...
-
 @var{rx} must be arrays of matching shapes. Return @code{{pred? rxi ..)} is that is
 true for some tuple @var{rxi} ... of matching elements of @var{rx} ...,
 otherwise return @code{#f}.
@@ -609,8 +603,6 @@ See also: ra-every ra-equal? ra-fold
 
 (define (ra-equal? . rx)
   "
-ra-equal? rx ...
-
 Return true if the arrays @var{rx} ... have the same shapes and types and their
 corresponding elements are @code{equal?}, or #f otherwise.
 

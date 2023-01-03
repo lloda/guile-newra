@@ -50,7 +50,7 @@
          (ref (ra-fold max -inf.0 b))
          (b (ra-map #f / (make-ra ref) b)))
     (format #t "ref/t m ~a n ~a for ref ≈ ~4,3f s.\n" m n ref)
-    (ra-format (ra-scat #f 1 (list->ra 1 '(guile newra blis)) b)
+    (ra-format (ra-cats #f 1 (list->ra 1 '(guile newra blis)) b)
                #:compact? #t #:prefix? #f
                #:fmt (lambda (x) (if (real? x) (format #f "~5,1f" x) (format #f "~a" x))))))
 
@@ -89,7 +89,7 @@
          (ref (ra-fold max -inf.0 b))
          (b (ra-map #f / (make-ra ref) b)))
     (format #t "ref/t m ~a n ~a for ref ≈ ~4,3f s.\n" m n ref)
-    (ra-format (ra-scat #f 1 (list->ra 1 '(guile newra blis)) b)
+    (ra-format (ra-cats #f 1 (list->ra 1 '(guile newra blis)) b)
                #:compact? #t #:prefix? #f
                #:fmt (lambda (x) (if (real? x) (format #f "~5,1f" x) (format #f "~a" x))))))
 

@@ -7,7 +7,7 @@
 @c last [ma112]
 
 @set VERSION 1
-@set UPDATED 2021 December 3
+@set UPDATED 2023 January 3
 
 @copying
 Version @value{VERSION}, updated @value{UPDATED}
@@ -94,7 +94,7 @@ This is a 3-array with bounds [0, 1] on axis 0, [2, 5] on axis 1, bounds [-2, 0]
 
 Sometimes we deal with multidimensional @emph{expressions} where the elements aren't stored anywhere, but are computed on demand when the expression is looked up. In this general sense, an ‘array’ is just a function of integers with a rectangular domain. Such an array would be immutable.
 
-Arrays (in the form of @dfn{matrices}, @dfn{vectors}, or @dfn{tensors}) are very common objects in math and programming, and it is very useful to be able to manipulate arrays as individual entities rather than as aggregates — that is one of the main purposes of @code{newra}.
+Arrays (in the form of @dfn{vectors}, @dfn{matrices}, or @dfn{tensors}) are common objects in math and programming, and it is very useful to be able to manipulate arrays as individual entities rather than as aggregates — that is one of the main purposes of @code{newra}.
 
 The rest of this section discusses the motivation for @code{newra} in more detail. To start using the library, please jump ahead to @ref{The array library}.
 
@@ -262,7 +262,7 @@ A drawback of singleton broadcasting is that it muddles the distinction between 
 @section The pieces of an array
 @c ------------------------------------------------
 
-An @code{newra} array is an aggregate of the following pieces:
+A @code{newra} array is an aggregate of the following pieces:
 
 @cindex rank
 @cindex dim vector
@@ -379,7 +379,7 @@ Built-in Guile arrays are implemented in C, as part of libguile. As a Guile type
 
 First, the built-in library offers a single function to manipulate array dims, @code{make-shared-array}. Although this is a sufficient interface, it is excessively generic, and also very cumbersome and inefficient. The array dims cannot be manipulated directly from Scheme, so any alternative interface written in Scheme is forced to go through @code{make-shared-array}.
 
-Second, the C stubs create a barrier to optimization by the Scheme compiler. The main loop of an operation such as @code{(array-map! c + a b)} has to be implemented in C (for the reasons given above) and then it has to call back to Scheme on each iteration in order to apply @code{+}. Since the Scheme compiler doesn't have any special support for @code{array-map!}, it doesn't know what the types of the arguments are, etc. and those checks and dispatches are repeated over and over. @footnote{Guile (before v1.8) used to offer dedicated operations to sum arrays, etc. but obviously that isn't any kind of solution.}
+Second, the C stubs create a barrier to optimization by the Scheme compiler. The main loop of an operation such as @code{(array-map! c + a b)} has to be implemented in C (for the reasons given above) and then it has to call back to Scheme on each iteration in order to apply @code{+}. Since the Scheme compiler doesn't have any special support for @code{array-map!}, it doesn't know what the types of the arguments are, etc. and those checks and dispatches are repeated over and over. @footnote{Old Guile (before v1.8) offered dedicated operations to sum arrays, etc. but obviously that isn't any kind of solution.}
 
 Third, some of the the larger functions of the array interface, such as @code{array-map!}, etc. are not interruptible. This is especially inconvenient when operating on large arrays.
 
@@ -439,6 +439,7 @@ An array can be created anew (@ref{x-make-ra-new, @code{make-ra-new}}, @ref{x-ma
 @result{} #%2:3:2((1 2) (3 4) (5 6))
 @end example
 
+@cindex applicative
 @code{newra} arrays are applicative; to look up or assign an element of an array, use it as a function of the indices.
 
 @example
@@ -1031,7 +1032,7 @@ To match APL ρ, @code{newra} offers three separate functions.
 @c ------------------------------------------------
 
 @cindex concatenation
-@code{newra} offers two concatenation operations: @ref{x-ra-cat, @code{ra-cat}} (prefix cat) and @ref{x-ra-scat, @code{ra-scat}} (suffix cat).
+@code{newra} offers two concatenation operations: @ref{x-ra-cat, @code{ra-cat}} (prefix cat) and @ref{x-ra-cats, @code{ra-cats}} (cat suffix).
 
 For @code{ra-cat}, the arguments are prefix-matched, and the concatenation axis is counted from the left. E.g. for three arrays @var{r}, @var{s}, @var{t} with shapes
 
@@ -1055,13 +1056,13 @@ Then @code{(define val (ra-cat #t 1 r s t))} will prefix-match these to (it is a
 
 and then concatenate them along axis 1 into an array of shape @code{(s₀ (r₁+s1+t₁) s₂ s₃ s₄ s₅)}.
 
-For @code{ra-scat}, the arguments are suffix-matched, and the concatenation axis is counted from the right. For example
+For @code{ra-cats}, the arguments are suffix-matched, and the concatenation axis is counted from the right. For example
 
 @example
 @verbatim
 (define r (ra-i 2 3 2))
 (define s (list->ra 1 '(a b)))
-(ra-scat #t 1 r s)
+(ra-cats #t 1 r s)
 @end verbatim
 @end example
 
@@ -1087,14 +1088,14 @@ for a result
 
 @example
 @verbatim
-(ra-scat #t 1 r s)
+(ra-cats #t 1 r s)
 @end verbatim
 @result{} @code{#%3(((0 1) (2 3) (4 5) (a b)) ((6 7) (8 9) (10 11) (a b)))}
 @end example
 
-Note that the rank extension of @code{s} on the concatenation axis yields a length of 1 (and not @code{r₀}). It can be useful to think of the axis argument of @code{ra-scat} as indicating cell rank, so the code above means `concatenate 1-cells'.
+Note that the rank extension of @code{s} on the concatenation axis yields a length of 1 (and not @code{r₀}). It can be useful to think of the axis argument of @code{ra-cats} as indicating cell rank, so the code above means `concatenate 1-cells'.
 
-For both @code{ra-cat} and @code{ra-scat}, axes other than the concatenation axis must match across all of the arguments.
+For both @code{ra-cat} and @code{ra-cats}, axes other than the concatenation axis must match across all of the arguments.
 
 @example
 @verbatim
@@ -1105,7 +1106,7 @@ For both @code{ra-cat} and @code{ra-scat}, axes other than the concatenation axi
 
 @example
 @verbatim
-(ra-scat #t 1 (ra-i 3 2) (ra-i 2))
+(ra-cats #t 1 (ra-i 3 2) (ra-i 2))
 @end verbatim
 @result{} @code{#%2:4:2((0 1) (2 3) (4 5) (0 1))}
 @end example
@@ -1128,7 +1129,7 @@ In particular, it is not enough for the lengths to be the same; both bounds must
 @result{} error ; axes 0 don't match
 @end example
 
-Here @ref{x-ra-reshape,@code{ra-reshape}} is used to move axis 0 of the second argument into agreement.@footnote{An example of how using lower bounds other than 0 is generally worthless trouble, not least for the library author.}
+Here @ref{x-ra-reshape,@code{ra-reshape}} is used to move axis 0 of the second argument into agreement.@footnote{An example of how using lower bounds other than 0 is not worth the trouble, not least for the library author.}
 
 @example
 @verbatim
@@ -1138,7 +1139,7 @@ Here @ref{x-ra-reshape,@code{ra-reshape}} is used to move axis 0 of the second a
 @result{} @code{#%2@@1:1:8((a a a a b b b b))}
 @end example
 
-On the concatenation axis, only lengths matter; for both @code{ra-cat} and @code{ra-scat}, the lower bound is 0 in the result, and the lower bounds of the arguments are ignored.
+On the concatenation axis, only lengths matter; for both @code{ra-cat} and @code{ra-cats}, the lower bound is 0 in the result, and the lower bounds of the arguments are ignored.
 
 @example
 @verbatim
@@ -1157,7 +1158,7 @@ On the concatenation axis, only lengths matter; for both @code{ra-cat} and @code
 @end verbatim
 @end example
 
-Both @code{ra-cat} and @code{ra-scat} accept a negative concatenation axis. That will rank-extend all the arguments to the left (@code{ra-cat}) or to the right (@code{ra-scat}) before concatenating on the leftmost (@code{ra-cat}) or rightmost (@code{ra-scat}) axis. In the same way, one may give a concatenation axis which is beyond the rank of the argument with the highest rank. Consider
+Both @code{ra-cat} and @code{ra-cats} accept a negative concatenation axis. That will rank-extend all the arguments to the left (@code{ra-cat}) or to the right (@code{ra-cats}) before concatenating on the leftmost (@code{ra-cat}) or rightmost (@code{ra-cats}) axis. In the same way, one may give a concatenation axis which is beyond the rank of the argument with the highest rank. Consider
 
 @example
 @verbatim
@@ -1183,19 +1184,19 @@ vs
 
 @example
 @verbatim
-(ra-scat #t -1 (ra-i 3) abc)
+(ra-cats #t -1 (ra-i 3) abc)
 @end verbatim
 @result{} @code{#%2:3:2((0 a) (1 b) (2 c))}
 @end example
 @example
 @verbatim
-(ra-scat #t 0 (ra-i 3) abc)
+(ra-cats #t 0 (ra-i 3) abc)
 @end verbatim
 @result{} @code{#%1:6(0 1 2 a b c)}
 @end example
 @example
 @verbatim
-(ra-scat #t 1 (ra-i 3) abc)
+(ra-cats #t 1 (ra-i 3) abc)
 @end verbatim
 @result{} @code{#%2:2:3((0 1 2) (a b c))}
 @end example
@@ -1440,7 +1441,7 @@ a
 @result{} @code{#%4d:1:2:1:3((((0 1 2)) ((3 4 5))))}
 @end example
 
-One important difference between the built-in array functions and @code{newra} is that bounds matching in @code{newra} is strict: finite bounds must be identical for axes to match, while for @code{array-map!}, @code{array-for-each}, @code{array-copy!}, etc. the iteration range is the intersection of the ranges of the arguments@footnote{I decided against this approach for @code{newra} because in my experience it results in errors going undetected much more often than it saves any work.}. @code{newra} provides @ref{x-ra-clip, @code{ra-clip}} to match ranges easily.
+One important difference between the built-in array functions and @code{newra} is that bounds matching in @code{newra} is strict: finite bounds must be identical for axes to match, while for @code{array-map!}, @code{array-for-each}, @code{array-copy!}, etc. the iteration range is the intersection of the ranges of the arguments@footnote{I decided against this approach for @code{newra} because in my experience it results in errors going undetected more often than it saves any work.}. @code{newra} provides @ref{x-ra-clip, @code{ra-clip}} to match ranges easily.
 
 @example
 @verbatim
@@ -1727,7 +1728,123 @@ Same as @ref{x-make-ra,@code{make-ra}}, except that the result has the specified
 
 See also: @ref{x-make-ra,@code{make-ra}}, @ref{x-make-ra-root,@code{ra-make-ra-root}}.
 
-@end deffn
+@end deffn @c make-typed-ra
+
+
+@cindex @code{ra->array}
+@anchor{x-ra->array}
+@deffn @w{Function} ra->array a
+
+Convert (@code{newra}) array @var{a} to built-in Guile array.
+
+This function does not create a copy of the array, but reuses the root (@code{ra-root}) of @var{a}, that is, @code{(eq? (ra-root a) (shared-array-root (ra->array a)))} is @code{#t}.
+
+Not all arrays can be converted to built-in Guile arrays. For example, type @code{d} arrays, or arrays with unbounded axes, are not convertible.
+
+@example
+@verbatim
+(ra->array (ra-i 3)) ; error, type d not convertible
+(ra->array (ra-copy (ra-i 3))) ; ok, (ra-copy (ra-i 3)) has type #t
+(ra->array (ra-transpose (ra-i 2 3) 1)) ; error, not convertible
+(ra->array (ra-singletonize (ra-transpose (ra-i 2 3) 1))) ; ok
+@end verbatim
+@end example
+
+See also: @ref{x-array->ra,@code{array->ra}}, @ref{x-ra-singletonize,@code{ra-singletonize}}, @ref{x-ra-copy!,@code{ra-copy!}}.
+
+@end deffn @c ra->array
+
+
+@cindex @code{ra-amend!}
+@anchor{x-ra-amend!}
+@deffn @w{Function} ra-amend! a c i ... → a
+Copy @var{c} to the outer product slice of @var{a} by indices @var{i} ...
+
+@example
+@verbatim
+a(i₀(j₀₀ j₀₁ ...) i₁(j₁₀ j₁₁ ...) ...) ← c(j₀₀ j₀₁ ... j₁₀ j₁₁ ...)
+@end verbatim
+@end example
+
+where @var{i} : @var{i₀} @var{i₁} ...
+
+This is equivalent to @code{(ra-copy! (ra-from a i ...) c)} if @code{(ra-from a i ...)} would
+return a shared ra of @var{a}, but it also works in other cases, as long as @var{a} is
+writable. @var{i} may take any of the special values accepted by @code{ra-from}.
+
+@example
+@verbatim
+(define a (list->ra 1 '(1 2 3)))
+(define x 1)
+(define y (array->ra #(1)))
+(ra-amend! a 9 x) ; modifies a
+(ra-amend! a (array->ra #0(9)) x) ; same thing
+(ra-copy! (ra-from a x) (array->ra #0(9))) ; modifies a
+(ra-amend! a 9 y) ; modifies a
+(ra-copy! (ra-from a y) (array->ra #0(9))) ; (ra-from a y) is a new array, so a is NOT modified
+(ra-amend! (array->ra #(2 3 4)) 9 1) ; error, (array->ra #(2 3 4)) is not mutable
+@end verbatim
+@end example
+
+If @var{i} contains repeated indices or the steps of @var{a} make it so that the same elements of @var{a}
+are referenced more than once, then the value that ends up in @var{a} may correspond to any of the
+indices that match those elements. @code{newra} will @emph{not} check that each element of @var{a} is represented uniquely in its root vector.
+
+@example
+@verbatim
+(ra-amend! a (array->ra #(6 7 8)) (ra-tile (array->ra #0(1)) 0 3))
+@end verbatim
+@result{} #%1:3(1 8 3) ; do not rely on 8 ending up there
+@end example
+
+This function returns the modified array @var{a}.
+
+See also: @ref{x-ra-from,@code{ra-from}}, @ref{x-ra-copy!,@code{ra-copy!}} @ref{x-ra-cell,@code{ra-cell}} @ref{x-ra-ref,@code{ra-ref}} @ref{x-ra-slice,@code{ra-slice}} @ref{x-ra-set!,@code{ra-set!}}.
+
+@end deffn @c ra-amend!
+
+
+@cindex @code{ra-any}
+@anchor{x-ra-any}
+@deffn @w{Function} ra-any pred? a ...
+
+See also: @ref{x-ra-fold,@code{ra-fold}}, @ref{x-ra-every,@code{ra-every}}.
+
+@end deffn @c ra-any
+
+
+@cindex @code{ra-cell}
+@anchor{x-ra-cell}
+@deffn @w{Function} ra-cell a i ...
+
+Look up array cell.
+
+Let @var{k} be the rank of @var{a} minus the number of @var{i ...}. If @var{k} is zero, return the array element at @var{i ...}, like @ref{x-ra-ref,@code{ra-ref}}; else return a @var{k}-view of @var{a}, like @ref{x-ra-slice,@code{ra-slice}}.
+
+It is an error if the number of @var{i ...} exceeds the rank of @var{a}.
+
+@example
+@verbatim
+(define a (ra-copy (ra-i 3 2)))
+(ra-cell a 0)
+(ra-slice a 0) ; same thing
+@end verbatim
+@result{} @code{#%1(0 1 2)}
+@verbatim
+(ra-slice a 0 1)
+@end verbatim
+@result{} @code{#%0(4)}
+@verbatim
+(ra-cell a 0 1)
+(ra-ref a 0 1) ; same thing
+@end verbatim
+@result{} @code{4}
+@end example
+
+See also: @ref{x-ra-slice,@code{ra-slice}}, @ref{x-ra-ref,@code{ra-ref}}, @ref{x-ra-from,@code{ra-from}}, @ref{Slicing}.
+
+@end deffn @c ra-cell
+
 
 @cindex intersection
 @cindex @code{ra-clip}
@@ -1798,7 +1915,7 @@ Slice @var{a} to the intersection of the bounds of @var{a} and @var{b}. If @var{
 The result of @code{ra-clip} always shares the root of its first argument @var{a}.
 
 See also: @ref{Slicing}, @ref{Compatibility with old Guile arrays}.
-@end deffn
+@end deffn @c ra-clip
 
 @cindex @code{ra-dimensions}
 @anchor{x-ra-dimensions}
@@ -2026,6 +2143,27 @@ See also: @ref{x-ra-iota,@code{ra-iota}}, @ref{x-ra-index-map!,@code{ra-index-ma
 
 @end deffn
 
+
+@cindex @code{ra-index-map!}
+@anchor{x-ra-index-map!}
+@deffn @w{Function} ra-index-map! a op @result{} a
+Iterate over array @var{a} in unspecified order, assigning to each element the result of @code{(op i₀ ...)}, where @code{i₀ ...} are the indices of that element.
+
+For example:
+
+@example
+@verbatim
+(ra-index-map! (make-ra #t 3 4) -)
+(ra-map! (make-ra #t 3 4) - (ra-iota) (ra-transpose (ra-iota) 1)) ; same thing
+@end verbatim
+@result{} @code{#%2:3:4((0 -1 -2 -3) (1 0 -1 -2) (2 1 0 -1))}
+@end example
+
+See also: @ref{x-ra-map!,@code{ra-map!}}, @ref{Iteration}.
+
+@end deffn
+
+
 @cindex @code{ra-iota}
 @anchor{x-ra-iota}
 @deffn @w{Function} ra-iota len [lo [step]]
@@ -2063,7 +2201,7 @@ See also: @ref{x-ra-i,@code{ra-i}}.
 
 Concatenate arrays @var{a} ... along axis @var{i}. The arguments are prefix-matched and rank extended before concatenation. All axes must match, other than the concatenation axis.
 
-This function always produces a new array, of the type given. If @var{type} is @code{#f} then the type of the first @var{a} is used, unless that is @code{d}, in which case @code{#t} is used. The lower bound in the concatenation axis of the result is 0; the lower bounds of the arguments in the concatenation axis are ignored.
+This function always produces a new array, of the type given. If @var{type} is @code{#f} then the type of the first @var{a} is used, unless that is @code{d}, in which case the result is of type @code{#t}. The lower bound in the concatenation axis of the result is 0; the lower bounds of the arguments in the concatenation axis are ignored.
 
 @example
 @verbatim
@@ -2072,9 +2210,312 @@ This function always produces a new array, of the type given. If @var{type} is @
 @result{} #%2((a 0 1) (b 2 3))
 @end example
 
-See also: @ref{x-ra-scat,@code{ra-scat}}, @ref{x-ra-tile,@code{ra-tile}},  @ref{Concatenation}.
+See also: @ref{x-ra-cats,@code{ra-cats}}, @ref{x-ra-tile,@code{ra-tile}},  @ref{Concatenation}.
 
-@end deffn
+@end deffn @c ra-cat
+
+
+@cindex @code{ra-cats}
+@anchor{x-ra-cats}
+@deffn @w{Function} ra-cats type i a ... @result{} b
+
+Concatenate @var{i}-items of arrays @var{a} ... . The arguments are suffix-matched and rank extended before concatenation. All axes must match, other than the concatenation axis.
+
+This function always produces a new array, of the type given. If @var{type} is @code{#f} then the type of the first @var{a} is used, unless that is @code{d}, in which case the result is  of type @code{#t}. The lower bound in the concatenation axis of the result is 0; the lower bounds of the arguments in the concatenation axis are ignored.
+
+@example
+@verbatim
+(ra-cats #t 1 #%2((0 1) (2 3)) #%(a b))
+@end verbatim
+@result{} #%2((0 1) (2 3) (a b))
+@end example
+
+See also: @ref{x-ra-cat,@code{ra-cat}}, @ref{x-ra-tile,@code{ra-tile}}, @ref{Concatenation}.
+
+@end deffn @c ra-cats
+
+
+@cindex @code{ra-copy}
+@anchor{x-ra-copy}
+@deffn @w{Function} ra-copy src @result{} dst
+@deffnx @w{Function} ra-copy type src @result{} dst
+Create a new array of type @var{type} and copy @var{src} into it. If @var{type} is @code{#f} or isn't given, use the type of @var{src}, unless that type is @code{d}, in which case the result is of type @code{#t}.
+
+See also @ref{x-ra-copy!,@code{ra-copy!}} @ref{x-ra-amend!,@code{ra-amend!}} @ref{x-ra-set!,@code{ra-set!}}.
+@end deffn @c ra-copy
+
+
+@cindex @code{ra-copy!}
+@anchor{x-ra-copy!}
+@deffn @w{Function} ra-copy! dst src @result{} dst
+Copy @var{src} to @var{dst}. The arguments must have matching shapes and be of compatible types.
+
+For valid arguments, this is equivalent to any one of
+@verbatim
+(ra-map! dst identity src)
+(ra-amend! dst src)
+@end verbatim
+
+See also @ref{x-ra-copy,@code{ra-copy}} @ref{x-ra-amend!,@code{ra-amend!}} @ref{x-ra-set!,@code{ra-set!}} @ref{x-ra-map!,@code{ra-map!}}.
+
+@end deffn @c ra-copy!
+
+@cindex @code{ra-equal?}
+@anchor{x-ra-equal?}
+@deffn @w{Function} ra-equal? a ... → boolean
+
+Return @code{#t} if the arrays @var{a} ... have the same shapes and types and their
+corresponding elements are all @code{equal?} to each other, or @code{#f} otherwise.
+
+Note that this function isn't rank extending; the shapes of the arguments must be the same, not just match. Here's a rank-extending version:
+
+@example
+@verbatim
+(import (ice-9 control))
+(define (ra-equal? . a) (let/ec exit (apply ra-for-each (λ a (unless (apply equal? a) (exit #f))) a) #t))
+@end verbatim
+@end example
+
+See also: @ref{x-ra-for-each,@code{ra-for-each}}, @ref{x-ra-fold,@code{ra-fold}}, @ref{x-ra-every,@code{ra-every}}, @ref{x-ra-any,@code{ra-any}}.
+
+@end deffn @c ra-equal?
+
+@cindex @code{ra-every}
+@anchor{x-ra-every}
+@deffn @w{Function} ra-every pred? a ...
+
+See also: @ref{x-ra-fold,@code{ra-fold}}, @ref{x-ra-any,@code{ra-any}}.
+
+@end deffn @c ra-every
+
+
+@cindex @code{ra-fill!}
+@anchor{x-ra-fill!}
+@deffn @w{Function} ra-fill! dst value @result{} dst
+Assign @var{value} to each element of @var{dst}. The arguments must be of compatible types.
+
+This is equivalent to any one of
+@example
+@verbatim
+(ra-map! dst (const value))
+(ra-copy! dst (make-ra value))
+(ra-amend! dst (make-ra value))
+(ra-amend! dst value) ; when value isn't an array
+@end verbatim
+@end example
+
+Compare
+
+@example
+@verbatim
+(ra-fill! (make-ra #f 2 2) (make-ra 'x))
+@end verbatim
+@result{} #%2:2:2((#%0(x) #%0(x)) (#%0(x) #%0(x)))
+@verbatim
+(ra-amend! (make-ra #f 2 2) 'x)
+@end verbatim
+@result{} #%2:2:2((x x) (x x))
+@verbatim
+(ra-amend! (make-ra #f 2 2) (make-ra 'x))
+@end verbatim
+@result{} #%2:2:2((x x) (x x))
+@verbatim
+(ra-amend! (make-ra #f 2 2) (make-ra (make-ra 'x)))
+@end verbatim
+@result{} #%2:2:2((#%0(x) #%0(x)) (#%0(x) #%0(x)))
+@end example
+
+See also: @ref{x-ra-set!,@code{ra-set!}}, @ref{x-ra-copy!,@code{ra-copy!}}, @ref{x-ra-amend!,@code{ra-amend!}}.
+
+@end deffn @c ra-fill!
+
+
+@cindex @code{ra-fold}
+@anchor{x-ra-fold}
+@deffn @w{Function} ra-fold op knil a ...
+
+@c Maybe any ravel.
+Returns @code{(... (op (op knil a₀ ...) a₁ ...) ...)}, where @var{a}₀ @var{a}₁ ... is the row-major ravel of @var{a} (after rank extension). The shapes of @var{a} ... must match. Example:
+
+@example
+@verbatim
+(ra-fold list 99 (ra-i 2) (ra-i 2 3))
+@end verbatim
+@result{} @code{((((((99 0 0) 0 1) 0 2) 1 3) 1 4) 1 5)}
+@end example
+
+See also: @ref{x-ra-every,@code{ra-every}}, @ref{x-ra-any,@code{ra-any}}, @ref{Iteration}.
+
+@end deffn @c ra-fold
+
+@cindex @code{ra-for-each}
+@anchor{x-ra-for-each}
+@deffn @w{Function} ra-for-each op a ...
+
+Apply @var{op} to each tuple of elements from arrays @var{a} ... The shapes of @var{a} must match.
+
+See also: @ref{x-ra-slice-for-each, @code{ra-slice-for-each}}, @ref{x-ra-map!,@code{ra-map}}, @ref{Iteration}.
+
+@end deffn @c ra-for-each
+
+
+@cindex @code{ra-from}
+@anchor{x-ra-from}
+@deffn @w{Function} ra-from a i ... → b
+
+Outer product slice of @var{a} by indices @var{i} ...
+
+The shape of @var{b} is the concatenation of the shapes of @var{i}... and the
+contents are obtained by looking up in each dimension of @var{a} by the indices @var{i},
+that is
+
+@example
+@verbatim
+b(j₀₀ j₀₁ ... j₁₀ j₁₁ ...) = a(i₀(j₀₀ j₀₁ ...) i₁(j₁₀ j₁₁ ...) ...)
+@end verbatim
+@end example
+
+where @var{i} : @var{i₀} @var{i₁} ... The special value @code{#t} is understood as the full range of @var{a} on that axis.
+
+Additionally, if each of the @var{i} ... is one of
+@itemize
+@item @code{#t}
+@item an array of type @code{d}
+@item an array of rank 0
+@item an integer
+@end itemize
+then the result @var{b} shares the root of @var{a}. In all other cases a new root is allocated for the result. For example
+
+@example
+@verbatim
+(define a (list->ra 2 '((1 2 3) (a b c))))
+(define b (ra-from a #t (ra-iota 3 2 -1))) ; same as (ra-reverse a 1)
+b
+@end verbatim
+@result {} @code{#%2:2:3((3 2 1) (c b a))}
+@verbatim
+(eq? (ra-root a) (ra-root b))
+@end verbatim
+@result {} @code{#t}
+@verbatim
+(define c (ra-from a #t (list->ra 1 '(2 1 0))))
+b
+@end verbatim
+@result {} @code{#%2:2:3((3 2 1) (c b a))}
+@verbatim
+(eq? (ra-root a) (ra-root c))
+@end verbatim
+@result {} @code{#f}
+@end example
+
+Unbounded indices aren't treated especially, so they are only valid if the relevant axis of @var{ra} is itself unbounded.
+
+@example
+@verbatim
+(ra-i #t 4)
+@end verbatim
+@result {}
+@verbatim
+#%2d:f:4──┐
+│0│1│ 2│ 3│
+├─┼─┼──┼──┤
+│4│5│ 6│ 7│
+├─┼─┼──┼──┤
+│8│9│10│11│
+...........
+@end verbatim
+@verbatim
+(ra-from (ra-i #t 4) (ra-iota #f 0 2))
+@end verbatim
+@result {}
+@verbatim
+#%2d:f:4─┬──┐
+│ 0│ 1│ 2│ 3│
+├──┼──┼──┼──┤
+│ 8│ 9│10│11│
+├──┼──┼──┼──┤
+│16│17│18│19│
+.............
+@end verbatim
+@end example
+
+@i{If the result would have rank 0, then an array element is returned, and not a 0-rank view of @var{a}. Use @ref{x-ra-amend!,@code{ra-amend!}} to assign to cells of an array regardless of whether they are of 0-rank or higher.}
+
+The type of @var{b} is the same as that of @var{a}, with the only exception that if the type of @var{a} is @code{d} and the root of @var{b} cannot be shared with the root of @var{a}, then the type of @var{b} is @code{#t}.
+
+See also: @ref{x-ra-cell,@code{ra-cell}}, @ref{x-ra-ref,@code{ra-ref}}, @ref{x-ra-slice,@code{ra-slice}}, @ref{x-ra-amend!,@code{ra-amend!}}, @ref{Slicing}.@footnote{Cf. @code{array-index-ref} from @mybibcite{SRFI-164}.}
+
+@end deffn @c ra-from
+
+@cindex @code{ra-from-copy}
+@anchor{x-ra-from-copy}
+@deffn @w{Function} ra-from-copy a i ... @result{} b
+
+Like @code{ra-from}, but always return a newly allocated array. This is equivalent to @code{(ra-copy (ra-from a i ...))}, but it doesn't incur a second copy in case @code{ra-from} already allocates a new array.
+
+See also: @ref{x-ra-from,@code{ra-from}}.
+
+@end deffn @c ra-from-copy
+
+
+@cindex @code{ra-map}
+@anchor{x-ra-map}
+@deffn @w{Function} ra-map type op a0 a ... @result{} dst
+Same as @ref{x-ra-map!,@code{ra-map!}}, but create the result array from the arguments. Unlike @code{ra-map!}, this function requires at least one source argument.
+
+The type of the result @var{dst} is @var{type} unless that is @code{#f}, in which case the type of @var{a0} is used,  unless that is @code{'d}, in which case the result is of type @code{#t}. For the computation of the shape of @var{dst} see @ref{Automatic result arrays}.
+
+@example
+@verbatim
+(ra-format (ra-map 'f64 + (ra-iota 3 1) (ra-i 3 4)))
+@end verbatim
+@result{}
+@verbatim
+#%2f64:3:4┬────┬────┐
+│ 1.0│ 2.0│ 3.0│ 4.0│
+├────┼────┼────┼────┤
+│ 6.0│ 7.0│ 8.0│ 9.0│
+├────┼────┼────┼────┤
+│11.0│12.0│13.0│14.0│
+└────┴────┴────┴────┘
+@end verbatim
+@end example
+
+See also: @ref{x-ra-map!,@code{ra-map!}}, @ref{x-ra-copy,@code{ra-copy}}.
+
+@end deffn @c ra-map
+
+@cindex @code{ra-map!}
+@anchor{x-ra-map!}
+@deffn @w{Function} ra-map! dst op a ... @result{} dst
+Iterate over arrays @var{dst} @var{a} ... applying @var{op} to the respective elements in @var{a}, and storing the result in the respective element of @var{dst}. The arguments must have matching shapes and the type of @var{dst} must be compatible with the results of @var{op}.
+
+This is equivalent to
+@verbatim
+(apply ra-slice-for-each
+       (rank dst)
+       (λ (dst . a)
+         (ra-set! dst (apply op (map ra-ref a))))
+       dst a)
+@end verbatim
+
+See also: @ref{x-ra-map,@code{ra-map}}, @ref{x-ra-for-each,@code{ra-for-each}}, @ref{x-ra-slice-for-each,@code{ra-slice-for-each}}, @ref{Iteration}.
+
+@end deffn @c ra-map!
+
+
+@cindex packed array
+@cindex @code{ra-order-c?}
+@anchor{x-ra-order-c?}
+@deffn @w{Function} ra-order-c? a [n [org]]
+Check whether axes [@var{org} ... @var{org}+@var{n}) of @var{a} are in row-major order. @var{org} defaults to 0.
+
+If @var{n} isn't given, check that the whole array is in row-major order, and additionally that the step on the last axis is 1 (i.e. the array is ‘packed’).
+
+@code{(ra-order-c? a n org)} implies @code{(eq? (ra-root a) (ra-root (@ref{x-ra-ravel, @code{ra-ravel}} a n org)))}. Note that the stronger condition @code{(ra-order-c? a)} is not necessary for @code{(eq? (ra-root a) (ra-root (ra-ravel a)))} to hold.
+
+@end deffn @c ra-order-c?
+
 
 @cindex @code{ra-print}
 @anchor{x-ra-print}
@@ -2189,11 +2630,23 @@ Ravel axes 1..2:
 To ravel other combinations of axes, use @ref{Transposition}.
 
 @cindex packed array
-The full ravel of an array doesn't necessarily result in a rank-1 `packed' array, that is, one where the step is 1. If that is required, one can use @code{(ra-ravel (ra-copy ra))}. @footnote{This works because @ref{x-ra-order-c?, @code{ra-order-c?}} is always true for the result of @code{ra-copy}. Note that the ravel operation in @code{(ra-ravel (ra-copy ra))} is free, while it might not be in @code{(ra-copy (ra-ravel ra))}, so it is preferable, in principle, to copy first.}.
+The full ravel of an array doesn't necessarily result in a rank-1 `packed' array, that is, one where the step is 1. If that is required, one can use @code{(ra-ravel (ra-copy ra))}. @footnote{@ref{x-ra-order-c?, @code{ra-order-c?}} is always true for the result of @code{ra-copy}, so the ravel operation in @code{(ra-ravel (ra-copy ra))} is free, but it might not be in @code{(ra-copy (ra-ravel ra))}. So in principle, it is preferable to copy first.}.
 
 See also: @ref{x-ra-reshape,@code{ra-reshape}}, @ref{x-ra-tile,@code{ra-tile}}, @ref{Reshaping}.
 
-@end deffn
+@end deffn @c ra-ravel
+
+
+@cindex @code{ra-ref}
+@anchor{x-ra-ref}
+@deffn @w{Function} ra-ref a i ...
+
+Look up array element. It is an error if the number of @var{i ...} doesn't match the rank of @var{a}.
+
+See also: @ref{x-ra-cell,@code{ra-cell}}, @ref{x-ra-slice,@code{ra-slice}}, @ref{x-ra-from,@code{ra-from}}, @ref{x-ra-set!,@code{ra-set!}}, @ref{Slicing}.
+
+@end deffn @c ra-ref
+
 
 @cindex @code{ra-reshape}
 @anchor{x-ra-reshape}
@@ -2296,7 +2749,8 @@ The result of @code{ra-reshape} always shares the root of @var{a}.
 
 See also: @ref{x-ra-ravel,@code{ra-ravel}}, @ref{x-ra-tile,@code{ra-tile}}, @ref{Reshaping}.
 
-@end deffn
+@end deffn @c ra-reshape
+
 
 @cindex @code{⌽}, reverse
 @cindex @code{ra-reverse}
@@ -2336,7 +2790,7 @@ Example:
 
 See also: @ref{x-ra-rotate!,@code{ra-rotate!}}, @ref{x-ra-reverse,@code{ra-reverse}}.
 
-@end deffn
+@end deffn @c ra-rotate
 
 @cindex rotate!
 @cindex @code{ra-rotate!}
@@ -2356,26 +2810,63 @@ a
 
 See also: @ref{x-ra-rotate,@code{ra-rotate}}, @ref{x-ra-reverse,@code{ra-reverse}}.
 
-@end deffn
+@end deffn @c ra-rotate!
 
-@cindex @code{ra-scat}
-@anchor{x-ra-scat}
-@deffn @w{Function} ra-scat type i a ... @result{} b
+@cindex @code{ra-slice-for-each}
+@anchor{x-ra-slice-for-each}
+@deffn @w{Function} ra-slice-for-each k op a ...
+Iterate over the @var{k}-frames of arrays @var{a} ..., applying @var{op} to the respective slices. The arguments @var{a} ... must have matching @var{k}-frames.
 
-Concatenate @var{i}-items of arrays @var{a} ... . The arguments are suffix-matched and rank extended before concatenation. All axes must match, other than the concatenation axis.
-
-This function always produces a new array, of the type given. If @var{type} is @code{#f} then the type of the first @var{a} is used, unless that is @code{d}, in which case @code{#t} is used. The lower bound in the concatenation axis of the result is 0; the lower bounds of the arguments in the concatenation axis are ignored.
+Note that it isn't necessary for arguments @var{a} to have rank ≥ @var{k}. Arguments with rank < @var{k} are rank-extended and the corresponding arguments are 0-cells. For example:
 
 @example
 @verbatim
-(ra-scat #t 1 #%2((0 1) (2 3)) #%(a b))
+(ra-slice-for-each 1
+  (λ (a b) (display (list (a) (b))))
+  (make-ra-root #(a b))
+  (ra-i 2 3))
 @end verbatim
-@result{} #%2((0 1) (2 3) (a b))
+@result{} @code{(a #%1d:3(0 1 2))(b #%1d:3(3 4 5))}
 @end example
 
-See also: @ref{x-ra-cat,@code{ra-cat}}, @ref{x-ra-tile,@code{ra-tile}}, @ref{Concatenation}.
+@example
+@verbatim
+(ra-slice-for-each 2
+  (λ (a b) (display (list (a) (b))))
+  (make-ra-root #(a b))
+  (ra-i 2 3))
+@end verbatim
+@result{} @code{(a 0)(a 1)(a 2)(b 3)(b 4)(b 5)}
+@end example
 
-@end deffn
+See also: @ref{x-ra-map!,@code{ra-map!}}, @ref{x-ra-for-each,@code{ra-for-each}}, @ref{Iteration}.
+
+@end deffn @c ra-slice-for-each
+
+@cindex @code{ra-set!}
+@anchor{x-ra-set!}
+@deffn @w{Function} ra-set! a o i ...
+
+Assign array element. It is an error if the number of @var{i ...} doesn't match the rank of @var{a}.
+
+See also: @ref{x-ra-amend!,@code{ra-amend!}}, @ref{x-ra-ref,@code{ra-ref}}, @ref{Slicing}.
+
+@end deffn @c ra-set!
+
+@cindex @code{ra-slice}
+@anchor{x-ra-slice}
+@deffn @w{Function} ra-slice a i ...
+
+Look up array cell.
+
+This function returns a view of @var{a} with rank @var{k} equal to the rank of @var{a} minus the number of @var{i ...}, even if that is 0.
+
+It is an error if the number of @var{i ...} exceeds the rank of @var{a}.
+
+See also: @ref{x-ra-cell,@code{ra-cell}}, @ref{x-ra-ref,@code{ra-ref}}, @ref{x-ra-from,@code{ra-from}}, @ref{Slicing}.
+
+@end deffn @c ra-slice
+
 
 @cindex @code{ra-shape}
 @anchor{x-ra-shape}
@@ -2392,7 +2883,57 @@ Return the shape (a list of two-element lists, each containing the lower and upp
 
 See also: @ref{x-ra-dimensions,@code{ra-dimensions}}, @ref{x-make-ra,@code{make-ra}}.
 
-@end deffn
+@end deffn @c ra-shape
+
+
+@cindex @code{ra-singletonize}
+@anchor{x-ra-singletonize}
+@deffn @w{Function} ra-singletonize a
+
+Return an array with the same root and dimensions as @var{a}, except that dead axes (axes with step 0 and undefined length) have their length set to 1.
+
+@example
+@verbatim
+(ra-dimensions (ra-transpose (ra-i 2 3) 1))
+@end verbatim
+@result{} (#f 2 3)
+@verbatim
+(ra-dimensions (ra-singletonize (ra-transpose (ra-i 2 3) 1)))
+@end verbatim
+@result{} (1 2 3)
+@verbatim
+(ra-dimensions (ra-singletonize (ra-tile (ra-i 2 3) 0 4)))
+@end verbatim
+@result{} (4 2 3) ; no change
+@end example
+
+@end deffn @c ra-singletonize
+
+
+@cindex @code{ra-swap!}
+@anchor{x-ra-swap!}
+@deffn @w{Function} ra-swap! a b @result{} a
+Swap the contents of @var{a} and @var{b}. The swap is executed in unspecified order, so the effect on @var{a} and @var{b} is undefined if @var{a} and @var{b} share storage.
+
+@example
+@verbatim
+(ra-swap! (make-ra 2 3) (make-typed-ra 'f64 -1 3))
+@end verbatim
+@result{}
+@verbatim
+#%1:3(-1.0 -1.0 -1.0)
+@end verbatim
+@end example
+
+See also @ref{x-ra-swap-in-order!,@code{ra-swap-in-order!}} @ref{x-ra-copy!,@code{ra-copy!}}.
+@end deffn @c ra-swap!
+
+@cindex @code{ra-swap-in-order!}
+@anchor{x-ra-swap-in-order!}
+@deffn @w{Function} ra-swap-in-order! a b @result{} a
+Swap the contents of @var{a} and @var{b}. The swap is executed in row-major order.
+@end deffn @c ra-swap-in-order!
+
 
 @cindex @code{ra-tile}
 @anchor{x-ra-tile}
@@ -2530,512 +3071,8 @@ The transposed array shares the root of @var{a}.
 
 See also: @ref{x-ra-transpose,@code{ra-transpose}}, @ref{Transposition}.
 
-@end deffn
+@end deffn @c ra-untranspose
 
-@cindex @code{ra-index-map!}
-@anchor{x-ra-index-map!}
-@deffn @w{Function} ra-index-map! a op @result{} a
-Iterate over array @var{a} in unspecified order, assigning to each element the result of @code{(op i₀ ...)}, where @code{i₀ ...} are the indices of that element.
-
-For example:
-
-@example
-@verbatim
-(ra-index-map! (make-ra #t 3 4) -)
-(ra-map! (make-ra #t 3 4) - (ra-iota) (ra-transpose (ra-iota) 1)) ; same thing
-@end verbatim
-@result{} @code{#%2:3:4((0 -1 -2 -3) (1 0 -1 -2) (2 1 0 -1))}
-@end example
-
-See also: @ref{x-ra-map!,@code{ra-map!}}, @ref{Iteration}.
-
-@end deffn
-
-@cindex @code{ra-slice-for-each}
-@anchor{x-ra-slice-for-each}
-@deffn @w{Function} ra-slice-for-each k op a ...
-Iterate over the @var{k}-frames of arrays @var{a} ..., applying @var{op} to the respective slices. The arguments @var{a} ... must have matching @var{k}-frames.
-
-Note that it isn't necessary for arguments @var{a} to have rank ≥ @var{k}. Arguments with rank < @var{k} are rank-extended and the corresponding arguments are 0-cells. For example:
-
-@example
-@verbatim
-(ra-slice-for-each 1
-  (λ (a b) (display (list (a) (b))))
-  (make-ra-root #(a b))
-  (ra-i 2 3))
-@end verbatim
-@result{} @code{(a #%1d:3(0 1 2))(b #%1d:3(3 4 5))}
-@end example
-
-@example
-@verbatim
-(ra-slice-for-each 2
-  (λ (a b) (display (list (a) (b))))
-  (make-ra-root #(a b))
-  (ra-i 2 3))
-@end verbatim
-@result{} @code{(a 0)(a 1)(a 2)(b 3)(b 4)(b 5)}
-@end example
-
-See also: @ref{x-ra-map!,@code{ra-map!}}, @ref{x-ra-for-each,@code{ra-for-each}}, @ref{Iteration}.
-
-@end deffn
-
-@cindex @code{ra-map!}
-@anchor{x-ra-map!}
-@deffn @w{Function} ra-map! dst op a ... @result{} dst
-Iterate over arrays @var{dst} @var{a} ... applying @var{op} to the respective elements in @var{a}, and storing the result in the respective element of @var{dst}. The arguments must have matching shapes and the type of @var{dst} must be compatible with the results of @var{op}.
-
-This is equivalent to
-@verbatim
-(apply ra-slice-for-each
-       (rank dst)
-       (λ (dst . a)
-         (ra-set! dst (apply op (map ra-ref a))))
-       dst a)
-@end verbatim
-
-See also: @ref{x-ra-map,@code{ra-map}}, @ref{x-ra-for-each,@code{ra-for-each}}, @ref{x-ra-slice-for-each,@code{ra-slice-for-each}}, @ref{Iteration}.
-
-@end deffn
-
-@cindex @code{ra-map}
-@anchor{x-ra-map}
-@deffn @w{Function} ra-map type op a0 a ... @result{} dst
-Same as @ref{x-ra-map!,@code{ra-map!}}, but create the result array from the arguments. Unlike @code{ra-map!}, this function requires at least one source argument.
-
-The type of @var{dst} is @var{type} unless that is @code{#f}, in which case the type of @var{a0} is used,  unless that is @code{'d}, in which case the @code{#f} is used. For the computation of the shape of @var{dst} see @ref{Automatic result arrays}.
-
-@example
-@verbatim
-(ra-format (ra-map 'f64 + (ra-iota 3 1) (ra-i 3 4)))
-@end verbatim
-@result{}
-@verbatim
-#%2f64:3:4┬────┬────┐
-│ 1.0│ 2.0│ 3.0│ 4.0│
-├────┼────┼────┼────┤
-│ 6.0│ 7.0│ 8.0│ 9.0│
-├────┼────┼────┼────┤
-│11.0│12.0│13.0│14.0│
-└────┴────┴────┴────┘
-@end verbatim
-@end example
-
-See also: @ref{x-ra-map!,@code{ra-map!}}, @ref{x-ra-copy,@code{ra-copy}}.
-
-@end deffn
-
-@cindex @code{ra-copy!}
-@anchor{x-ra-copy!}
-@deffn @w{Function} ra-copy! dst src @result{} dst
-Copy @var{src} to @var{dst}. The arguments must have matching shapes and be of compatible types.
-
-For valid arguments, this is equivalent to any one of
-@verbatim
-(ra-map! dst identity src)
-(ra-amend! dst src)
-@end verbatim
-
-See also @ref{x-ra-copy,@code{ra-copy}} @ref{x-ra-amend!,@code{ra-amend!}} @ref{x-ra-set!,@code{ra-set!}} @ref{x-ra-map!,@code{ra-map!}}.
-
-@end deffn
-
-@cindex @code{ra-copy}
-@anchor{x-ra-copy}
-@deffn @w{Function} ra-copy src @result{} dst
-@deffnx @w{Function} ra-copy type src @result{} dst
-Create a new array of type @var{type} and copy @var{src} into it. If @var{type} is @code{#f} or isn't given, use the type of @var{src}, unless that type is @code{d}, in which case the result is of type @code{#t}.
-
-See also @ref{x-ra-copy!,@code{ra-copy!}} @ref{x-ra-amend!,@code{ra-amend!}} @ref{x-ra-set!,@code{ra-set!}}.
-@end deffn
-
-@cindex @code{ra-swap!}
-@anchor{x-ra-swap!}
-@deffn @w{Function} ra-swap! a b @result{} a
-Swap the contents of @var{a} and @var{b}. The swap is executed in unspecified order, so the effect on @var{a} and @var{b} is undefined if @var{a} and @var{b} share storage.
-
-@example
-@verbatim
-(ra-swap! (make-ra 2 3) (make-typed-ra 'f64 -1 3))
-@end verbatim
-@result{}
-@verbatim
-#%1:3(-1.0 -1.0 -1.0)
-@end verbatim
-@end example
-
-See also @ref{x-ra-swap-in-order!,@code{ra-swap-in-order!}} @ref{x-ra-copy!,@code{ra-copy!}}.
-@end deffn
-
-@cindex @code{ra-swap-in-order!}
-@anchor{x-ra-swap-in-order!}
-@deffn @w{Function} ra-swap-in-order! a b @result{} a
-Swap the contents of @var{a} and @var{b}. The swap is executed in row-major order.
-@end deffn
-
-@cindex @code{ra-fill!}
-@anchor{x-ra-fill!}
-@deffn @w{Function} ra-fill! dst value @result{} dst
-Assign @var{value} to each element of @var{dst}. The arguments must be of compatible types.
-
-This is equivalent to any one of
-@example
-@verbatim
-(ra-map! dst (const value))
-(ra-copy! dst (make-ra value))
-(ra-amend! dst (make-ra value))
-(ra-amend! dst value) ; when value isn't an array
-@end verbatim
-@end example
-
-Compare
-
-@example
-@verbatim
-(ra-fill! (make-ra #f 2 2) (make-ra 'x))
-@end verbatim
-@result{} #%2:2:2((#%0(x) #%0(x)) (#%0(x) #%0(x)))
-@verbatim
-(ra-amend! (make-ra #f 2 2) 'x)
-@end verbatim
-@result{} #%2:2:2((x x) (x x))
-@verbatim
-(ra-amend! (make-ra #f 2 2) (make-ra 'x))
-@end verbatim
-@result{} #%2:2:2((x x) (x x))
-@verbatim
-(ra-amend! (make-ra #f 2 2) (make-ra (make-ra 'x)))
-@end verbatim
-@result{} #%2:2:2((#%0(x) #%0(x)) (#%0(x) #%0(x)))
-@end example
-
-See also: @ref{x-ra-set!,@code{ra-set!}}, @ref{x-ra-copy!,@code{ra-copy!}}, @ref{x-ra-amend!,@code{ra-amend!}}.
-
-@end deffn
-
-@cindex packed array
-@cindex @code{ra-order-c?}
-@anchor{x-ra-order-c?}
-@deffn @w{Function} ra-order-c? a [n [org]]
-Check whether axes [@var{org} ... @var{org}+@var{n}) of @var{a} are in row-major order. @var{org} defaults to 0.
-
-If @var{n} isn't given, check that the whole array is in row-major order, and additionally that the step on the last axis is 1 (i.e. the array is ‘packed’).
-
-@code{(ra-order-c? a n org)} implies @code{(eq? (ra-root a) (ra-root (@ref{x-ra-ravel, @code{ra-ravel}} a n org)))}. Note that the stronger condition @code{(ra-order-c? a)} is not necessary for @code{(eq? (ra-root a) (ra-root (ra-ravel a)))} to hold.
-
-@end deffn
-
-@cindex @code{ra-ref}
-@anchor{x-ra-ref}
-@deffn @w{Function} ra-ref a i ...
-
-Look up array element. It is an error if the number of @var{i ...} doesn't match the rank of @var{a}.
-
-See also: @ref{x-ra-cell,@code{ra-cell}}, @ref{x-ra-slice,@code{ra-slice}}, @ref{x-ra-from,@code{ra-from}}, @ref{x-ra-set!,@code{ra-set!}}, @ref{Slicing}.
-
-@end deffn
-
-@cindex @code{ra-set!}
-@anchor{x-ra-set!}
-@deffn @w{Function} ra-set! a o i ...
-
-Assign array element. It is an error if the number of @var{i ...} doesn't match the rank of @var{a}.
-
-See also: @ref{x-ra-amend!,@code{ra-amend!}}, @ref{x-ra-ref,@code{ra-ref}}, @ref{Slicing}.
-
-@end deffn
-
-@cindex @code{ra-slice}
-@anchor{x-ra-slice}
-@deffn @w{Function} ra-slice a i ...
-
-Look up array cell.
-
-This function returns a view of @var{a} with rank @var{k} equal to the rank of @var{a} minus the number of @var{i ...}, even if that is 0.
-
-It is an error if the number of @var{i ...} exceeds the rank of @var{a}.
-
-See also: @ref{x-ra-cell,@code{ra-cell}}, @ref{x-ra-ref,@code{ra-ref}}, @ref{x-ra-from,@code{ra-from}}, @ref{Slicing}.
-@end deffn
-
-@cindex @code{ra-cell}
-@anchor{x-ra-cell}
-@deffn @w{Function} ra-cell a i ...
-
-Look up array cell.
-
-Let @var{k} be the rank of @var{a} minus the number of @var{i ...}. If @var{k} is zero, return the array element at @var{i ...}, like @ref{x-ra-ref,@code{ra-ref}}; else return a @var{k}-view of @var{a}, like @ref{x-ra-slice,@code{ra-slice}}.
-
-It is an error if the number of @var{i ...} exceeds the rank of @var{a}.
-
-@example
-@verbatim
-(define a (ra-copy (ra-i 3 2)))
-(ra-cell a 0)
-(ra-slice a 0) ; same thing
-@end verbatim
-@result{} @code{#%1(0 1 2)}
-@verbatim
-(ra-slice a 0 1)
-@end verbatim
-@result{} @code{#%0(4)}
-@verbatim
-(ra-cell a 0 1)
-(ra-ref a 0 1) ; same thing
-@end verbatim
-@result{} @code{4}
-@end example
-
-See also: @ref{x-ra-slice,@code{ra-slice}}, @ref{x-ra-ref,@code{ra-ref}}, @ref{x-ra-from,@code{ra-from}}, @ref{Slicing}.
-
-@end deffn
-
-@cindex @code{ra-equal?}
-@anchor{x-ra-equal?}
-@deffn @w{Function} ra-equal? a ... → boolean
-
-Return @code{#t} if the arrays @var{a} ... have the same shapes and types and their
-corresponding elements are all @code{equal?} to each other, or @code{#f} otherwise.
-
-Note that this function isn't rank extending; the shapes of the arguments must be the same, not just match. Here's a rank-extending version:
-
-@example
-@verbatim
-(import (ice-9 control))
-(define (ra-equal? . a) (let/ec exit (apply ra-for-each (λ a (unless (apply equal? a) (exit #f))) a) #t))
-@end verbatim
-@end example
-
-See also: @ref{x-ra-for-each,@code{ra-for-each}}, @ref{x-ra-fold,@code{ra-fold}}, @ref{x-ra-every,@code{ra-every}}, @ref{x-ra-any,@code{ra-any}}.
-
-@end deffn
-
-@cindex @code{ra-for-each}
-@anchor{x-ra-for-each}
-@deffn @w{Function} ra-for-each op a ...
-
-See also: @ref{x-ra-slice-for-each, @code{ra-slice-for-each}}, @ref{x-ra-map!,@code{ra-map}}, @ref{Iteration}.
-
-@end deffn
-
-@cindex @code{ra-fold}
-@anchor{x-ra-fold}
-@deffn @w{Function} ra-fold op knil a ...
-
-See also: @ref{x-ra-every,@code{ra-every}}, @ref{x-ra-any,@code{ra-any}}, @ref{Iteration}.
-
-@end deffn
-
-@cindex @code{ra-every}
-@anchor{x-ra-every}
-@deffn @w{Function} ra-every pred? a ...
-
-See also: @ref{x-ra-fold,@code{ra-fold}}, @ref{x-ra-any,@code{ra-any}}.
-
-@end deffn
-
-@cindex @code{ra-any}
-@anchor{x-ra-any}
-@deffn @w{Function} ra-any pred? a ...
-
-See also: @ref{x-ra-fold,@code{ra-fold}}, @ref{x-ra-every,@code{ra-every}}.
-
-@end deffn
-
-@cindex @code{ra-from}
-@anchor{x-ra-from}
-@deffn @w{Function} ra-from a i ... → b
-
-Outer product slice of @var{a} by indices @var{i} ...
-
-The shape of @var{b} is the concatenation of the shapes of @var{i}... and the
-contents are obtained by looking up in each dimension of @var{a} by the indices @var{i},
-that is
-
-@example
-@verbatim
-b(j₀₀ j₀₁ ... j₁₀ j₁₁ ...) = a(i₀(j₀₀ j₀₁ ...) i₁(j₁₀ j₁₁ ...) ...)
-@end verbatim
-@end example
-
-where @var{i} : @var{i₀} @var{i₁} ... The special value @code{#t} is understood as the full range of @var{a} on that axis.
-
-Additionally, if each of the @var{i} ... is one of
-@itemize
-@item @code{#t}
-@item an array of type @code{d}
-@item an array of rank 0
-@item an integer
-@end itemize
-then the result @var{b} shares the root of @var{a}. In all other cases a new root is allocated for the result. For example
-
-@example
-@verbatim
-(define a (list->ra 2 '((1 2 3) (a b c))))
-(define b (ra-from a #t (ra-iota 3 2 -1))) ; same as (ra-reverse a 1)
-b
-@end verbatim
-@result {} @code{#%2:2:3((3 2 1) (c b a))}
-@verbatim
-(eq? (ra-root a) (ra-root b))
-@end verbatim
-@result {} @code{#t}
-@verbatim
-(define c (ra-from a #t (list->ra 1 '(2 1 0))))
-b
-@end verbatim
-@result {} @code{#%2:2:3((3 2 1) (c b a))}
-@verbatim
-(eq? (ra-root a) (ra-root c))
-@end verbatim
-@result {} @code{#f}
-@end example
-
-Unbounded indices aren't treated especially, so they are only valid if the relevant axis of @var{ra} is itself unbounded.
-
-@example
-@verbatim
-(ra-i #t 4)
-@end verbatim
-@result {}
-@verbatim
-#%2d:f:4──┐
-│0│1│ 2│ 3│
-├─┼─┼──┼──┤
-│4│5│ 6│ 7│
-├─┼─┼──┼──┤
-│8│9│10│11│
-...........
-@end verbatim
-@verbatim
-(ra-from (ra-i #t 4) (ra-iota #f 0 2))
-@end verbatim
-@result {}
-@verbatim
-#%2d:f:4─┬──┐
-│ 0│ 1│ 2│ 3│
-├──┼──┼──┼──┤
-│ 8│ 9│10│11│
-├──┼──┼──┼──┤
-│16│17│18│19│
-.............
-@end verbatim
-@end example
-
-@i{If the result would have rank 0, then an array element is returned, and not a 0-rank view of @var{a}. Use @ref{x-ra-amend!,@code{ra-amend!}} to assign to cells of an array regardless of whether they are of 0-rank or higher.}
-
-The type of @var{b} is the same as that of @var{a}, with the only exception that if the type of @var{a} is @code{d} and the root of @var{b} cannot be shared with the root of @var{a}, then the type of @var{b} is @code{#t}.
-
-See also: @ref{x-ra-cell,@code{ra-cell}}, @ref{x-ra-ref,@code{ra-ref}}, @ref{x-ra-slice,@code{ra-slice}}, @ref{x-ra-amend!,@code{ra-amend!}}, @ref{Slicing}.@footnote{Cf. @code{array-index-ref} from @mybibcite{SRFI-164}.}
-
-@end deffn
-
-@cindex @code{ra-from-copy}
-@anchor{x-ra-from-copy}
-@deffn @w{Function} ra-from-copy a i ... @result{} b
-
-Like @code{ra-from}, but always return a newly allocated array. This is equivalent to @code{(ra-copy (ra-from a i ...))}, but it doesn't incur a second copy in case @code{ra-from} already allocates a new array.
-
-See also: @ref{x-ra-from,@code{ra-from}}.
-
-@end deffn
-
-@cindex @code{ra-amend!}
-@anchor{x-ra-amend!}
-@deffn @w{Function} ra-amend! a c i ... → a
-Copy @var{c} to the outer product slice of @var{a} by indices @var{i} ...
-
-@example
-@verbatim
-a(i₀(j₀₀ j₀₁ ...) i₁(j₁₀ j₁₁ ...) ...) ← c(j₀₀ j₀₁ ... j₁₀ j₁₁ ...)
-@end verbatim
-@end example
-
-where @var{i} : @var{i₀} @var{i₁} ...
-
-This is equivalent to @code{(ra-copy! (ra-from a i ...) c)} if @code{(ra-from a i ...)} would
-return a shared ra of @var{a}, but it also works in other cases, as long as @var{a} is
-writable. @var{i} may take any of the special values accepted by @code{ra-from}.
-
-@example
-@verbatim
-(define a (list->ra 1 '(1 2 3)))
-(define x 1)
-(define y (array->ra #(1)))
-(ra-amend! a 9 x) ; modifies a
-(ra-amend! a (array->ra #0(9)) x) ; same thing
-(ra-copy! (ra-from a x) (array->ra #0(9))) ; modifies a
-(ra-amend! a 9 y) ; modifies a
-(ra-copy! (ra-from a y) (array->ra #0(9))) ; (ra-from a y) is a new array, so a is NOT modified
-(ra-amend! (array->ra #(2 3 4)) 9 1) ; error, (array->ra #(2 3 4)) is not mutable
-@end verbatim
-@end example
-
-If @var{i} contains repeated indices or the steps of @var{a} make it so that the same elements of @var{a}
-are referenced more than once, then the value that ends up in @var{a} may correspond to any of the
-indices that match those elements. @code{newra} will @emph{not} check that each element of @var{a} is represented uniquely in its root vector.
-
-@example
-@verbatim
-(ra-amend! a (array->ra #(6 7 8)) (ra-tile (array->ra #0(1)) 0 3))
-@end verbatim
-@result{} #%1:3(1 8 3) ; do not rely on 8 ending up there
-@end example
-
-This function returns the modified array @var{a}.
-
-See also: @ref{x-ra-from,@code{ra-from}}, @ref{x-ra-copy!,@code{ra-copy!}} @ref{x-ra-cell,@code{ra-cell}} @ref{x-ra-ref,@code{ra-ref}} @ref{x-ra-slice,@code{ra-slice}} @ref{x-ra-set!,@code{ra-set!}}.
-
-@end deffn
-
-
-@cindex @code{ra->array}
-@anchor{x-ra->array}
-@deffn @w{Function} ra->array a
-
-Convert (@code{newra}) array @var{a} to built-in Guile array.
-
-This function does not create a copy of the array, but reuses the root (@code{ra-root}) of @var{a}, that is, @code{(eq? (ra-root a) (shared-array-root (ra->array a)))} is @code{#t}.
-
-Not all arrays can be converted to built-in Guile arrays. For example, type @code{d} arrays, or arrays with unbounded axes, are not convertible.
-
-@example
-@verbatim
-(ra->array (ra-i 3)) ; error, type d not convertible
-(ra->array (ra-copy (ra-i 3))) ; ok, (ra-copy (ra-i 3)) has type #t
-(ra->array (ra-transpose (ra-i 2 3) 1)) ; error, not convertible
-(ra->array (ra-singletonize (ra-transpose (ra-i 2 3) 1))) ; ok
-@end verbatim
-@end example
-
-See also: @ref{x-array->ra,@code{array->ra}}, @ref{x-ra-singletonize,@code{ra-singletonize}}, @ref{x-ra-copy!,@code{ra-copy!}}.
-
-@end deffn
-
-@cindex @code{ra-singletonize}
-@anchor{x-ra-singletonize}
-@deffn @w{Function} ra-singletonize a
-
-Return an array with the same root and dimensions as @var{a}, except that dead axes (axes with step 0 and undefined length) have their length set to 1.
-
-@example
-@verbatim
-(ra-dimensions (ra-transpose (ra-i 2 3) 1))
-@end verbatim
-@result{} (#f 2 3)
-@verbatim
-(ra-dimensions (ra-singletonize (ra-transpose (ra-i 2 3) 1)))
-@end verbatim
-@result{} (1 2 3)
-@verbatim
-(ra-dimensions (ra-singletonize (ra-tile (ra-i 2 3) 0 4)))
-@end verbatim
-@result{} (4 2 3) ; no change
-@end example
-
-@end deffn
 
 @c ------------------------------------------------
 @node Cheatsheet
@@ -3334,7 +3371,7 @@ cat vertically
 @tab
 @verbatim
 ∗ (define a #%(1 2))
-(ra-scat #f 1 a a)
+(ra-cats #f 1 a a)
 @end verbatim
 @tab
 @verbatim

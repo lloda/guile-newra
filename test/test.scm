@@ -1222,14 +1222,14 @@
 (test-assert (ra-equal? (ra-cat #t 1 (array->ra #(a b)) (ra-i 2 2)) (array->ra #2((a 0 1) (b 2 3)))))
 (test-assert (ra-equal? (ra-cat #t 0 (array->ra #(a b)) (ra-i 2 2)) (array->ra #2((a a) (b b) (0 1) (2 3)))))
 
-(test-assert (ra-equal? (ra-scat #t 0 (make-ra 'a) (make-ra 'b) (make-ra 'c))              (array->ra #1(a b c))))
-(test-assert (ra-equal? (ra-scat #t 1 (make-ra 'a) (make-ra 'b) (make-ra 'c))              (array->ra #2((a) (b) (c)))))
-(test-assert (ra-equal? (ra-scat #t 0 (array->ra #(1 2 3)) (make-ra 4) (array->ra #(5 6))) (array->ra #1(1 2 3 4 5 6))))
-(test-assert (ra-equal? (ra-scat #t 0 (array->ra #2((0 1) (2 3))) (array->ra #(a b)))      (array->ra #2((0 1 a b) (2 3 a b)))))
-(test-assert (ra-equal? (ra-scat #t 1 (array->ra #2((0 1) (2 3))) (array->ra #(a b)))      (array->ra #2((0 1) (2 3) (a b)))))
-(test-assert (ra-equal? (ra-scat #t 0 (array->ra #2((0 1))) (array->ra #(a)))              (array->ra #2((0 1 a)))))
-(test-assert (ra-equal? (ra-scat #t -1 (array->ra #(1 2 3)) (array->ra #(a b c)))          (array->ra #2((1 a) (2 b) (3 c)))))
-(test-assert (ra-equal? (ra-scat #t -1 (make-ra 'a) (array->ra #(x y z)))                  (array->ra #2((a x) (a y) (a z)))))
+(test-assert (ra-equal? (ra-cats #t 0 (make-ra 'a) (make-ra 'b) (make-ra 'c))              (array->ra #1(a b c))))
+(test-assert (ra-equal? (ra-cats #t 1 (make-ra 'a) (make-ra 'b) (make-ra 'c))              (array->ra #2((a) (b) (c)))))
+(test-assert (ra-equal? (ra-cats #t 0 (array->ra #(1 2 3)) (make-ra 4) (array->ra #(5 6))) (array->ra #1(1 2 3 4 5 6))))
+(test-assert (ra-equal? (ra-cats #t 0 (array->ra #2((0 1) (2 3))) (array->ra #(a b)))      (array->ra #2((0 1 a b) (2 3 a b)))))
+(test-assert (ra-equal? (ra-cats #t 1 (array->ra #2((0 1) (2 3))) (array->ra #(a b)))      (array->ra #2((0 1) (2 3) (a b)))))
+(test-assert (ra-equal? (ra-cats #t 0 (array->ra #2((0 1))) (array->ra #(a)))              (array->ra #2((0 1 a)))))
+(test-assert (ra-equal? (ra-cats #t -1 (array->ra #(1 2 3)) (array->ra #(a b c)))          (array->ra #2((1 a) (2 b) (3 c)))))
+(test-assert (ra-equal? (ra-cats #t -1 (make-ra 'a) (array->ra #(x y z)))                  (array->ra #2((a x) (a y) (a z)))))
 
 ; non-zero base indices on the concat axis
 
@@ -1241,7 +1241,7 @@
 (let* ((a0 (ra-i 4 2))
        (a1 (ra-untranspose (ra-reshape (ra-transpose a0 1 0) 0 '(1 2)) 1 0))
        (b (ra-i 4 1)))
-  (test-assert (ra-equal? (ra-scat #t 0 a0 b) (ra-scat #t 0 a1 b))))
+  (test-assert (ra-equal? (ra-cats #t 0 a0 b) (ra-cats #t 0 a1 b))))
 
 ; non-zero base indices on a non-concat axis
 
@@ -1250,7 +1250,7 @@
   (test-equal "#%2:5@1:4((a a a a) (a a a a) (b b b b) (b b b b) (b b b b))"
     (ra->string (ra-cat #t 0 a b)))
   (test-equal "#%2:5@1:4((a a a a) (a a a a) (b b b b) (b b b b) (b b b b))"
-    (ra->string (ra-scat #t 1 a b))))
+    (ra->string (ra-cats #t 1 a b))))
 
 
 ; -----------------------

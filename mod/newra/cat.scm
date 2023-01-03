@@ -11,7 +11,7 @@
 ;;; Code:
 
 (define-module (newra cat)
-  #:export (ra-cat ra-scat))
+  #:export (ra-cat ra-cats))
 
 (import (srfi 1) (srfi 26) (srfi 71) (newra base) (newra lib) (newra reshape) (newra from) (ice-9 match))
 
@@ -73,7 +73,7 @@ For example:
 (ra-cat #t 0 (array->ra #(a b)) (ra-i 2 2)) => #%2((a a) (b b) (0 1) (2 3))
 @end verbatim
 
-See also: ra-scat ra-tile
+See also: ra-cats ra-tile
 "
   (if (> 0 i)
     (apply ra-cat type 0 (map (cute apply ra-tile <> 0 (make-list (max 0 (- i)) 1)) xx))
@@ -90,7 +90,7 @@ See also: ra-scat ra-tile
                                i (fold (lambda (x o) (+ o (if (> (ra-rank x) i) (ra-len x i) 1))) 0 xx)))
                 xx))))))
 
-(define (ra-scat type i . xx)
+(define (ra-cats type i . xx)
   "
 Concatenate items of rank @var{i} of arrays @var{xx} ... The shapes of @var{xx}
 ... must have matching suffixes except at axis @code{(- (ra-rank x) 1 i)} for
@@ -105,7 +105,7 @@ If @var{i} is negative, the shape of each array @var{xx} ... is suffix-extended
 by @code{(- i)} singleton dimensions and the concatenation is carried out along
 the last axis.
 
-@code{ra-scat} always creates a new array and not a shared array.
+@code{ra-cats} always creates a new array and not a shared array.
 
 The type of the output is @var{type}, unless @code{#f}; else the type of the
 first argument, unless @code{'d}; else @code{#t}.
@@ -115,24 +115,24 @@ first argument, unless @code{'d}; else @code{#t}.
 For example:
 
 @verbatim
-(ra-scat #t 0 (make-ra 'a) (make-ra 'b) (make-ra 'c))              => #%1(a b c)
-(ra-scat #t 1 (make-ra 'a) (make-ra 'b) (make-ra 'c))              => #%2((a) (b) (c))
-(ra-scat #t 0 (array->ra #(1 2 3)) (make-ra 4) (array->ra #(5 6))) => #%1(1 2 3 4 5 6)
-(ra-scat #t 0 (array->ra #2((0 1) (2 3))) (array->ra #(a b)))      => #%2((0 1 a b) (2 3 a b)))
-(ra-scat #t 1 (array->ra #2((0 1) (2 3))) (array->ra #(a b)))      => #%2((0 1) (2 3) (a b))
-(ra-scat #t 1 (array->ra #2((0 1))) (array->ra #(a)))              => error, mismatched dimensions
-(ra-scat #t 0 (array->ra #2((0 1))) (array->ra #(a)))              => #%2((0 1 a))
-(ra-scat #t -1 (array->ra #(1 2 3)) (array->ra #(a b c)))          => #%2((1 a) (2 b) (3 c))
-(ra-scat #t -1 (make-ra 'a) (array->ra #(x y z)))                  => #%2((a x) (a y) (a z))
+(ra-cats #t 0 (make-ra 'a) (make-ra 'b) (make-ra 'c))              => #%1(a b c)
+(ra-cats #t 1 (make-ra 'a) (make-ra 'b) (make-ra 'c))              => #%2((a) (b) (c))
+(ra-cats #t 0 (array->ra #(1 2 3)) (make-ra 4) (array->ra #(5 6))) => #%1(1 2 3 4 5 6)
+(ra-cats #t 0 (array->ra #2((0 1) (2 3))) (array->ra #(a b)))      => #%2((0 1 a b) (2 3 a b)))
+(ra-cats #t 1 (array->ra #2((0 1) (2 3))) (array->ra #(a b)))      => #%2((0 1) (2 3) (a b))
+(ra-cats #t 1 (array->ra #2((0 1))) (array->ra #(a)))              => error, mismatched dimensions
+(ra-cats #t 0 (array->ra #2((0 1))) (array->ra #(a)))              => #%2((0 1 a))
+(ra-cats #t -1 (array->ra #(1 2 3)) (array->ra #(a b c)))          => #%2((1 a) (2 b) (3 c))
+(ra-cats #t -1 (make-ra 'a) (array->ra #(x y z)))                  => #%2((a x) (a y) (a z))
 @end verbatim
 
 See also: ra-cat ra-tile
 "
   (if (> 0 i)
-    (apply ra-scat type 0 (map (lambda (x) (apply ra-tile x (ra-rank x) (make-list (max 0 (- i)) 1))) xx))
+    (apply ra-cats type 0 (map (lambda (x) (apply ra-tile x (ra-rank x) (make-list (max 0 (- i)) 1))) xx))
     (match xx
       (()
-       (throw 'ra-scat-missing-arguments))
+       (throw 'ra-cats-missing-arguments))
       (xx
        (let* ((xm (fold (lambda (x xm) (if (> (ra-rank x) (ra-rank xm)) x xm)) (car xx) (cdr xx)))
               (im (max (+ 1 i) (ra-rank xm)))

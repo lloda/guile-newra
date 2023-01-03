@@ -44,7 +44,7 @@
 
            ra-from ra-from-copy ra-amend! dots
 
-           ra-cat ra-scat
+           ra-cat ra-cats
 
            list->ra list->typed-ra
 
