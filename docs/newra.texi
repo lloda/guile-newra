@@ -397,7 +397,7 @@ These problems are solved if the built-in type is replaced with a new type defin
 
 An array can be created anew (@ref{x-make-ra-new, @code{make-ra-new}}, @ref{x-make-ra, @code{make-ra}}, @ref{x-make-typed-ra, @code{make-typed-ra}}), or over an existing root (@ref{x-make-ra-root, @code{make-ra-root}}).
 
-@ref{x-make-ra, @code{make-ra}} or @ref{x-make-typed-ra, @code{make-typed-ra}} take array lengths and use row-major order by default.
+@ref{x-make-ra, @code{make-ra}} or @ref{x-make-typed-ra, @code{make-typed-ra}} take a fill element and array lengths and use row-major order by default. The fill element may be @code{*unspecified*}.
 
 @example
 @verbatim
@@ -408,17 +408,17 @@ An array can be created anew (@ref{x-make-ra-new, @code{make-ra-new}}, @ref{x-ma
 
 @example
 @verbatim
-(make-typed-ra 'f64 99 2 3)
+(make-typed-ra 's16 *unspecified* 2 3)
 @end verbatim
-@result{} #%2f64:3:2((9.0 9.0) (9.0 9.0) (9.0 9.0))
+@result{} #%2s16:2:3((26414 26997 25964) (24878 26994 26996)) ; likely different values
 @end example
 
-@ref{x-make-ra-new, @code{make-ra-new}} takes an array type, a fill value, and a dim vector. @ref{x-c-dims, @code{c-dims}} can be used to create a row-major dim vector.
+The functions @code{make-ra-new} and @code{make-ra-root} are lower level. @ref{x-make-ra-new, @code{make-ra-new}} takes an array type, a fill value, and a dim vector. @ref{x-c-dims, @code{c-dims}} can be used to create a row-major dim vector.
 
 @example
 @verbatim
-(make-ra-new #t 'x (vector (make-dim 3 0 2) (make-dim 2 0 1))) ; more simply
-(make-ra-new #t 'x (c-dims 3 2))
+(make-ra-new #t 'x (vector (make-dim 3 0 2) (make-dim 2 0 1)))
+(make-ra-new #t 'x (c-dims 3 2))  ; more simply
 @end verbatim
 @result{} #%2:3:2((x x) (x x) (x x))
 @end example
@@ -430,13 +430,20 @@ An array can be created anew (@ref{x-make-ra-new, @code{make-ra-new}}, @ref{x-ma
 @result{} #%2f32:3:2((0.0 0.0) (0.0 0.0) (0.0 0.0))
 @end example
 
-@ref{x-make-ra-root, @code{make-ra-root}} takes the type from the root vector.
+@ref{x-make-ra-root, @code{make-ra-root}} takes the type from the root.
 
 @example
 @verbatim
 (make-ra-root (vector 1 2 3 4 5 6) (c-dims 3 2))
 @end verbatim
 @result{} #%2:3:2((1 2) (3 4) (5 6))
+@end example
+
+@example
+@verbatim
+(make-ra-root (vector 1 2 3 4 5 6)) ; default dims are whole root
+@end verbatim
+@result{} #%1:6(1 2 3 4 5 6)
 @end example
 
 @cindex applicative
@@ -489,7 +496,7 @@ Any type that is usable as the root of an old built-in Guile array is also usabl
 @item bitvectors (e.g. @code{(bitvector #f #t #f #t)})
 @end itemize
 
-@code{newra} supports an additional root vector type, @code{<aseq>}, representing an unbounded arithmetic sequence.
+@code{newra} supports an additional root type, @code{<aseq>}, representing an unbounded arithmetic sequence.
 
 @cindex @code{make-aseq}
 @anchor{x-none}
@@ -504,7 +511,7 @@ Create an arithmetic sequence [@code{org, org+inc, org+2·inc, ...}]. The defaul
 @result{} #%1d:10(0 3 6 9 12 15 18 21 24 27)
 @end example
 
-(The example above can be written @code{(@ref{x-ra-iota, ra-iota} 10 0 3)}).
+This can be written more succinctly as @code{(@ref{x-ra-iota, ra-iota} 10 0 3)}).
 @end deffn
 
 @cindex @code{d}
@@ -1093,7 +1100,7 @@ for a result
 @result{} @code{#%3(((0 1) (2 3) (4 5) (a b)) ((6 7) (8 9) (10 11) (a b)))}
 @end example
 
-Note that the rank extension of @code{s} on the concatenation axis yields a length of 1 (and not @code{r₀}). It can be useful to think of the axis argument of @code{ra-cats} as indicating cell rank, so the code above means `concatenate 1-cells'.
+Note that the rank extension of @code{s} on the concatenation axis yields a length of 1 (and not @code{r₁}). It can be useful to think of the axis argument of @code{ra-cats} as indicating cell rank, so the code above means `concatenate 1-cells'.
 
 For both @code{ra-cat} and @code{ra-cats}, axes other than the concatenation axis must match across all of the arguments.
 
@@ -1788,7 +1795,7 @@ writable. @var{i} may take any of the special values accepted by @code{ra-from}.
 
 If @var{i} contains repeated indices or the steps of @var{a} make it so that the same elements of @var{a}
 are referenced more than once, then the value that ends up in @var{a} may correspond to any of the
-indices that match those elements. @code{newra} will @emph{not} check that each element of @var{a} is represented uniquely in its root vector.
+indices that match those elements. @code{newra} will @emph{not} check that each element of @var{a} is represented uniquely in its root.
 
 @example
 @verbatim

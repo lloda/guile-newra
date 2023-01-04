@@ -467,7 +467,7 @@ Next: <a href="#Special-arrays" accesskey="n" rel="next">Special arrays</a>, Up:
 
 <p>An array can be created anew (<a href="#x_002dmake_002dra_002dnew"><code>make-ra-new</code></a>, <a href="#x_002dmake_002dra"><code>make-ra</code></a>, <a href="#x_002dmake_002dtyped_002dra"><code>make-typed-ra</code></a>), or over an existing root (<a href="#x_002dmake_002dra_002droot"><code>make-ra-root</code></a>).
 </p>
-<p><a href="#x_002dmake_002dra"><code>make-ra</code></a> or <a href="#x_002dmake_002dtyped_002dra"><code>make-typed-ra</code></a> take array lengths and use row-major order by default.
+<p><a href="#x_002dmake_002dra"><code>make-ra</code></a> or <a href="#x_002dmake_002dtyped_002dra"><code>make-typed-ra</code></a> take a fill element and array lengths and use row-major order by default. The fill element may be <code>*unspecified*</code>.
 </p>
 <div class="example">
 <pre class="verbatim">(make-ra 99 2 3)
@@ -475,15 +475,15 @@ Next: <a href="#Special-arrays" accesskey="n" rel="next">Special arrays</a>, Up:
 </pre></div>
 
 <div class="example">
-<pre class="verbatim">(make-typed-ra 'f64 99 2 3)
-</pre><pre class="example">&rArr; #%2f64:3:2((9.0 9.0) (9.0 9.0) (9.0 9.0))
+<pre class="verbatim">(make-typed-ra 's16 *unspecified* 2 3)
+</pre><pre class="example">&rArr; #%2s16:2:3((26414 26997 25964) (24878 26994 26996)) ; likely different values
 </pre></div>
 
-<p><a href="#x_002dmake_002dra_002dnew"><code>make-ra-new</code></a> takes an array type, a fill value, and a dim vector. <a href="#x_002dc_002ddims"><code>c-dims</code></a> can be used to create a row-major dim vector.
+<p>The functions <code>make-ra-new</code> and <code>make-ra-root</code> are lower level. <a href="#x_002dmake_002dra_002dnew"><code>make-ra-new</code></a> takes an array type, a fill value, and a dim vector. <a href="#x_002dc_002ddims"><code>c-dims</code></a> can be used to create a row-major dim vector.
 </p>
 <div class="example">
-<pre class="verbatim">(make-ra-new #t 'x (vector (make-dim 3 0 2) (make-dim 2 0 1))) ; more simply
-(make-ra-new #t 'x (c-dims 3 2))
+<pre class="verbatim">(make-ra-new #t 'x (vector (make-dim 3 0 2) (make-dim 2 0 1)))
+(make-ra-new #t 'x (c-dims 3 2))  ; more simply
 </pre><pre class="example">&rArr; #%2:3:2((x x) (x x) (x x))
 </pre></div>
 
@@ -492,11 +492,16 @@ Next: <a href="#Special-arrays" accesskey="n" rel="next">Special arrays</a>, Up:
 </pre><pre class="example">&rArr; #%2f32:3:2((0.0 0.0) (0.0 0.0) (0.0 0.0))
 </pre></div>
 
-<p><a href="#x_002dmake_002dra_002droot"><code>make-ra-root</code></a> takes the type from the root vector.
+<p><a href="#x_002dmake_002dra_002droot"><code>make-ra-root</code></a> takes the type from the root.
 </p>
 <div class="example">
 <pre class="verbatim">(make-ra-root (vector 1 2 3 4 5 6) (c-dims 3 2))
 </pre><pre class="example">&rArr; #%2:3:2((1 2) (3 4) (5 6))
+</pre></div>
+
+<div class="example">
+<pre class="verbatim">(make-ra-root (vector 1 2 3 4 5 6)) ; default dims are whole root
+</pre><pre class="example">&rArr; #%1:6(1 2 3 4 5 6)
 </pre></div>
 
 <span id="index-applicative"></span>
@@ -543,7 +548,7 @@ Next: <a href="#Writing-and-reading" accesskey="n" rel="next">Writing and readin
 </li><li> bitvectors (e.g. <code>(bitvector #f #t #f #t)</code>)
 </li></ul>
 
-<p><code>newra</code> supports an additional root vector type, <code>&lt;aseq&gt;</code>, representing an unbounded arithmetic sequence.
+<p><code>newra</code> supports an additional root type, <code>&lt;aseq&gt;</code>, representing an unbounded arithmetic sequence.
 </p>
 <span id="index-make_002daseq"></span>
 <span id="x_002dnone"></span><dl class="def">
@@ -556,7 +561,7 @@ Next: <a href="#Writing-and-reading" accesskey="n" rel="next">Writing and readin
 </pre><pre class="example">&rArr; #%1d:10(0 3 6 9 12 15 18 21 24 27)
 </pre></div>
 
-<p>(The example above can be written <code>(<a href="#x_002dra_002diota">ra-iota</a> 10 0 3)</code>).
+<p>This can be written more succinctly as <code>(<a href="#x_002dra_002diota">ra-iota</a> 10 0 3)</code>).
 </p></dd></dl>
 
 <span id="index-d"></span>
@@ -1039,7 +1044,7 @@ Next: <a href="#Transposition" accesskey="n" rel="next">Transposition</a>, Previ
 </pre><pre class="example">&rArr; <code>#%3(((0 1) (2 3) (4 5) (a b)) ((6 7) (8 9) (10 11) (a b)))</code>
 </pre></div>
 
-<p>Note that the rank extension of <code>s</code> on the concatenation axis yields a length of 1 (and not <code>r₀</code>). It can be useful to think of the axis argument of <code>ra-cats</code> as indicating cell rank, so the code above means &lsquo;concatenate 1-cells&rsquo;.
+<p>Note that the rank extension of <code>s</code> on the concatenation axis yields a length of 1 (and not <code>r₁</code>). It can be useful to think of the axis argument of <code>ra-cats</code> as indicating cell rank, so the code above means &lsquo;concatenate 1-cells&rsquo;.
 </p>
 <p>For both <code>ra-cat</code> and <code>ra-cats</code>, axes other than the concatenation axis must match across all of the arguments.
 </p>
@@ -1688,7 +1693,7 @@ writable. <var>i</var> may take any of the special values accepted by <code>ra-f
 
 <p>If <var>i</var> contains repeated indices or the steps of <var>a</var> make it so that the same elements of <var>a</var>
 are referenced more than once, then the value that ends up in <var>a</var> may correspond to any of the
-indices that match those elements. <code>newra</code> will <em>not</em> check that each element of <var>a</var> is represented uniquely in its root vector.
+indices that match those elements. <code>newra</code> will <em>not</em> check that each element of <var>a</var> is represented uniquely in its root.
 </p>
 <div class="example">
 <pre class="verbatim">(ra-amend! a (array-&gt;ra #(6 7 8)) (ra-tile (array-&gt;ra #0(1)) 0 3))
