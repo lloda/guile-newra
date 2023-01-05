@@ -15,7 +15,7 @@
 (define-module (newra from)
   #:export (dots
             ra-from ra-from-copy ra-amend! ra-clip
-            ra-rotate!
+            ra-rotate! ra-rotate
             fromb fromu amendu!))
 
 (import (srfi 1) (srfi 9) (srfi srfi-9 gnu) (srfi 26) (srfi 71)
@@ -343,33 +343,38 @@ See also: ra-from, ra-amend, ra-reshape
 ; FIXME custom case for k = ±1.
 ; FIXME replace ra-from calls by bumps of zero.
 
-(define (ra-rotate! k a)
+(define (ra-rotate! n a)
   (let* ((a (ra-check a))
          (rank (%%ra-rank a)))
     (match (vector-ref (%%ra-dims a) 0)
-      (($ <dim> n lo step)
-       (if (zero? n)
+      (($ <dim> s lo step)
+       (if (zero? s)
          a
-         (let loop ((p lo) (k (euclidean-remainder k n)) (n n))
+         (let loop ((p lo) (n (euclidean-remainder n s)) (s s))
            (cond
-            ((zero? k) a)
-            ((= (* 2 k) n)
+            ((zero? n) a)
+            ((= (* 2 n) s)
              (ra-swap!
-              (ra-from a (ra-iota k p))
-              (ra-from a (ra-iota k (+ p k))))
+              (ra-from a (ra-iota n p))
+              (ra-from a (ra-iota n (+ p n))))
              a)
-            ((< (* 2 k) n)
+            ((< (* 2 n) s)
              (ra-swap-in-order!
-              (ra-from a (ra-iota (- n k) p))
-              (ra-from a (ra-iota (- n k) (+ p k))))
-             (let ((p (+ p (- n k)))
-                   (n (euclidean-remainder n k)))
-               (if (positive? n)
-                 (loop p (- k n) k)
+              (ra-from a (ra-iota (- s n) p))
+              (ra-from a (ra-iota (- s n) (+ p n))))
+             (let ((p (+ p (- s n)))
+                   (s (euclidean-remainder s n)))
+               (if (positive? s)
+                 (loop p (- n s) n)
                  a)))
             (else
-             (let ((k (- n k)))
+             (let ((n (- s n)))
                (ra-swap-in-order!
-                (ra-from a (ra-iota (- n k) (+ p n -1) -1))
-                (ra-from a (ra-iota (- n k) (+ p n -1 (- k)) -1)))
-               (loop p (euclidean-remainder n k) k))))))))))
+                (ra-from a (ra-iota (- s n) (+ p s -1) -1))
+                (ra-from a (ra-iota (- s n) (+ p s -1 (- n)) -1)))
+               (loop p (euclidean-remainder s n) n))))))))))
+
+; FIXME surely we can do better
+
+(define (ra-rotate n a)
+  (ra-rotate! n (ra-copy a)))

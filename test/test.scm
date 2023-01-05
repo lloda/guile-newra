@@ -1151,6 +1151,20 @@
   (ra-rotate! -1 a)
   (test-assert (ra-equal? (string->ra "#%2:4:3((3 4 5) (6 7 8) (9 10 11) (0 1 2))") a)))
 
+(let ((a (ra-copy #t (ra-i 4 3))))
+  (test-assert (ra-equal? (string->ra "#%2:4:3((0 1 2) (3 4 5) (6 7 8) (9 10 11))") (ra-rotate! 0 a)))
+  (test-assert (ra-equal? (string->ra "#%2:4:3((3 4 5) (6 7 8) (9 10 11) (0 1 2))") (ra-rotate! 1 a)))
+  (test-assert (ra-equal? (string->ra "#%2:4:3((9 10 11) (0 1 2) (3 4 5) (6 7 8))") (ra-rotate! 2 a)))
+  (test-assert (ra-equal? (string->ra "#%2:4:3((6 7 8) (9 10 11) (0 1 2) (3 4 5))") (ra-rotate! 3 a)))
+  (test-assert (ra-equal? (string->ra "#%2:4:3((3 4 5) (6 7 8) (9 10 11) (0 1 2))") (ra-rotate! -1 a))))
+
+(let ((a (ra-i 4 3)))
+  (test-assert (ra-equal? (string->ra "#%2:4:3((0 1 2) (3 4 5) (6 7 8) (9 10 11))") (ra-rotate 0 a)))
+  (test-assert (ra-equal? (string->ra "#%2:4:3((3 4 5) (6 7 8) (9 10 11) (0 1 2))") (ra-rotate 1 a)))
+  (test-assert (ra-equal? (string->ra "#%2:4:3((6 7 8) (9 10 11) (0 1 2) (3 4 5))") (ra-rotate 2 a)))
+  (test-assert (ra-equal? (string->ra "#%2:4:3((9 10 11) (0 1 2) (3 4 5) (6 7 8))") (ra-rotate 3 a)))
+  (test-assert (ra-equal? (string->ra "#%2:4:3((9 10 11) (0 1 2) (3 4 5) (6 7 8))") (ra-rotate -1 a))))
+
 
 ; -----------------------
 ; ra-singletonize

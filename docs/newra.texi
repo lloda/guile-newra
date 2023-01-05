@@ -7,7 +7,7 @@
 @c last [ma112]
 
 @set VERSION 1
-@set UPDATED 2023 January 3
+@set UPDATED 2023 January 5
 
 @copying
 Version @value{VERSION}, updated @value{UPDATED}
@@ -58,7 +58,8 @@ This document uses ‘array’ to refer both to the old built-in array type and 
 @c ------------------------------------------------
 
 @cindex bounds
-A multidimensional array is a container (or rather a container view) whose elements can be looked up using a multi-index (i₀, i₁, ...). Each of the indices i₀, i₁, ... has constant bounds [l₀, h₀], [l₁, h₁], ... independent of the values of the other indices, so the array is ‘rectangular’. The number of indices in the multi-index is the @dfn{rank} of the array, and the list ([l₀ h₀] [l₁ h₁] ... [lᵣ₋₁ hᵣ₋₁]) is the @dfn{shape} of the array. We speak of a rank-@math{r} array or of an @math{r}-array.
+@cindex view
+A multidimensional array is a container (or rather a container @emph{view}) whose elements can be looked up using a multi-index (i₀, i₁, ...). Each of the indices i₀, i₁, ... has constant bounds [l₀, h₀], [l₁, h₁], ... independent of the values of the other indices, so the array is ‘rectangular’. The number of indices in the multi-index is the @dfn{rank} of the array, and the list ([l₀ h₀] [l₁ h₁] ... [lᵣ₋₁ hᵣ₋₁]) is the @dfn{shape} of the array. We speak of a rank-@math{r} array or of an @math{r}-array.
 
 This is a 2-array with bounds [0, 2] on both axes:
 @verbatim
@@ -276,6 +277,7 @@ An arbitary integer.
 Each dim consists of a length (@dfn{len}), a lower bound (@dfn{lo}), and a @dfn{step}. The length of the dim vector is the @dfn{rank} of the array.
 @end itemize
 
+@cindex view
 Together, the dim vector and the zero define an affine function of array indices @code{i₀, i₁, ..} that produces an index into the root. Thus, the array is a multidimensional view of the root.
 
 For example, the following pieces
@@ -439,9 +441,11 @@ The functions @code{make-ra-new} and @code{make-ra-root} are lower level. @ref{x
 @result{} #%2:3:2((1 2) (3 4) (5 6))
 @end example
 
+The default dims produce a view of the root as is (rank 1, zero offset, same length)@footnote{This is equivalent to @ref{x-array->ra, @code{array->ra}} when the argument is a root type.}.
+
 @example
 @verbatim
-(make-ra-root (vector 1 2 3 4 5 6)) ; default dims are whole root
+(make-ra-root (vector 1 2 3 4 5 6))
 @end verbatim
 @result{} #%1:6(1 2 3 4 5 6)
 @end example
@@ -480,7 +484,7 @@ a
 @result{} #%2:3:4((9 #f) (b 3) (#f #f))
 @end example
 
-You can also access arrays in the more usual way with the functions @ref{x-ra-ref, @code{ra-ref}} and @ref{x-ra-set!, @code{ra-set!}}. See @ref{Slicing} for additional options.
+You can also access arrays in the more usual way with the functions @ref{x-ra-ref, @code{ra-ref}} and @ref{x-ra-set!, @code{ra-set!}}. See @ref{Slicing} for all the options.
 
 @c ------------------------------------------------
 @node Special arrays
@@ -490,10 +494,10 @@ You can also access arrays in the more usual way with the functions @ref{x-ra-re
 Any type that is usable as the root of an old built-in Guile array is also usable as root of a @code{newra} array. These include
 
 @itemize
-@item vectors (e.g. @code{(vector 3)})
-@item SRFI-4 typed vectors (e.g. @code{(c64vector 1 2+0i)})
-@item strings (e.g. @code{"hello"})
-@item bitvectors (e.g. @code{(bitvector #f #t #f #t)})
+@item vectors, like @code{(vector 3)}
+@item SRFI-4 typed vectors, like @code{(c64vector 1 2+0i)}
+@item strings, like @code{"hello"}
+@item bitvectors, like  @code{(bitvector #f #t #f #t)}
 @end itemize
 
 @code{newra} supports an additional root type, @code{<aseq>}, representing an unbounded arithmetic sequence.
@@ -511,11 +515,11 @@ Create an arithmetic sequence [@code{org, org+inc, org+2·inc, ...}]. The defaul
 @result{} #%1d:10(0 3 6 9 12 15 18 21 24 27)
 @end example
 
-This can be written more succinctly as @code{(@ref{x-ra-iota, ra-iota} 10 0 3)}).
+This can be written more succinctly as @code{(@ref{x-ra-iota, ra-iota} 10 0 3)}.
 @end deffn
 
 @cindex @code{d}
-@code{aseq} roots are immutable. The type tag of @code{aseq} roots is @code{d}. Arrays with integer-valued @code{aseq} roots have a few special uses; one of them is as arguments in @ref{Slicing, slicing}.
+@code{aseq} roots are immutable. The type tag of @code{aseq} roots is @code{d}. Arrays with integer-valued @code{aseq} roots have some special uses; one of them is as arguments in @ref{Slicing, slicing}.
 
 @cindex infinite axes
 @cindex unbounded axes
@@ -529,7 +533,7 @@ To make @code{<aseq>} even more useful, @code{newra} supports unbounded axes.
 @result{} 1000000000000
 @end example
 
-These are treated especially when used in iteration, in that they match axes of any finite length (@ref{x-ra-map!, @code{ra-map!}}). Effectively this lets one use @code{(@ref{x-ra-transpose, @code{ra-transpose}} (ra-iota) k)} as a placeholder for the index over axis @code{k}.
+These are treated especially when used in iteration (@ref{x-ra-map!, @code{ra-map!}}), in that they match axes of any finite length. Effectively this lets one use @code{(@ref{x-ra-transpose, @code{ra-transpose}} (ra-iota) k)} as a placeholder for the index over axis @code{k}.
 
 @example
 @verbatim
@@ -2783,7 +2787,7 @@ See also: @ref{x-ra-rotate,@code{ra-rotate}}, @ref{x-ra-rotate,@code{ra-rotate!}
 @cindex @code{ra-rotate}
 @anchor{x-ra-rotate}
 @deffn @w{Function} ra-rotate n a @result{} b
-(FIXME: not implemented) Rotate the first axis of @var{a} toward the lower indices (‘to the left’) @var{n} times. @var{n} may be any integer. The result has the type of @var{a}, unless that type is @code{d}, in which case the result is of type @code{#t}.
+Rotate the first axis of @var{a} toward the lower indices (‘to the left’) @var{n} times. @var{n} may be any integer. The result has the type of @var{a}, unless that type is @code{d}, in which case the result is of type @code{#t}.
 
 This function always returns a new array.
 

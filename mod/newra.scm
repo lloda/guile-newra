@@ -38,7 +38,7 @@
            ra-reverse ra-transpose ra-untranspose ra-order-c?
            ra-ravel ra-reshape ra-tile
            ra-fold
-           ra-rotate!
+           ra-rotate! ra-rotate
 
            ra-singletonize ra-clip
 

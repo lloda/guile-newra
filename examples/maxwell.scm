@@ -17,7 +17,6 @@
         (only (rnrs base) exact))
 
 ; transpose/untranspose isn't convenient here :-\
-; FIXME copying version of ra-rotate!
 (define (⌽ n k A)
   (let ((A (ra-copy A)))
     (vector-swap! (ra-dims A) 0 k)

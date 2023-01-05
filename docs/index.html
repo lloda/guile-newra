@@ -3,7 +3,7 @@
 <!-- Created by GNU Texinfo 6.8, http://www.gnu.org/software/texinfo/ -->
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-<!-- Version 1, updated 2023 January 3
+<!-- Version 1, updated 2023 January 5
  -->
 <title>newra — An alternative array library for Guile 3</title>
 
@@ -99,7 +99,7 @@ Next: <a href="#Introduction" accesskey="n" rel="next">Introduction</a> &nbsp; [
 </div>
 <span id="newra"></span><h1 class="top"><code>newra</code></h1>
 
-<p>Version 1, updated 2023 January 3
+<p>Version 1, updated 2023 January 5
 <a id="DOCF1" href="#FOOT1"><sup>1</sup></a>
 </p>
 <p><code>newra</code> is a pure Scheme replacement for the built-in C-based array facility in Guile 3.0.
@@ -127,7 +127,8 @@ Next: <a href="#The-array-library" accesskey="n" rel="next">The array library</a
 <span id="Introduction-1"></span><h2 class="chapter">1 Introduction</h2>
 
 <span id="index-bounds"></span>
-<p>A multidimensional array is a container (or rather a container view) whose elements can be looked up using a multi-index (i₀, i₁, ...). Each of the indices i₀, i₁, ... has constant bounds [l₀, h₀], [l₁, h₁], ... independent of the values of the other indices, so the array is ‘rectangular’. The number of indices in the multi-index is the <em>rank</em> of the array, and the list ([l₀ h₀] [l₁ h₁] ... [lᵣ₋₁ hᵣ₋₁]) is the <em>shape</em> of the array. We speak of a rank-<em class='math'>r</em> array or of an <em class='math'>r</em>-array.
+<span id="index-view"></span>
+<p>A multidimensional array is a container (or rather a container <em>view</em>) whose elements can be looked up using a multi-index (i₀, i₁, ...). Each of the indices i₀, i₁, ... has constant bounds [l₀, h₀], [l₁, h₁], ... independent of the values of the other indices, so the array is ‘rectangular’. The number of indices in the multi-index is the <em>rank</em> of the array, and the list ([l₀ h₀] [l₁ h₁] ... [lᵣ₋₁ hᵣ₋₁]) is the <em>shape</em> of the array. We speak of a rank-<em class='math'>r</em> array or of an <em class='math'>r</em>-array.
 </p>
 <p>This is a 2-array with bounds [0, 2] on both axes:
 </p><pre class="verbatim">┌───────┬───────┬───────┐
@@ -336,6 +337,7 @@ An arbitary integer.
 Each dim consists of a length (<em>len</em>), a lower bound (<em>lo</em>), and a <em>step</em>. The length of the dim vector is the <em>rank</em> of the array.
 </li></ul>
 
+<span id="index-view-1"></span>
 <p>Together, the dim vector and the zero define an affine function of array indices <code>i₀, i₁, ..</code> that produces an index into the root. Thus, the array is a multidimensional view of the root.
 </p>
 <p>For example, the following pieces
@@ -499,8 +501,10 @@ Next: <a href="#Special-arrays" accesskey="n" rel="next">Special arrays</a>, Up:
 </pre><pre class="example">&rArr; #%2:3:2((1 2) (3 4) (5 6))
 </pre></div>
 
+<p>The default dims produce a view of the root as is (rank 1, zero offset, same length)<a id="DOCF5" href="#FOOT5"><sup>5</sup></a>.
+</p>
 <div class="example">
-<pre class="verbatim">(make-ra-root (vector 1 2 3 4 5 6)) ; default dims are whole root
+<pre class="verbatim">(make-ra-root (vector 1 2 3 4 5 6))
 </pre><pre class="example">&rArr; #%1:6(1 2 3 4 5 6)
 </pre></div>
 
@@ -528,7 +532,7 @@ Next: <a href="#Special-arrays" accesskey="n" rel="next">Special arrays</a>, Up:
 </pre><pre class="example">&rArr; #%2:3:4((9 #f) (b 3) (#f #f))
 </pre></div>
 
-<p>You can also access arrays in the more usual way with the functions <a href="#x_002dra_002dref"><code>ra-ref</code></a> and <a href="#x_002dra_002dset_0021"><code>ra-set!</code></a>. See <a href="#Slicing">Slicing</a> for additional options.
+<p>You can also access arrays in the more usual way with the functions <a href="#x_002dra_002dref"><code>ra-ref</code></a> and <a href="#x_002dra_002dset_0021"><code>ra-set!</code></a>. See <a href="#Slicing">Slicing</a> for all the options.
 </p>
 <hr>
 </div>
@@ -542,10 +546,10 @@ Next: <a href="#Writing-and-reading" accesskey="n" rel="next">Writing and readin
 <p>Any type that is usable as the root of an old built-in Guile array is also usable as root of a <code>newra</code> array. These include
 </p>
 <ul>
-<li> vectors (e.g. <code>(vector 3)</code>)
-</li><li> SRFI-4 typed vectors (e.g. <code>(c64vector 1 2+0i)</code>)
-</li><li> strings (e.g. <code>&quot;hello&quot;</code>)
-</li><li> bitvectors (e.g. <code>(bitvector #f #t #f #t)</code>)
+<li> vectors, like <code>(vector 3)</code>
+</li><li> SRFI-4 typed vectors, like <code>(c64vector 1 2+0i)</code>
+</li><li> strings, like <code>&quot;hello&quot;</code>
+</li><li> bitvectors, like  <code>(bitvector #f #t #f #t)</code>
 </li></ul>
 
 <p><code>newra</code> supports an additional root type, <code>&lt;aseq&gt;</code>, representing an unbounded arithmetic sequence.
@@ -561,11 +565,11 @@ Next: <a href="#Writing-and-reading" accesskey="n" rel="next">Writing and readin
 </pre><pre class="example">&rArr; #%1d:10(0 3 6 9 12 15 18 21 24 27)
 </pre></div>
 
-<p>This can be written more succinctly as <code>(<a href="#x_002dra_002diota">ra-iota</a> 10 0 3)</code>).
+<p>This can be written more succinctly as <code>(<a href="#x_002dra_002diota">ra-iota</a> 10 0 3)</code>.
 </p></dd></dl>
 
 <span id="index-d"></span>
-<p><code>aseq</code> roots are immutable. The type tag of <code>aseq</code> roots is <code>d</code>. Arrays with integer-valued <code>aseq</code> roots have a few special uses; one of them is as arguments in <a href="#Slicing">slicing</a>.
+<p><code>aseq</code> roots are immutable. The type tag of <code>aseq</code> roots is <code>d</code>. Arrays with integer-valued <code>aseq</code> roots have some special uses; one of them is as arguments in <a href="#Slicing">slicing</a>.
 </p>
 <span id="index-infinite-axes"></span>
 <span id="index-unbounded-axes"></span>
@@ -577,7 +581,7 @@ Next: <a href="#Writing-and-reading" accesskey="n" rel="next">Writing and readin
 </pre><pre class="example">&rArr; 1000000000000
 </pre></div>
 
-<p>These are treated especially when used in iteration, in that they match axes of any finite length (<a href="#x_002dra_002dmap_0021"><code>ra-map!</code></a>). Effectively this lets one use <code>(<a href="#x_002dra_002dtranspose"><code>ra-transpose</code></a> (ra-iota) k)</code> as a placeholder for the index over axis <code>k</code>.
+<p>These are treated especially when used in iteration (<a href="#x_002dra_002dmap_0021"><code>ra-map!</code></a>), in that they match axes of any finite length. Effectively this lets one use <code>(<a href="#x_002dra_002dtranspose"><code>ra-transpose</code></a> (ra-iota) k)</code> as a placeholder for the index over axis <code>k</code>.
 </p>
 <div class="example">
 <pre class="verbatim">(ra-map! (make-ra 0 3) + (ra-iota 3) (ra-iota))
@@ -783,7 +787,7 @@ Next: <a href="#Slicing" accesskey="n" rel="next">Slicing</a>, Previous: <a href
 </pre><pre class="example">&rArr; #%1:3(-1 -2 -3)
 </pre></div>
 
-<p>It is common to need the indices of the elements during array iteration. <code>newra</code> iteration operations do not keep track of those indices<a id="DOCF5" href="#FOOT5"><sup>5</sup></a> because that has a cost. You need to pass the indices you need as arguments, but it&rsquo;s easy to do so by using an unbounded index vector together with <a href="#x_002dra_002dtranspose"><code>ra-transpose</code></a>.
+<p>It is common to need the indices of the elements during array iteration. <code>newra</code> iteration operations do not keep track of those indices<a id="DOCF6" href="#FOOT6"><sup>6</sup></a> because that has a cost. You need to pass the indices you need as arguments, but it&rsquo;s easy to do so by using an unbounded index vector together with <a href="#x_002dra_002dtranspose"><code>ra-transpose</code></a>.
 </p>
 <div class="example">
 <pre class="verbatim">(define i0 (ra-iota))
@@ -879,7 +883,7 @@ Next: <a href="#Reshaping" accesskey="n" rel="next">Reshaping</a>, Previous: <a 
 <pre class="verbatim">(ra-from a i₀ ...) ⇒ b
 </pre></blockquote>
 
-<p>Each of the <code>i₀...</code> is either 1. an integer; 2. an array of integers; 3. the special value <code>#t</code>. Integer arguments contain indices into the respective axis of <code>a</code>. <code>#t</code> for <code>iₖ</code> is a shortcut for ‘the whole of axis <code>k</code>’<a id="DOCF6" href="#FOOT6"><sup>6</sup></a>. The result <code>b</code> has rank equal to the sum of all the ranks of the <code>i₀...</code>, and is defined as
+<p>Each of the <code>i₀...</code> is either 1. an integer; 2. an array of integers; 3. the special value <code>#t</code>. Integer arguments contain indices into the respective axis of <code>a</code>. <code>#t</code> for <code>iₖ</code> is a shortcut for ‘the whole of axis <code>k</code>’<a id="DOCF7" href="#FOOT7"><sup>7</sup></a>. The result <code>b</code> has rank equal to the sum of all the ranks of the <code>i₀...</code>, and is defined as
 </p>
 <blockquote>
 <pre class="verbatim">(ra-ref b j₀ ...) = (ra-ref a (ra-ref i₀ j₀ ...) ...)
@@ -1072,7 +1076,7 @@ Next: <a href="#Transposition" accesskey="n" rel="next">Transposition</a>, Previ
 </pre><pre class="example">&rArr; error ; axes 0 don't match
 </pre></div>
 
-<p>Here <a href="#x_002dra_002dreshape"><code>ra-reshape</code></a> is used to move axis 0 of the second argument into agreement.<a id="DOCF7" href="#FOOT7"><sup>7</sup></a>
+<p>Here <a href="#x_002dra_002dreshape"><code>ra-reshape</code></a> is used to move axis 0 of the second argument into agreement.<a id="DOCF8" href="#FOOT8"><sup>8</sup></a>
 </p>
 <div class="example">
 <pre class="verbatim">(ra-cat #t 1 (make-ra 'a '(1 1) '(1 4))
@@ -1338,7 +1342,7 @@ a
 </pre><pre class="example">&rArr; <code>#%4d:1:2:1:3((((0 1 2)) ((3 4 5))))</code>
 </pre></div>
 
-<p>One important difference between the built-in array functions and <code>newra</code> is that bounds matching in <code>newra</code> is strict: finite bounds must be identical for axes to match, while for <code>array-map!</code>, <code>array-for-each</code>, <code>array-copy!</code>, etc. the iteration range is the intersection of the ranges of the arguments<a id="DOCF8" href="#FOOT8"><sup>8</sup></a>. <code>newra</code> provides <a href="#x_002dra_002dclip"><code>ra-clip</code></a> to match ranges easily.
+<p>One important difference between the built-in array functions and <code>newra</code> is that bounds matching in <code>newra</code> is strict: finite bounds must be identical for axes to match, while for <code>array-map!</code>, <code>array-for-each</code>, <code>array-copy!</code>, etc. the iteration range is the intersection of the ranges of the arguments<a id="DOCF9" href="#FOOT9"><sup>9</sup></a>. <code>newra</code> provides <a href="#x_002dra_002dclip"><code>ra-clip</code></a> to match ranges easily.
 </p>
 <div class="example">
 <pre class="verbatim">(define a (make-ra-root (vector 'a 'b 'c 'd 'e 'f 'g))) ; range is 0..6
@@ -1830,7 +1834,7 @@ indices that match those elements. <code>newra</code> will <em>not</em> check th
 <dd>
 <p>Pretty print array <var>ra</var>.
 </p>
-<p>Each element <var>x</var> of <var>ra</var> is converted to a string using <code>(fmt x)</code>, or <code>(format #f fmt x)</code><a id="DOCF9" href="#FOOT9"><sup>9</sup></a> if <var>fmt</var> is a string. <var>fmt</var> defauts to <code>&quot;~a&quot;</code>. Elements that are arrays are formatted using <code>ra-format</code> recursively.
+<p>Each element <var>x</var> of <var>ra</var> is converted to a string using <code>(fmt x)</code>, or <code>(format #f fmt x)</code><a id="DOCF10" href="#FOOT10"><sup>10</sup></a> if <var>fmt</var> is a string. <var>fmt</var> defauts to <code>&quot;~a&quot;</code>. Elements that are arrays are formatted using <code>ra-format</code> recursively.
 </p>
 <p>If <var>port</var> is <code>#f</code>, nothing is printed; instead, the function returns a rank-2 character array <var>sc</var> with the result of the printing. Otherwise the array is printed to <var>port</var> and the function returns unspecified values. The default for <var>port</var> is <code>#t</code>, which works as <code>(current-output-port)</code>.
 </p>
@@ -1987,7 +1991,7 @@ element
 </pre><pre class="example">&rArr; #%3d:2:3:4(((0 1 2 3) (4 5 6 7) (8 9 10 11)) ((12 13 14 15) (16 17 18 19) (20 21 22 23)))
 </pre></div>
 
-<p>See also: <a href="#x_002dra_002diota"><code>ra-iota</code></a>, <a href="#x_002dra_002dindex_002dmap_0021"><code>ra-index-map!</code></a>. <a id="DOCF10" href="#FOOT10"><sup>10</sup></a>
+<p>See also: <a href="#x_002dra_002diota"><code>ra-iota</code></a>, <a href="#x_002dra_002dindex_002dmap_0021"><code>ra-index-map!</code></a>. <a id="DOCF11" href="#FOOT11"><sup>11</sup></a>
 </p>
 </dd></dl>
 
@@ -2244,7 +2248,7 @@ b
 </p>
 <p>The type of <var>b</var> is the same as that of <var>a</var>, with the only exception that if the type of <var>a</var> is <code>d</code> and the root of <var>b</var> cannot be shared with the root of <var>a</var>, then the type of <var>b</var> is <code>#t</code>.
 </p>
-<p>See also: <a href="#x_002dra_002dcell"><code>ra-cell</code></a>, <a href="#x_002dra_002dref"><code>ra-ref</code></a>, <a href="#x_002dra_002dslice"><code>ra-slice</code></a>, <a href="#x_002dra_002damend_0021"><code>ra-amend!</code></a>, <a href="#Slicing">Slicing</a>.<a id="DOCF11" href="#FOOT11"><sup>11</sup></a>
+<p>See also: <a href="#x_002dra_002dcell"><code>ra-cell</code></a>, <a href="#x_002dra_002dref"><code>ra-ref</code></a>, <a href="#x_002dra_002dslice"><code>ra-slice</code></a>, <a href="#x_002dra_002damend_0021"><code>ra-amend!</code></a>, <a href="#Slicing">Slicing</a>.<a id="DOCF12" href="#FOOT12"><sup>12</sup></a>
 </p>
 </dd></dl>
 
@@ -2407,7 +2411,7 @@ b
 <p>To ravel other combinations of axes, use <a href="#Transposition">Transposition</a>.
 </p>
 <span id="index-packed-array-2"></span>
-<p>The full ravel of an array doesn&rsquo;t necessarily result in a rank-1 &lsquo;packed&rsquo; array, that is, one where the step is 1. If that is required, one can use <code>(ra-ravel (ra-copy ra))</code>. <a id="DOCF12" href="#FOOT12"><sup>12</sup></a>.
+<p>The full ravel of an array doesn&rsquo;t necessarily result in a rank-1 &lsquo;packed&rsquo; array, that is, one where the step is 1. If that is required, one can use <code>(ra-ravel (ra-copy ra))</code>. <a id="DOCF13" href="#FOOT13"><sup>13</sup></a>.
 </p>
 <p>See also: <a href="#x_002dra_002dreshape"><code>ra-reshape</code></a>, <a href="#x_002dra_002dtile"><code>ra-tile</code></a>, <a href="#Reshaping">Reshaping</a>.
 </p>
@@ -2527,7 +2531,7 @@ b
 <span id="index-ra_002drotate"></span>
 <span id="x_002dra_002drotate"></span><dl class="def">
 <dt id="index-ra_002drotate-1"><span class="category">Function<!-- /@w -->: </span><span><strong>ra-rotate</strong> <em>n a &rArr; b</em><a href='#index-ra_002drotate-1' class='copiable-anchor'> &para;</a></span></dt>
-<dd><p>(FIXME: not implemented) Rotate the first axis of <var>a</var> toward the lower indices (‘to the left’) <var>n</var> times. <var>n</var> may be any integer. The result has the type of <var>a</var>, unless that type is <code>d</code>, in which case the result is of type <code>#t</code>.
+<dd><p>Rotate the first axis of <var>a</var> toward the lower indices (‘to the left’) <var>n</var> times. <var>n</var> may be any integer. The result has the type of <var>a</var>, unless that type is <code>d</code>, in which case the result is of type <code>#t</code>.
 </p>
 <p>This function always returns a new array.
 </p>
@@ -3158,6 +3162,8 @@ Previous: <a href="#Sources" accesskey="p" rel="prev">Sources</a>, Up: <a href="
  &nbsp; 
 <a class="summary-letter" href="#Indices_cp_letter-U"><b>U</b></a>
  &nbsp; 
+<a class="summary-letter" href="#Indices_cp_letter-V"><b>V</b></a>
+ &nbsp; 
 </td></tr></table>
 <table class="index-cp" border="0">
 <tr><td></td><th align="left">Index Entry</th><td>&nbsp;</td><th align="left"> Section</th></tr>
@@ -3328,6 +3334,10 @@ Previous: <a href="#Sources" accesskey="p" rel="prev">Sources</a>, Up: <a href="
 <tr><th id="Indices_cp_letter-U">U</th><td></td><td></td></tr>
 <tr><td></td><td valign="top"><a href="#index-unbounded-axes">unbounded axes</a>:</td><td>&nbsp;</td><td valign="top"><a href="#Special-arrays">Special arrays</a></td></tr>
 <tr><td colspan="4"> <hr></td></tr>
+<tr><th id="Indices_cp_letter-V">V</th><td></td><td></td></tr>
+<tr><td></td><td valign="top"><a href="#index-view">view</a>:</td><td>&nbsp;</td><td valign="top"><a href="#Introduction">Introduction</a></td></tr>
+<tr><td></td><td valign="top"><a href="#index-view-1">view</a>:</td><td>&nbsp;</td><td valign="top"><a href="#The-pieces-of-an-array">The pieces of an array</a></td></tr>
+<tr><td colspan="4"> <hr></td></tr>
 </table>
 <table><tr><th valign="top">Jump to: &nbsp; </th><td><a class="summary-letter" href="#Indices_cp_symbol-1"><b>*</b></a>
  &nbsp; 
@@ -3378,6 +3388,8 @@ Previous: <a href="#Sources" accesskey="p" rel="prev">Sources</a>, Up: <a href="
  &nbsp; 
 <a class="summary-letter" href="#Indices_cp_letter-U"><b>U</b></a>
  &nbsp; 
+<a class="summary-letter" href="#Indices_cp_letter-V"><b>V</b></a>
+ &nbsp; 
 </td></tr></table>
 
 
@@ -3405,22 +3417,24 @@ Invariant Sections, no Front-Cover Texts, and no Back-Cover Texts.
 <h5><a id="FOOT4" href="#DOCF4">(4)</a></h5>
 <p>Old Guile (before v1.8) offered dedicated operations to sum arrays, etc. but obviously that isn&rsquo;t any kind of solution.</p>
 <h5><a id="FOOT5" href="#DOCF5">(5)</a></h5>
-<p>An exception is <a href="#x_002dra_002dindex_002dmap_0021"><code>ra-index-map!</code></a>, where passing the indices is the purpose.</p>
+<p>This is equivalent to <a href="#x_002darray_002d_003era"><code>array-&gt;ra</code></a> when the argument is a root type.</p>
 <h5><a id="FOOT6" href="#DOCF6">(6)</a></h5>
-<p>Note that this is not the same as <code>(let ((d (vector-ref (ra-dims a) k))) (ra-iota (dim-len d) (dim-lo d)))</code>, because the lower bound of <code>(ra-iota ...)</code> (<em>not</em> its content) is 0, not <code>(dim-lo d)</code>, so the corresponding lower bound on the result array would also be 0, while <code>#t</code> preserves the lower bound of <code>a</code>.</p>
+<p>An exception is <a href="#x_002dra_002dindex_002dmap_0021"><code>ra-index-map!</code></a>, where passing the indices is the purpose.</p>
 <h5><a id="FOOT7" href="#DOCF7">(7)</a></h5>
-<p>An example of how using lower bounds other than 0 is not worth the trouble, not least for the library author.</p>
+<p>Note that this is not the same as <code>(let ((d (vector-ref (ra-dims a) k))) (ra-iota (dim-len d) (dim-lo d)))</code>, because the lower bound of <code>(ra-iota ...)</code> (<em>not</em> its content) is 0, not <code>(dim-lo d)</code>, so the corresponding lower bound on the result array would also be 0, while <code>#t</code> preserves the lower bound of <code>a</code>.</p>
 <h5><a id="FOOT8" href="#DOCF8">(8)</a></h5>
-<p>I decided against this approach for <code>newra</code> because in my experience it results in errors going undetected more often than it saves any work.</p>
+<p>An example of how using lower bounds other than 0 is not worth the trouble, not least for the library author.</p>
 <h5><a id="FOOT9" href="#DOCF9">(9)</a></h5>
-<p><a href="https://www.gnu.org/software/guile/manual/html_node/Formatted-Output.html"><code>(ice-9 format)</code></a></p>
+<p>I decided against this approach for <code>newra</code> because in my experience it results in errors going undetected more often than it saves any work.</p>
 <h5><a id="FOOT10" href="#DOCF10">(10)</a></h5>
+<p><a href="https://www.gnu.org/software/guile/manual/html_node/Formatted-Output.html"><code>(ice-9 format)</code></a></p>
+<h5><a id="FOOT11" href="#DOCF11">(11)</a></h5>
 <p>Cf. <code>array-index</code> from [<a href="#Sources">SRFI-164</a>]
 .</p>
-<h5><a id="FOOT11" href="#DOCF11">(11)</a></h5>
+<h5><a id="FOOT12" href="#DOCF12">(12)</a></h5>
 <p>Cf. <code>array-index-ref</code> from [<a href="#Sources">SRFI-164</a>]
 .</p>
-<h5><a id="FOOT12" href="#DOCF12">(12)</a></h5>
+<h5><a id="FOOT13" href="#DOCF13">(13)</a></h5>
 <p><a href="#x_002dra_002dorder_002dc_003f"><code>ra-order-c?</code></a> is always true for the result of <code>ra-copy</code>, so the ravel operation in <code>(ra-ravel (ra-copy ra))</code> is free, but it might not be in <code>(ra-copy (ra-ravel ra))</code>. So in principle, it is preferable to copy first.</p>
 </div>
 
