@@ -22,6 +22,13 @@
         (ice-9 control) (ice-9 match) (only (rnrs base) vector-map vector-for-each)
         (newra base) (newra map) (newra reshape))
 
+(define (ra-unique-elements? ra)
+  "
+Return @code{#t} if every combination of valid indices for the array @var{ra} yields a
+different element in @var{ra}'s root, otherwise return @code{#f}.
+"
+  (throw 'not-implemented))
+
 
 ; ----------------
 ; fold - probably better ways to do this by fixing or extending (newra map)
@@ -34,7 +41,7 @@ Reduce arrays @var{a} by (... (@var{kons} (@var{cons} @var{knil} @var{a}0 ...)
 @var{a}1 ... ) ...) where (@var{a}0 ...), (@var{a}1 ...) is the row-major ravel
 of @var{a}...
 
-See also: ra-fold ra-map! ra-for-each ra-slice-for-each
+See also: @code{ra-fold ra-map!} @code{ra-for-each} @code{ra-slice-for-each}
 "
    ((kons knil)
     knil)
@@ -76,17 +83,17 @@ See also: ra-fold ra-map! ra-for-each ra-slice-for-each
   "
 Return a new array of type @var{type} and shape @var{d}. The array will be
 initialized with @var{value}. @var{value} may be *unspecified*, in which case
-the array may be left uninitialized.
+the array contents may be left uninitialized.
 
-See also: make-ra
+See also: @code{make-ra}
 "
   (make-ra-new type value (apply c-dims d)))
 
 (define (make-ra value . d)
   "
-Equivalent to (make-typed-ra #t value d ...).
+Equivalent to @code{(make-typed-ra #t value d ...)}.
 
-See also: make-typed-ra
+See also: @code{make-typed-ra}
 "
   (make-ra-new #t value (apply c-dims d)))
 
@@ -110,7 +117,7 @@ guile> (make-ra-shared x (lambda (i j) (list (- i 2) (+ j 3))) '(2 4) '(-3 -2))
 #%2d@2:3@-3:2((0 1) (2 3) (4 5)
 @end verbatim
 
-See also: make-ra
+See also: @code{make-ra}
 "
 ; get lo & len, won't use step except if the result is empty.
   (let* ((oldra (ra-check oldra))
@@ -146,16 +153,14 @@ See also: make-ra
 
 (define (ra->list ra)
   "
-ra->list ra
+Return a nested list of the elements of array @var{ra}. For example, if @var{ra} is a
+1-rank array, the list contains the elements of @var{ra}; if @var{ra} is a 2-rank ra, the
+list contains a list for each of the rows of @var{ra}; and so on.
 
-Return a nested list of the elements of ra RA. For example, if RA is a 1-rank
-ra, the list contains the elements of RA; if RA is a 2-rank ra, the list
-contains a list for each of the rows of RA; and so on.
-
-See also: as-ra
+See also: @code{as-ra}
 "
-  (let ((ra (ra-check ra))
-        (rank (%%ra-rank ra)))
+  (let* ((ra (ra-check ra))
+         (rank (%%ra-rank ra)))
     (cond
      ((zero? rank) (ra-ref ra))
      (else
@@ -183,9 +188,7 @@ See also: as-ra
 
 (define (ra-index-map! ra op)
   "
-ra-index-map! ra op -> ra
-
-Apply @var{op} to the indices of each element of @var{ra} in turn, storing the
+Apply @var{op} to the indices of each element of array @var{ra} in turn, storing the
 result in the corresponding element. The order of iteration is unspecified.
 
 This function returns the modified @var{ra}.
@@ -193,10 +196,9 @@ This function returns the modified @var{ra}.
 For example:
 
 @example
-guile> (define x (make-ra 0 2 3))
-guile> (ra-index-map! x (lambda x x))
-guile> x
-#%2:2:3(((0 0) (0 1) (0 2)) ((1 0) (1 1) (1 2)))
+(define x (make-ra 0 2 3))
+(ra-index-map! x (lambda x x))
+x @result{} #%2:2:3(((0 0) (0 1) (0 2)) ((1 0) (1 1) (1 2)))
 @end example
 
 See also: @code{ra-iota} @code{ra-i}
@@ -267,7 +269,7 @@ shape as @var{src}. @var{type} defaults to @code{(ra-type src)} if not given, or
 
 If @var{src} has dead axes, those are preserved in the result.
 
-See also: ra-copy! as-ra
+See also: @code{ra-copy!} @copy{as-ra}
 "
    ((ra) (ra-copy #f ra))
    ((type ra)
@@ -300,7 +302,7 @@ Same as @code{(ra-map! ra rx0 rx ...)}, except that the result is created from
 If @var{type} is #f, then the type of the result is @code{(ra-type rx0)}, or
 @code{#t} if @code{(ra-type rx0)} is @code{'d}.
 
-See also: ra-map!
+See also: @code{ra-map!}
 "
   (let* ((k (fold (lambda (a b) (max b (ra-rank a))) (ra-rank rx0) rx))
 ; FIXME vector->list is ugly. Need to refine/formalize the 'arguments match' routine

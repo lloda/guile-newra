@@ -12,7 +12,7 @@
 @copying
 Version @value{VERSION}, updated @value{UPDATED}
 @footnote{
-(c) lloda 2017--2021. Permission is granted to copy, distribute and/or modify this document
+(c) lloda 2017--2023. Permission is granted to copy, distribute and/or modify this document
 under the terms of the GNU Free Documentation License, Version 1.3 or
 any later version published by the Free Software Foundation; with no
 Invariant Sections, no Front-Cover Texts, and no Back-Cover Texts.
@@ -1288,8 +1288,8 @@ This ability of @code{ra-transpose} can be exploited to compute `outer products'
 
 @example
 @verbatim
-                 A : [2 2]
-(ra-transpose B 2) : [f f 2 2]
+                 A : [ 2  2]
+(ra-transpose B 2) : [#f #f  2  2]
 @end verbatim
 @end example
 
@@ -1483,12 +1483,15 @@ a
 
 NOTE This section is about a facility that hasn't been implemented yet.
 
-In array languages such as APL, scalar operations are implicitly extended to work on arrays, so one can just write (the equivalent of) @code{(+ A B)} instead of @code{(ra-map #f + A B)}. The basic @code{newra} iteration operations such as @code{ra-map} already perform rank extension of their arguments (so @code{A} or @code{B} can have a different rank from the result, as long as the prefix axes match). We still need ways to:
+In array languages such as APL, scalar operations are implicitly extended (or `lifted') to work on arrays, so one can just write (the equivalent of) @code{(+ A B)} instead of @code{(ra-map #f + A B)}. The basic @code{newra} iteration operations such as @code{ra-map} already perform rank extension of their arguments (so @code{A} or @code{B} can have a different rank from the result, as long as the prefix axes match). We still need ways to:
 
 @itemize
-@item associate an operation to the ranks of their arguments, so that the right frame of iteration can be chosen.
-@item compute the shape and type of the result (if any).
-@item handle scalar (non-array) arguments.
+@item
+associate an operation to the ranks of their arguments, so that the right frame of iteration can be chosen.
+@item
+compute the shape and type of the result (if any).
+@item
+handle scalar (non-array) arguments.
 @end itemize
 
 @c ------------------------------------------------
@@ -1658,7 +1661,7 @@ See also: @ref{x-ra->array,@code{ra->array}}.
 @deffn @w{Function} c-dims bounds ...
 
 @cindex packed array
-Create dims for row-major order array (packed elements, last dimension changing fastest).
+Create dims (dim vector) for row-major order array (packed elements, last dimension changing fastest).
 
 Each of the @var{bounds} may be an integer (a length) or a pair of integers (lower and upper bounds).
 @example
@@ -1667,6 +1670,9 @@ Each of the @var{bounds} may be an integer (a length) or a pair of integers (low
 @end verbatim
 @result{} @code{#(#<<dim> len: 2 lo: 0 step: 3> #<<dim> len: 3 lo: 0 step: 1>)}
 @end example
+
+The functions @ref{x-make-ra-new,@code{make-ra-new}} and @ref{x-make-ra-root,@code{make-ra-root}} take a dim vector as one of their arguments.
+
 @end deffn
 
 @cindex @code{dots}
@@ -3182,7 +3188,9 @@ integers from @var{a} to @var{b} with step size @var{k}
 (ra-iota (euclidean/ (- b a (- k)) k) a k)
 @end verbatim
 @tab
-tbf
+@verbatim
+a + k × ι ⌊ (b-a) ÷ k
+@end verbatim
 @tab
 @verbatim
 np.arange(a, b+1, k)
@@ -3193,22 +3201,22 @@ j:k:n
 @end verbatim
 
 @item
-equispaced sequence [a .. b] with k points
+equispaced sequence [a .. b] with @var{n} points
 @tab
 @verbatim
-(ra-iota k a (/ (- b a) (- k 1)))
+(ra-iota k a (/ (- b a) (- n 1)))
 @end verbatim
 @tab
 @verbatim
-a + ((b-a) ÷ (k-1)) × ι k
+a + ((b-a) ÷ (n-1)) × ι n
 @end verbatim
 @tab
 @verbatim
-np.linspace(a, b, k)
+np.linspace(a, b, n)
 @end verbatim
 @tab
 @verbatim
-linspace(a, b, k)
+linspace(a, b, n)
 @end verbatim
 
 @item
@@ -3219,7 +3227,7 @@ integer sequence :p
 @end verbatim
 @tab
 @verbatim
-a + k × ι k
+a + k × ι n
 @end verbatim
 @tab
 @verbatim
@@ -3835,7 +3843,6 @@ m * diag(v)
 @item @mybibitem{num17} @tab NumPy. @url{http://www.numpy.org}, November 2017.
 @item @mybibitem{Ric08} @tab Henry Rich. J for C programmers, February 2008.
 @item @mybibitem{SSM14} @tab Justin Slepak, Olin Shivers, and Panagiotis Manolios. An array-oriented language with static rank polymorphism. In Z. Shao, editor, ESOP 2014, LNCS 8410, pages 27–46, 2014.
-@item @mybibitem{Vel01} @tab Todd Veldhuizen. Blitz++ user’s guide, February 2001.
 @item @mybibitem{Wad90} @tab Philip Wadler. Deforestation: transforming programs to eliminate trees. Theoretical Computer Science, 73(2): 231--248, June 1990. @url{https://doi.org/10.1016/0304-3975%2890%2990147-A}
 @item @mybibitem{SRFI-4} @tab Marc Feeley. SRFI-4: Homogeneous numeric vector datatypes, May 1999. @url{https://srfi.schemers.org/srfi-4/srfi-4.html}
 @item @mybibitem{SRFI-25} @tab Jussi Piitulainen. SRFI-25: Multi-dimensional array primitives, May 2002. @url{https://srfi.schemers.org/srfi-25/srfi-25.html}
@@ -3844,6 +3851,7 @@ m * diag(v)
 @item @mybibitem{S7} @tab S7 Scheme: Multidimensional vectors. Accessed June 2022. @url{https://ccrma.stanford.edu/software/snd/snd/s7.html#multidimensionalvectors}
 @item @mybibitem{SRFI-163} @tab Per Bothner. SRFI-163: Enhanced array literals, January 2019. @url{https://srfi.schemers.org/srfi-163/srfi-163.html}
 @item @mybibitem{SRFI-164} @tab Per Bothner. SRFI-164: Enhanced multi-dimensional arrays, August  2019. @url{https://srfi.schemers.org/srfi-164/srfi-164.html}
+@item @mybibitem{SRFI-231} @tab Bradley J. Lucier. SRFI-231: Intervals and generalized arrays, September 2022. @url{https://srfi.schemers.org/srfi-164/srfi-164.html}
 @end multitable
 
 @c ------------------------------------------------

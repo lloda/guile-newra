@@ -1197,8 +1197,8 @@ A
 <p>This ability of <code>ra-transpose</code> can be exploited to compute &lsquo;outer products&rsquo;. In the following example the shape <code>[2 2]</code> of <code>A</code> matches with the two leading dead axes of <code>(ra-transpose B 2)</code>:
 </p>
 <div class="example">
-<pre class="verbatim">                 A : [2 2]
-(ra-transpose B 2) : [f f 2 2]
+<pre class="verbatim">                 A : [ 2  2]
+(ra-transpose B 2) : [#f #f  2  2]
 </pre></div>
 
 <span id="index-prefix-matching-1"></span>
@@ -1366,7 +1366,7 @@ Next: <a href="#Hazards" accesskey="n" rel="next">Hazards</a>, Previous: <a href
 
 <p>NOTE This section is about a facility that hasn&rsquo;t been implemented yet.
 </p>
-<p>In array languages such as APL, scalar operations are implicitly extended to work on arrays, so one can just write (the equivalent of) <code>(+ A B)</code> instead of <code>(ra-map #f + A B)</code>. The basic <code>newra</code> iteration operations such as <code>ra-map</code> already perform rank extension of their arguments (so <code>A</code> or <code>B</code> can have a different rank from the result, as long as the prefix axes match). We still need ways to:
+<p>In array languages such as APL, scalar operations are implicitly extended (or &lsquo;lifted&rsquo;) to work on arrays, so one can just write (the equivalent of) <code>(+ A B)</code> instead of <code>(ra-map #f + A B)</code>. The basic <code>newra</code> iteration operations such as <code>ra-map</code> already perform rank extension of their arguments (so <code>A</code> or <code>B</code> can have a different rank from the result, as long as the prefix axes match). We still need ways to:
 </p>
 <ul>
 <li> associate an operation to the ranks of their arguments, so that the right frame of iteration can be chosen.
@@ -1574,13 +1574,16 @@ a
 <dt id="index-c_002ddims-1"><span class="category">Function<!-- /@w -->: </span><span><strong>c-dims</strong> <em>bounds ...</em><a href='#index-c_002ddims-1' class='copiable-anchor'> &para;</a></span></dt>
 <dd>
 <span id="index-packed-array"></span>
-<p>Create dims for row-major order array (packed elements, last dimension changing fastest).
+<p>Create dims (dim vector) for row-major order array (packed elements, last dimension changing fastest).
 </p>
 <p>Each of the <var>bounds</var> may be an integer (a length) or a pair of integers (lower and upper bounds).
 </p><div class="example">
 <pre class="verbatim">(c-dims 2 3)
 </pre><pre class="example">&rArr; <code>#(#&lt;&lt;dim&gt; len: 2 lo: 0 step: 3&gt; #&lt;&lt;dim&gt; len: 3 lo: 0 step: 1&gt;)</code>
 </pre></div>
+
+<p>The functions <a href="#x_002dmake_002dra_002dnew"><code>make-ra-new</code></a> and <a href="#x_002dmake_002dra_002droot"><code>make-ra-root</code></a> take a dim vector as one of their arguments.
+</p>
 </dd></dl>
 
 <span id="index-dots-1"></span>
@@ -2825,16 +2828,17 @@ NumPy</td><td width="20%">Octave</td></tr>
 </pre></td><td width="20%"><pre class="verbatim">np.array([1, 2, 3])
 </pre></td><td width="20%">n/a</td></tr>
 <tr><td width="20%">integers from <var>a</var> to <var>b</var> with step size <var>k</var></td><td width="20%"><pre class="verbatim">(ra-iota (euclidean/ (- b a (- k)) k) a k)
-</pre></td><td width="20%">tbf</td><td width="20%"><pre class="verbatim">np.arange(a, b+1, k)
+</pre></td><td width="20%"><pre class="verbatim">a + k × ι ⌊ (b-a) ÷ k
+</pre></td><td width="20%"><pre class="verbatim">np.arange(a, b+1, k)
 </pre></td><td width="20%"><pre class="verbatim">j:k:n
 </pre></td></tr>
-<tr><td width="20%">equispaced sequence [a .. b] with k points</td><td width="20%"><pre class="verbatim">(ra-iota k a (/ (- b a) (- k 1)))
-</pre></td><td width="20%"><pre class="verbatim">a + ((b-a) ÷ (k-1)) × ι k
-</pre></td><td width="20%"><pre class="verbatim">np.linspace(a, b, k)
-</pre></td><td width="20%"><pre class="verbatim">linspace(a, b, k)
+<tr><td width="20%">equispaced sequence [a .. b] with <var>n</var> points</td><td width="20%"><pre class="verbatim">(ra-iota k a (/ (- b a) (- n 1)))
+</pre></td><td width="20%"><pre class="verbatim">a + ((b-a) ÷ (n-1)) × ι n
+</pre></td><td width="20%"><pre class="verbatim">np.linspace(a, b, n)
+</pre></td><td width="20%"><pre class="verbatim">linspace(a, b, n)
 </pre></td></tr>
 <tr><td width="20%">integer sequence :p</td><td width="20%"><pre class="verbatim">(ra-iota n a k)
-</pre></td><td width="20%"><pre class="verbatim">a + k × ι k
+</pre></td><td width="20%"><pre class="verbatim">a + k × ι n
 </pre></td><td width="20%"><pre class="verbatim">np.arange(a, a+k*n, k)
 </pre></td><td width="20%"><pre class="verbatim">a:(a+k*(n-1)):k
 </pre></td></tr>
@@ -3085,8 +3089,6 @@ Next: <a href="#Indices" accesskey="n" rel="next">Indices</a>, Previous: <a href
 <tr><td width="10%"></td></tr>
 <tr><td width="10%"><span id="SSM14"></span>[SSM14]</td><td width="90%">Justin Slepak, Olin Shivers, and Panagiotis Manolios. An array-oriented language with static rank polymorphism. In Z. Shao, editor, ESOP 2014, LNCS 8410, pages 27–46, 2014.</td></tr>
 <tr><td width="10%"></td></tr>
-<tr><td width="10%"><span id="Vel01"></span>[Vel01]</td><td width="90%">Todd Veldhuizen. Blitz++ user’s guide, February 2001.</td></tr>
-<tr><td width="10%"></td></tr>
 <tr><td width="10%"><span id="Wad90"></span>[Wad90]</td><td width="90%">Philip Wadler. Deforestation: transforming programs to eliminate trees. Theoretical Computer Science, 73(2): 231&ndash;248, June 1990. <a href="https://doi.org/10.1016/0304-3975%2890%2990147-A">https://doi.org/10.1016/0304-3975%2890%2990147-A</a></td></tr>
 <tr><td width="10%"></td></tr>
 <tr><td width="10%"><span id="SRFI_002d4"></span>[SRFI-4]</td><td width="90%">Marc Feeley. SRFI-4: Homogeneous numeric vector datatypes, May 1999. <a href="https://srfi.schemers.org/srfi-4/srfi-4.html">https://srfi.schemers.org/srfi-4/srfi-4.html</a></td></tr>
@@ -3102,6 +3104,8 @@ Next: <a href="#Indices" accesskey="n" rel="next">Indices</a>, Previous: <a href
 <tr><td width="10%"><span id="SRFI_002d163"></span>[SRFI-163]</td><td width="90%">Per Bothner. SRFI-163: Enhanced array literals, January 2019. <a href="https://srfi.schemers.org/srfi-163/srfi-163.html">https://srfi.schemers.org/srfi-163/srfi-163.html</a></td></tr>
 <tr><td width="10%"></td></tr>
 <tr><td width="10%"><span id="SRFI_002d164"></span>[SRFI-164]</td><td width="90%">Per Bothner. SRFI-164: Enhanced multi-dimensional arrays, August  2019. <a href="https://srfi.schemers.org/srfi-164/srfi-164.html">https://srfi.schemers.org/srfi-164/srfi-164.html</a></td></tr>
+<tr><td width="10%"></td></tr>
+<tr><td width="10%"><span id="SRFI_002d231"></span>[SRFI-231]</td><td width="90%">Bradley J. Lucier. SRFI-231: Intervals and generalized arrays, September 2022. <a href="https://srfi.schemers.org/srfi-164/srfi-164.html">https://srfi.schemers.org/srfi-164/srfi-164.html</a></td></tr>
 </table>
 
 <hr>
@@ -3400,7 +3404,7 @@ Previous: <a href="#Sources" accesskey="p" rel="prev">Sources</a>, Up: <a href="
 <h4 class="footnotes-heading">Footnotes</h4>
 
 <h5><a id="FOOT1" href="#DOCF1">(1)</a></h5>
-<p>(c) lloda 2017&ndash;2021. Permission is granted to copy, distribute and/or modify this document
+<p>(c) lloda 2017&ndash;2023. Permission is granted to copy, distribute and/or modify this document
 under the terms of the GNU Free Documentation License, Version 1.3 or
 any later version published by the Free Software Foundation; with no
 Invariant Sections, no Front-Cover Texts, and no Back-Cover Texts.

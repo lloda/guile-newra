@@ -115,7 +115,7 @@
 ; the empty case is needed so that (fromu A) shares the root of A, which is something (ra-from) relies on.
 ; FIXME factor make-B out of fromu and the shared part of fromu amendu! and TBD fromu-copy!
 
-(define (broadcast-indices . i)
+(define (broadcast-indices i)
   (let* ((frame (fold (lambda (i c) (+ c (ra-rank i))) 0 i))
          (i (map (lambda (i stairs)
                    (apply ra-transpose i (iota (ra-rank i) stairs)))
@@ -136,7 +136,7 @@
                 (append (append-map ra-shape i)
                         (map (lambda (dim) (list (dim-lo dim) (dim-hi dim)))
                           (drop (vector->list (ra-dims A)) (length i)))))))
-          (frame i (apply broadcast-indices i)))
+          (frame i (broadcast-indices i)))
       (if (= frame (ra-rank A) (ra-rank C))
 ; optimization
         (apply ra-map! C A i)
@@ -151,7 +151,7 @@
 ; optimization I
     (ra-copy! A C))
    ((A C . i)
-    (let ((frame i (apply broadcast-indices i)))
+    (let ((frame i (broadcast-indices i)))
       (if (= (ra-rank A) (length i))
 ; optimization II
         (apply ra-for-each
@@ -220,7 +220,7 @@
                     (ra-zero B))))
            (values B iu tu tb)))))))
 
-; FIXME add a version that copies the to an arg. That avoids allocation of the result, although it would be better if the compiler could tell where the result goes.
+; FIXME add a version that copies the result to an arg. That avoids allocation of the result, although it would be better if the compiler could tell where the result goes.
 
 (define (ra-from A . i)
   "
@@ -246,7 +246,7 @@ The type of @var{B} is the same as that of @var{A}, with the exception that if
 the type of @var{A} is 'd and the root of @var{B} isn't shared with the root of
 @var{A}, then the type of @var{B} is #t.
 
-See also: ra-cell ra-ref ra-slice ra-amend! ra-set!
+See also: @code{ra-cell} @code{ra-ref} @code{ra-slice} @code{ra-amend!} @code{ra-set!}
 "
   (let ((B iu tu tb (apply parse-args A i)))
 ; optimization. FIXME return (ra-ref B) if (zero? (ra-rank B)) ? Not sure that's the right choice.
@@ -259,7 +259,7 @@ See also: ra-cell ra-ref ra-slice ra-amend! ra-set!
   "
 Like @code{(ra-from A i ...)}, but always return a newly allocated array.
 
-See also: ra-from ra-amend! ra-copy ra-copy!
+See also: @code{ra-from} @code{ra-amend!} @code{ra-copy} @code{ra-copy!}
 "
   (let ((B iu tu tb (apply parse-args A i)))
     (if (null? iu)
@@ -288,13 +288,13 @@ This is equivalent to @code{(ra-copy! (ra-from A i ...) C)} whenever
 the special values accepted by @code{ra-from}.
 
 The copy is performed in no particular order.  If @var{I} contains repeated
-indices or the steps of @var{A} make it so that the same elements of @var{A} are
-referenced more than once, the value that ends up in @var{A} may correspond to
-any of the indices that match those elements.
+indices or the steps of @var{A} make it so that the same elements of the root of
+@var{A} are referenced more than once, the value that ends up in @var{A} may
+correspond to any of the indices that match those elements.
 
 This function returns the modified array @var{A}.
 
-See also: ra-set! ra-from ra-copy! ra-cell ra-ref ra-slice
+See also: @code{ra-set!} @code{ra-from} @code{ra-copy!} @code{ra-cell} @code{ra-ref} @code{ra-slice}
 "
   (let* ((B iu tu tb (apply parse-args A i))
 ; C needs to be transposed to match the transposition of B relative to A.
@@ -319,7 +319,7 @@ ra-clip a b
 
 Slice A to the intersection of the bounds of A and B.
 
-See also: ra-from, ra-amend, ra-reshape
+See also: @code{ra-from} @code{ra-amend} @code{ra-reshape}
 "
   (let ((db (ra-dims b))
         (da (vector-copy (ra-dims a))))

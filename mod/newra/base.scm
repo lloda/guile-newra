@@ -212,7 +212,7 @@ Return the index @var{i} into the root vector of @var{ra} that corresponds to
 all array indices being 0. Note that @var{i} may be outside the range of the
 root vector, for example if @var{a} is empty or its lower bounds are positive.
 
-See also: ra-offset
+See also: @code{ra-offset}
 "
   (%rastruct-ref a 3))
 
@@ -304,7 +304,7 @@ See also: ra-offset
 Return the root vector index @var{i} that corresponds to all ra indices being
 equal to the lower bound of @var{ra} in axes [@var{org} ... @var{org}+@var{k}).
 
-See also: ra-zero
+See also: @code{ra-zero}
 "
    ((ra)
     (let ((ra (ra-check ra)))
@@ -359,7 +359,7 @@ For example:
 @result{} 5
 @end lisp
 
-See also: ra-cell ra-slice ra-from
+See also: @code{ra-cell} @code{ra-slice} @code{ra-from}
 "
    ((ra) (%ra-ref ra))
    ((ra i0) (%ra-ref ra i0))
@@ -423,7 +423,7 @@ For example:
 @code{ra-slice} can be used to copy an array descriptor; the return value
 contains a fresh copy of the dim vector of @var{ra}.
 
-See also: ra-ref ra-cell ra-from
+See also: @code{ra-ref} @code{ra-cell} @code{ra-from}
 "
   (let ((ra (ra-check ra)))
     (make-ra-root (%%ra-root ra)
@@ -468,7 +468,7 @@ For example:
 @result{} 5
 @end lisp
 
-See also: ra-ref ra-slice ra-from
+See also: @code{ra-ref} @code{ra-slice} @code{ra-from}
 "
    ((ra) (%ra-cell ra))
    ((ra i0) (%ra-cell ra i0))
@@ -522,7 +522,7 @@ is the first element of the root, that is, @code{(ra-offset ra)} is 0.
 
 If @var{dims} is absent, make a rank-1 array with the full length of @var{root}.
 
-See also: ra-root ra-zero ra-dims
+See also: @code{ra-root} @code{ra-zero} @code{ra-dims}
 "
    ((root dims zero)
     (when dims
@@ -555,7 +555,7 @@ Each of the @var{d} ... may be @var{len}, or a bounds pair (@var{lo}
 The first non-@code{#f} @var{hi} or @var{len} may be @code{#t}; this creates an
 unbounded axis.
 
-See also: make-ra-root make-ra-new
+See also: @code{make-ra-root} @code{make-ra-new}
 "
   (let ((d (list->vector d)))
     (let loop ((i (- (vector-length d) 1)) (step 1))
@@ -587,7 +587,7 @@ See also: make-ra-root make-ra-new
 Make new array of @var{type} from dim-vector @var{dims}, and fill it with
 @var{value}. @var{value} may be @code{*unspecified*}.
 
-See also: make-dim ra-dims make-ra-root c-dims
+See also: @code{make-dim} @code{ra-dims} @code{make-ra-root} @code{c-dims}
 "
   (let ((size (vector-fold
                (lambda (a c)
@@ -606,22 +606,18 @@ See also: make-dim ra-dims make-ra-root c-dims
 
 (define (ra-shape ra)
   "
-ra-shape ra
-
 Return a list with the lower and upper bounds of each dimension of @var{ra}.
 
 @lisp
 (ra-shape (make-ra 'foo '(-1 3) 5)) ==> ((-1 3) (0 4))
 @end lisp
 
-See also: ra-rank ra-dimensions ra-len
+See also: @code{ra-rank} @code{ra-dimensions} @code{ra-len}
 "
   (map (lambda (dim) (list (dim-lo dim) (dim-hi dim))) (vector->list (ra-dims ra))))
 
 (define (ra-dimensions ra)
   "
-ra-dimensions ra
-
 Like ra-shape, but if the lower bound for a given dimension is zero, return
 the size of that dimension instead of a lower bound - upper bound pair.
 
@@ -630,7 +626,7 @@ the size of that dimension instead of a lower bound - upper bound pair.
 (ra-dimensions (make-ra 'foo '(-1 3) 5)) ==> ((-1 3) 5)
 @end lisp
 
-See also: ra-rank ra-shape ra-len
+See also: @code{ra-rank} @code{ra-shape} @code{ra-len}
 "
   (map (lambda (dim)
          (let ((lo (dim-lo dim)))
@@ -641,30 +637,24 @@ See also: ra-rank ra-shape ra-len
 
 (define* (ra-len ra #:optional (k 0))
   "
-ra-len ra [k]
-
 Return the length of axis @var{k} of array @var{ra}. @var{k} defaults to 0. It
 is an error if @var{ra} has zero rank.
 
-See also: ra-shape ra-dimensions ra-size ra-lo
+See also: @code{ra-shape} @code{ra-dimensions} @code{ra-size} @code{ra-lo}
 "
   (dim-len (vector-ref (ra-dims ra) k)))
 
 (define* (ra-lo ra #:optional (k 0))
   "
-ra-lo ra [k]
-
 Return the lower bound of axis @var{k} of array @var{ra}. @var{k} defaults to
 0. It is an error if @var{ra} has zero rank.
 
-See also: ra-shape ra-dimensions ra-len
+See also: @code{ra-shape} @code{ra-dimensions} @code{ra-len}
 "
   (dim-lo (vector-ref (ra-dims ra) k)))
 
 (define* (ra-size ra #:optional (n (ra-rank ra)) (org 0))
   "
-ra-size ra [n [org]]
-
 Return the product of the lengths of axes [@var{org} .. @var{org}+@var{n}) of
 @var{ra}.
 
@@ -672,6 +662,6 @@ Return the product of the lengths of axes [@var{org} .. @var{org}+@var{n}) of
 default @code{(ra-size ra)} will return the number of elements of
 @var{ra}. Arrays of rank 0 have size 1.
 
-See also: ra-shape ra-dimensions ra-len
+See also: @code{ra-shape} @code{ra-dimensions} @code{ra-len}
 "
   (vector-fold* n org (lambda (d s) (* s (dim-len d))) 1 (ra-dims ra)))

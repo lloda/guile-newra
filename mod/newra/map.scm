@@ -335,7 +335,7 @@ Apply @var{op} to each tuple of elements from arrays @var{rx} ... All the
 
 This function returns unspecified values.
 
-See also: ra-map! ra-slice-for-each ra-clip
+See also: @code{ra-map!} @code{ra-slice-for-each} @code{ra-clip}
 "
   (let-syntax
       ((%op
@@ -361,7 +361,7 @@ must have matching shapes.
 
 Returns the updated array @var{ra}.
 
-See also: ra-for-each ra-copy! ra-fill! ra-clip
+See also: @code{ra-for-each} @code{ra-copy!} @code{ra-fill!} @code{ra-clip}
 "
   (let-syntax
       ((%op
@@ -390,7 +390,7 @@ with @var{fill}.
 
 This function returns the filled array @var{ra}.
 
-See also: ra-copy! ra-map!
+See also: @code{ra-copy!} @code{ra-map!}
 "
   (define (line! t step)
     (match t
@@ -450,7 +450,7 @@ must have matching shapes and be of compatible types.
 
 This function returns the updated array @var{ra}.
 
-See also: ra-fill! ra-map! ra-clip
+See also: @code{ra-fill!} @code{ra-map!} @code{ra-clip}
 "
 ; These only support step 1.
 ; Or we could use bli_?copyv / bli_?copym from BLIS.
@@ -505,7 +505,7 @@ matching shapes and be of compatible types.
 
 This function returns the swapped array @var{ra}.
 
-See also: ra-copy! ra-fill! ra-map!
+See also: @code{ra-copy!} @code{ra-fill!} @code{ra-map!}
 "
   (let-syntax
       ((%op
@@ -527,7 +527,7 @@ See also: ra-copy! ra-fill! ra-map!
 is true for every tuple @var{rxi} ... of matching elements of @var{rx} ...,
 otherwise return @code{#f}.
 
-See also: ra-any ra-equal? ra-fold
+See also: @code{ra-any} @code{ra-equal?} @code{ra-fold}
 "
   (let/ec exit
     (let-syntax
@@ -562,7 +562,7 @@ For example:
 (ra-any (lambda (a i j) (and a (vector i j))) A I J)
 @end lisp
 
-See also: ra-every ra-equal? ra-fold
+See also: @code{ra-every} @code{ra-equal?} @code{ra-fold}
 "
   (let/ec exit
     (let-syntax
@@ -606,7 +606,7 @@ See also: ra-every ra-equal? ra-fold
 Return true if the arrays @var{rx} ... have the same shapes and types and their
 corresponding elements are @code{equal?}, or #f otherwise.
 
-See also: ra-map! ra-for-each
+See also: @code{ra-map!} @code{ra-for-each}
 "
   (let/ec exit
     (let-syntax

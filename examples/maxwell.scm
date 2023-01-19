@@ -24,7 +24,7 @@
     (vector-swap! (ra-dims A) 0 k)
     A))
 
-(define I (ra-iota)) ; index for the first dimension
+(define ι (ra-iota)) ; index for the first dimension
 (define ⍉ ra-transpose)
 (define .. (dots))
 (define : (dots 1))
@@ -54,8 +54,8 @@
          (Y (make-ra 0 n m l 4))
          (dn (* 2 (acos -1) (/ n))))
 
-    (ra-map! (ra-from A 0 .. 2) (lambda (x) (* -1 (/ dn) (cos (* x dn)))) I)
-    (ra-map! (ra-from A 1 .. 2) (lambda (x) (* -1 (/ dn) (cos (* (- x δ) dn)))) I)
+    (ra-map! (ra-from A 0 .. 2) (lambda (x) (* -1 (/ dn) (cos (* x dn)))) ι)
+    (ra-map! (ra-from A 1 .. 2) (lambda (x) (* -1 (/ dn) (cos (* (- x δ) dn)))) ι)
 
     (do ((t 1 (+ t 1))) ((= o (+ t 1)))
       (ra-map! X + (⌽ +1 0 (A t)) (⌽ +1 1 (A t)) (⌽ +1 2 (A t)))

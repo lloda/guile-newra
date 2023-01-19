@@ -73,7 +73,7 @@ For example:
 (ra-cat #t 0 (array->ra #(a b)) (ra-i 2 2)) => #%2((a a) (b b) (0 1) (2 3))
 @end verbatim
 
-See also: ra-cats ra-tile
+See also: @code{ra-cats} @code{ra-tile}
 "
   (if (> 0 i)
     (apply ra-cat type 0 (map (cute apply ra-tile <> 0 (make-list (max 0 (- i)) 1)) xx))
@@ -126,7 +126,7 @@ For example:
 (ra-cats #t -1 (make-ra 'a) (array->ra #(x y z)))                  => #%2((a x) (a y) (a z))
 @end verbatim
 
-See also: ra-cat ra-tile
+See also: @code{ra-cat} @code{ra-tile}
 "
   (if (> 0 i)
     (apply ra-cats type 0 (map (lambda (x) (apply ra-tile x (ra-rank x) (make-list (max 0 (- i)) 1))) xx))

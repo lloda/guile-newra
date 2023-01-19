@@ -58,7 +58,7 @@ Help: [C-uc .] insert timestamp [C-cc] flip checkbox [C-uucc] partial flip check
   * [ ] ra-grade
   * [-] ra-rotate [1/2]
     - [X] ra-rotate!
-    - [ ] ra-rotate
+    - [ ] ra-rotate that isn't just (ra-rotate! n (ra-copy x))
   * [ ] as-ra
   * [ ] ra-filter, ra-select, etc.
   * [ ] ra-affine map that explicitly takes an [M×(N+1)] matrix
@@ -110,6 +110,7 @@ Help: [C-uc .] insert timestamp [C-cc] flip checkbox [C-uucc] partial flip check
   * [ ] refactor macros
   * [ ] bench tracking
   * [ ] move struct defs to (newra types)
+  * [ ] ra-unique-elements?
   * [X] parameters to control print format (eg print sizes/strides, truncate...)
     - [X] CL/SRFI-163 style rank-0 (e.g. '#0 x' instead of '#0(x)').
     - [X] print sizes in prefix

@@ -8,7 +8,8 @@
 
 ; Benchmark basic ops vs guile-ffi-blis. Obviously that's required.
 
-(import (newra) (ice-9 match) (ffi blis) (only (newra tools) repeat))
+(import (newra) (ice-9 match) (ffi blis) (ice-9 format)
+        (only (newra tools) repeat time))
 
 
 ; -----------------------
@@ -49,7 +50,7 @@
   (let* ((b (list->ra 2 bench))
          (ref (ra-fold max -inf.0 b))
          (b (ra-map #f / (make-ra ref) b)))
-    (format #t "ref/t m ~a n ~a for ref ≈ ~4,3f s.\n" m n ref)
+    (format #t "copy! ref/t m ~a n ~a for ref ≈ ~4,3f s.\n" m n ref)
     (ra-format (ra-cats #f 1 (list->ra 1 '(guile newra blis)) b)
                #:compact? #t #:prefix? #f
                #:fmt (lambda (x) (if (real? x) (format #f "~5,1f" x) (format #f "~a" x))))))
@@ -62,7 +63,7 @@
     (100000 50)
     (10 500000)))
 
-(define (bench-setm m n)
+(define (bench-fillm m n)
   (define A (make-typed-array 'f64 1 m n))
   (define At (transpose-array A 1 0))
   (define Bt (make-typed-array 'f64 1 n m))
@@ -88,12 +89,12 @@
   (let* ((b (list->ra 2 bench))
          (ref (ra-fold max -inf.0 b))
          (b (ra-map #f / (make-ra ref) b)))
-    (format #t "ref/t m ~a n ~a for ref ≈ ~4,3f s.\n" m n ref)
+    (format #t "fill! ref/t m ~a n ~a for ref ≈ ~4,3f s.\n" m n ref)
     (ra-format (ra-cats #f 1 (list->ra 1 '(guile newra blis)) b)
                #:compact? #t #:prefix? #f
                #:fmt (lambda (x) (if (real? x) (format #f "~5,1f" x) (format #f "~a" x))))))
 
-(for-each (match-lambda ((m n) (bench-setm m n)))
+(for-each (match-lambda ((m n) (bench-fillm m n)))
   '((10 5)
     (100 50)
     (1000 500)
