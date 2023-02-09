@@ -2773,7 +2773,7 @@ See also: @ref{x-ra-ravel,@code{ra-ravel}}, @ref{x-ra-tile,@code{ra-tile}}, @ref
 @cindex @code{ra-reverse}
 @anchor{x-ra-reverse}
 @deffn @w{Function} ra-reverse a axes ... @result{} b
-Reverse the given @var{axes} of @var{a}.
+Reverse the given @var{axes} of @var{a}, that is, the order of the elements along those axes. The bounds do not change.
 
 @example
 @verbatim

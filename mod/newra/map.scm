@@ -88,7 +88,7 @@
 
 (define-syntax-rule (%list a ...)
   (list a ...))
-(define-syntax-rule (%let ((a [x ...] b) ...) e ...)
+(define-syntax-rule (%let ((a (x ...) b) ...) e ...)
   (let ((a b) ...) e ...))
 (define-syntax-rule (%stepu n (ra step) ...)
   (begin (%%ra-zero-set! ra (+ (%%ra-zero ra) (* n step))) ...))
@@ -97,7 +97,7 @@
 
 (define-syntax-rule (%apply-list a)
   a)
-(define-syntax-rule (%apply-let ((a [x ...] b)) e ...)
+(define-syntax-rule (%apply-let ((a (x ...) b)) e ...)
   (let ((a (map (lambda (x ...) b) x ...))) e ...))
 (define-syntax-rule (%apply-stepu n (ra step))
   (for-each (lambda (ra step) (%stepu n (ra step))) ra step))
@@ -110,9 +110,9 @@
   (lambda (stx)
     (syntax-case stx ()
       ((_ %op %stepu %stepk ra_ ...)
-       (with-syntax ([(ra ...) (generate-temporaries #'(ra_ ...))]
-                     [(frame ...) (generate-temporaries #'(ra_ ...))]
-                     [(step ...) (generate-temporaries #'(ra_ ...))])
+       (with-syntax (((ra ...) (generate-temporaries #'(ra_ ...)))
+                     ((frame ...) (generate-temporaries #'(ra_ ...)))
+                     ((step ...) (generate-temporaries #'(ra_ ...))))
          #'(lambda (lens lenm u ra ... frame ... step ...)
              (let loop-rank ((k 0))
                (if (= k u)
@@ -138,15 +138,15 @@
   (lambda (stx)
     (syntax-case stx ()
       ((_ k_ %op %op-loop %list %let frame ...)
-       (with-syntax ([(ra ...) (generate-temporaries #'(frame ...))]
-                     [(step ...) (generate-temporaries #'(frame ...))]
-                     [(s ...) (generate-temporaries #'(frame ...))]
-                     [(ss ...) (generate-temporaries #'(frame ...))]
-                     [(sm ...) (generate-temporaries #'(frame ...))])
+       (with-syntax (((ra ...) (generate-temporaries #'(frame ...)))
+                     ((step ...) (generate-temporaries #'(frame ...)))
+                     ((s ...) (generate-temporaries #'(frame ...)))
+                     ((ss ...) (generate-temporaries #'(frame ...)))
+                     ((sm ...) (generate-temporaries #'(frame ...))))
          #`(let* ((k k_)
 ; create (rank(ra) - k) slices that we'll use to iterate by bumping their zeros.
                   (los lens (apply ra-slice-for-each-check k (%list frame ...))))
-             (%let ((ra [frame] (make-ra-root-prefix frame k los)) ...)
+             (%let ((ra (frame) (make-ra-root-prefix frame k los)) ...)
 ; since we'll unroll, special case for rank 0
                (if (zero? k)
 ; no fresh slice descriptor like in array-slice-for-each. Should be all right b/c the descriptors can be copied.
@@ -155,13 +155,13 @@
                  (when (vector-every positive? lens)
 ; we'll do a normal rank-loop in [0..u) and unroll dimensions [u..k); u must be searched.
                    (let ((u (- k 1)))
-                     (%let ((step [frame] (%%ra-step-prefix frame u)) ...)
+                     (%let ((step (frame) (%%ra-step-prefix frame u)) ...)
                        (let* ((u len (let loop ((u u) (len 1) (s step) ...)
                                        (let ((lenu (vector-ref lens u)))
                                          (if (zero? u)
                                            (values u (* len lenu))
-                                           (%let ((ss [s] (* lenu s)) ...)
-                                             (%let ((sm [frame] (%%ra-step-prefix frame (- u 1))) ...)
+                                           (%let ((ss (s) (* lenu s)) ...)
+                                             (%let ((sm (frame) (%%ra-step-prefix frame (- u 1))) ...)
                                                (if (and (equal? ss sm) ...)
                                                  (loop (- u 1) (* len lenu) ss ...)
                                                  (values u (* len lenu)))))))))
@@ -200,11 +200,11 @@
   (lambda (stx)
     (syntax-case stx ()
       ((_ (%op0 %op1) ra_ ...)
-       (with-syntax ([(ra ...) (generate-temporaries #'(ra_ ...))]
-                     [(frame ...) (generate-temporaries #'(ra_ ...))]
-                     [(step ...) (generate-temporaries #'(ra_ ...))]
-                     [(z ...) (generate-temporaries #'(ra_ ...))]
-                     [(d ...) (generate-temporaries #'(ra_ ...))])
+       (with-syntax (((ra ...) (generate-temporaries #'(ra_ ...)))
+                     ((frame ...) (generate-temporaries #'(ra_ ...)))
+                     ((step ...) (generate-temporaries #'(ra_ ...)))
+                     ((z ...) (generate-temporaries #'(ra_ ...)))
+                     ((d ...) (generate-temporaries #'(ra_ ...))))
          #'(lambda (lens lenm u ra ... frame ... step ...)
              (let ((d (%%ra-root ra)) ...)
                (let loop-rank ((k 0) (z (%%ra-zero ra)) ...)
@@ -297,8 +297,8 @@
                  (with-ellipsis …
                    (syntax-case sty ()
                      ((_ ((vref-ra vset!-ra ra) …) (sa …))
-                      (with-syntax ([(d …) (generate-temporaries #'(ra …))]
-                                    [(z …) (generate-temporaries #'(ra …))])
+                      (with-syntax (((d …) (generate-temporaries #'(ra …)))
+                                    ((z …) (generate-temporaries #'(ra …))))
                         #'(let-syntax
                               ((%op-op
                                 (syntax-rules ()
