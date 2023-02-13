@@ -2480,7 +2480,7 @@ See also: @ref{x-ra-from,@code{ra-from}}.
 @deffn @w{Function} ra-map type op a0 a ... @result{} dst
 Same as @ref{x-ra-map!,@code{ra-map!}}, but create the result array from the arguments. Unlike @code{ra-map!}, this function requires at least one source argument.
 
-The type of the result @var{dst} is @var{type} unless that is @code{#f}, in which case the type of @var{a0} is used,  unless that is @code{'d}, in which case the result is of type @code{#t}. For the computation of the shape of @var{dst} see @ref{Automatic result arrays}.
+The type of the result @var{dst} is @var{type} unless that is @code{#f}, in which case the type of @var{a0} is used,  unless that is @code{'d}, in which case the result is of type @code{#t}. For the shape of @var{dst} see @ref{Automatic result arrays}.
 
 @example
 @verbatim

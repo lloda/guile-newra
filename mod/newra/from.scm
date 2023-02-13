@@ -16,6 +16,7 @@
   #:export (dots
             ra-from ra-from-copy ra-amend! ra-clip
             ra-rotate! ra-rotate
+; FIXME these are tested separately in test/test.scm, which may not be necessary.
             fromb fromu amendu!))
 
 (import (srfi 1) (srfi 9) (srfi srfi-9 gnu) (srfi 26) (srfi 71)
@@ -123,9 +124,9 @@
     (values frame i)))
 
 ; FIXME don't create the output here; show the symmetry with amendu!.
-
 (define fromu
   (case-lambda
+; optimization: no indices
    ((A) A)
    ((A . i)
     (let ((C (make-ra-new
@@ -137,29 +138,27 @@
                         (map (lambda (dim) (list (dim-lo dim) (dim-hi dim)))
                           (drop (vector->list (ra-dims A)) (length i)))))))
           (frame i (broadcast-indices i)))
-      (if (= frame (ra-rank A) (ra-rank C))
-; optimization
+      (if (= frame (ra-rank C))
+; optimization: scalar dest
         (apply ra-map! C A i)
-        (apply ra-slice-for-each frame
-               (lambda (C . i) (ra-copy! C (apply (lambda i (apply ra-slice A i)) (map ra-ref i))))
-               C i))
+        (apply ra-slice-for-each
+          frame
+          (lambda (C . i) (ra-copy! C (apply (lambda (i) (ra-slice A (ra-ref i))) i)))
+          C i))
       C))))
 
 (define amendu!
   (case-lambda
-   ((A C)
-; optimization I
-    (ra-copy! A C))
+; optimization: no indices
+   ((A C) (ra-copy! A C))
    ((A C . i)
     (let ((frame i (broadcast-indices i)))
       (if (= (ra-rank A) (length i))
-; optimization II
-        (apply ra-for-each
-          (lambda (C . i) (apply ra-set! A C i))
-          C i)
+; optimization: scalar dest
+        (apply ra-for-each (cut ra-set! A <> <...>) C i)
         (apply ra-slice-for-each
           frame
-          (lambda (C . i) (ra-copy! (apply (lambda i (apply ra-slice A i)) (map ra-ref i)) C))
+          (lambda (C . i) (ra-copy! (apply (lambda (i) (ra-slice A (ra-ref i))) i) C))
           C i))
       A))))
 
@@ -170,7 +169,7 @@
   (match x ((? integer? z) 0) ((? ra? ra) (ra-rank ra)) (#t 1)))
 
 ; split the beatable part of A and chew the indices for fromb.
-; FIXME redundancy in going over the args twice and in fromb...
+; FIXME going over the args twice, here and in fromb
 
 (define (parse-args A . i)
   (let loop ((j 0) (m 0) (ii i)
@@ -198,12 +197,11 @@
       (()
        (when (> j (%%ra-rank A))
          (throw 'too-many-indices-for-rank-of-A j (%%ra-rank A)))
-       (let ((ib (reverse ib))
-             (ibi (reverse ibi))
-             (tb (reverse tb))
-             (iu (reverse iu))
-             (iui (reverse iui))
-             (tu (reverse tu)))
+       (let ((ib (reverse! ib))
+             (ibi (reverse! ibi))
+             (iu (reverse! iu))
+             (iui (reverse! iui))
+             (tub (reverse! (append! tb tu))))
 ; pick the beatable axes
          (let* ((B (make-ra-root
                     (ra-root A)
@@ -218,9 +216,18 @@
                                    (ra-dims B)
                                    (vector-drop (ra-dims A) j))
                     (ra-zero B))))
-           (values B iu tu tb)))))))
+           (values B iu tub)))))))
 
 ; FIXME add a version that copies the result to an arg. That avoids allocation of the result, although it would be better if the compiler could tell where the result goes.
+; FIXME returns rank 0 arrays, but should it?
+
+(define (ra-from* copy? A . i)
+  (let ((B iu tub (apply parse-args A i)))
+; optimization.
+    (if (null? iu)
+      (if copy? (ra-copy B) B)
+; apply the unbeatable axes and undo the transposition. ra-transpose handles any trailing axes
+      (apply ra-transpose (apply fromu B iu) tub))))
 
 (define (ra-from A . i)
   "
@@ -238,22 +245,17 @@ where @var{i} : i0 i1 ...
 
 The special value #t is understood as the full range of @var{A} on that axis.
 
-Additionally, if every @var{i} ... is either 1) #t 2) an ra of type 'd, 3) an ra
-of rank 0, or 4) an integer, the result @var{B} shares the root of @var{A}. In
-all other cases a new root is allocated.
+Additionally, if every @var{i} ... is either 1) #t 2) an ra of type 'd, 3) an
+array of rank 0, or 4) an integer, the result @var{B} shares the root of
+@var{A}. In all other cases a new root is allocated.
 
-The type of @var{B} is the same as that of @var{A}, with the exception that if
-the type of @var{A} is 'd and the root of @var{B} isn't shared with the root of
-@var{A}, then the type of @var{B} is #t.
+The type of the result @var{B} is the same as that of @var{A}, with the
+exception that if the type of @var{A} is 'd and the root of @var{B} isn't shared
+with the root of @var{A}, then the type of @var{B} is @code{#t}.
 
 See also: @code{ra-cell} @code{ra-ref} @code{ra-slice} @code{ra-amend!} @code{ra-set!}
 "
-  (let ((B iu tu tb (apply parse-args A i)))
-; optimization. FIXME return (ra-ref B) if (zero? (ra-rank B)) ? Not sure that's the right choice.
-    (if (null? iu)
-      B
-; apply the unbeatable axes and undo the transposition. ra-transpose handles any trailing axes
-      (apply ra-transpose (apply fromu B iu) (append tu tb)))))
+  (apply ra-from* #f A i))
 
 (define (ra-from-copy A . i)
   "
@@ -261,10 +263,7 @@ Like @code{(ra-from A i ...)}, but always return a newly allocated array.
 
 See also: @code{ra-from} @code{ra-amend!} @code{ra-copy} @code{ra-copy!}
 "
-  (let ((B iu tu tb (apply parse-args A i)))
-    (if (null? iu)
-      (ra-copy B)
-      (apply ra-transpose (apply fromu B iu) (append tu tb)))))
+  (apply ra-from* #t A i))
 
 
 ; -----------------------
@@ -296,15 +295,14 @@ This function returns the modified array @var{A}.
 
 See also: @code{ra-set!} @code{ra-from} @code{ra-copy!} @code{ra-cell} @code{ra-ref} @code{ra-slice}
 "
-  (let* ((B iu tu tb (apply parse-args A i))
+  (let* ((B iu tub (apply parse-args A i))
 ; C needs to be transposed to match the transposition of B relative to A.
          (C (if (ra? C)
-              (let ((gup (append tu tb)))
-                (apply ra-untranspose C (take gup (min (length gup) (ra-rank C)))))
+              (apply ra-untranspose C (take tub (min (length tub) (ra-rank C))))
               (make-ra C))))
 ; apply the unbeatable axes.
     (apply amendu! B C iu)
-; we aren't making a new array so there's no need to transpose back.
+; not making a new array so there's no need to transpose back.
     A))
 
 
@@ -315,11 +313,9 @@ See also: @code{ra-set!} @code{ra-from} @code{ra-copy!} @code{ra-cell} @code{ra-
 ; ra-from resets the bounds so it cannot be reused here.
 (define (ra-clip a b)
   "
-ra-clip a b
-
 Slice A to the intersection of the bounds of A and B.
 
-See also: @code{ra-from} @code{ra-amend} @code{ra-reshape}
+See also: @code{ra-from} @code{ra-amend!} @code{ra-reshape}
 "
   (let ((db (ra-dims b))
         (da (vector-copy (ra-dims a))))
@@ -344,6 +340,18 @@ See also: @code{ra-from} @code{ra-amend} @code{ra-reshape}
 ; FIXME replace ra-from calls by bumps of zero.
 
 (define (ra-rotate! n a)
+  "
+Rotate in place the first axis of array @var{a} by @var{n} positions, and return
+the modified @var{a}. For example:
+
+@lisp
+(define a (ra-copy #t (ra-i 3 2)))
+(ra-rotate! 1 a)
+@result {} #%1:3:2((2 3) (4 5) (0 1))
+@end lisp
+
+See also: @code{ra-rotate}, @code{ra-reverse}
+"
   (let* ((a (ra-check a))
          (rank (%%ra-rank a)))
     (match (vector-ref (%%ra-dims a) 0)
@@ -377,4 +385,10 @@ See also: @code{ra-from} @code{ra-amend} @code{ra-reshape}
 ; FIXME surely we can do better
 
 (define (ra-rotate n a)
+  "
+Like @code{ra-rotate!}, but return a new array instead of modifying the input
+array @var{a}.
+
+See also: @code{ra-rotate!}, @code{ra-reverse}
+"
   (ra-rotate! n (ra-copy a)))
