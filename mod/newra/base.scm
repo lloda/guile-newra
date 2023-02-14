@@ -25,17 +25,12 @@
             <ra-vtable> pick-functions pick-make
             %%ra-root %%ra-zero %%ra-type %%ra-rank
             %%ra-zero-set! %%ra-dims %%ra-vlen %%ra-vref %%ra-vset! %%ra-step
-            ra-shape ra-dimensions ra-len ra-lo ra-size
-            have-blis?))
+            ra-shape ra-dimensions ra-len ra-lo ra-size))
 
 (import (srfi 26) (srfi 2) (srfi 71) (srfi srfi-4 gnu) (srfi srfi-9 gnu)
         (only (srfi 1) fold every) (ice-9 match) (ice-9 control)
         (rnrs bytevectors) (only (rnrs base) vector-for-each)
         (newra vector))
-
-; for internal (newra) use, don't re-export from (newra)
-
-(re-export vector-drop vector-fold* vector-fold vector-append)
 
 
 ; ----------------
@@ -57,9 +52,6 @@
 ;; slice:       an ra, as a piece of another ra
 ;; cell:        (also prefix-cell) slice obtained by fixing the first k indices into an ra.
 ;; item:        slice obtained by fixing the first index into an ra; a (rank - 1)-cell.
-
-(eval-when (expand load eval)
-  (define have-blis? (catch #t (lambda () (import (ffi blis)) #t) (const #f))))
 
 
 ; ----------------
@@ -156,14 +148,16 @@ See also: dim-len dim-lo dim-step c-dims
     (and len (+ (dim-lo dim) (dim-len dim) -1))))
 
 (define-inlinable (dim-check dim i)
-  (if (and i
-           (let ((lo (dim-lo dim)))
-             (and
-              (or (not lo) (>= i lo))
-              (let ((len (dim-len dim)))
-                (or (not len) (< i (+ len lo))))))) ; len implies lo
-    i
-    (throw 'dim-check-out-of-range dim i)))
+  (if (integer? i)
+    (if (let ((lo (dim-lo dim)))
+          (and
+           (or (not lo) (>= i lo))
+           (let ((len (dim-len dim)))
+             (or (not len) (< i (+ len lo)))))) ; len implies lo
+      i
+      (throw 'dim-check-out-of-range dim i))
+; FIXME catch & forward to ra-from in make-ra* applications
+    (throw 'dim-check-index-not-integer dim i)))
 
 
 ; ----------------

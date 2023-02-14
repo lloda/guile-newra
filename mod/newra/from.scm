@@ -20,7 +20,8 @@
             fromb fromu amendu!))
 
 (import (srfi 1) (srfi 9) (srfi srfi-9 gnu) (srfi 26) (srfi 71)
-        (newra base) (newra map) (newra lib) (newra reshape) (ice-9 control) (ice-9 match)
+        (newra base) (newra map) (newra lib) (newra reshape) (newra vector)
+        (ice-9 control) (ice-9 match)
         (only (srfi 43) vector-copy)
         (only (rnrs base) vector-map vector-for-each))
 

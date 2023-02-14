@@ -16,8 +16,9 @@
             ra-fill! ra-copy! ra-swap! ra-swap-in-order! ra-map! ra-map-in-order! ra-for-each
             ra-every ra-any ra-equal?))
 
-(import (newra base) (srfi 9) (srfi srfi-9 gnu) (srfi 71) (srfi 2)
-        (srfi 26) (srfi srfi-4 gnu) (ice-9 match) (ice-9 control)
+(import (newra base) (newra vector) (newra blis)
+        (srfi 9) (srfi srfi-9 gnu) (srfi 71) (srfi 2) (srfi 26) (srfi srfi-4 gnu)
+        (ice-9 match) (ice-9 control)
         (only (srfi 1) fold every)
         (only (rnrs base) vector-map vector-for-each)
         (only (srfi 43) vector-copy! vector-fill! vector-every)
