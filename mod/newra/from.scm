@@ -167,7 +167,11 @@
   (or (and (ra? x) (or (zero? (ra-rank x)) (aseq? (ra-root x)))) (integer? x) (eq? x #t)))
 
 (define (index-rank x)
-  (match x ((? integer? z) 0) ((? ra? ra) (ra-rank ra)) (#t 1)))
+  (match x
+    ((? integer? z) 0)
+    ((? ra? ra) (ra-rank ra))
+    (#t 1)
+    (else (throw 'bad-index x))))
 
 ; split the beatable part of A and chew the indices for fromb.
 ; FIXME going over the args twice, here and in fromb

@@ -532,6 +532,13 @@ Next: <a href="#Special-arrays" accesskey="n" rel="next">Special arrays</a>, Up:
 </pre><pre class="example">&rArr; #%2:3:4((9 #f) (b 3) (#f #f))
 </pre></div>
 
+<p>Generalized indices are handled through <a href="#x_002dra_002dfrom"><code>ra-from</code></a>:
+</p>
+<div class="example">
+<pre class="verbatim">((ra-i 3 4) #t 1) ; second column
+</pre><pre class="example">&rArr; #%1d:3(1 5 9)
+</pre></div>
+
 <p>You can also access arrays in the more usual way with the functions <a href="#x_002dra_002dref"><code>ra-ref</code></a> and <a href="#x_002dra_002dset_0021"><code>ra-set!</code></a>. See <a href="#Slicing">Slicing</a> for all the options.
 </p>
 <hr>

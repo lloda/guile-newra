@@ -30,7 +30,25 @@
 (import (srfi 26) (srfi 2) (srfi 71) (srfi srfi-4 gnu) (srfi srfi-9 gnu)
         (only (srfi 1) fold every) (ice-9 match) (ice-9 control)
         (rnrs bytevectors) (only (rnrs base) vector-for-each)
+        (ice-9 exceptions)
         (newra vector))
+
+; from Guile's (rnrs base)
+
+(define-syntax define-proxy
+  (syntax-rules (@)
+    ;; Define BINDING to point to (@ MODULE ORIGINAL).  This hack is to
+    ;; make sure MODULE is loaded lazily, at run-time, when BINDING is
+    ;; encountered, rather than being loaded while compiling and
+    ;; loading (rnrs base).
+    ;; This avoids circular dependencies among modules and makes
+    ;; (rnrs base) more lightweight.
+    ((_ binding (@ module original))
+     (define-syntax binding
+       (identifier-syntax
+        (module-ref (resolve-interface 'module) 'original))))))
+
+(define-proxy ra-from (@ (newra from) ra-from))
 
 
 ; ----------------
@@ -148,16 +166,13 @@ See also: dim-len dim-lo dim-step c-dims
     (and len (+ (dim-lo dim) (dim-len dim) -1))))
 
 (define-inlinable (dim-check dim i)
-  (if (integer? i)
-    (if (let ((lo (dim-lo dim)))
-          (and
-           (or (not lo) (>= i lo))
-           (let ((len (dim-len dim)))
-             (or (not len) (< i (+ len lo)))))) ; len implies lo
-      i
-      (throw 'dim-check-out-of-range dim i))
-; FIXME catch & forward to ra-from in make-ra* applications
-    (throw 'dim-check-index-not-integer dim i)))
+  (if (let ((lo (dim-lo dim)))
+        (and
+         (or (not lo) (>= i lo))
+         (let ((len (dim-len dim)))
+           (or (not len) (< i (+ len lo)))))) ; len implies lo
+    i
+    (throw 'dim-check-out-of-range dim i)))
 
 
 ; ----------------
@@ -484,14 +499,27 @@ See also: @code{ra-ref} @code{ra-slice} @code{ra-from}
   (letrec ((ra
             (make-struct/simple
              <ra-vtable>
+;  tried catching dim-check exception but it's way too expensive
              (case-lambda
                (() (ra-cell ra))
-               ((i0) (ra-cell ra i0))
-               ((i0 i1) (ra-cell ra i0 i1))
-               ((i0 i1 i2) (ra-cell ra i0 i1 i2))
-               ((i0 i1 i2 i3) (ra-cell ra i0 i1 i2 i3))
-               ((i0 i1 i2 i3 i4) (ra-cell ra i0 i1 i2 i3 i4))
-               (i (apply ra-cell ra i)))
+               ((i0)
+                (if (integer? i0)
+                  (ra-cell ra i0) (ra-from ra i0)))
+               ((i0 i1)
+                (if (and (integer? i0) (integer? i1))
+                  (ra-cell ra i0 i1) (ra-from ra i0 i1)))
+               ((i0 i1 i2)
+                (if (and (integer? i0) (integer? i1) (integer? i2))
+                  (ra-cell ra i0 i1 i2) (ra-from ra i0 i1 i2)))
+               ((i0 i1 i2 i3)
+                (if (and (integer? i0) (integer? i1) (integer? i2) (integer? i3))
+                  (ra-cell ra i0 i1 i2 i3) (ra-from ra i0 i1 i2 i3)))
+               ((i0 i1 i2 i3 i4)
+                (if (and (integer? i0) (integer? i1) (integer? i2) (integer? i3) (integer? i4))
+                  (ra-cell ra i0 i1 i2 i3 i4) (ra-from ra i0 i1 i2 i3 i4)))
+               (i
+                (if (every integer? i)
+                  (apply ra-cell ra i) (apply ra-from ra i))))
 ; it should be easier :-/
              (match-lambda*
                ((o) (ra-set! ra o))

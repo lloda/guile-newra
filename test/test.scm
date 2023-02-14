@@ -828,7 +828,7 @@
 ; tests
 ; ------------------------
 
-(define (test-from-from? id A . i)
+(define (test-from id A . i)
 ; to be able to test integers on fromu
   (let ((ii (map (match-lambda ((? ra? x) x) ((? integer? x) (make-ra x))) i)))
     (test-begin id)
@@ -862,50 +862,54 @@
 ; one arg
 
 ; rank 0
-(test-from-from? "00" A (make-ra-root (make-aseq 3) (vector)))
-(test-from-from? "01" A 2)
-(test-from-from? "02" A (make-ra 2))
+(test-from "00" A (make-ra-root (make-aseq 3) (vector)))
+(test-from "01" A 2)
+(test-from "02" A (make-ra 2))
 
 ; rank 1
-(test-from-from? "03" A (ra-iota 3))
-(test-from-from? "04" A (make-ra-root (make-aseq) (vector (make-dim 3 1 1))))
-(test-from-from? "05" A (make-ra-root (make-aseq 1 1) (vector (make-dim 3 1 1))))
-(test-from-from? "06" A (make-ra-root (make-aseq 1 2) (vector (make-dim 3 1 1))))
-(test-from-from? "07" A (make-ra-root (make-aseq 1 1) (vector (make-dim 3 1 2))))
-(test-from-from? "08" A (make-ra-root (make-aseq 3 2) (vector (make-dim 2 1 3))))
+(test-from "03" A (ra-iota 3))
+(test-from "04" A (make-ra-root (make-aseq) (vector (make-dim 3 1 1))))
+(test-from "05" A (make-ra-root (make-aseq 1 1) (vector (make-dim 3 1 1))))
+(test-from "06" A (make-ra-root (make-aseq 1 2) (vector (make-dim 3 1 1))))
+(test-from "07" A (make-ra-root (make-aseq 1 1) (vector (make-dim 3 1 2))))
+(test-from "08" A (make-ra-root (make-aseq 3 2) (vector (make-dim 2 1 3))))
 
 ; rank 2
-(test-from-from? "09" A (ra-i 2 2))
-(test-from-from? "10" A (make-ra-root (make-aseq 3) (vector (make-dim 2 1 2) (make-dim 2 1 3))))
+(test-from "09" A (ra-i 2 2))
+(test-from "10" A (make-ra-root (make-aseq 3) (vector (make-dim 2 1 2) (make-dim 2 1 3))))
 
 
 ; ------------------------
 ; two args
 
 ; rank 0 0
-(test-from-from? "11" A (make-ra-root (make-aseq 3) (vector))
-                 (make-ra-root (make-aseq 2) (vector)))
-(test-from-from? "12" A 3 (make-ra-root (make-aseq 2) (vector)))
-(test-from-from? "13" A (make-ra-root (make-aseq 3) (vector)) 2)
-(test-from-from? "14" A 3 2)
+(test-from "11" A (make-ra-root (make-aseq 3) (vector))
+           (make-ra-root (make-aseq 2) (vector)))
+(test-from "12" A 3 (make-ra-root (make-aseq 2) (vector)))
+(test-from "13" A (make-ra-root (make-aseq 3) (vector)) 2)
+(test-from "14" A 3 2)
 
 ; rank 1 1
-(test-from-from? "15" A (ra-iota 3) (ra-iota 2 4))
-(test-from-from? "16" A (make-ra-root (make-aseq) (vector (make-dim 3 1 1)))
-                 (make-ra-root (make-aseq) (vector (make-dim 3 1 2))))
-(test-from-from? "17" A (make-ra-root (make-aseq 1 1) (vector (make-dim 3 1 1)))
-                 (make-ra-root (make-aseq 1 2) (vector (make-dim 3 1 1))))
-(test-from-from? "18" A (make-ra-root (make-aseq 1 2) (vector (make-dim 3 1 1)))
-                 (make-ra-root (make-aseq 1 1) (vector (make-dim 3 1 2))))
-(test-from-from? "19" A (make-ra-root (make-aseq 1 1) (vector (make-dim 3 1 2)))
-                 (make-ra-root (make-aseq 1 1) (vector (make-dim 3 1 2))))
-(test-from-from? "20" A (make-ra-root (make-aseq 3 2) (vector (make-dim 2 1 3)))
-                 (make-ra-root (make-aseq 1 1) (vector (make-dim 3 1 2))))
+(test-from "15" A (ra-iota 3) (ra-iota 2 4))
+(test-from "16" A (make-ra-root (make-aseq) (vector (make-dim 3 1 1)))
+           (make-ra-root (make-aseq) (vector (make-dim 3 1 2))))
+(test-from "17" A (make-ra-root (make-aseq 1 1) (vector (make-dim 3 1 1)))
+           (make-ra-root (make-aseq 1 2) (vector (make-dim 3 1 1))))
+(test-from "18" A (make-ra-root (make-aseq 1 2) (vector (make-dim 3 1 1)))
+           (make-ra-root (make-aseq 1 1) (vector (make-dim 3 1 2))))
+(test-from "19" A (make-ra-root (make-aseq 1 1) (vector (make-dim 3 1 2)))
+           (make-ra-root (make-aseq 1 1) (vector (make-dim 3 1 2))))
+(test-from "20" A (make-ra-root (make-aseq 3 2) (vector (make-dim 2 1 3)))
+           (make-ra-root (make-aseq 1 1) (vector (make-dim 3 1 2))))
 
 ; rank 2 2
-(test-from-from? "21" A (ra-i 3 3) (ra-i 2 2))
-(test-from-from? "22" A (make-ra-root (make-aseq 3) (vector (make-dim 2 1 2) (make-dim 2 1 3)))
-                 (make-ra-root (make-aseq 3) (vector (make-dim 2 1 2) (make-dim 2 1 3))))
+(test-from "21" A (ra-i 3 3) (ra-i 2 2))
+(test-from "22" A (make-ra-root (make-aseq 3) (vector (make-dim 2 1 2) (make-dim 2 1 3)))
+           (make-ra-root (make-aseq 3) (vector (make-dim 2 1 2) (make-dim 2 1 3))))
+
+; FIXME if ra-from is used in ra application, then these must give the same result.
+(ra-from (ra-i 2 3) (make-ra 0) (make-ra 1))
+(ra-cell (ra-i 2 3) 0 1)
 
 ; placeholders
 (let* ((a (ra-i 2 3 4 5 6))

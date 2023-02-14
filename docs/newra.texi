@@ -484,6 +484,15 @@ a
 @result{} #%2:3:4((9 #f) (b 3) (#f #f))
 @end example
 
+Generalized indices are handled through @ref{x-ra-from, @code{ra-from}}:
+
+@example
+@verbatim
+((ra-i 3 4) #t 1) ; second column
+@end verbatim
+@result{} #%1d:3(1 5 9)
+@end example
+
 You can also access arrays in the more usual way with the functions @ref{x-ra-ref, @code{ra-ref}} and @ref{x-ra-set!, @code{ra-set!}}. See @ref{Slicing} for all the options.
 
 @c ------------------------------------------------
