@@ -278,7 +278,7 @@ Each dim consists of a length (@dfn{len}), a lower bound (@dfn{lo}), and a @dfn{
 @end itemize
 
 @cindex view
-Together, the dim vector and the zero define an affine function of array indices @code{i₀, i₁, ..} that produces an index into the root. Thus, the array is a multidimensional view of the root.
+Together, the dim vector and the zero define an affine function of array indices @code{i₀, i₁, ...} that produces an index into the root. Thus, the array is a multidimensional view of the root.
 
 For example, the following pieces
 
@@ -1836,7 +1836,7 @@ See also: @ref{x-ra-fold,@code{ra-fold}}, @ref{x-ra-every,@code{ra-every}}.
 
 Look up array cell.
 
-Let @var{k} be the rank of @var{a} minus the number of @var{i ...}. If @var{k} is zero, return the array element at @var{i ...}, like @ref{x-ra-ref,@code{ra-ref}}; else return a @var{k}-view of @var{a}, like @ref{x-ra-slice,@code{ra-slice}}.
+Let @var{k} be the rank of @var{a} minus the number of @var{i ...} If @var{k} is zero, return the array element at @var{i ...}, like @ref{x-ra-ref,@code{ra-ref}}; else return a @var{k}-view of @var{a}, like @ref{x-ra-slice,@code{ra-slice}}.
 
 It is an error if the number of @var{i ...} exceeds the rank of @var{a}.
 
@@ -2862,9 +2862,11 @@ See also: @ref{x-ra-map!,@code{ra-map!}}, @ref{x-ra-for-each,@code{ra-for-each}}
 
 @cindex @code{ra-set!}
 @anchor{x-ra-set!}
-@deffn @w{Function} ra-set! a o i ...
+@deffn @w{Function} ra-set! a value i ...
 
-Assign array element. It is an error if the number of @var{i ...} doesn't match the rank of @var{a}.
+Assign @var{value} to array @var{a} at indices @var{i ...} It is an error if the number of @var{i ...} doesn't match the rank of @var{a}.
+
+This function returns the modified array @var{a}.
 
 See also: @ref{x-ra-amend!,@code{ra-amend!}}, @ref{x-ra-ref,@code{ra-ref}}, @ref{Slicing}.
 
@@ -2874,7 +2876,7 @@ See also: @ref{x-ra-amend!,@code{ra-amend!}}, @ref{x-ra-ref,@code{ra-ref}}, @ref
 @anchor{x-ra-slice}
 @deffn @w{Function} ra-slice a i ...
 
-Look up array cell.
+Look up cell of array @var{a} at positions @var{i ...}
 
 This function returns a view of @var{a} with rank @var{k} equal to the rank of @var{a} minus the number of @var{i ...}, even if that is 0.
 
@@ -2955,7 +2957,7 @@ Swap the contents of @var{a} and @var{b}. The swap is executed in row-major orde
 @cindex @code{ra-tile}
 @anchor{x-ra-tile}
 @deffn @w{Function} ra-tile a k bounds ... @result{} b
-Replicate array @var{a} by inserting axes of @var{bounds} ... before axis @var{k}. If @var{t} is the shape of @var{a}, the shape of the result will be
+Replicate array @var{a} by inserting axes of @var{bounds ...} before axis @var{k}. If @var{t} is the shape of @var{a}, the shape of the result will be
 
 @example
 @verbatim
@@ -3204,7 +3206,7 @@ j:k:n
 equispaced sequence [a .. b] with @var{n} points
 @tab
 @verbatim
-(ra-iota k a (/ (- b a) (- n 1)))
+(ra-iota n a (/ (- b a) (- n 1)))
 @end verbatim
 @tab
 @verbatim
@@ -3321,16 +3323,16 @@ eye(2, 2)
 create diagonal matrix
 @tab
 @verbatim
-(let ((v #%(1 2 3))
-      (a (make-ra 0 (ra-len a) (ra-len a))))
+(let* ((v #%(1 2 3))
+       (a (make-ra 0 (ra-len v) (ra-len v))))
   (ra-copy! (⍉ a 0 0) v)
   a)
 @end verbatim
 @tab
 @verbatim
-n ← ⍴ 1 2 3
-a ← (n, n) ⍴ 0
-(0 0 ⍉ a) ← ⍳ n
+v ← 1 2 3
+a ← ((⍴ v), ⍴ v) ⍴ 0
+(0 0 ⍉ a) ← v
 a
 @end verbatim
 @tab

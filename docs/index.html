@@ -338,7 +338,7 @@ Each dim consists of a length (<em>len</em>), a lower bound (<em>lo</em>), and a
 </li></ul>
 
 <span id="index-view-1"></span>
-<p>Together, the dim vector and the zero define an affine function of array indices <code>i₀, i₁, ..</code> that produces an index into the root. Thus, the array is a multidimensional view of the root.
+<p>Together, the dim vector and the zero define an affine function of array indices <code>i₀, i₁, ...</code> that produces an index into the root. Thus, the array is a multidimensional view of the root.
 </p>
 <p>For example, the following pieces
 </p>
@@ -1729,7 +1729,7 @@ indices that match those elements. <code>newra</code> will <em>not</em> check th
 <dd>
 <p>Look up array cell.
 </p>
-<p>Let <var>k</var> be the rank of <var>a</var> minus the number of <var>i ...</var>. If <var>k</var> is zero, return the array element at <var>i ...</var>, like <a href="#x_002dra_002dref"><code>ra-ref</code></a>; else return a <var>k</var>-view of <var>a</var>, like <a href="#x_002dra_002dslice"><code>ra-slice</code></a>.
+<p>Let <var>k</var> be the rank of <var>a</var> minus the number of <var>i ...</var> If <var>k</var> is zero, return the array element at <var>i ...</var>, like <a href="#x_002dra_002dref"><code>ra-ref</code></a>; else return a <var>k</var>-view of <var>a</var>, like <a href="#x_002dra_002dslice"><code>ra-slice</code></a>.
 </p>
 <p>It is an error if the number of <var>i ...</var> exceeds the rank of <var>a</var>.
 </p>
@@ -2271,7 +2271,7 @@ b
 <dt id="index-ra_002dmap-1"><span class="category">Function<!-- /@w -->: </span><span><strong>ra-map</strong> <em>type op a0 a ... &rArr; dst</em><a href='#index-ra_002dmap-1' class='copiable-anchor'> &para;</a></span></dt>
 <dd><p>Same as <a href="#x_002dra_002dmap_0021"><code>ra-map!</code></a>, but create the result array from the arguments. Unlike <code>ra-map!</code>, this function requires at least one source argument.
 </p>
-<p>The type of the result <var>dst</var> is <var>type</var> unless that is <code>#f</code>, in which case the type of <var>a0</var> is used,  unless that is <code>'d</code>, in which case the result is of type <code>#t</code>. For the computation of the shape of <var>dst</var> see <a href="#Automatic-result-arrays">Automatic result arrays</a>.
+<p>The type of the result <var>dst</var> is <var>type</var> unless that is <code>#f</code>, in which case the type of <var>a0</var> is used,  unless that is <code>'d</code>, in which case the result is of type <code>#t</code>. For the shape of <var>dst</var> see <a href="#Automatic-result-arrays">Automatic result arrays</a>.
 </p>
 <div class="example">
 <pre class="verbatim">(ra-format (ra-map 'f64 + (ra-iota 3 1) (ra-i 3 4)))
@@ -2516,7 +2516,7 @@ b
 <span id="index-ra_002dreverse"></span>
 <span id="x_002dra_002dreverse"></span><dl class="def">
 <dt id="index-ra_002dreverse-1"><span class="category">Function<!-- /@w -->: </span><span><strong>ra-reverse</strong> <em>a axes ... &rArr; b</em><a href='#index-ra_002dreverse-1' class='copiable-anchor'> &para;</a></span></dt>
-<dd><p>Reverse the given <var>axes</var> of <var>a</var>.
+<dd><p>Reverse the given <var>axes</var> of <var>a</var>, that is, the order of the elements along those axes. The bounds do not change.
 </p>
 <div class="example">
 <pre class="verbatim">(ra-reverse (ra-i 2 3) 0 1)
@@ -2595,9 +2595,11 @@ a
 
 <span id="index-ra_002dset_0021"></span>
 <span id="x_002dra_002dset_0021"></span><dl class="def">
-<dt id="index-ra_002dset_0021-1"><span class="category">Function<!-- /@w -->: </span><span><strong>ra-set!</strong> <em>a o i ...</em><a href='#index-ra_002dset_0021-1' class='copiable-anchor'> &para;</a></span></dt>
+<dt id="index-ra_002dset_0021-1"><span class="category">Function<!-- /@w -->: </span><span><strong>ra-set!</strong> <em>a value i ...</em><a href='#index-ra_002dset_0021-1' class='copiable-anchor'> &para;</a></span></dt>
 <dd>
-<p>Assign array element. It is an error if the number of <var>i ...</var> doesn&rsquo;t match the rank of <var>a</var>.
+<p>Assign <var>value</var> to array <var>a</var> at indices <var>i ...</var> It is an error if the number of <var>i ...</var> doesn&rsquo;t match the rank of <var>a</var>.
+</p>
+<p>This function returns the modified array <var>a</var>.
 </p>
 <p>See also: <a href="#x_002dra_002damend_0021"><code>ra-amend!</code></a>, <a href="#x_002dra_002dref"><code>ra-ref</code></a>, <a href="#Slicing">Slicing</a>.
 </p>
@@ -2607,7 +2609,7 @@ a
 <span id="x_002dra_002dslice"></span><dl class="def">
 <dt id="index-ra_002dslice-1"><span class="category">Function<!-- /@w -->: </span><span><strong>ra-slice</strong> <em>a i ...</em><a href='#index-ra_002dslice-1' class='copiable-anchor'> &para;</a></span></dt>
 <dd>
-<p>Look up array cell.
+<p>Look up cell of array <var>a</var> at positions <var>i ...</var>
 </p>
 <p>This function returns a view of <var>a</var> with rank <var>k</var> equal to the rank of <var>a</var> minus the number of <var>i ...</var>, even if that is 0.
 </p>
@@ -2676,7 +2678,7 @@ a
 <span id="index-ra_002dtile"></span>
 <span id="x_002dra_002dtile"></span><dl class="def">
 <dt id="index-ra_002dtile-1"><span class="category">Function<!-- /@w -->: </span><span><strong>ra-tile</strong> <em>a k bounds ... &rArr; b</em><a href='#index-ra_002dtile-1' class='copiable-anchor'> &para;</a></span></dt>
-<dd><p>Replicate array <var>a</var> by inserting axes of <var>bounds</var> ... before axis <var>k</var>. If <var>t</var> is the shape of <var>a</var>, the shape of the result will be
+<dd><p>Replicate array <var>a</var> by inserting axes of <var>bounds ...</var> before axis <var>k</var>. If <var>t</var> is the shape of <var>a</var>, the shape of the result will be
 </p>
 <div class="example">
 <pre class="verbatim">[t₀ ... tₖ₋₁ s₀ ... tₖ ...]
@@ -2832,7 +2834,7 @@ NumPy</td><td width="20%">Octave</td></tr>
 </pre></td><td width="20%"><pre class="verbatim">np.arange(a, b+1, k)
 </pre></td><td width="20%"><pre class="verbatim">j:k:n
 </pre></td></tr>
-<tr><td width="20%">equispaced sequence [a .. b] with <var>n</var> points</td><td width="20%"><pre class="verbatim">(ra-iota k a (/ (- b a) (- n 1)))
+<tr><td width="20%">equispaced sequence [a .. b] with <var>n</var> points</td><td width="20%"><pre class="verbatim">(ra-iota n a (/ (- b a) (- n 1)))
 </pre></td><td width="20%"><pre class="verbatim">a + ((b-a) ÷ (n-1)) × ι n
 </pre></td><td width="20%"><pre class="verbatim">np.linspace(a, b, n)
 </pre></td><td width="20%"><pre class="verbatim">linspace(a, b, n)
@@ -2865,13 +2867,13 @@ NumPy</td><td width="20%">Octave</td></tr>
 </pre></td><td width="20%"><pre class="verbatim">np.eye(2)
 </pre></td><td width="20%"><pre class="verbatim">eye(2, 2)
 </pre></td></tr>
-<tr><td width="20%">create diagonal matrix</td><td width="20%"><pre class="verbatim">(let ((v #%(1 2 3))
-      (a (make-ra 0 (ra-len a) (ra-len a))))
+<tr><td width="20%">create diagonal matrix</td><td width="20%"><pre class="verbatim">(let* ((v #%(1 2 3))
+       (a (make-ra 0 (ra-len v) (ra-len v))))
   (ra-copy! (⍉ a 0 0) v)
   a)
-</pre></td><td width="20%"><pre class="verbatim">n ← ⍴ 1 2 3
-a ← (n, n) ⍴ 0
-(0 0 ⍉ a) ← ⍳ n
+</pre></td><td width="20%"><pre class="verbatim">v ← 1 2 3
+a ← ((⍴ v), ⍴ v) ⍴ 0
+(0 0 ⍉ a) ← v
 a
 </pre></td><td width="20%"><pre class="verbatim">np.diag([1, 2, 3])
 </pre></td><td width="20%"><pre class="verbatim">diag([1 2 3])

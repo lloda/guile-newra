@@ -28,7 +28,7 @@
   6 ((@ (newra vector) vector-fold) (lambda (a c) (+ c (car a))) 0 #((1) (2) (3))))
 
 (test-equal
-  #(2 3) ((@ (newra vector) vector-copy) #(1 2 3 4) 1 3))
+  #(2 3) (vector-copy #(1 2 3 4) 1 3)) ; in Guile 3.0.8
 
 ; loop-fun from (test misc) FIXME may become ra-index-map!
 
@@ -795,6 +795,8 @@
 ; -----------------------
 ; from
 ; -----------------------
+
+; all the tests below pass with fromu = fromb set to ra-from.
 
 (define fromu (@ (newra from) fromu))
 (define fromb (@ (newra from) fromb))

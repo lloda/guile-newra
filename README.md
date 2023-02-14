@@ -10,7 +10,7 @@ The C API shouldn't be affected. Once you get an array handle it makes no sense 
 
 Except for the tests and for the pair of functions `ra->array` / `array->ra`, `newra` is independent of the old array system.
 
-`newra` tracks the Guile main branch as of 2021/12/03 and might not work with earlier revisions. Run the test or the benchmark with
+`newra` requires Guile 3.0.8. Run the test or the benchmark with
 
 ```
 > $GUILE -L mod test/test.scm

@@ -14,10 +14,8 @@
   #:use-module (srfi srfi-26)
   #:use-module ((srfi srfi-1) #:select (fold))
   #:use-module ((rnrs base) #:select (vector-for-each))
-  #:use-module ((scheme base) #:select (vector-copy! vector-copy))
   #:export (vector-drop vector-fold* vector-fold vector-append vector-take)
-  #:re-export (vector-for-each)
-  #:re-export-and-replace (vector-copy))
+  #:re-export (vector-for-each))
 
 (define vector-fold*
   (case-lambda
