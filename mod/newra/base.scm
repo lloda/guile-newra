@@ -33,23 +33,6 @@
         (ice-9 exceptions)
         (newra vector))
 
-; from Guile's (rnrs base)
-
-(define-syntax define-proxy
-  (syntax-rules (@)
-    ;; Define BINDING to point to (@ MODULE ORIGINAL).  This hack is to
-    ;; make sure MODULE is loaded lazily, at run-time, when BINDING is
-    ;; encountered, rather than being loaded while compiling and
-    ;; loading (rnrs base).
-    ;; This avoids circular dependencies among modules and makes
-    ;; (rnrs base) more lightweight.
-    ((_ binding (@ module original))
-     (define-syntax binding
-       (identifier-syntax
-        (module-ref (resolve-interface 'module) 'original))))))
-
-(define-proxy ra-from (@ (newra from) ra-from))
-
 
 ; ----------------
 ;; Conventions
@@ -75,6 +58,23 @@
 ; ----------------
 ; misc - FIXME remove if unused
 ; ----------------
+
+; from Guile's (rnrs base)
+
+(define-syntax define-proxy
+  (syntax-rules (@)
+    ;; Define BINDING to point to (@ MODULE ORIGINAL).  This hack is to
+    ;; make sure MODULE is loaded lazily, at run-time, when BINDING is
+    ;; encountered, rather than being loaded while compiling and
+    ;; loading (rnrs base).
+    ;; This avoids circular dependencies among modules and makes
+    ;; (rnrs base) more lightweight.
+    ((_ binding (@ module original))
+     (define-syntax binding
+       (identifier-syntax
+        (module-ref (resolve-interface 'module) 'original))))))
+
+(define-proxy ra-from (@ (newra from) ra-from))
 
 ; cf https://www.scheme.com/tspl4/syntax.html - define-integrable
 ; cf guile/module/ice-9/boot.scm - define-inlinable
@@ -153,9 +153,11 @@ See also: dim-len dim-lo dim-step c-dims
    ((len) (make-dim len 0 1))
    ((len lo) (make-dim len lo 1))
    ((len lo step)
-    (when (and len (or (not (integer? len)) (negative? len))) (throw 'bad-dim-len len))
+    (when (and len (or (not (integer? len)) (negative? len)))
+      (throw 'bad-dim-len len))
 ; lo #f requires len #f. FIXME doc when that can happen.
-    (when (and (not lo) len) (throw 'bad-dim-lo-len lo len))
+    (when (and (not lo) len)
+      (throw 'bad-dim-lo-len lo len))
     (make-dim* len lo step))))
 
 (define-inlinable (dim-end dim)
@@ -495,39 +497,49 @@ See also: @code{ra-ref} @code{ra-slice} @code{ra-from}
 
 ; these depend on accessor/setter.
 
+(define (no-rank-zero A)
+  (if (zero? (%%ra-rank A)) (%ra-ref A) A))
+
 (define (make-ra* data zero dims type vlen vref vset!)
   (letrec ((ra
             (make-struct/simple
              <ra-vtable>
 ;  tried catching dim-check exception but it's way too expensive
              (case-lambda
-               (() (ra-cell ra))
-               ((i0)
-                (if (integer? i0)
-                  (ra-cell ra i0) (ra-from ra i0)))
-               ((i0 i1)
-                (if (and (integer? i0) (integer? i1))
-                  (ra-cell ra i0 i1) (ra-from ra i0 i1)))
-               ((i0 i1 i2)
-                (if (and (integer? i0) (integer? i1) (integer? i2))
-                  (ra-cell ra i0 i1 i2) (ra-from ra i0 i1 i2)))
-               ((i0 i1 i2 i3)
-                (if (and (integer? i0) (integer? i1) (integer? i2) (integer? i3))
-                  (ra-cell ra i0 i1 i2 i3) (ra-from ra i0 i1 i2 i3)))
-               ((i0 i1 i2 i3 i4)
-                (if (and (integer? i0) (integer? i1) (integer? i2) (integer? i3) (integer? i4))
-                  (ra-cell ra i0 i1 i2 i3 i4) (ra-from ra i0 i1 i2 i3 i4)))
-               (i
-                (if (every integer? i)
-                  (apply ra-cell ra i) (apply ra-from ra i))))
+              (()
+               (%ra-cell ra))
+              ((i0)
+               (if (integer? i0)
+                 (%ra-cell ra i0)
+                 (no-rank-zero (ra-from ra i0))))
+              ((i0 i1)
+               (if (and (integer? i0) (integer? i1))
+                 (%ra-cell ra i0 i1)
+                 (no-rank-zero (ra-from ra i0 i1))))
+              ((i0 i1 i2)
+               (if (and (integer? i0) (integer? i1) (integer? i2))
+                 (%ra-cell ra i0 i1 i2)
+                 (no-rank-zero (ra-from ra i0 i1 i2))))
+              ((i0 i1 i2 i3)
+               (if (and (integer? i0) (integer? i1) (integer? i2) (integer? i3))
+                 (%ra-cell ra i0 i1 i2 i3)
+                 (no-rank-zero (ra-from ra i0 i1 i2 i3))))
+              ((i0 i1 i2 i3 i4)
+               (if (and (integer? i0) (integer? i1) (integer? i2) (integer? i3) (integer? i4))
+                 (%ra-cell ra i0 i1 i2 i3 i4)
+                 (no-rank-zero (ra-from ra i0 i1 i2 i3 i4))))
+              (i
+               (if (every integer? i)
+                 (apply ra-cell ra i)
+                 (no-rank-zero (apply ra-from ra i)))))
 ; it should be easier :-/
              (match-lambda*
-               ((o) (ra-set! ra o))
-               ((i0 o) (ra-set! ra o i0))
-               ((i0 i1 o) (ra-set! ra o i0 i1))
-               ((i0 i1 i2 o) (ra-set! ra o i0 i1 i2))
-               ((i0 i1 i2 i3 o) (ra-set! ra o i0 i1 i2 i3))
-               ((i0 i1 i2 i3 i4 o) (ra-set! ra o i0 i1 i2 i3 i4))
+               ((o) (%ra-set! ra o))
+               ((i0 o) (%ra-set! ra o i0))
+               ((i0 i1 o) (%ra-set! ra o i0 i1))
+               ((i0 i1 i2 o) (%ra-set! ra o i0 i1 i2))
+               ((i0 i1 i2 i3 o) (%ra-set! ra o i0 i1 i2 i3))
+               ((i0 i1 i2 i3 i4 o) (%ra-set! ra o i0 i1 i2 i3 i4))
                ((i ... o) (apply ra-set! ra o i)))
              data zero dims type vlen vref vset!)))
     ra))

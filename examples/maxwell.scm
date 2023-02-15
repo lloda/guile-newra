@@ -32,7 +32,7 @@
 (define (draw t F)
   (show t "Ey" (F t : 0 0 2 0))
   (show t "Bz" (F t : 0 0 2 1))
-  (usleep #e50e3))
+  (usleep #e1e4))
 
 (define (show t name F)
   (format #t "~a(0)=~12,10f t=~a:\n" name (F 0) t)

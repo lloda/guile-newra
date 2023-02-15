@@ -484,7 +484,7 @@ a
 @result{} #%2:3:4((9 #f) (b 3) (#f #f))
 @end example
 
-Generalized indices are handled through @ref{x-ra-from, @code{ra-from}}:
+Generalized indices are handled as in @ref{x-ra-from, @code{ra-from}}:
 
 @example
 @verbatim
@@ -912,7 +912,7 @@ Each of the @code{i₀...} is either 1. an integer; 2. an array of integers; 3. 
 @end verbatim
 @end quotation
 
-In other words, @code{ra-from} produces the outer product of the indices @code{i₀...} with operator @code{a} (if one thinks of @code{(a i₀ ...)} as @code{(ra-ref a i₀ ...)}).
+In other words, @code{ra-from} produces the outer product of the indices @code{i₀...} with operator @code{a} (if one thinks of @code{(a i₀ ...)} as @code{(ra-ref a i₀ ...)}). The rank of this outer product is @math{\mathrm{rank}\,A + \sum_i (\mathrm{rank}\,i - 1)}.
 
 If all of the @code{i...} are integers or arrays of type @code{d} (such as those produced by @code{ra-iota} or @code{ra-i}) then the result of @code{ra-from} shares the root of @code{a}. Otherwise @code{newra} cannot tell whether the indices are an arithmetic sequence, so the result has to be copied to a new root. For example:
 
@@ -971,10 +971,29 @@ For instance:
 @result{} #%2d:4:3((1 3 5) (7 9 11) (13 15 17) (19 21 23))
 @end example
 
+Array application @code{(A i₀ ...)} is equivalent to @code{(ra-from A i₀ ...)}, except that whenever the result of @code{(ra-from A i₀ ...)} has rank-0, @code{(A i₀ ...)} returns the element of that result instead.@footnote{It's still possible for array application to return a rank-0 array if that element is itself a rank-0 array, e.g.
+@example
+((make-ra (make-ra 'x)))
+@result{} #%0(x)
+@end example
+}
+
+@example
+@verbatim
+(ra-from (ra-i 2 3) 1 1)
+@end verbatim
+@result{} @code{#%0(4)}
+@verbatim
+((ra-i 2 3) 0 0)
+@end verbatim
+@result{} 4
+@end example
+
 When it is known that the result of @code{ra-from} will share the root with its argument, that can be used to modify the original array. For example:
 
 @example
 @verbatim
+(define a (list->ra 2 '((a b c) (d e f))))
 (ra-fill! (ra-from a 1) x)
 @end verbatim
 @result{} @code{#%2:3((a b c) (x x x)}
@@ -2465,9 +2484,21 @@ Unbounded indices aren't treated especially, so they are only valid if the relev
 @end verbatim
 @end example
 
-@i{If the result would have rank 0, then an array element is returned, and not a 0-rank view of @var{a}. Use @ref{x-ra-amend!,@code{ra-amend!}} to assign to cells of an array regardless of whether they are of 0-rank or higher.}
-
 The type of @var{b} is the same as that of @var{a}, with the only exception that if the type of @var{a} is @code{d} and the root of @var{b} cannot be shared with the root of @var{a}, then the type of @var{b} is @code{#t}.
+
+@code{ra-from} always returns an array, even if the result has rank 0. This is in contrast to array application (see @ref{Slicing}).
+
+@example
+@verbatim
+(define A (list->ra 2 '((1 a) (2 b) (3 c))))
+(ra-from A 2 1)
+@end verbatim
+@result{} #%0(b)
+@verbatim
+(A 2 1)
+@end verbatim
+@result{} b
+@end example
 
 See also: @ref{x-ra-cell,@code{ra-cell}}, @ref{x-ra-ref,@code{ra-ref}}, @ref{x-ra-slice,@code{ra-slice}}, @ref{x-ra-amend!,@code{ra-amend!}}, @ref{Slicing}.@footnote{Cf. @code{array-index-ref} from @mybibcite{SRFI-164}.}
 

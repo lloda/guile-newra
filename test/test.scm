@@ -833,28 +833,46 @@
   (let ((ii (map (match-lambda ((? ra? x) x) ((? integer? x) (make-ra x))) i)))
     (test-begin id)
 ; beatable vs unbeatable
-    (test-assert (ra-equal? (apply fromb A i) (apply fromu A ii)))
+    (let ((X (apply fromb A i))
+          (Y (apply fromu A ii)))
+      (test-assert (ra-equal? X Y)))
 ; general as unbeatable (except integers), vs unbeatable
-    (test-assert (ra-equal? (apply ra-from A (map (lambda (x) (if (ra? x) (ra-copy #t x) x)) i))
-                            (apply fromu A ii)))
+    (let ((X (apply ra-from A (map (lambda (x) (if (ra? x) (ra-copy #t x) x)) i)))
+          (Y (apply fromu A ii))
+          (Z (apply A i)))
+      (test-assert (ra-equal? Y X))
+      (test-assert (ra-equal? Y (if (zero? (ra-rank Y)) (make-ra Z) Z))))
 ; general as beatable, vs beatable
     (let ((X (apply ra-from A i))
-          (Y (apply fromb A i)))
-      (test-assert (ra-equal? X Y))
+          (Y (apply fromb A i))
+          (Z (apply A i)))
+      (test-assert (ra-equal? Y X))
+      (test-assert (ra-equal? Y (if (zero? (ra-rank Y)) (make-ra Z) Z)))
 ; purely beatable indices preserve the root.
       (test-eq (ra-root A) (ra-root Y))
-      (test-eq (ra-root A) (ra-root X)))
+      (test-eq (ra-root A) (ra-root X))
+      (unless (zero? (ra-rank Y))
+        (test-assert (ra-root A) (ra-root Z))))
 ; general as beatable, vs unbeatable
-    (test-assert (ra-equal? (apply ra-from A i) (apply fromu A ii)))
+    (let ((X (apply ra-from A i))
+          (Y (apply fromu A ii))
+          (Z (apply A i)))
+      (test-assert (ra-equal? Y X))
+      (test-assert (ra-equal? Y (if (zero? (ra-rank Y)) (make-ra Z) Z))))
 ; general as unbeatable/beatable (2 args), vs unbeatable
     (match i
       ((i j)
        (match ii
          ((ii jj)
-          (test-assert (ra-equal? (ra-from A (if (ra? i) (ra-copy #t i) i) j)
-                                  (fromu A ii jj)))
-          (test-assert (ra-equal? (ra-from A i (if (ra? j) (ra-copy #t j) j))
-                                  (fromu A ii jj))))))
+          (let ((X1 (ra-from A (if (ra? i) (ra-copy #t i) i) j))
+                (X2 (ra-from A i (if (ra? j) (ra-copy #t j) j)))
+                (Y (fromu A ii jj))
+                (Z1 (A (if (ra? i) (ra-copy #t i) i) j))
+                (Z2 (A i (if (ra? j) (ra-copy #t j) j))))
+          (test-assert (ra-equal? Y X1))
+          (test-assert (ra-equal? Y X2))
+          (test-assert (ra-equal? Y (if (zero? (ra-rank Y)) (make-ra Z1) Z1)))
+          (test-assert (ra-equal? Y (if (zero? (ra-rank Y)) (make-ra Z2) Z2)))))))
       (else #f))
     (test-end id)))
 
@@ -862,49 +880,49 @@
 ; one arg
 
 ; rank 0
-(test-from "00" A (make-ra-root (make-aseq 3) (vector)))
-(test-from "01" A 2)
-(test-from "02" A (make-ra 2))
+(test-from "from00" A (make-ra-root (make-aseq 3) (vector)))
+(test-from "from01" A 2)
+(test-from "from02" A (make-ra 2))
 
 ; rank 1
-(test-from "03" A (ra-iota 3))
-(test-from "04" A (make-ra-root (make-aseq) (vector (make-dim 3 1 1))))
-(test-from "05" A (make-ra-root (make-aseq 1 1) (vector (make-dim 3 1 1))))
-(test-from "06" A (make-ra-root (make-aseq 1 2) (vector (make-dim 3 1 1))))
-(test-from "07" A (make-ra-root (make-aseq 1 1) (vector (make-dim 3 1 2))))
-(test-from "08" A (make-ra-root (make-aseq 3 2) (vector (make-dim 2 1 3))))
+(test-from "from03" A (ra-iota 3))
+(test-from "from04" A (make-ra-root (make-aseq) (vector (make-dim 3 1 1))))
+(test-from "from05" A (make-ra-root (make-aseq 1 1) (vector (make-dim 3 1 1))))
+(test-from "from06" A (make-ra-root (make-aseq 1 2) (vector (make-dim 3 1 1))))
+(test-from "from07" A (make-ra-root (make-aseq 1 1) (vector (make-dim 3 1 2))))
+(test-from "from08" A (make-ra-root (make-aseq 3 2) (vector (make-dim 2 1 3))))
 
 ; rank 2
-(test-from "09" A (ra-i 2 2))
-(test-from "10" A (make-ra-root (make-aseq 3) (vector (make-dim 2 1 2) (make-dim 2 1 3))))
+(test-from "from09" A (ra-i 2 2))
+(test-from "from10" A (make-ra-root (make-aseq 3) (vector (make-dim 2 1 2) (make-dim 2 1 3))))
 
 
 ; ------------------------
 ; two args
 
 ; rank 0 0
-(test-from "11" A (make-ra-root (make-aseq 3) (vector))
+(test-from "from11" A (make-ra-root (make-aseq 3) (vector))
            (make-ra-root (make-aseq 2) (vector)))
-(test-from "12" A 3 (make-ra-root (make-aseq 2) (vector)))
-(test-from "13" A (make-ra-root (make-aseq 3) (vector)) 2)
-(test-from "14" A 3 2)
+(test-from "from12" A 3 (make-ra-root (make-aseq 2) (vector)))
+(test-from "from13" A (make-ra-root (make-aseq 3) (vector)) 2)
+(test-from "from14" A 3 2)
 
 ; rank 1 1
-(test-from "15" A (ra-iota 3) (ra-iota 2 4))
-(test-from "16" A (make-ra-root (make-aseq) (vector (make-dim 3 1 1)))
+(test-from "from15" A (ra-iota 3) (ra-iota 2 4))
+(test-from "from16" A (make-ra-root (make-aseq) (vector (make-dim 3 1 1)))
            (make-ra-root (make-aseq) (vector (make-dim 3 1 2))))
-(test-from "17" A (make-ra-root (make-aseq 1 1) (vector (make-dim 3 1 1)))
+(test-from "from17" A (make-ra-root (make-aseq 1 1) (vector (make-dim 3 1 1)))
            (make-ra-root (make-aseq 1 2) (vector (make-dim 3 1 1))))
-(test-from "18" A (make-ra-root (make-aseq 1 2) (vector (make-dim 3 1 1)))
+(test-from "from18" A (make-ra-root (make-aseq 1 2) (vector (make-dim 3 1 1)))
            (make-ra-root (make-aseq 1 1) (vector (make-dim 3 1 2))))
-(test-from "19" A (make-ra-root (make-aseq 1 1) (vector (make-dim 3 1 2)))
+(test-from "from19" A (make-ra-root (make-aseq 1 1) (vector (make-dim 3 1 2)))
            (make-ra-root (make-aseq 1 1) (vector (make-dim 3 1 2))))
-(test-from "20" A (make-ra-root (make-aseq 3 2) (vector (make-dim 2 1 3)))
+(test-from "from20" A (make-ra-root (make-aseq 3 2) (vector (make-dim 2 1 3)))
            (make-ra-root (make-aseq 1 1) (vector (make-dim 3 1 2))))
 
 ; rank 2 2
-(test-from "21" A (ra-i 3 3) (ra-i 2 2))
-(test-from "22" A (make-ra-root (make-aseq 3) (vector (make-dim 2 1 2) (make-dim 2 1 3)))
+(test-from "from21" A (ra-i 3 3) (ra-i 2 2))
+(test-from "from22" A (make-ra-root (make-aseq 3) (vector (make-dim 2 1 2) (make-dim 2 1 3)))
            (make-ra-root (make-aseq 3) (vector (make-dim 2 1 2) (make-dim 2 1 3))))
 
 ; FIXME if ra-from is used in ra application, then these must give the same result.
@@ -912,6 +930,7 @@
 (ra-cell (ra-i 2 3) 0 1)
 
 ; placeholders
+(test-begin "from, placeholders")
 (let* ((a (ra-i 2 3 4 5 6))
        (ref0 (ra-from a 0 (ra-iota 3)))
        (ref1 (ra-from a 0 (ra-iota 3) 1))
@@ -928,10 +947,13 @@
   (test-assert (ra-equal? ref2 (ra-from a 0 #t #t #t 2)))
   (test-assert (ra-equal? ref2 (ra-from a 0 (dots 3) 2)))
   (test-assert (ra-equal? ref2 (ra-from a 0 (dots) 2))))
+(test-end "from, placeholders")
 
 
 ; ------------------------
 ; other A
+
+(test-begin "from, other cases")
 
 (throws-exception? 'dim-check-out-of-range (lambda () (ra-from (ra-i 4) (ra-iota 6))))
 (throws-exception? 'dim-check-out-of-range (lambda () (ra-from (ra-i 4) 4)))
@@ -968,10 +990,14 @@
   (test-equal "#%1d@1:4(1 4 7 10)" (ra->string (ra-from A #t 2)))
   (test-equal "#%1d@1:3(3 4 5)" (ra->string (ra-from A 2 #t))))
 
+(test-end "from, other cases")
+
 
 ; -----------------------
 ; ra-amend! FIXME needs more tests
 ; -----------------------
+
+(test-begin "amend!")
 
 (define (ra-I . i) (ra-copy #t (apply ra-i i)))
 (define (amend-case A . i) (ra->string (apply ra-amend! A i)))
@@ -1007,10 +1033,14 @@
 (test-equal "#%3:4:3:2(((0 x) (2 x) (4 x)) ((6 x) (8 x) (10 x)) ((12 x) (14 x) (16 x)) ((18 x) (20 x) (22 x)))"
             (amend-case (ra-I 4 3 2) 'x (dots) 1))
 
+(test-end "amend!")
+
 
 ; -----------------------
 ; ra-ravel
 ; -----------------------
+
+(test-begin "ravel")
 
 (test-assert (ra-order-c? (ra-i)))
 (test-assert (ra-order-c? (ra-i 2)))
@@ -1071,10 +1101,14 @@
 (test-assert "#%2:2:12((0 4 8 1 5 9 2 6 10 3 7 11) (12 16 20 13 17 21 14 18 22 15 19 23))"
              (ra->string (ra-ravel (ra-transpose (ra-i 2 3 4) 0 2 1) 2 1)))
 
+(test-end "ravel")
+
 
 ; -----------------------
 ; ra-reshape
 ; -----------------------
+
+(test-begin "reshape")
 
 (define (test-reshape k a shape check-shape)
   (let* ((b (apply ra-reshape a k shape)))
@@ -1116,10 +1150,14 @@
 (test-reshape 1 (ra-i 5 12) '(2 #f 2) '((0 4) (0 1) (0 2) (0 1)))
 (test-reshape 0 (ra-i 12 5) '(2 #f 2) '((0 1) (0 2) (0 1) (0 4)))
 
+(test-end "reshape")
+
 
 ; -----------------------
 ; ra-tile
 ; -----------------------
+
+(test-begin "tile")
 
 (define (test-tile a shape check-shape)
   (let* ((b (apply ra-tile a 0 shape)))
@@ -1135,14 +1173,17 @@
            '(2 3) '((0 1) (0 2) (1 4) (4 9)))
 (test-tile (ra-transpose (make-ra-root (make-aseq) (c-dims '(4 9) '(1 4))) 1 0)
            '((2 4) (-1 3)) '((2 4) (-1 3) (1 4) (4 9)))
-
 (test-tile (ra-i 5)
            '(2 #f) '((0 1) (0 #f) (0 4)))
+
+(test-end "tile")
 
 
 ; -----------------------
 ; ra-rotate!
 ; -----------------------
+
+(test-begin "rotate")
 
 (let ((a (ra-copy #t (ra-i 4 3))))
   (ra-rotate! 0 a)
@@ -1170,6 +1211,8 @@
   (test-assert (ra-equal? (string->ra "#%2:4:3((9 10 11) (0 1 2) (3 4 5) (6 7 8))") (ra-rotate 3 a)))
   (test-assert (ra-equal? (string->ra "#%2:4:3((9 10 11) (0 1 2) (3 4 5) (6 7 8))") (ra-rotate -1 a))))
 
+(test-end "rotate")
+
 
 ; -----------------------
 ; ra-singletonize
@@ -1182,6 +1225,8 @@
 ; ra-clip
 ; -----------------------
 
+(test-begin "clip")
+
 (let* ((i0 (ra-transpose (ra-iota) 0))
        (i1 (ra-transpose (ra-iota) 1))
        (i2 (ra-transpose (ra-iota) 2))
@@ -1193,10 +1238,14 @@
     "#%3@4:3@1:2:5(((\"410\" \"411\" \"412\" \"413\" \"414\") (\"420\" \"421\" \"422\" \"423\" \"424\")) ((\"510\" \"511\" \"512\" \"513\" \"514\") (\"520\" \"521\" \"522\" \"523\" \"524\")) ((\"610\" \"611\" \"612\" \"613\" \"614\") (\"620\" \"621\" \"622\" \"623\" \"624\")))"
     (ra->string b)))
 
+(test-end "clip")
+
 
 ; -----------------------
 ; a bug in c0f60b1b76118a601715d331c265d1126b0d1e7c & before
 ; -----------------------
+
+(test-begin "bug in c0f60b1b76118a601715d331c265d1126b0d1e7c")
 
 (let ()
   (define ra0 (make-ra-root #f64(0 1 2 3 4)))
@@ -1209,6 +1258,8 @@
   (define ra1 (ra-copy! (make-typed-ra 'u8 0 5) ra0))
   (test-assert (ra-equal? ra0 ra1))
   (test-equal (ra-ref ra0 4) (ra-ref ra1 4)))
+
+(test-end "bug in c0f60b1b76118a601715d331c265d1126b0d1e7c")
 
 
 ; -----------------------
@@ -1230,6 +1281,8 @@
 ; -----------------------
 ; concatenation
 ; -----------------------
+
+(test-begin "cat")
 
 (test-assert (ra-equal? (ra-cat #t 0 (ra-i 1 2) (ra-i 2 2))         (array->ra #2((0 1) (0 1) (2 3)))))
 (test-assert (ra-equal? (ra-cat #t 0 (ra-iota 2 1) (ra-iota 3 3))   (array->ra #1(1 2 3 4 5))))
@@ -1271,6 +1324,8 @@
   (test-equal "#%2:5@1:4((a a a a) (a a a a) (b b b b) (b b b b) (b b b b))"
     (ra->string (ra-cats #t 1 a b))))
 
+(test-end "cat")
+
 
 ; -----------------------
 ; ra-map
@@ -1289,6 +1344,8 @@
 ; -----------------------
 ; ra-format
 ; -----------------------
+
+(test-begin "format")
 
 (define port #f) ; no real test, but at least check that they run. Use #t to demo
 
@@ -1336,6 +1393,8 @@
 
 ; when there are dead axes, print the result of ra-singletonize, except for the prefix. Not ideal...
 (ra-format (ra-i 3 #f 4) port)
+
+(test-end "format")
 
 
 ; -----------------------

@@ -15,7 +15,7 @@ set (man_in ${CMAKE_CURRENT_SOURCE_DIR}/newra.texi)
 set (man_out ${CMAKE_CURRENT_BINARY_DIR}/index.html)
 
 add_custom_command (OUTPUT ${man_out}
-  COMMAND ${MAKEINFO_EXECUTABLE} --html --no-split ${man_in} -o ${man_out} # -c HTML_MATH=mathjax
+  COMMAND ${MAKEINFO_EXECUTABLE} --html --no-split ${man_in} -o ${man_out} -c HTML_MATH=mathjax
   DEPENDS ${man_in}
   COMMENT "Creating HTML file ${man_out}"
   VERBATIM)
