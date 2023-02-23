@@ -76,7 +76,7 @@ See also: @code{ra-fold ra-map!} @code{ra-for-each} @code{ra-slice-for-each}
     (throw 'nonconvertible-type (ra-type ra)))
   (apply make-shared-array (ra-root ra)
          (lambda i (list (apply ra-pos (ra-zero ra) (ra-dims ra) i)))
-         (vector->list (vector-map (lambda (dim) (list (dim-lo dim) (dim-hi dim)))
+         (vector->list (vector-map (match-lambda (($ <dim> len lo _) (list lo (dim-hi len lo))))
                                    (ra-dims ra)))))
 
 (define (make-typed-ra type value . d)
@@ -132,7 +132,7 @@ See also: @code{make-ra}
         (let* ((los (vector->list (vector-map dim-lo dims)))
                (ref (apply ra-pos (%%ra-zero oldra) (%%ra-dims oldra) (apply mapf los)))
                (dims (vector-map
-                      (lambda (dim step) (make-dim (dim-len dim) (dim-lo dim) step))
+                      (match-lambda* ((($ <dim> len lo _) step) (make-dim len lo step)))
                       dims
                       (let ((steps (make-vector newrank 0)))
                         (let loop ((k 0))
@@ -164,21 +164,22 @@ See also: @code{as-ra}
     (cond
      ((zero? rank) (ra-ref ra))
      (else
-      (let ((ra (apply ra-reverse ra (iota rank)))
-            (dimk (vector-ref (%%ra-dims ra) (- rank 1))))
-        (let loop-rank ((ra ra))
-          (cond
-           ((= 1 (%%ra-rank ra))
-            (if (> (dim-len dimk) 20)
-              (ra-fold xcons '() ra)
-              (let loop-dim ((l '()) (i (dim-lo dimk)))
-                (if (> i (dim-hi dimk))
-                  l
-                  (loop-dim (cons (ra-ref ra i) l) (+ i 1))))))
-           (else
-            (let ((l '()))
-              (ra-slice-for-each 1 (lambda (x) (set! l (cons (loop-rank x) l))) ra)
-              l)))))))))
+      (let ((ra (apply ra-reverse ra (iota rank))))
+        (match (vector-ref (%%ra-dims ra) (- rank 1))
+          (($ <dim> klen klo kstep)
+           (let loop-rank ((ra ra))
+             (cond
+              ((= 1 (%%ra-rank ra))
+               (if (> klen 20)
+                 (ra-fold xcons '() ra)
+                 (let loop-dim ((l '()) (i klo))
+                   (if (> i (dim-hi klen klo))
+                     l
+                     (loop-dim (cons (ra-ref ra i) l) (+ i 1))))))
+              (else
+               (let ((l '()))
+                 (ra-slice-for-each 1 (lambda (x) (set! l (cons (loop-rank x) l))) ra)
+                 l)))))))))))
 
 ; Similar to (@ (newra) ra-for-each-slice-1) - since we cannot unroll. It
 ; might be cheaper to go Fortran order (building the index lists back to front);

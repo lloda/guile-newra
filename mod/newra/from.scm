@@ -58,56 +58,57 @@
       ((i0 . irest)
        (match i0
          (#t
-          (let ((dimA (vector-ref (%%ra-dims A) j)))
-            (loopj (+ j 1) irest zero (cons (vector dimA) bdims))))
+          (loopj (+ j 1) irest zero (cons (vector (vector-ref (%%ra-dims A) j)) bdims)))
          ((? integer? z)
-          (let ((dimA (vector-ref (%%ra-dims A) j)))
-            (loopj (+ j 1) irest (+ zero (* (dim-step dimA) (dim-check dimA z))) bdims)))
+          (match (vector-ref (%%ra-dims A) j)
+            (($ <dim> Alen Alo Astep)
+             (loopj (+ j 1) irest (+ zero (* Astep (dim-check Alen Alo z))) bdims))))
          (($ <dots> n)
           (let ((jnext (+ j n)))
             (unless (<= jnext (%%ra-rank A))
               (throw 'dots-n-at-j-too-large-for-rank n j (%%ra-rank A)))
             (loopj jnext irest zero (cons (vector-copy (%%ra-dims A) j jnext) bdims))))
          ((? ra? i)
-          (let ((dimA (vector-ref (%%ra-dims A) j))
-                (ri (%%ra-rank i)))
-            (if (zero? ri)
-              (loopj (+ j 1) irest (+ zero (* (dim-step dimA) (dim-check dimA (i)))) bdims)
-              (let ((root (%%ra-root i)))
-                (match root
-                  (($ <aseq> rorg rinc)
-                   (let ((bdimsj (make-vector ri))
-                         (izero (%%ra-zero i)))
-                     (let loopk ((k 0) (lo izero) (hi izero))
-                       (if (< k ri)
-                         (match (vector-ref (%%ra-dims i) k)
-                           (($ <dim> ilen ilo istep)
-                            (vector-set! bdimsj k (make-dim ilen ilo (* (dim-step dimA) istep rinc)))
-                            (cond
-                             ((zero? istep)
-                              (loopk (+ k 1) lo hi))
-                             ((positive? istep)
-                              (loopk (+ k 1)
-                                     (and lo ilo (+ lo (* istep ilo)))
-                                     (and hi ilo ilen (+ hi (* istep (+ ilo ilen -1))))))
-                             (else
-                              (loopk (+ k 1)
-                                     (and lo ilo ilen (+ lo (* istep (+ ilo ilen -1))))
-                                     (and hi ilo (+ hi (* istep ilo))))))))
+          (match (vector-ref (%%ra-dims A) j)
+            (($ <dim> Alen Alo Astep)
+             (let ((ri (%%ra-rank i)))
+               (if (zero? ri)
+                 (loopj (+ j 1) irest (+ zero (* Astep (dim-check Alen Alo (i)))) bdims)
+                 (let ((root (%%ra-root i)))
+                   (match root
+                     (($ <aseq> rorg rinc)
+                      (let ((bdimsj (make-vector ri))
+                            (izero (%%ra-zero i)))
+                        (let loopk ((k 0) (lo izero) (hi izero))
+                          (if (< k ri)
+                            (match (vector-ref (%%ra-dims i) k)
+                              (($ <dim> ilen ilo istep)
+                               (vector-set! bdimsj k (make-dim ilen ilo (* Astep istep rinc)))
+                               (cond
+                                ((zero? istep)
+                                 (loopk (+ k 1) lo hi))
+                                ((positive? istep)
+                                 (loopk (+ k 1)
+                                        (and lo ilo (+ lo (* istep ilo)))
+                                        (and hi ilo ilen (+ hi (* istep (+ ilo ilen -1))))))
+                                (else
+                                 (loopk (+ k 1)
+                                        (and lo ilo ilen (+ lo (* istep (+ ilo ilen -1))))
+                                        (and hi ilo (+ hi (* istep ilo))))))))
 
-                         (let* ((lo (and lo (aseq-ref root lo)))
-                                (hi (and hi (aseq-ref root hi)))
-                                (lo hi (if (negative? rinc) (values hi lo) (values lo hi))))
-; we don't use dim-check as that requires integer i.
-                           (when (dim-lo dimA)
-                             (unless (and lo (>= lo (dim-lo dimA)))
-                               (throw 'dim-check-out-of-range dimA lo)))
-                           (when (dim-hi dimA)
-                             (unless (and hi (<= hi (dim-hi dimA)))
-                               (throw 'dim-check-out-of-range dimA lo)))
-                           (loopj (+ j 1) irest
-                                  (+ zero (* (dim-step dimA) (+ rorg (* rinc izero))))
-                                  (cons bdimsj bdims)))))))))))))))))
+                            (let* ((lo (and lo (aseq-ref root lo)))
+                                   (hi (and hi (aseq-ref root hi)))
+                                   (lo hi (if (negative? rinc) (values hi lo) (values lo hi))))
+; don't use dim-check as that requires integer i.
+                              (when Alo
+                                (unless (and lo (>= lo Alo))
+                                  (throw 'dim-check-out-of-range Alen Alo lo)))
+                              (when Alen ; implies Alo
+                                (unless (and hi (<= hi (dim-hi Alen Alo)))
+                                  (throw 'dim-check-out-of-range Alen Alo hi)))
+                              (loopj (+ j 1) irest
+                                     (+ zero (* Astep (+ rorg (* rinc izero))))
+                                     (cons bdimsj bdims)))))))))))))))))))
 
 
 ; ------------------------
@@ -136,7 +137,7 @@
               *unspecified*
               (apply c-dims
                 (append (append-map ra-shape i)
-                        (map (lambda (dim) (list (dim-lo dim) (dim-hi dim)))
+                        (map (match-lambda (($ <dim> len lo _) (list lo (dim-hi len lo))))
                           (drop (vector->list (ra-dims A)) (length i)))))))
           (frame i (broadcast-indices i)))
       (if (= frame (ra-rank C))
@@ -224,7 +225,6 @@
            (values B iu tub)))))))
 
 ; FIXME add a version that copies the result to an arg. That avoids allocation of the result, although it would be better if the compiler could tell where the result goes.
-; FIXME returns rank 0 arrays, but should it?
 
 (define (ra-from* copy? A . i)
   (let ((B iu tub (apply parse-args A i)))
@@ -327,12 +327,14 @@ See also: @code{ra-from} @code{ra-amend!} @code{ra-reshape}
     (let loop ((i (- (min (vector-length da) (vector-length db)) 1)))
       (if (negative? i)
         (make-ra-root (ra-root a) da (ra-zero a))
-        (let* ((dbi (vector-ref db i))
-               (dai (vector-ref da i))
-               (lo (max (dim-lo dai) (dim-lo dbi)))
-               (hi (min (dim-hi dai) (dim-hi dbi))))
-          (vector-set! da i (make-dim (max 0 (- hi lo -1)) lo (dim-step dai)))
-          (loop (- i 1)))))))
+        (match (vector-ref da i)
+          (($ <dim> alen alo astep)
+           (match (vector-ref db i)
+             (($ <dim> blen blo bstep)
+              (let* ((lo (max alo blo))
+                     (hi (min (+ alo alen -1) (+ blo blen -1))))
+                (vector-set! da i (make-dim (max 0 (- hi lo -1)) lo astep))
+                (loop (- i 1)))))))))))
 
 
 ; -----------------------

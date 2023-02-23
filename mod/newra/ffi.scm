@@ -123,11 +123,10 @@ CFI_cdesc
                    theattribute                          ; 21
                    (CFI-type (ra-type a)))               ; 22
              (append-map                                 ; 24
-              (lambda (dim)
+              (match-lambda
+                (($ <dim> len lo step)
 ; lbound is always 1 fortranside. FIXME warn?
-                (list (dim-lo dim)
-                      (dim-len dim)
-                      (* elemsize (dim-step dim))))
+                 (list lo len (* elemsize step))))
               (vector->list (ra-dims a)))))))
 
 (define (ra->ffi-type t)

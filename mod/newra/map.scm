@@ -43,20 +43,19 @@
                 (let ((framek (min k (%%ra-rank ra))))
                   (do ((j 0 (+ j 1))) ((= j framek))
                     (let* ((lenj0 (vector-ref len j))
-                           (loj0 (vector-ref lo j))
-                           (dimj (vector-ref (%%ra-dims ra) j))
-                           (lenj (dim-len dimj))
-                           (loj (dim-lo dimj)))
-                      (if lenj0
-                        (begin
-                          (unless (match-len? lenj0 lenj)
-                            (throw 'mismatched-lens lenj0 lenj 'at-dim j))
+                           (loj0 (vector-ref lo j)))
+                      (match (vector-ref (%%ra-dims ra) j)
+                        (($ <dim> lenj loj _)
+                         (if lenj0
+                           (begin
+                             (unless (match-len? lenj0 lenj)
+                               (throw 'mismatched-lens lenj0 lenj 'at-dim j))
 ; valid len means los must be matched. lenj0 implies loj0 (cf make-dim) so we can reuse match-len?.
-                          (unless (match-len? loj0 loj)
-                            (throw 'mismatched-los loj0 loj 'at-dim j)))
-                        (begin
-                          (vector-set! len j lenj)
-                          (vector-set! lo j loj)))))))
+                             (unless (match-len? loj0 loj)
+                               (throw 'mismatched-los loj0 loj 'at-dim j)))
+                           (begin
+                             (vector-set! len j lenj)
+                             (vector-set! lo j loj)))))))))
       ra)
     (do ((j 0 (+ j 1))) ((= j k))
       (unless (vector-ref len j) (throw 'unset-len-for-dim j len))
@@ -186,7 +185,8 @@
             ((ra rb rc) (%args ra rb rc))
             (rx (%slice-loop k %apply-op (%op-loop %apply-op %apply-stepu %apply-stepk rx)
                              %apply-list %apply-let rx)))
-      rx)))
+      rx)
+    (values)))
 
 (define ra-slice-for-each-in-order ra-slice-for-each)
 
@@ -352,7 +352,8 @@ See also: @code{ra-map!} @code{ra-slice-for-each} @code{ra-clip}
             ((ra rb) (%dispatch %op ra rb))
             ((ra rb rc) (%dispatch %op ra rb rc))
             (rx (%apply-sloop %apply-op rx)))
-      rx)))
+      rx)
+    (values)))
 
 (define (ra-map! ra op . rx)
   "
@@ -591,9 +592,10 @@ See also: @code{ra-every} @code{ra-equal?} @code{ra-fold}
                                  (= (vector-length da) (vector-length db)))
                       (exit #f))
                     (vector-for-each
-                     (lambda (da db)
-                       (unless (and (eqv? (dim-lo da) (dim-lo db)) (eqv? (dim-len da) (dim-len db)))
-                         (exit #f)))
+                     (match-lambda*
+                       ((($ <dim> alen alo _) ($ <dim> blen blo _))
+                        (unless (and (eqv? alo blo) (eqv? alen blen))
+                          (exit #f))))
                      da db)))
         rx)
       #t)))

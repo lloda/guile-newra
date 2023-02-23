@@ -1,6 +1,6 @@
 ; -*- mode: scheme; coding: utf-8 -*-
 
-; (c) Daniel Llorens - 2016-2017
+; (c) Daniel Llorens - 2016-2023
 ; This library is free software; you can redistribute it and/or modify it under
 ; the terms of the GNU General Public License as published by the Free
 ; Software Foundation; either version 3 of the License, or (at your option) any
@@ -128,6 +128,7 @@ Then any shape op on arrays needs to be beatable on the args to avoid having to 
 (define n 100)
 (define B (ra-copy #t (ra-i n n)))
 (define C (ra-copy #t (ra-i n n)))
+(define ⍉ ra-transpose)
 
 ; Guile newra doesn't define gemm so we make it up on the spot. A few versions...
 
@@ -169,7 +170,6 @@ Then any shape op on arrays needs to be beatable on the args to avoid having to 
 (define N #e1e7)
 (define y (ra-copy 'f64 (ra-iota N)))
 ,time (ra-fold + 0 y)    ;  ~ 4.7s for #e1e8, 1.7s for #e1e7
-
 
 (define y (let ((y (make-typed-array 'f64 0 N)))
             (array-index-map! y (lambda (i) i))

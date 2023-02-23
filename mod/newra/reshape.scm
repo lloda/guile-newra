@@ -91,14 +91,15 @@ See also: make-ra-root make-ra-new
              (ndim (vector-ref ndims k)))
         (vector-set!
          ndims k
-         (if ndim
-           (if (= (dim-lo odim) (dim-lo ndim))
-             (make-dim (let* ((nd (dim-len ndim)) (od (dim-len odim)))
-                         (if nd (and od (min nd od)) od))
-                       (dim-lo ndim)
-                       (+ (dim-step odim) (dim-step ndim)))
-             (throw 'bad-lo))
-           odim))))))
+         (match ndim
+           (#f odim)
+           (($ <dim> nlen nlo nstep)
+            (match odim
+              (($ <dim> olen olo ostep)
+               (if (= olo nlo)
+                 (make-dim (if nlen (and olen (min nlen olen)) olen)
+                           nlo (+ ostep nstep))
+                 (throw 'bad-lo)))))))))))
 
 ; TODO Does it make sense to define this so rank ra = len axes, allow repeats?
 
@@ -272,7 +273,8 @@ See also: ra-ravel ra-tile ra-transpose ra-from ra-order-c? c-dims make-ra-new
         (throw 'bad-size-for-reshape ssize (ra-len ra k))))
     (match (vector-ref (%%ra-dims ra) k)
       (($ <dim> ilen ilo istep)
-       (let ((sdims (vector-map (lambda (d) (make-dim (dim-len d) (dim-lo d) (* (dim-step d) istep))) sdims)))
+       (let ((sdims (vector-map (match-lambda (($ <dim> dlen dlo dstep) (make-dim dlen dlo (* dstep istep))))
+                                sdims)))
          (make-ra-root (%%ra-root ra)
                        (let* ((adims (%%ra-dims ra))
                               (bdims (make-vector (+ (vector-length sdims) (vector-length adims) -1))))
@@ -301,7 +303,8 @@ See also: ra-ravel ra-reshape ra-transpose ra-from ra-order-c? c-dims
 "
   (let ((ra (ra-check ra)))
     (make-ra-root (%%ra-root ra)
-                  (let* ((sdims (vector-map (lambda (d) (make-dim (dim-len d) (dim-lo d) 0)) (apply c-dims s)))
+                  (let* ((sdims (vector-map (match-lambda (($ <dim> dlen dlo _) (make-dim dlen dlo 0)))
+                                            (apply c-dims s)))
                          (adims (%%ra-dims ra))
                          (bdims (make-vector (+ (vector-length sdims) (vector-length adims)))))
                     (vector-copy! bdims 0 adims 0 k)

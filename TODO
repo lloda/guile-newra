@@ -2,16 +2,20 @@
 
 Help: [C-uc .] insert timestamp [C-cc] flip checkbox [C-uucc] partial flip checkbox [C-ct] flip TODO.
 
-* TODO bugs [5/8]
+* TODO bugs [8/11]
   * [X] (call-with-input-string "#3()" read) vs (call-with-input-string "#%3()" read)
   * [X] reader loses type when reading rank-0 arrays
   * [X] ra-equal? errors out with mismatched shapes
   * [X] zero lengths break ra-format
   * [X] (ra-dimensions (ra-iota))
   * [X] (ra-reshape (ra-iota) ...) doesn't work
-  * [ ] ra-slice-for-each shouldn't return anything
-  * [ ] (ra-from (list->ra 2 '((a b c) (x y z))) 1 1) => #%0(y) contradicts doc
+  * [X] (ra-from (list->ra 2 '((a b c) (x y z))) 1 1) => #%0(y) contradicts doc
+    - Resolved in 792491e163794d2788b049b071d6cd0740d59c92 <2023-02-16 Thu 09:33>
+  * [X] ra-slice-for-each shouldn't return anything
+    - Fixed with explicit (values) <2023-02-16 Thu 09:42>
   * [ ] docstrings don't work for define-inlinable-case
+  * [-] define-inlinable-case doesn't inline case-lambda forms
+    - This will be fixed with a patch to guile:module/language/tree-il/peval
   * [ ] manual lacks a hands on intro 'first (import (newra)) then etc'
 
 * TODO documentation [1/1]

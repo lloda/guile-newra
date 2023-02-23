@@ -1,6 +1,6 @@
 ; -*- mode: scheme; coding: utf-8 -*-
 
-; (c) Daniel Llorens - 2016-2021
+; (c) Daniel Llorens - 2016-2023
 ; This library is free software; you can redistribute it and/or modify it under
 ; the terms of the GNU General Public License as published by the Free
 ; Software Foundation; either version 3 of the License, or (at your option) any
@@ -56,7 +56,7 @@
 
 
 ; ----------------
-; misc - FIXME remove if unused
+; misc
 ; ----------------
 
 ; from Guile's (rnrs base)
@@ -78,6 +78,7 @@
 
 ; cf https://www.scheme.com/tspl4/syntax.html - define-integrable
 ; cf guile/module/ice-9/boot.scm - define-inlinable
+; actually inlining depends on Guile's peval.
 
 (define-syntax define-inlinable-case
   (lambda (x)
@@ -102,7 +103,8 @@
                          (case-lambda DOC (formals form1 form2 ...) ...))
                        arg (... ...)))))))))
       ((_ name (case-lambda (formals form1 form2 ...) ...))
-       #'(define-inlinable-case name (case-lambda "" (formals form1 form2 ...) ...))))))
+       #'(define-inlinable-case name
+           (case-lambda "" (formals form1 form2 ...) ...))))))
 
 
 ; ----------------
@@ -139,6 +141,12 @@
   (lo dim-lo)
   (step dim-step))
 
+; when we KNOW arg is <dim>.
+
+(define-inlinable (%%dim-len dim) (struct-ref dim 0))
+(define-inlinable (%%dim-lo dim) (struct-ref dim 1))
+(define-inlinable (%%dim-step dim) (struct-ref dim 2))
+
 (define-inlinable-case make-dim
   (case-lambda
    "
@@ -161,20 +169,31 @@ See also: dim-len dim-lo dim-step c-dims
     (make-dim* len lo step))))
 
 (define-inlinable (dim-end dim)
-  (+ (dim-lo dim) (dim-len dim)))
+  (match dim
+    (($ <dim> len lo _)
+     (+ lo len))))
 
-(define-inlinable (dim-hi dim)
-  (let ((len (dim-len dim)))
-    (and len (+ (dim-lo dim) (dim-len dim) -1))))
+(define-inlinable-case dim-hi
+  (case-lambda
+   ((len lo)
+    (and len (+ lo len -1)))
+   ((dim)
+    (match dim
+      (($ <dim> len lo _)
+       (dim-hi len lo))))))
 
-(define-inlinable (dim-check dim i)
-  (if (let ((lo (dim-lo dim)))
-        (and
+(define-inlinable-case dim-check
+  (case-lambda
+   ((len lo i)
+    (if (and
          (or (not lo) (>= i lo))
-         (let ((len (dim-len dim)))
-           (or (not len) (< i (+ len lo)))))) ; len implies lo
-    i
-    (throw 'dim-check-out-of-range dim i)))
+         (or (not len) (< i (+ len lo)))) ; len implies lo
+      i
+      (throw 'dim-check-out-of-range len lo i)))
+   ((dim i)
+    (match dim
+      (($ <dim> len lo _)
+       (dim-check len lo i))))))
 
 
 ; ----------------
@@ -288,9 +307,9 @@ See also: @code{ra-offset}
     ((_ j pos dims)
      pos)
     ((_ j pos dims i0 i ...)
-     (let ((dim (vector-ref dims j)))
-       (dim-check dim i0)
-       (%ra-pos (+ j 1) (+ pos (* i0 (dim-step dim))) dims i ...)))))
+     (let ((dimj (vector-ref dims j)))
+       (dim-check (%%dim-len dimj) (%%dim-lo dimj) i0)
+       (%ra-pos (+ j 1) (+ pos (* i0 (%%dim-step dimj))) dims i ...)))))
 
 (define-inlinable-case ra-pos
   (case-lambda
@@ -306,8 +325,10 @@ See also: @code{ra-offset}
         pos
         (if (>= j (vector-length dims))
           (throw 'too-many-indices i_)
-          (let ((dim (vector-ref dims j)))
-            (loop (+ j 1) (+ pos (* (dim-check dim (car i)) (dim-step dim))) (cdr i)))))))))
+          (let ((dimj (vector-ref dims j)))
+            (loop (+ j 1)
+                  (+ pos (* (dim-check (%%dim-len dimj) (%%dim-lo dimj) (car i)) (%%dim-step dimj)))
+                  (cdr i)))))))))
 
 (define-inlinable-case ra-offset
   (case-lambda
@@ -330,9 +351,10 @@ See also: @code{ra-zero}
     (let loop ((k (min (+ k org) (vector-length dims))) (pos zero))
       (if (<= k org)
         pos
-        (let* ((k (- k 1))
-               (dim (vector-ref dims k)))
-          (loop k (+ pos (* (or (dim-lo dim) 0) (dim-step dim))))))))))
+        (let ((k (- k 1)))
+          (match (vector-ref dims k)
+            (($ <dim> _ lo step)
+             (loop k (+ pos (* (or lo 0) step)))))))))))
 
 
 ; ----------------
@@ -353,8 +375,9 @@ See also: @code{ra-zero}
   (syntax-rules  ()
     ((_ ra i ...)
      (begin
-       (unless (= (ra-rank ra) (%length i ...))
-         (throw 'bad-number-of-indices (ra-rank ra) (%length i ...)))
+       (let ((rank (ra-rank ra)))
+         (unless (= rank (%length i ...))
+           (throw 'bad-number-of-indices rank (%length i ...))))
        ((%%ra-vref ra) (%%ra-root ra) (%ra-pos 0 (%%ra-zero ra) (%%ra-dims ra) i ...))))))
 
 (define-inlinable-case ra-ref
@@ -624,9 +647,12 @@ Make new array of @var{type} from dim-vector @var{dims}, and fill it with
 See also: @code{make-dim} @code{ra-dims} @code{make-ra-root} @code{c-dims}
 "
   (let ((size (vector-fold
-               (lambda (a c)
-                 (* c (let ((len (dim-len a)))
-                        (or len (if (zero? (dim-step a)) 1 (throw 'cannot-make-new-ra-with-dims dims))))))
+               (lambda (dim c)
+                 (match dim
+                   (($ <dim> len _ step)
+                    (* c (or len (if (zero? step)
+                                   1
+                                   (throw 'cannot-make-new-ra-with-dims dims)))))))
                1 dims))
         (make (pick-make type)))
     (make-ra-root (if (unspecified? value) (make size) (make size value))
@@ -648,7 +674,10 @@ Return a list with the lower and upper bounds of each dimension of @var{ra}.
 
 See also: @code{ra-rank} @code{ra-dimensions} @code{ra-len}
 "
-  (map (lambda (dim) (list (dim-lo dim) (dim-hi dim))) (vector->list (ra-dims ra))))
+  (map (match-lambda
+         (($ <dim> len lo _)
+          (list lo (dim-hi len lo))))
+    (vector->list (ra-dims ra))))
 
 (define (ra-dimensions ra)
   "
@@ -662,11 +691,11 @@ the size of that dimension instead of a lower bound - upper bound pair.
 
 See also: @code{ra-rank} @code{ra-shape} @code{ra-len}
 "
-  (map (lambda (dim)
-         (let ((lo (dim-lo dim)))
-           (if (or (not lo) (zero? lo))
-             (dim-len dim)
-             (list lo (dim-hi dim)))))
+  (map (match-lambda
+         (($ <dim> len lo _)
+          (if (or (not lo) (zero? lo))
+            len
+            (list lo (dim-hi len lo)))))
     (vector->list (ra-dims ra))))
 
 (define* (ra-len ra #:optional (k 0))

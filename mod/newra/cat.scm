@@ -22,8 +22,9 @@
 (define (plain-cat! i dest . xx)
   (fold (lambda (x base)
           (let ((len lo hi (if (< i (ra-rank x))
-                             (let ((d (vector-ref (ra-dims x) i)))
-                               (values (dim-len d) (dim-lo d) (dim-hi d)))
+                             (match (vector-ref (ra-dims x) i)
+                               (($ <dim> len lo _)
+                                (values len lo (dim-hi len lo))))
                              (values 1 0 0))))
             (ra-amend! dest
 ; optimization
