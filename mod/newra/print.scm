@@ -105,13 +105,15 @@
 ; FIXME ra-slice-for-each should do this
     (values)))
 
-(define arts (make-ra-root (vector "┆╌┌┐└┘     " "│─┌┐└┘├┤┬┴┼" "║═╔╗╚╝╠╣╦╩╬" "┃━┏┓┗┛┣┫┳┻╋" "████████████")))
+(define arts (make-ra-root (vector "┆╌┌┐└┘     " "│─┌┐└┘├┤┬┴┼" "║═╔╗╚╝╠╣╦╩╬" "┃━┏┓┗┛┣┫┳┻╋"
+                                   "░░░░░░░░░░░" "▒▒▒▒▒▒▒▒▒▒▒" "▓▓▓▓▓▓▓▓▓▓▓" "████████████")))
 
 (define (vector-any pred? v)
   (let/ec exit
     (vector-for-each (lambda (e) (and=> (pred? e) exit)) v)
     #f))
 
+; FIXME if a cell prints as nothing (e.g. "" with compact? #t) then it shouldn't take up vertical space.
 (define* (ra-format ra #:optional (port #t) #:key (fmt "~a") (prefix? #t) compact?)
   (define prefix (and prefix? (call-with-output-string (cut ra-print-prefix ra <>))))
   (let ((ra (if (vector-any (lambda (d)

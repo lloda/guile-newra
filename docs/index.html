@@ -1866,13 +1866,13 @@ indices that match those elements. <code>newra</code> will <em>not</em> check th
 </p>
 <p>Each element <var>x</var> of <var>ra</var> is converted to a string using <code>(fmt x)</code>, or <code>(format #f fmt x)</code><a id="DOCF11" href="#FOOT11"><sup>11</sup></a> if <var>fmt</var> is a string. <var>fmt</var> defauts to <code>&quot;~a&quot;</code>. Elements that are arrays are formatted using <code>ra-format</code> recursively.
 </p>
-<p>If <var>port</var> is <code>#f</code>, nothing is printed; instead, the function returns a rank-2 character array <var>sc</var> with the result of the printing. Otherwise the array is printed to <var>port</var> and the function returns unspecified values. The default for <var>port</var> is <code>#t</code>, which works as <code>(current-output-port)</code>.
+<p>If <var>port</var> is <code>#f</code>, nothing is printed and the function returns a rank-2 character array <var>sc</var> with the result of the printing. Otherwise the array is printed to <var>port</var> and the function returns unspecified values. The default for <var>port</var> is <code>#t</code>, which works as <code>(current-output-port)</code>.
 </p>
 <p>If <var>prefix?</var> is true, the array print prefix <a href="#x_002dra_002dprint_002dprefix"><code>ra-print-prefix</code></a> is printed over the first line of the printout if the rank of <var>ra</var> is 2 or greater, else it is printed on a separate line above the printout.
 </p>
 <p>If <var>compact?</var> is true, the separators for the rank-0 cells are replaced by spaces and the separators for the rank-1 cells are omitted. This results in a more compact output at the cost of some clarity.
 </p>
-<p>This function handles arrays of rank up to 8, or up to 10 in compact mode. The even dimensions (counting from the last one) are arranged horizontally, while the odd dimensions are arranged vertically. The dimensions are separated visually using <a href="https://unicode.org/charts/nameslist/n_2500.html">box-drawing characters</a>. This might look better or worse depending on the font.
+<p>This function handles arrays of rank up to 14, or up to 16 in compact mode. The even dimensions (counting from the last one) are arranged horizontally, while the odd dimensions are arranged vertically. The dimensions are separated visually using <a href="https://unicode.org/charts/nameslist/n_2500.html">box-drawing characters</a>. This might look better or worse depending on the font.
 </p>
 <p>A 0-array:
 </p><div class="example">

@@ -396,7 +396,7 @@ See also: @code{ra-copy!} @code{ra-map!}
 "
   (define (line! t step)
     (match t
-; These only support step 1. bytevector-fill! can be used after Guile 3.0.8 (check).
+; These only support step 1.
       (#t
        (and (= step 1)
             (lambda (da len za stepa)
@@ -558,7 +558,6 @@ For example:
 
 @lisp
 ; find some i, j such that A(i, j) is true
-
 (define I (ra-iota #f))
 (define J (ra-transpose (ra-iota #f) 1))
 (ra-any (lambda (a i j) (and a (vector i j))) A I J)

@@ -222,9 +222,10 @@
    "
 list->ra [type] shape l -> ra
 
-Convert the nested list L to a RA of type TYPE. TYPE defaults to #t.
+Convert the nested list @var{l} to array of @var{type}. @var{type} defaults to
+@code{#t}.
 
-The argument SHAPE determines the number of dimensions of the array and their
+@var{SHAPE} determines the number of dimensions of the array and their
 shape.  It is either an exact integer, giving the number of dimensions directly,
 or a list whose length specifies the number of dimensions and each element
 specified the lower and optionally the upper bound of the corresponding
@@ -240,10 +241,7 @@ See also: list->typed-ra ra->list ra-copy ra-copy! as-ra
 ; FIXME looks up all lengths first. Is that necessary?
 
 (define (list->typed-ra type shape l)
-  "
-list->typed-ra type shape l -> ra
-
-Equivalent to (list->ra TYPE SHAPE L).
+  "Equivalent to (list->ra TYPE SHAPE L).
 
 See also: list->ra ra->list ra-copy ra-copy! as-ra
 "

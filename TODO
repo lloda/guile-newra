@@ -2,7 +2,7 @@
 
 Help: [C-uc .] insert timestamp [C-cc] flip checkbox [C-uucc] partial flip checkbox [C-ct] flip TODO.
 
-* TODO bugs [8/11]
+* TODO bugs [9/10]
   * [X] (call-with-input-string "#3()" read) vs (call-with-input-string "#%3()" read)
   * [X] reader loses type when reading rank-0 arrays
   * [X] ra-equal? errors out with mismatched shapes
@@ -13,13 +13,13 @@ Help: [C-uc .] insert timestamp [C-cc] flip checkbox [C-uucc] partial flip check
     - Resolved in 792491e163794d2788b049b071d6cd0740d59c92 <2023-02-16 Thu 09:33>
   * [X] ra-slice-for-each shouldn't return anything
     - Fixed with explicit (values) <2023-02-16 Thu 09:42>
+  * [X] define-inlinable-case doesn't inline case-lambda forms
+    - Fixed with a patch to guile:module/language/tree-il/peval (3b47f87618047ebb8812788c64a44877a4f2e0dd)
   * [ ] docstrings don't work for define-inlinable-case
-  * [-] define-inlinable-case doesn't inline case-lambda forms
-    - This will be fixed with a patch to guile:module/language/tree-il/peval
-  * [ ] manual lacks a hands on intro 'first (import (newra)) then etc'
 
-* TODO documentation [1/1]
+* TODO documentation [1/2]
   * [X] actually explain rank extension / prefix matching in the manual
+  * [ ] manual lacks a hands on intro 'first (import (newra)) then etc'
 
 * TODO compatibility with existing Guile arrays [8/9]
   * [X] ra-slice-for-each ra-map! ra-for-each ra-cell ra-ref ra-set!
@@ -101,7 +101,7 @@ Help: [C-uc .] insert timestamp [C-cc] flip checkbox [C-uucc] partial flip check
   * [ ] reading of arrays with inf axes
   * [ ] reading of arrays with dead axes
 
-* TODO quality of life [3/16]
+* TODO quality of life [2/15]
   * [X] make (ra ...) work with generalized slices just like (ra-from ...).
   * [ ] make (set! (ra ...) o) work with slices (now) or generalized slices (eventually) just like (ra ...).
   * [X] rank-1 ops in the unrolled section (e.g. bytevector-copy!, bytevector-fill!).
@@ -115,20 +115,18 @@ Help: [C-uc .] insert timestamp [C-cc] flip checkbox [C-uucc] partial flip check
   * [ ] bench tracking
   * [ ] move struct defs to (newra types)
   * [ ] ra-unique-elements?
-  * [X] parameters to control print format (eg print sizes/strides, truncate...)
-    - [X] CL/SRFI-163 style rank-0 (e.g. '#0 x' instead of '#0(x)').
-    - [X] print sizes in prefix
-    - [X] pretty-print
-  * [-] pretty printer
+  * [-] pretty printer [4/6]
     - [X] basic ra-format
+    - [X] print sizes in prefix
+    - [X] CL/SRFI-163 style rank-0 (e.g. '#0 x' instead of '#0(x)').
     - [X] compact mode
     - [ ] handle unbounded axes
     - [ ] auto truncation
-  * [-] an ffi to Fortran based on iso_c_binding, be able to pass arrays & scalars at least
+  * [-] an ffi to Fortran based on iso_c_binding, be able to pass arrays & scalars at least [3/6]
     - [X] fix rank 0
     - [X] fix non-zero ra-offset
     - [X] verify behavior of lbounds
-    - [-] fortran-library-function
+    - [-] fortran-library-function [3/7]
       + [X] c32/c64
       + [X] fix arg-types format
       + [X] working example with intent(inout)

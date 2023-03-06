@@ -1992,13 +1992,13 @@ Pretty print array @var{ra}.
 
 Each element @var{x} of @var{ra} is converted to a string using @code{(fmt x)}, or @code{(format #f fmt x)}@footnote{@url{https://www.gnu.org/software/guile/manual/html_node/Formatted-Output.html,@code{(ice-9 format)}}} if @var{fmt} is a string. @var{fmt} defauts to @code{"~a"}. Elements that are arrays are formatted using @code{ra-format} recursively.
 
-If @var{port} is @code{#f}, nothing is printed; instead, the function returns a rank-2 character array @var{sc} with the result of the printing. Otherwise the array is printed to @var{port} and the function returns unspecified values. The default for @var{port} is @code{#t}, which works as @code{(current-output-port)}.
+If @var{port} is @code{#f}, nothing is printed and the function returns a rank-2 character array @var{sc} with the result of the printing. Otherwise the array is printed to @var{port} and the function returns unspecified values. The default for @var{port} is @code{#t}, which works as @code{(current-output-port)}.
 
 If @var{prefix?} is true, the array print prefix @ref{x-ra-print-prefix,@code{ra-print-prefix}} is printed over the first line of the printout if the rank of @var{ra} is 2 or greater, else it is printed on a separate line above the printout.
 
 If @var{compact?} is true, the separators for the rank-0 cells are replaced by spaces and the separators for the rank-1 cells are omitted. This results in a more compact output at the cost of some clarity.
 
-This function handles arrays of rank up to 8, or up to 10 in compact mode. The even dimensions (counting from the last one) are arranged horizontally, while the odd dimensions are arranged vertically. The dimensions are separated visually using @url{https://unicode.org/charts/nameslist/n_2500.html,box-drawing characters}. This might look better or worse depending on the font.
+This function handles arrays of rank up to 14, or up to 16 in compact mode. The even dimensions (counting from the last one) are arranged horizontally, while the odd dimensions are arranged vertically. The dimensions are separated visually using @url{https://unicode.org/charts/nameslist/n_2500.html,box-drawing characters}. This might look better or worse depending on the font.
 
 A 0-array:
 @example
