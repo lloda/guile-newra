@@ -2460,7 +2460,7 @@ b
 <span id="x_002dra_002dref"></span><dl class="def">
 <dt id="index-ra_002dref-1"><span class="category">Function<!-- /@w -->: </span><span><strong>ra-ref</strong> <em>a i ...</em><a href='#index-ra_002dref-1' class='copiable-anchor'> &para;</a></span></dt>
 <dd>
-<p>Look up array element. It is an error if the number of <var>i ...</var> doesn&rsquo;t match the rank of <var>a</var>.
+<p>Look up element of array <var>a</var>. The indices <var>i ...</var> must be integers within the bounds of <var>a</var>. It is an error if the number of <var>i ...</var> doesn&rsquo;t match the rank of <var>a</var>.
 </p>
 <p>See also: <a href="#x_002dra_002dcell"><code>ra-cell</code></a>, <a href="#x_002dra_002dslice"><code>ra-slice</code></a>, <a href="#x_002dra_002dfrom"><code>ra-from</code></a>, <a href="#x_002dra_002dset_0021"><code>ra-set!</code></a>, <a href="#Slicing">Slicing</a>.
 </p>
@@ -2644,11 +2644,9 @@ a
 <span id="x_002dra_002dslice"></span><dl class="def">
 <dt id="index-ra_002dslice-1"><span class="category">Function<!-- /@w -->: </span><span><strong>ra-slice</strong> <em>a i ...</em><a href='#index-ra_002dslice-1' class='copiable-anchor'> &para;</a></span></dt>
 <dd>
-<p>Look up cell of array <var>a</var> at positions <var>i ...</var>
+<p>Look up cell of array <var>a</var>. The indices <var>i ...</var> must be integers within the bounds of <var>a</var>.
 </p>
-<p>This function returns a view of <var>a</var> with rank <var>k</var> equal to the rank of <var>a</var> minus the number of <var>i ...</var>, even if that is 0.
-</p>
-<p>It is an error if the number of <var>i ...</var> exceeds the rank of <var>a</var>.
+<p>This function returns a view of <var>a</var> with rank <var>k</var> equal to the rank of <var>a</var> minus the number of <var>i ...</var>, even if that is 0. It is an error if the number of <var>i ...</var> exceeds the rank of <var>a</var>.
 </p>
 <p>See also: <a href="#x_002dra_002dcell"><code>ra-cell</code></a>, <a href="#x_002dra_002dref"><code>ra-ref</code></a>, <a href="#x_002dra_002dfrom"><code>ra-from</code></a>, <a href="#Slicing">Slicing</a>.
 </p>

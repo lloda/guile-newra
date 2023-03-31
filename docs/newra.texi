@@ -2698,7 +2698,7 @@ See also: @ref{x-ra-reshape,@code{ra-reshape}}, @ref{x-ra-tile,@code{ra-tile}}, 
 @anchor{x-ra-ref}
 @deffn @w{Function} ra-ref a i ...
 
-Look up array element. It is an error if the number of @var{i ...} doesn't match the rank of @var{a}.
+Look up element of array @var{a}. The indices @var{i ...} must be integers within the bounds of @var{a}. It is an error if the number of @var{i ...} doesn't match the rank of @var{a}.
 
 See also: @ref{x-ra-cell,@code{ra-cell}}, @ref{x-ra-slice,@code{ra-slice}}, @ref{x-ra-from,@code{ra-from}}, @ref{x-ra-set!,@code{ra-set!}}, @ref{Slicing}.
 
@@ -2916,11 +2916,9 @@ See also: @ref{x-ra-amend!,@code{ra-amend!}}, @ref{x-ra-ref,@code{ra-ref}}, @ref
 @anchor{x-ra-slice}
 @deffn @w{Function} ra-slice a i ...
 
-Look up cell of array @var{a} at positions @var{i ...}
+Look up cell of array @var{a}. The indices @var{i ...} must be integers within the bounds of @var{a}.
 
-This function returns a view of @var{a} with rank @var{k} equal to the rank of @var{a} minus the number of @var{i ...}, even if that is 0.
-
-It is an error if the number of @var{i ...} exceeds the rank of @var{a}.
+This function returns a view of @var{a} with rank @var{k} equal to the rank of @var{a} minus the number of @var{i ...}, even if that is 0. It is an error if the number of @var{i ...} exceeds the rank of @var{a}.
 
 See also: @ref{x-ra-cell,@code{ra-cell}}, @ref{x-ra-ref,@code{ra-ref}}, @ref{x-ra-from,@code{ra-from}}, @ref{Slicing}.
 

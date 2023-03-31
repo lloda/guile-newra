@@ -101,9 +101,7 @@
       (lambda (line)
         (ra-for-each (cut display <> o) line)
         (newline o))
-      sc)
-; FIXME ra-slice-for-each should do this
-    (values)))
+      sc)))
 
 (define arts (make-ra-root (vector "┆╌┌┐└┘     " "│─┌┐└┘├┤┬┴┼" "║═╔╗╚╝╠╣╦╩╬" "┃━┏┓┗┛┣┫┳┻╋"
                                    "░░░░░░░░░░░" "▒▒▒▒▒▒▒▒▒▒▒" "▓▓▓▓▓▓▓▓▓▓▓" "████████████")))
@@ -114,6 +112,7 @@
     #f))
 
 ; FIXME if a cell prints as nothing (e.g. "" with compact? #t) then it shouldn't take up vertical space.
+; FIXME compact rank <=2 should avoid borders at all.
 (define* (ra-format ra #:optional (port #t) #:key (fmt "~a") (prefix? #t) compact?)
   (define prefix (and prefix? (call-with-output-string (cut ra-print-prefix ra <>))))
   (let ((ra (if (vector-any (lambda (d)
@@ -149,7 +148,6 @@
                                     sq)
 ; FIXME handle border entirely here
         (when (and compact? (> (ra-rank l) 0))
-; FIXME need ra-hi
           (let ((ll (ra-from l (dots) (dim-hi (vector-ref (ra-dims l) (- (ra-rank l) 1))))))
             (ra-map! ll (cut + <> 1) ll)))
         l))
@@ -198,14 +196,14 @@
                    (begin
                      (ra-for-each (lambda (m0) (line-1 sc k (ra-iota (+ 1 t1) 0) m0)) m0)
                      (ra-for-each (lambda (m1) (line-0 sc k (ra-iota (+ 1 t0) 0) m1)) m1)))
-; crosses
+; inner crosses
                  (if compact?
                    (when (> k 0)
                      (ra-for-each (lambda (m0 m1) (ra-set! sc (char k 10) m0 m1))
                                   >m0< (ra-transpose >m1< 1)))
                    (ra-for-each (lambda (m0 m1) (ra-set! sc (char k 10) m0 m1))
                                 >m0< (ra-transpose >m1< 1)))
-; crosses horiz + vert
+; edge crosses
                  (unless (and compact? (zero? k))
                    (ra-for-each (lambda (m0)
                                   (ra-set! sc (char k 6) m0 0)

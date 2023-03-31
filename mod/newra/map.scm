@@ -42,8 +42,8 @@
                 (ra-check ra)
                 (let ((framek (min k (%%ra-rank ra))))
                   (do ((j 0 (+ j 1))) ((= j framek))
-                    (let* ((lenj0 (vector-ref len j))
-                           (loj0 (vector-ref lo j)))
+                    (let ((lenj0 (vector-ref len j))
+                          (loj0 (vector-ref lo j)))
                       (match (vector-ref (%%ra-dims ra) j)
                         (($ <dim> lenj loj _)
                          (if lenj0

@@ -21,10 +21,10 @@
          (ec (status:exit-val (close-pipe p))))
     (values s ec)))
 
-(format #t "Guile ~a\n~!" (version))
-(format #t "newra ~a ~a\n~!"
-        (string-trim-both (command-output "git" "describe" "--always" "--dirty"))
-        (date->string (current-date) "~4"))
+;; (format #t "Guile ~a\n~!" (version))
+;; (format #t "newra ~a ~a\n~!"
+;;         (string-trim-both (command-output "git" "describe" "--always" "--dirty"))
+;;         (date->string (current-date) "~4"))
 
 (define (format-header . x)
   (apply format #t
