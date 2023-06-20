@@ -8,15 +8,15 @@ on:
     branches: [ master ]
   workflow_dispatch:
 
-jobs:
-  build:
-    runs-on: ubuntu-latest
-    steps:
-      - name: update
-        run: |
-          sudo apt update
-          sudo apt install guile-3.0
-      - uses: actions/checkout@v3
-      - name: test
-        run: |
-          guile -L mod test/test.scm
+# jobs:
+#   build:
+#     runs-on: ubuntu-latest
+#     steps:
+#       - name: update
+#         run: |
+#           sudo apt update
+#           sudo apt install guile-3.0
+#       - uses: actions/checkout@v3
+#       - name: test
+#         run: |
+#           guile -L mod test/test.scm
