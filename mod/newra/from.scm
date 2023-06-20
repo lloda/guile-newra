@@ -19,10 +19,10 @@
 ; FIXME these are tested separately in test/test.scm, which may not be necessary.
             fromb fromu amendu!))
 
-(import (srfi 1) (srfi 9) (srfi srfi-9 gnu) (srfi 26) (srfi 71)
+(import (srfi srfi-1) (srfi srfi-9) (srfi srfi-9 gnu) (srfi srfi-26) (srfi srfi-71)
         (newra base) (newra map) (newra lib) (newra reshape) (newra vector)
         (ice-9 control) (ice-9 match)
-        (only (srfi 43) vector-copy)
+        (only (srfi srfi-43) vector-copy)
         (only (rnrs base) vector-map vector-for-each))
 
 (define-immutable-record-type <dots>

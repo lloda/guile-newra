@@ -10,7 +10,7 @@
 ; see ffi.cc, https://j3-fortran.org/doc/year/18/18-007r1.pdf
 
 (import (newra) (newra base) (newra ffi)
-        (srfi 8) (srfi 26) (srfi 71) (srfi 1) (srfi 111)
+        (srfi srfi-8) (srfi srfi-26) (srfi srfi-71) (srfi srfi-1) (srfi srfi-111)
         (ice-9 match) (ice-9 format) (rnrs bytevectors)
         (system foreign) (system foreign-library))
 

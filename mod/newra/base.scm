@@ -27,8 +27,8 @@
             %%ra-zero-set! %%ra-dims %%ra-vlen %%ra-vref %%ra-vset! %%ra-step
             ra-shape ra-dimensions ra-len ra-lo ra-size))
 
-(import (srfi 26) (srfi 2) (srfi 71) (srfi srfi-4 gnu) (srfi srfi-9 gnu)
-        (only (srfi 1) fold every) (ice-9 match) (ice-9 control)
+(import (srfi srfi-26) (srfi srfi-2) (srfi srfi-71) (srfi srfi-4 gnu) (srfi srfi-9 gnu)
+        (only (srfi srfi-1) fold every) (ice-9 match) (ice-9 control)
         (rnrs bytevectors) (only (rnrs base) vector-for-each)
         (ice-9 exceptions)
         (newra vector))

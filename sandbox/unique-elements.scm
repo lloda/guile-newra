@@ -8,10 +8,10 @@ https://github.com/numpy/numpy/blob/main/numpy/core/src/common/mem_overlap.c
 https://github.com/Kraks/omega/blob/master/src/main/scala/omega/Omega.scala
 |#
 
-(import (only (srfi 43) vector-copy! vector-fill! vector-every vector-any)
+(import (only (srfi srfi-43) vector-copy! vector-fill! vector-every vector-any)
         (only (rnrs base) vector-map vector-for-each)
         (ice-9 control)
-        (srfi 26)
+        (srfi srfi-26)
         (newra))
 
 (define (ra-unique-elements-brute-force? ra)

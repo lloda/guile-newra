@@ -13,7 +13,7 @@
 (define-module (test map-ladder)
   #:export (ra-slice-for-each-1 ra-slice-for-each-2 ra-slice-for-each-3 ra-slice-for-each-4))
 
-(import (newra base) (srfi 26) (srfi 71) (ice-9 control)
+(import (newra base) (srfi srfi-26) (srfi srfi-71) (ice-9 control)
         (only (rnrs base) vector-for-each)
         (only (newra map) ra-slice-for-each-check make-ra-root-prefix ra-slice-for-each))
 

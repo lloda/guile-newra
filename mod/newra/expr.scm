@@ -12,7 +12,7 @@
 
 ;; (define-module (newra expr))
 
-(import (newra) (only (srfi 1) fold every) (srfi 71) (srfi 26) (ice-9 match))
+(import (newra) (only (srfi srfi-1) fold every) (srfi srfi-71) (srfi srfi-26) (ice-9 match))
 
 
 ; ----------------

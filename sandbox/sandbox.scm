@@ -9,7 +9,8 @@
 ; Trying things.
 
 (import (newra) (newra tools) (newra base) (ice-9 match) (ice-9 format)
-        (srfi 8) (srfi 26) (srfi 1) (only (srfi 43) vector-copy! vector-fill!)
+        (srfi srfi-8) (srfi srfi-26) (srfi srfi-1)
+        (only (srfi srfi-43) vector-copy! vector-fill!)
         (rnrs io ports) (only (rnrs base) vector-map)
         (only (rnrs bytevectors) bytevector-copy! bytevector-fill!))
 

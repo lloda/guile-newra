@@ -13,7 +13,7 @@
 (define-module (newra ffi)
   #:export (ra->fortran fortran-library-function))
 
-(import (srfi 8) (srfi 26) (srfi 71) (srfi 1) (srfi srfi-4 gnu)
+(import (srfi srfi-8) (srfi srfi-26) (srfi srfi-71) (srfi srfi-1) (srfi srfi-4 gnu)
         (ice-9 match) (ice-9 format) (rnrs bytevectors)
         (system foreign) (system foreign-library)
         (newra) (newra base))

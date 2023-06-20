@@ -17,11 +17,11 @@
             ra-every ra-any ra-equal?))
 
 (import (newra base) (newra vector) (newra blis)
-        (srfi 9) (srfi srfi-9 gnu) (srfi 71) (srfi 2) (srfi 26) (srfi srfi-4 gnu)
+        (srfi srfi-9) (srfi srfi-9 gnu) (srfi srfi-71) (srfi srfi-2) (srfi srfi-26) (srfi srfi-4 gnu)
         (ice-9 match) (ice-9 control)
-        (only (srfi 1) fold every)
+        (only (srfi srfi-1) fold every)
         (only (rnrs base) vector-map vector-for-each)
-        (only (srfi 43) vector-copy! vector-fill! vector-every)
+        (only (srfi srfi-43) vector-copy! vector-fill! vector-every)
         (only (rnrs bytevectors) bytevector-copy! bytevector-fill! bytevector?))
 
 (eval-when (expand load eval)

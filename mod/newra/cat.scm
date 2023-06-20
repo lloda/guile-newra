@@ -13,7 +13,8 @@
 (define-module (newra cat)
   #:export (ra-cat ra-cats))
 
-(import (srfi 1) (srfi 26) (srfi 71) (newra base) (newra lib) (newra reshape) (newra from) (ice-9 match))
+(import (srfi srfi-1) (srfi srfi-26) (srfi srfi-71) (newra base) (newra lib)
+        (newra reshape) (newra from) (ice-9 match))
 
 (define (list-subst! l k val)
   (list-set! l k val)
