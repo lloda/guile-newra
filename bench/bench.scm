@@ -7,7 +7,7 @@
 ; Software Foundation; either version 3 of the License, or (at your option) any
 ; later version.
 
-; Run with $GUILE -L mod bench.scm
+; Run with $GUILE -L mod bench/bench.scm
 
 (import (newra) (newra tools) (newra read)
         (only (newra print) ra-print) (test misc)

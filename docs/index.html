@@ -1044,7 +1044,7 @@ Next: <a href="#Transposition" accesskey="n" rel="next">Transposition</a>, Previ
 (s₀ |t₁| s₂ s₃ s₄ s₅)
 </pre></div>
 
-<p>and then concatenate them along axis 1 into an array of shape <code>(s₀ (r₁+s1+t₁) s₂ s₃ s₄ s₅)</code>.
+<p>and then concatenate them along axis 1 into an array of shape <code>(s₀ (r₁+s₁+t₁) s₂ s₃ s₄ s₅)</code>.
 </p>
 <p>For <code>ra-cats</code>, the arguments are suffix-matched, and the concatenation axis is counted from the right. For example
 </p>
@@ -2121,7 +2121,7 @@ element
 <dd><p>Copy <var>src</var> to <var>dst</var>. The arguments must have matching shapes and be of compatible types.
 </p>
 <p>For valid arguments, this is equivalent to any one of
-</p><pre class="verbatim">(ra-map! dst identity src)
+</p><pre class="verbatim">(ra-map! dst values src)
 (ra-amend! dst src)
 </pre>
 <p>See also <a href="#x_002dra_002dcopy"><code>ra-copy</code></a> <a href="#x_002dra_002damend_0021"><code>ra-amend!</code></a> <a href="#x_002dra_002dset_0021"><code>ra-set!</code></a> <a href="#x_002dra_002dmap_0021"><code>ra-map!</code></a>.
@@ -2784,7 +2784,7 @@ a
 <span id="index-ra_002dtranspose"></span>
 <span id="x_002dra_002dtranspose"></span><dl class="def">
 <dt id="index-ra_002dtranspose-1"><span class="category">Function<!-- /@w -->: </span><span><strong>ra-transpose</strong> <em>a axes ... &rArr; b</em><a href='#index-ra_002dtranspose-1' class='copiable-anchor'> &para;</a></span></dt>
-<dd><p>Transpose each axis 0, 1, ... of <var>a</var> to matching destination <var>axes</var>.
+<dd><p>Transpose axes 0, 1, ... of <var>a</var> to matching destination <var>axes</var>.
 </p>
 <div class="example">
 <pre class="verbatim">(ra-transpose (ra-i 2 3) 1 0)

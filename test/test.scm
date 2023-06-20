@@ -7,11 +7,11 @@
 ; Software Foundation; either version 3 of the License, or (at your option) any
 ; later version.
 
-; Run with $GUILE -L mod test.scm
+; Run with $GUILE -L mod test/test.scm
 
 (import (newra) (newra tools) (newra read) (test misc) (test map-ladder)
         (srfi 64) (srfi 26) (srfi 8) (only (srfi 1) fold iota drop)
-        (ice-9 match) (only (rnrs base) vector-map vector-for-each))
+        (ice-9 format) (ice-9 match) (only (rnrs base) vector-map vector-for-each))
 
 (define (ra->string ra) (call-with-output-string (cut display ra <>)))
 (define (string->ra s) (call-with-input-string s read))

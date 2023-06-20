@@ -1093,7 +1093,7 @@ Then @code{(define val (ra-cat #t 1 r s t))} will prefix-match these to (it is a
 @end verbatim
 @end example
 
-and then concatenate them along axis 1 into an array of shape @code{(s₀ (r₁+s1+t₁) s₂ s₃ s₄ s₅)}.
+and then concatenate them along axis 1 into an array of shape @code{(s₀ (r₁+s₁+t₁) s₂ s₃ s₄ s₅)}.
 
 For @code{ra-cats}, the arguments are suffix-matched, and the concatenation axis is counted from the right. For example
 
@@ -2297,7 +2297,7 @@ Copy @var{src} to @var{dst}. The arguments must have matching shapes and be of c
 
 For valid arguments, this is equivalent to any one of
 @verbatim
-(ra-map! dst identity src)
+(ra-map! dst values src)
 (ra-amend! dst src)
 @end verbatim
 
@@ -3088,7 +3088,7 @@ See also: @ref{x-ra-ravel,@code{ra-ravel}}, @ref{x-ra-reshape,@code{ra-reshape}}
 @cindex @code{ra-transpose}
 @anchor{x-ra-transpose}
 @deffn @w{Function} ra-transpose a axes ... @result{} b
-Transpose each axis 0, 1, ... of @var{a} to matching destination @var{axes}.
+Transpose axes 0, 1, ... of @var{a} to matching destination @var{axes}.
 
 @example
 @verbatim

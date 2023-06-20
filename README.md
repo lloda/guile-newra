@@ -1,6 +1,5 @@
-# ![(travis build status)](https://travis-ci.org/lloda/guile-newra.svg?branch=master) #
 
-## newra
+# newra [![guile-3.0](https://github.com/lloda/guile-newra/actions/workflows/guile-3.0.yml/badge.svg)](https://github.com/lloda/guile-newra/actions/workflows/guile-3.0.yml)
 
 guile-newra (`newra`) wants to replace the current (3.0) Guile array system, which is almost entirely implemented in C.
 
