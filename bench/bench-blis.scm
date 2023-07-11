@@ -52,7 +52,7 @@
          (b (ra-map #f / (make-ra ref) b)))
     (format #t "copy! ref/t m ~a n ~a for ref ≈ ~4,3f s.\n" m n ref)
     (ra-format (ra-cats #f 1 (list->ra 1 '(guile newra blis)) b)
-               #:compact? #t #:prefix? #f
+               #:compact 1 #:prefix? #f
                #:fmt (lambda (x) (if (real? x) (format #f "~5,1f" x) (format #f "~a" x))))))
 
 (for-each (match-lambda ((m n) (bench-copym m n)))
@@ -91,7 +91,7 @@
          (b (ra-map #f / (make-ra ref) b)))
     (format #t "fill! ref/t m ~a n ~a for ref ≈ ~4,3f s.\n" m n ref)
     (ra-format (ra-cats #f 1 (list->ra 1 '(guile newra blis)) b)
-               #:compact? #t #:prefix? #f
+               #:compact 1 #:prefix? #f
                #:fmt (lambda (x) (if (real? x) (format #f "~5,1f" x) (format #f "~a" x))))))
 
 (for-each (match-lambda ((m n) (bench-fillm m n)))

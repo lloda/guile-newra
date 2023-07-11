@@ -662,9 +662,10 @@ The writing mode can be configured with the following parameter.
 Set the default printer for arrays. This parameter is available from @code{(newra print)}.
 
 @cindex @code{box}
-@cindex @code{box-compact}
+@cindex @code{box1}
+@cindex @code{box2}
 @cindex @code{default}
-The parameter can be set to a function @code{(λ (array port) ...)} or to one of the values @code{#f}, @code{'default}, @code{'box} or @code{'box-compact}.
+The parameter can be set to a function @code{(λ (array port) ...)} or to one of the values @code{#f}, @code{'default}, @code{'box}, @code{'box1}, or @code{'box2}.
 
 For example
 @example
@@ -697,6 +698,8 @@ $1 =
 └─┴─┴─┘
 @end verbatim
 @end example
+
+The options @code{'box1} and @code{'box2} use @ref{x-ra-format,@code{ra-format}} like @code{'box} but pass 1 or 2 to the @code{#:compact} argument.
 
 The default printer can be reset with @code{(*ra-print* #f)} or @code{(*ra-print* 'default)}.
 @end deffn
@@ -1985,8 +1988,8 @@ See also: @ref{x-ra-shape,@code{ra-shape}}, @ref{x-make-ra,@code{make-ra}}.
 
 @cindex @code{ra-format}
 @anchor{x-ra-format}
-@deffn @w{Function} ra-format ra port #:fmt #:prefix?
-@deffnx @w{Function} ra-format ra #f #:fmt #:prefix? @result{} sc
+@deffn @w{Function} ra-format ra port #:fmt #:prefix? #:compact
+@deffnx @w{Function} ra-format ra #f #:fmt #:prefix? #:compact @result{} sc
 
 Pretty print array @var{ra}.
 
@@ -1996,9 +1999,9 @@ If @var{port} is @code{#f}, nothing is printed and the function returns a rank-2
 
 If @var{prefix?} is true, the array print prefix @ref{x-ra-print-prefix,@code{ra-print-prefix}} is printed over the first line of the printout if the rank of @var{ra} is 2 or greater, else it is printed on a separate line above the printout.
 
-If @var{compact?} is true, the separators for the rank-0 cells are replaced by spaces and the separators for the rank-1 cells are omitted. This results in a more compact output at the cost of some clarity.
+If @var{compact} is 0 (the default) separators are printed around every cell. If @var{compact} is 1, the separators for the rank-0 cells are replaced by spaces and the separators for the rank-1 cells are omitted. This results in a more compact output at the cost of some clarity. If @var{compact} is 2, the separators for the rank-0 cells are also omitted.
 
-This function handles arrays of rank up to 14, or up to 16 in compact mode. The even dimensions (counting from the last one) are arranged horizontally, while the odd dimensions are arranged vertically. The dimensions are separated visually using @url{https://unicode.org/charts/nameslist/n_2500.html,box-drawing characters}. This might look better or worse depending on the font.
+This function handles arrays of rank up to 14, or up to 16 if @var{compact} > 0. The even dimensions (counting from the last one) are arranged horizontally, while the odd dimensions are arranged vertically. The dimensions are separated visually using @url{https://unicode.org/charts/nameslist/n_2500.html,box-drawing characters}. This might look better or worse depending on the font.
 
 A 0-array:
 @example
@@ -2076,7 +2079,7 @@ A 5-array:
 The same 5-array in compact mode:
 @example
 @verbatim
-(ra-format (ra-i 2 2 3 2 4) #:prefix? #f #:compact? #t)
+(ra-format (ra-i 2 2 3 2 4) #:prefix? #f #:compact 1)
 @end verbatim
 @result{}
 @verbatim
@@ -2135,6 +2138,23 @@ Looking at the return value when @var{port} is @code{#f}:
 ├─┼─┼─┼─┼─┼─┼─┤
 │└│─│┴│─│┴│─│┘│
 └─┴─┴─┴─┴─┴─┴─┘
+@end verbatim
+@end example
+
+The same array with @code{#:compact 2}:
+@example
+@verbatim
+(ra-format (ra-format (ra-i 2 3) #f #:prefix? #f) #:prefix? #f #:compact 2)
+@end verbatim
+@result{}
+@verbatim
+┌╌╌╌╌╌╌╌┐
+┆┌─┬─┬─┐┆
+┆│0│1│2│┆
+┆├─┼─┼─┤┆
+┆│3│4│5│┆
+┆└─┴─┴─┘┆
+└╌╌╌╌╌╌╌┘
 @end verbatim
 @end example
 

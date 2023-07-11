@@ -1361,7 +1361,7 @@
   (ra-format ra port #:fmt "~a"))
 
 (let ((ra (ra-i 2 2 2 2 2 2 2 2)))
-  (ra-format ra port #:compact? #t))
+  (ra-format ra port #:compact 1))
 
 (let* ((ra (ra-set! (ra-copy #t (ra-i 7)) (make-ra-root #(hello world of ras) (c-dims 2 2)) 3))
        (ra (ra-tile ra (ra-rank ra) 1)))
@@ -1373,8 +1373,8 @@
                    (#(42 43) #2((8 7 6)) #2((90 91) (100 101)))))
        (ra (array->ra arr))
        (ra (ra-map! (ra-copy ra) (lambda (x) (if (array? x) (array->ra x) x)) ra)))
-  (ra-format ra port #:prefix? #t #:compact? #t)
-  (ra-format ra port #:prefix? #t #:compact? #f))
+  (ra-format ra port #:prefix? #t #:compact 1)
+  (ra-format ra port #:prefix? #t #:compact 0))
 
 (let ((ra (array->ra #2@1:2@1:3((1 2 3) (4 5 6)))))
   (ra-format ra port))

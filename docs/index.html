@@ -697,9 +697,10 @@ s
 <p>Set the default printer for arrays. This parameter is available from <code>(newra print)</code>.
 </p>
 <span id="index-box"></span>
-<span id="index-box_002dcompact"></span>
+<span id="index-box1"></span>
+<span id="index-box2"></span>
 <span id="index-default"></span>
-<p>The parameter can be set to a function <code>(λ (array port) ...)</code> or to one of the values <code>#f</code>, <code>'default</code>, <code>'box</code> or <code>'box-compact</code>.
+<p>The parameter can be set to a function <code>(λ (array port) ...)</code> or to one of the values <code>#f</code>, <code>'default</code>, <code>'box</code>, <code>'box1</code>, or <code>'box2</code>.
 </p>
 <p>For example
 </p><div class="example">
@@ -725,6 +726,8 @@ s
 └─┴─┴─┘
 </pre></div>
 
+<p>The options <code>'box1</code> and <code>'box2</code> use <a href="#x_002dra_002dformat"><code>ra-format</code></a> like <code>'box</code> but pass 1 or 2 to the <code>#:compact</code> argument.
+</p>
 <p>The default printer can be reset with <code>(*ra-print* #f)</code> or <code>(*ra-print* 'default)</code>.
 </p></dd></dl>
 
@@ -1859,8 +1862,8 @@ indices that match those elements. <code>newra</code> will <em>not</em> check th
 
 <span id="index-ra_002dformat"></span>
 <span id="x_002dra_002dformat"></span><dl class="def">
-<dt id="index-ra_002dformat-1"><span class="category">Function<!-- /@w -->: </span><span><strong>ra-format</strong> <em>ra port #:fmt #:prefix?</em><a href='#index-ra_002dformat-1' class='copiable-anchor'> &para;</a></span></dt>
-<dt id="index-ra_002dformat-2"><span class="category">Function<!-- /@w -->: </span><span><strong>ra-format</strong> <em>ra #f #:fmt #:prefix? &rArr; sc</em><a href='#index-ra_002dformat-2' class='copiable-anchor'> &para;</a></span></dt>
+<dt id="index-ra_002dformat-1"><span class="category">Function<!-- /@w -->: </span><span><strong>ra-format</strong> <em>ra port #:fmt #:prefix? #:compact</em><a href='#index-ra_002dformat-1' class='copiable-anchor'> &para;</a></span></dt>
+<dt id="index-ra_002dformat-2"><span class="category">Function<!-- /@w -->: </span><span><strong>ra-format</strong> <em>ra #f #:fmt #:prefix? #:compact &rArr; sc</em><a href='#index-ra_002dformat-2' class='copiable-anchor'> &para;</a></span></dt>
 <dd>
 <p>Pretty print array <var>ra</var>.
 </p>
@@ -1870,9 +1873,9 @@ indices that match those elements. <code>newra</code> will <em>not</em> check th
 </p>
 <p>If <var>prefix?</var> is true, the array print prefix <a href="#x_002dra_002dprint_002dprefix"><code>ra-print-prefix</code></a> is printed over the first line of the printout if the rank of <var>ra</var> is 2 or greater, else it is printed on a separate line above the printout.
 </p>
-<p>If <var>compact?</var> is true, the separators for the rank-0 cells are replaced by spaces and the separators for the rank-1 cells are omitted. This results in a more compact output at the cost of some clarity.
+<p>If <var>compact</var> is 0 (the default) separators are printed around every cell. If <var>compact</var> is 1, the separators for the rank-0 cells are replaced by spaces and the separators for the rank-1 cells are omitted. This results in a more compact output at the cost of some clarity. If <var>compact</var> is 2, the separators for the rank-0 cells are also omitted.
 </p>
-<p>This function handles arrays of rank up to 14, or up to 16 in compact mode. The even dimensions (counting from the last one) are arranged horizontally, while the odd dimensions are arranged vertically. The dimensions are separated visually using <a href="https://unicode.org/charts/nameslist/n_2500.html">box-drawing characters</a>. This might look better or worse depending on the font.
+<p>This function handles arrays of rank up to 14, or up to 16 if <var>compact</var> &gt; 0. The even dimensions (counting from the last one) are arranged horizontally, while the odd dimensions are arranged vertically. The dimensions are separated visually using <a href="https://unicode.org/charts/nameslist/n_2500.html">box-drawing characters</a>. This might look better or worse depending on the font.
 </p>
 <p>A 0-array:
 </p><div class="example">
@@ -1929,7 +1932,7 @@ element
 
 <p>The same 5-array in compact mode:
 </p><div class="example">
-<pre class="verbatim">(ra-format (ra-i 2 2 3 2 4) #:prefix? #f #:compact? #t)
+<pre class="verbatim">(ra-format (ra-i 2 2 3 2 4) #:prefix? #f #:compact 1)
 </pre><pre class="example">&rArr;
 </pre><pre class="verbatim">║───────────┬───────────┬───────────║───────────┬───────────┬───────────║
 ║ 0  1  2  3│ 8  9 10 11│16 17 18 19║48 49 50 51│56 57 58 59│64 65 66 67║
@@ -1979,6 +1982,19 @@ element
 ├─┼─┼─┼─┼─┼─┼─┤
 │└│─│┴│─│┴│─│┘│
 └─┴─┴─┴─┴─┴─┴─┘
+</pre></div>
+
+<p>The same array with <code>#:compact 2</code>:
+</p><div class="example">
+<pre class="verbatim">(ra-format (ra-format (ra-i 2 3) #f #:prefix? #f) #:prefix? #f #:compact 2)
+</pre><pre class="example">&rArr;
+</pre><pre class="verbatim">┌╌╌╌╌╌╌╌┐
+┆┌─┬─┬─┐┆
+┆│0│1│2│┆
+┆├─┼─┼─┤┆
+┆│3│4│5│┆
+┆└─┴─┴─┘┆
+└╌╌╌╌╌╌╌┘
 </pre></div>
 
 <p>Using a custom element formatter:
@@ -3246,7 +3262,8 @@ Previous: <a href="#Sources" accesskey="p" rel="prev">Sources</a>, Up: <a href="
 <tr><td></td><td valign="top"><a href="#index-bounds">bounds</a>:</td><td>&nbsp;</td><td valign="top"><a href="#Introduction">Introduction</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-bounds-1">bounds</a>:</td><td>&nbsp;</td><td valign="top"><a href="#Reference">Reference</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-box"><code>box</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Writing-and-reading">Writing and reading</a></td></tr>
-<tr><td></td><td valign="top"><a href="#index-box_002dcompact"><code>box-compact</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Writing-and-reading">Writing and reading</a></td></tr>
+<tr><td></td><td valign="top"><a href="#index-box1"><code>box1</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Writing-and-reading">Writing and reading</a></td></tr>
+<tr><td></td><td valign="top"><a href="#index-box2"><code>box2</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Writing-and-reading">Writing and reading</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-broadcasting_002c-singleton_002c-newaxis">broadcasting, singleton, newaxis</a>:</td><td>&nbsp;</td><td valign="top"><a href="#Rank-extension">Rank extension</a></td></tr>
 <tr><td colspan="4"> <hr></td></tr>
 <tr><th id="Indices_cp_letter-C">C</th><td></td><td></td></tr>

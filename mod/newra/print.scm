@@ -1,6 +1,6 @@
 ; -*- mode: scheme; coding: utf-8 -*-
 
-; (c) Daniel Llorens - 2017-2018, 2021
+; (c) Daniel Llorens - 2017-2023
 ; This library is free software; you can redistribute it and/or modify it under
 ; the terms of the GNU General Public License as published by the Free
 ; Software Foundation; either version 3 of the License, or (at your option) any
@@ -23,7 +23,7 @@
 (define *ra-print*
   (make-parameter #f
     (lambda (x) (match x
-                  ((or 'box 'box-compact 'default #f (? procedure?)) x)
+                  ((or 'box 'box1 'box2 'default #f (? procedure?)) x)
                   (x (throw 'bad-argument-to-*ra-print* x))))))
 
 (define *ra-parenthesized-rank-zero*
@@ -111,9 +111,10 @@
     (vector-for-each (lambda (e) (and=> (pred? e) exit)) v)
     #f))
 
-; FIXME if a cell prints as nothing (e.g. "" with compact? #t) then it shouldn't take up vertical space.
-; FIXME compact rank <=2 should avoid borders at all.
-(define* (ra-format ra #:optional (port #t) #:key (fmt "~a") (prefix? #t) compact?)
+; FIXME if a cell prints as nothing (e.g. "" with compact >0) then it shouldn't take up vertical space.
+; FIXME compact >0 rank <=2 should avoid borders at all.
+
+(define* (ra-format ra #:optional (port #t) #:key (fmt "~a") (prefix? #t) (compact 0))
   (define prefix (and prefix? (call-with-output-string (cut ra-print-prefix ra <>))))
   (let ((ra (if (vector-any (lambda (d)
                               (and (not (dim-len d))
@@ -128,34 +129,39 @@
     (define s (ra-map! (apply make-ra #f (ra-dimensions ra))
                        (lambda (x)
                          (if (ra? x)
-                           (ra-format x #f #:fmt fmt #:prefix? prefix? #:compact? compact?)
+                           (ra-format x #f #:fmt fmt #:prefix? prefix? #:compact compact)
                            (ra-tile (make-ra-root (tostring x)) 0 1)))
                        ra))
-    (define-values (dim0 dim1)
+; vertical axes go in dimv, horizontal axes in dimh
+    (define-values (dimv dimh)
       (let* ((q r (euclidean/ (ra-rank s) 2))
              (a (ra-iota (+ q r) 0 2))
              (b (ra-iota q 1 2)))
         (if (zero? r)
           (values a b)
           (values b a))))
-    (define (lengths dim0 dim1 k compact?)
-      (let* ((sq (apply ra-untranspose s (ra->list (ra-cat #f 0 dim1 dim0))))
-             (l (apply make-ra 0 (drop (ra-dimensions sq) (ra-len dim1))))
-             (border (if (or compact? (zero? (ra-rank l))) 0 1)))
-        (ra-slice-for-each-in-order (ra-len dim1)
-                                    (lambda (w)
-                                      (ra-map! l (lambda (l w) (max l (+ border (ra-len w k)))) l w))
-                                    sq)
+    (define extrav (> (ra-len dimv) (if (< compact 2) 0 1)))
+    (define extrah (> (ra-len dimh) (if (< compact 2) 0 1)))
+    (define (lengths dimv dimh k compact)
+      (let* ((sq (apply ra-untranspose s (ra->list (ra-cat #f 0 dimh dimv))))
+             (l (apply make-ra 0 (drop (ra-dimensions sq) (ra-len dimh))))
+             (inner-compact? (if (zero? compact)
+                               (= (ra-len dimv) 0)
+                               (>= (ra-len dimv) 0)))
+             (border (if inner-compact? 0 1)))
+        (ra-slice-for-each-in-order (ra-len dimh)
+          (lambda (w) (ra-map! l (lambda (l w) (max l (+ border (ra-len w k)))) l w))
+          sq)
 ; FIXME handle border entirely here
-        (when (and compact? (> (ra-rank l) 0))
-          (let ((ll (ra-from l (dots) (dim-hi (vector-ref (ra-dims l) (- (ra-rank l) 1))))))
+        (when (and inner-compact? (match k (0 extrav) (1 extrah)))
+          (let ((ll (ra-from l (dots) ((match k (0 dim-hi) (1 dim-lo)) (vector-ref (ra-dims l) (- (ra-rank l) 1))))))
             (ra-map! ll (cut + <> 1) ll)))
         l))
-    (define l0 (lengths dim0 dim1 0 compact?))
-    (define l1 (lengths dim1 dim0 1 #f))
-    (define t0 (- (ra-fold + 0 l0) (if (zero? (ra-rank l0)) 1 0)))
-    (define t1 (- (ra-fold + 0 l1) (if (zero? (ra-rank l1)) 1 0)))
-; define positions for grid and cells
+    (define lv (lengths dimv dimh 0 (match compact (0 0) (1 1) (2 2))))
+    (define lh (lengths dimh dimv 1 (match compact (0 0) (1 0) (2 2))))
+    (define tv (ra-fold + (if extrav 0 -1) lv))
+    (define th (ra-fold + (if extrah 0 -1) lh))
+; compute positions for grid and cells
     (define (scan! a) (let ((s 0)) (ra-map-in-order! a (lambda (c) (let ((d s)) (set! s (+ s c)) d)) a)))
     (define (scan-0 a) (scan! (ra-copy a)))
     (define (scan-1 a) (scan! (ra-cat #f 0 a (make-ra 0))))
@@ -165,13 +171,12 @@
              (ra-slice-for-each (+ k 1) (lambda (l m) (set! (m) (ra-fold + 0 l)) m) l m)
              (scan-1 (ra-ravel m)))))
 ; make screen, adding line for prefix if necessary
+    (define prefix-lines (if (and prefix (not extrav)) 1 0))
     (define scc (make-typed-ra 'a #\space
-                               (+ 1 t0 (if (and prefix (< (ra-rank ra) 2)) 1 0))
-                               (max (if prefix (string-length prefix) 0) (+ 1 t1))))
-    (define sc (if (and prefix (< (ra-rank ra) 2))
-                 (ra-from scc (ra-iota (- (ra-len scc) 1) 1))
-                 scc))
-    (define (char k n) (string-ref (ra-ref arts (+ (if compact? 0 1) k)) n))
+                               (+ 1 tv prefix-lines)
+                               (max (if prefix (string-length prefix) 0) (+ 1 th))))
+    (define sc (ra-from scc (ra-iota (- (ra-len scc) prefix-lines) prefix-lines)))
+    (define (char k n) (string-ref (ra-ref arts (+ (if (positive? compact) 0 1) k)) n))
     (define (line-0 sc k range at) (ra-amend! sc (char k 0) range at))
     (define (line-1 sc k range at) (ra-amend! sc (char k 1) at range))
     (cond
@@ -180,64 +185,64 @@
      ((zero? (ra-size ra)) #f)
      (else
 ; print grid
-      (let loop ((k 0))
-        (let* ((m0 (marks l0 (- (ra-rank l0) 1 k)))
-               (m1 (marks l1 (- (ra-rank l1) 1 k)))
+      (let loop ((k (max 0 (- compact 1))))
+        (let* ((m0 (marks lv (- (ra-len dimv) 1 k)))
+               (m1 (marks lh (- (ra-len dimh) 1 k)))
                (>m0< (and m0 (ra-from m0 (ra-iota (- (ra-len m0) 2) 1))))
                (>m1< (and m1 (ra-from m1 (ra-iota (- (ra-len m1) 2) 1)))))
           (cond ((and m0 m1)
 ; horiz + vert
-                 (if (and compact? (zero? k))
+                 (if (and (positive? compact) (zero? k))
                    (begin
-                     (line-1 sc k (ra-iota (+ 1 t1) 0) (ra-ref m0 0))
-                     (line-1 sc k (ra-iota (+ 1 t1) 0) (ra-ref m0 (- (ra-len m0) 1)))
-                     (line-0 sc k (ra-iota (+ 1 t0) 0) (ra-ref m1 0))
-                     (line-0 sc k (ra-iota (+ 1 t0) 0) (ra-ref m1 (- (ra-len m1) 1))))
+                     (line-1 sc k (ra-iota (+ 1 th) 0) (ra-ref m0 0))
+                     (line-1 sc k (ra-iota (+ 1 th) 0) (ra-ref m0 (- (ra-len m0) 1)))
+                     (line-0 sc k (ra-iota (+ 1 tv) 0) (ra-ref m1 0))
+                     (line-0 sc k (ra-iota (+ 1 tv) 0) (ra-ref m1 (- (ra-len m1) 1))))
                    (begin
-                     (ra-for-each (lambda (m0) (line-1 sc k (ra-iota (+ 1 t1) 0) m0)) m0)
-                     (ra-for-each (lambda (m1) (line-0 sc k (ra-iota (+ 1 t0) 0) m1)) m1)))
+                     (ra-for-each (lambda (m0) (line-1 sc k (ra-iota (+ 1 th) 0) m0)) m0)
+                     (ra-for-each (lambda (m1) (line-0 sc k (ra-iota (+ 1 tv) 0) m1)) m1)))
 ; inner crosses
-                 (if compact?
+                 (if (positive? compact)
                    (when (> k 0)
                      (ra-for-each (lambda (m0 m1) (ra-set! sc (char k 10) m0 m1))
                                   >m0< (ra-transpose >m1< 1)))
                    (ra-for-each (lambda (m0 m1) (ra-set! sc (char k 10) m0 m1))
                                 >m0< (ra-transpose >m1< 1)))
 ; edge crosses
-                 (unless (and compact? (zero? k))
+                 (unless (and (positive? compact) (zero? k))
                    (ra-for-each (lambda (m0)
                                   (ra-set! sc (char k 6) m0 0)
-                                  (ra-set! sc (char k 7) m0 t1))
+                                  (ra-set! sc (char k 7) m0 th))
                                 >m0<)
                    (ra-for-each (lambda (m1)
                                   (ra-set! sc (char k 8) 0 m1)
-                                  (ra-set! sc (char k 9) t0 m1))
+                                  (ra-set! sc (char k 9) tv m1))
                                 >m1<))
 ; corners
                  (ra-set! sc (char k 2) 0 0)
-                 (ra-set! sc (char k 3) 0 t1)
-                 (ra-set! sc (char k 4) t0 0)
-                 (ra-set! sc (char k 5) t0 t1)
+                 (ra-set! sc (char k 3) 0 th)
+                 (ra-set! sc (char k 4) tv 0)
+                 (ra-set! sc (char k 5) tv th)
                  (loop (+ k 1)))
                 (m1
-                 (if (and compact? (zero? k))
+                 (if (and (positive? compact) (zero? k))
                    (begin
-                     (line-0 sc k (ra-iota (+ t0 1) 0) 0)
-                     (line-0 sc k (ra-iota (+ t0 1) 0) (ra-ref m1 (- (ra-len m1) 1))))
-                   (ra-for-each (lambda (m1) (line-0 sc k (ra-iota (+ t0 1) 0) m1)) m1)))
+                     (line-0 sc k (ra-iota (+ tv 1) 0) 0)
+                     (line-0 sc k (ra-iota (+ tv 1) 0) (ra-ref m1 (- (ra-len m1) 1))))
+                   (ra-for-each (lambda (m1) (line-0 sc k (ra-iota (+ tv 1) 0) m1)) m1)))
                 (else #f))))
 ; print cells
       (ra-for-each
-       (lambda (sq o0 l0 o1 l1)
+       (lambda (sq ov lv oh lh)
          (ra-copy! (ra-from sc
-                            (ra-iota (ra-len sq 0) (+ o0 (if (> (ra-rank s) 1) 1 0)))
-                            (ra-iota (ra-len sq 1) (+ o1 1 (- l1 (ra-len sq 1) 1)))) ; align right
+                            (ra-iota (ra-len sq 0) (+ ov (if extrav 1 0)))
+                            (ra-iota (ra-len sq 1) (+ oh lh (- (ra-len sq 1))))) ; align right
                    sq))
-       (apply ra-untranspose s (ra->list (ra-cat #f 0 dim0 dim1)))
-       (apply ra-reshape (scan-0 (ra-ravel l0)) 0 (ra-dimensions l0))
-       l0
-       (ra-transpose (apply ra-reshape (scan-0 (ra-ravel l1)) 0 (ra-dimensions l1)) (ra-rank l0))
-       (ra-transpose l1 (ra-rank l0)))))
+       (apply ra-untranspose s (ra->list (ra-cat #f 0 dimv dimh)))
+       (apply ra-reshape (scan-0 (ra-ravel lv)) 0 (ra-dimensions lv))
+       lv
+       (ra-transpose (apply ra-reshape (scan-0 (ra-ravel lh)) 0 (ra-dimensions lh)) (ra-rank lv))
+       (ra-transpose lh (ra-rank lv)))))
 ; print prefix
     (when prefix
       (ra-amend! scc (make-ra-root prefix) 0 (ra-iota (string-length prefix))))
@@ -246,8 +251,10 @@
       scc)))
 
 (struct-set! (@ (newra base) <ra-vtable>) vtable-index-printer
-             (lambda (ra o) (match (*ra-print*)
-                              ('box (newline o) (ra-format ra o))
-                              ('box-compact (newline o) (ra-format ra o #:compact? #t))
-                              ((or 'default #f) (ra-print ra o))
-                              (f (f ra o)))))
+             (lambda (ra o)
+               (match (*ra-print*)
+                 ('box (newline o) (ra-format ra o))
+                 ('box1 (newline o) (ra-format ra o #:compact 1))
+                 ('box2 (newline o) (ra-format ra o #:compact 2))
+                 ((or 'default #f) (ra-print ra o))
+                 (f (f ra o)))))
