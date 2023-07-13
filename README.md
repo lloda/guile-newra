@@ -1,5 +1,5 @@
 
-# newra [![guile-3.0](https://github.com/lloda/guile-newra/actions/workflows/guile-3.0.yml/badge.svg)](https://github.com/lloda/guile-newra/actions/workflows/guile-3.0.yml)
+# newra <!-- [![guile-3.0](https://github.com/lloda/guile-newra/actions/workflows/guile-3.0.yml/badge.svg)](https://github.com/lloda/guile-newra/actions/workflows/guile-3.0.yml) -->
 
 guile-newra (`newra`) wants to replace the current (3.0) Guile array system, which is almost entirely implemented in C.
 
@@ -9,16 +9,22 @@ The C API shouldn't be affected. Once you get an array handle it makes no sense 
 
 Except for the tests and for the pair of functions `ra->array` / `array->ra`, `newra` is independent of the old array system.
 
-`newra` requires Guile 3.0.8. Run the test or the benchmark with
+`newra` requires Guile 3.0.8. Run the tests with
 
 ```
-> $GUILE -L mod test/test.scm
+> cd test && cmake . && make test
+```
+
+Run the benchmarks with
+
+```
 > $GUILE -L mod bench/bench.scm
+> $GUILE -L mod -L path-to-guile-ffi-blis bench/bench-blis.scm
 ```
 
 The manual is at [lloda.github.io/guile-newra](https://lloda.github.io/guile-newra), and you can find some larger examples in `examples/`.
 
-To install the library, copy `mod/newra` and `mod/newra.scm` to somewhere in your Guile load path, and use it with `(import (newra))`.
+To install the library, put `mod/newra` and `mod/newra.scm` somewhere in your Guile load path, and use it with `(import (newra))`.
 
 `newra` can use [`guile-ffi-blis`](https://github.com/lloda/guile-ffi-blis) for some functions (`ra-fill!` in the current version), which can provide a considerable speed up for operations with arrays of types `s32`, `u32`, `f32`, `s64`, `u64`, `f64`, `c32`, or `c64` (it can also be slower — there isn't a good heuristic yet). `newra` will test at runtime whether `guile-ffi-blis` is available.
 

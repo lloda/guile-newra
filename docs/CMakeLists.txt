@@ -1,8 +1,14 @@
 # -*- coding: utf-8; mode: cmake -*-
-# (c) Daniel Llorens - 2018-2019
+# docs CMakeLists.txt
+
+# (c) lloda@sarc.name 2023
+# This library is free software; you can redistribute it and/or modify it under
+# the terms of the GNU Lesser General Public License as published by the Free
+# Software Foundation; either version 3 of the License, or (at your option) any
+# later version.
 
 cmake_minimum_required (VERSION 3.5)
-project (newra-docs)
+project (newra-test)
 
 if (NOT "$ENV{MAKEINFO}" STREQUAL "")
   set(MAKEINFO_EXECUTABLE "$ENV{MAKEINFO}" CACHE INTERNAL "Copied from environment variable")

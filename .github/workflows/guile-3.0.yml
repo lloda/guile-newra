@@ -19,4 +19,4 @@ on:
 #       - uses: actions/checkout@v3
 #       - name: test
 #         run: |
-#           guile -L mod test/test.scm
+#           cd test && cmake . && make test
