@@ -12,21 +12,19 @@ Except for the tests and for the pair of functions `ra->array` / `array->ra`, `n
 `newra` requires Guile 3.0.8. Run the tests with
 
 ```
-> cd test && cmake . && make test
-```
-
-Run the benchmarks with
-
-```
-> $GUILE -L mod bench/bench.scm
-> $GUILE -L mod -L path-to-guile-ffi-blis bench/bench-blis.scm
+> cmake . && make test
 ```
 
 The manual is at [lloda.github.io/guile-newra](https://lloda.github.io/guile-newra), and you can find some larger examples in `examples/`.
 
 To install the library, put `mod/newra` and `mod/newra.scm` somewhere in your Guile load path, and use it with `(import (newra))`.
 
-`newra` can use [`guile-ffi-blis`](https://github.com/lloda/guile-ffi-blis) for some functions (`ra-fill!` in the current version), which can provide a considerable speed up for operations with arrays of types `s32`, `u32`, `f32`, `s64`, `u64`, `f64`, `c32`, or `c64` (it can also be slower — there isn't a good heuristic yet). `newra` will test at runtime whether `guile-ffi-blis` is available.
+`newra` can use [`guile-ffi-blis`](https://github.com/lloda/guile-ffi-blis) for some functions (`ra-fill!` in the current version), which can provide a considerable speed up for operations with arrays of types `s32`, `u32`, `f32`, `s64`, `u64`, `f64`, `c32`, or `c64`. It can also be slower — there isn't a good heuristic yet. Run the benchmarks with
+
+```
+> $GUILE -L mod bench/bench.scm
+> $GUILE -L mod -L path-to-guile-ffi-blis bench/bench-blis.scm
+```
 
 ## Status
 
@@ -34,7 +32,7 @@ The old array compatibility layer is mostly finished, with only a naming change 
 
 These issues seem fixable, and besides, the Scheme compiler is only improving.
 
-Compared with the old arrays, `newra` offers a growing list of features:
+Compared with the old arrays, `newra` offers many features:
 
 * Applicable arrays: Given `(define ra (list->ra 2 '((1 2) (3 4))))`, `(ra 1 1)` returns `4` and `(ra 0)` returns `#%1(1 2)`.
 * Settable arrays: `(set! ((make-ra #f 2 3) 1 1) 99)` returns `#%2:2:3((#f #f #f) (#f 99 #f))`.

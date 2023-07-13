@@ -143,8 +143,8 @@ Help: [C-uc .] insert timestamp [C-cc] flip checkbox [C-uucc] partial flip check
 
 * TODO other [0/1]
   * [ ] review definition of (ra-untranspose a i ...). Does it make sense to allow any i < (rank a) ?
-* TODO packaging [0/3]
-  * [ ] Global CMakeLists.txt
+* TODO packaging [1/3]
+  * [X] Global CMakeLists.txt
   * [ ] Autoconf (?)
   * [ ] Installation
 * TODO replace Guile arrays [0/5]

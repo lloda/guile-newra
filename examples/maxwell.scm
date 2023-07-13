@@ -79,4 +79,7 @@
 
 (test-begin "maxwell")
 (test-approximate 0.3039588939177449 (pk 'result ((maxwell) 19 0 0 0 2 1)) 1e-14)
+
+(define error-count (test-runner-fail-count (test-runner-current)))
 (test-end "maxwell")
+(exit error-count)
