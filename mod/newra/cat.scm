@@ -46,9 +46,9 @@ Concatenate arrays @var{xx} ... along axis @var{i}. The shapes of @var{xx}
 ... must have matching prefixes except at axis @var{i}.
 
 The output array will have the rank of the @var{xx} with the largest rank, or
-@code{(+ 1 i)}, whichever is larger. If necessary, the @var{xx} are rank
-extended to this output rank. The bounds of @var{xx} must match on all axes
-other than @var{i}.
+@code{(+ 1 i)}, whichever is larger. All of the @var{xx} are rank extended to
+this output rank. The bounds of @var{xx} must match on all axes other than
+@var{i}.
 
 If @var{i} is negative, the shape of each @var{xx} ... is prefix-extended by
 @code{(- i)} singleton dimensions and the concatenation is carried out along the
@@ -58,8 +58,6 @@ first axis.
 
 The type of the output is @var{type}, unless @code{#f}; else the type of the
 first argument, unless @code{'d}; else @code{#t}.
-
-'pcat' stands for 'prefix-cat'.
 
 For example:
 
@@ -99,9 +97,9 @@ Concatenate items of rank @var{i} of arrays @var{xx} ... The shapes of @var{xx}
 each @var{x} in @var{xx}.
 
 The output array will have the rank of the @var{xx} with the largest rank, or
-@code{(+ 1 i)}, whichever is larger. If necessary, the @var{xx} are rank
-extended to this output rank. The bounds of @var{xx} must match on all axes
-other than @code{(- (ra-rank x) 1 i)}.
+@code{(+ 1 i)}, whichever is larger. All of the @var{xx} are rank extended to
+this output rank. The bounds of @var{xx} must match on all axes other than
+@code{(- (ra-rank x) 1 i)}.
 
 If @var{i} is negative, the shape of each array @var{xx} ... is suffix-extended
 by @code{(- i)} singleton dimensions and the concatenation is carried out along
@@ -112,7 +110,7 @@ the last axis.
 The type of the output is @var{type}, unless @code{#f}; else the type of the
 first argument, unless @code{'d}; else @code{#t}.
 
-'scat' stands for 'suffix-cat'.
+'cats' stands for 'cat-suffix'.
 
 For example:
 

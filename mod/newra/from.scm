@@ -16,7 +16,7 @@
   #:export (dots
             ra-from ra-from-copy ra-amend! ra-clip
             ra-rotate! ra-rotate
-; FIXME these are tested separately in test/test.scm, which may not be necessary.
+; FIXME these are tested separately in test/everything.scm, which may not be necessary.
             fromb fromu amendu!))
 
 (import (srfi srfi-1) (srfi srfi-9) (srfi srfi-9 gnu) (srfi srfi-26) (srfi srfi-71)

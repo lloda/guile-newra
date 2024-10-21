@@ -1,5 +1,5 @@
 ; -*- mode: scheme; coding: utf-8 -*-
-; Replacement for Guile C-based array system - Tests for ra-format
+; guile-newra - Tests for ra-format
 
 ; (c) Daniel Llorens - 2023
 ; This library is free software; you can redistribute it and/or modify it under
@@ -11,7 +11,6 @@
 
 (import (newra) (newra print) (srfi srfi-64))
 
-(set! test-log-to-file #f)
 (test-begin "format")
 
 (define results

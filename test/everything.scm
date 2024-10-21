@@ -1,5 +1,5 @@
 ; -*- mode: scheme; coding: utf-8 -*-
-; Replacement for Guile C-based array system - Tests
+; guile-newra - Tests
 
 ; (c) Daniel Llorens - 2016-2021
 ; This library is free software; you can redistribute it and/or modify it under
@@ -7,7 +7,7 @@
 ; Software Foundation; either version 3 of the License, or (at your option) any
 ; later version.
 
-; Run with $GUILE -L mod test/test.scm
+; Run with $GUILE -L mod test/everything.scm
 
 (import (newra) (newra tools) (newra read) (test misc) (test map-ladder)
         (srfi srfi-64) (srfi srfi-26) (srfi srfi-8)
@@ -17,7 +17,6 @@
 (define (ra->string ra) (call-with-output-string (cut display ra <>)))
 (define (string->ra s) (call-with-input-string s read))
 
-(set! test-log-to-file #f)
 (test-begin "newra")
 
 
@@ -339,7 +338,7 @@
 
 (for-each
  (lambda (ra-slice-for-each)
-   (test-begin (procedure-name ra-slice-for-each))
+   (test-begin (symbol->string (procedure-name ra-slice-for-each)))
 
    (test-equal "#%2d@1:0@2:0()\n"
      (call-with-output-string
@@ -378,7 +377,7 @@
      (call-with-output-string
       (lambda (s) (ra-slice-for-each 2 (lambda x (format s "~a\n" x)) ra6 ra7a ra7b))))
 
-   (test-end (procedure-name ra-slice-for-each)))
+   (test-end (symbol->string (procedure-name ra-slice-for-each))))
  (list ra-slice-for-each-1 ra-slice-for-each-2
        ra-slice-for-each-3 ra-slice-for-each-4))
 

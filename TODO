@@ -80,7 +80,7 @@ Help: [C-uc .] insert timestamp [C-cc] flip checkbox [C-uucc] partial flip check
   * [ ] separate somehow the rank matching cases that can be done in parallel from those that
     cannot, e.g. using lower rank dest arg to perform reductions.
 
-* TODO ra the array language [/]
+* TODO array language [/]
   * [ ] drag-along facility / lazy ops
     - [ ] verbs
     - [ ] rank conjunction
