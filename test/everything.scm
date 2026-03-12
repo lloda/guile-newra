@@ -1398,6 +1398,15 @@
 
 
 ; -----------------------
+; catch errors
+; -----------------------
+
+(test-begin "errors")
+(test-error "bad-type" 'not-ra? (ra-from #2((0 1) (2 3))))
+(test-end "errors")
+
+
+; -----------------------
 ; the end.
 ; -----------------------
 

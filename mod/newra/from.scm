@@ -178,51 +178,52 @@
 ; FIXME going over the args twice, here and in fromb
 
 (define (parse-args A . i)
-  (let loop ((j 0) (m 0) (ii i)
-             (ib '()) (ibi '()) (tb '())
-             (iu '()) (iui '()) (tu '()))
-    (match ii
-      ((i0 . irest)
-       (match i0
-         (($ <dots> n)
-          (let* ((k (or n (- (ra-rank A) j (count-axes-left irest))))
-                 (idest (iota k m)))
-            (loop (+ j k) (+ m k) irest
-                  (cons (dots k) ib) (fold cons ibi (iota k j)) (fold cons tb idest)
-                  iu iui tu)))
-         (i0
-          (let* ((k (index-rank i0))
-                 (idest (iota k m)))
-            (if (beatable? i0)
-              (loop (+ j 1) (+ m k) irest
-                    (cons i0 ib) (cons j ibi) (fold cons tb idest)
-                    iu iui tu)
-              (loop (+ j 1) (+ m k) irest
-                    ib ibi tb
-                    (cons i0 iu) (cons j iui) (fold cons tu idest)))))))
-      (()
-       (when (> j (%%ra-rank A))
-         (throw 'too-many-indices-for-rank-of-A j (%%ra-rank A)))
-       (let ((ib (reverse! ib))
-             (ibi (reverse! ibi))
-             (iu (reverse! iu))
-             (iui (reverse! iui))
-             (tub (reverse! (append! tb tu))))
+  (let ((rank (ra-rank A)))
+    (let loop ((j 0) (m 0) (ii i)
+               (ib '()) (ibi '()) (tb '())
+               (iu '()) (iui '()) (tu '()))
+      (match ii
+        ((i0 . irest)
+         (match i0
+           (($ <dots> n)
+            (let* ((k (or n (- rank j (count-axes-left irest))))
+                   (idest (iota k m)))
+              (loop (+ j k) (+ m k) irest
+                    (cons (dots k) ib) (fold cons ibi (iota k j)) (fold cons tb idest)
+                    iu iui tu)))
+           (i0
+            (let* ((k (index-rank i0))
+                   (idest (iota k m)))
+              (if (beatable? i0)
+                (loop (+ j 1) (+ m k) irest
+                      (cons i0 ib) (cons j ibi) (fold cons tb idest)
+                      iu iui tu)
+                (loop (+ j 1) (+ m k) irest
+                      ib ibi tb
+                      (cons i0 iu) (cons j iui) (fold cons tu idest)))))))
+        (()
+         (when (> j rank)
+           (throw 'too-many-indices-for-rank-of-A j rank))
+         (let ((ib (reverse! ib))
+               (ibi (reverse! ibi))
+               (iu (reverse! iu))
+               (iui (reverse! iui))
+               (tub (reverse! (append! tb tu))))
 ; pick the beatable axes
-         (let* ((B (make-ra-root
-                    (ra-root A)
-                    (vector-map (cute vector-ref (ra-dims A) <>) (list->vector ibi))
-                    (ra-zero A)))
+           (let* ((B (make-ra-root
+                      (%%ra-root A)
+                      (vector-map (cute vector-ref (%%ra-dims A) <>) (list->vector ibi))
+                      (%%ra-zero A)))
 ; beat them. This might change zero, but not root.
-                (B (apply fromb B ib))
+                  (B (apply fromb B ib))
 ; put the unbeatable axes in front
-                (B (make-ra-root
-                    (ra-root B)
-                    (vector-append (vector-map (cute vector-ref (ra-dims A) <>) (list->vector iui))
-                                   (ra-dims B)
-                                   (vector-drop (ra-dims A) j))
-                    (ra-zero B))))
-           (values B iu tub)))))))
+                  (B (make-ra-root
+                      (%%ra-root B)
+                      (vector-append (vector-map (cute vector-ref (%%ra-dims A) <>) (list->vector iui))
+                                     (%%ra-dims B)
+                                     (vector-drop (%%ra-dims A) j))
+                      (%%ra-zero B))))
+             (values B iu tub))))))))
 
 ; FIXME add a version that copies the result to an arg. That avoids allocation of the result, although it would be better if the compiler could tell where the result goes.
 
