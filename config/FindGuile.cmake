@@ -71,10 +71,10 @@ endif ()
 
 find_program(GUILE_EXECUTABLE
   NAMES guile
-  HINTS ${GUILE_ROOT})
+  HINTS ${GUILE_ROOT} /usr/bin)
 find_program(GUILE_CONFIG_EXECUTABLE
   NAMES guile-config
-  HINTS ${GUILE_ROOT})
+  HINTS ${GUILE_ROOT} /usr/bin)
 
 if (GUILE_CONFIG_EXECUTABLE)
   execute_process (COMMAND ${GUILE_CONFIG_EXECUTABLE} info prefix

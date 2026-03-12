@@ -3,20 +3,20 @@ name: GNU Guile 3.0
 
 on:
   push:
-    branches: [ master ]
+    branches: [ main ]
   pull_request:
-    branches: [ master ]
+    branches: [ main ]
   workflow_dispatch:
 
-# jobs:
-#   build:
-#     runs-on: ubuntu-latest
-#     steps:
-#       - name: update
-#         run: |
-#           sudo apt update
-#           sudo apt install guile-3.0
-#       - uses: actions/checkout@v3
-#       - name: test
-#         run: |
-#           cd test && cmake . && make test
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: update
+        run: |
+          sudo apt update
+          sudo apt install guile-3.0 guile-3.0-dev
+      - name: test
+        run: |
+          cd test && cmake . && make test
