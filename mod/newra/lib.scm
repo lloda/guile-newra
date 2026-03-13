@@ -149,8 +149,6 @@ See also: @code{make-ra}
                             (loop (+ k 1)))))))))
           (make-ra-root (%%ra-root oldra) dims (- ref (ra-offset 0 dims))))))))
 
-; FIXME Depends on traversal order of ra-for-each.
-
 (define (ra->list ra)
   "
 Return a nested list of the elements of array @var{ra}. For example, if @var{ra} is a
@@ -160,32 +158,28 @@ list contains a list for each of the rows of @var{ra}; and so on.
 See also: @code{as-ra}
 "
   (let* ((ra (ra-check ra))
-         (rank (%%ra-rank ra)))
-    (cond
-     ((zero? rank) (ra-ref ra))
-     (else
-      (let ((ra (apply ra-reverse ra (iota rank))))
-        (match (vector-ref (%%ra-dims ra) (- rank 1))
-          (($ <dim> klen klo kstep)
-           (let loop-rank ((ra ra))
-             (cond
-              ((= 1 (%%ra-rank ra))
-               (if (> klen 20)
-                 (ra-fold xcons '() ra)
-                 (let loop-dim ((l '()) (i klo))
-                   (if (> i (dim-hi klen klo))
-                     l
-                     (loop-dim (cons (ra-ref ra i) l) (+ i 1))))))
-              (else
-               (let ((l '()))
-                 (ra-slice-for-each 1 (lambda (x) (set! l (cons (loop-rank x) l))) ra)
-                 l)))))))))))
+         (rank (%%ra-rank ra))
+         (ra (apply ra-reverse ra (iota rank))))
+    (if (zero? rank)
+      (ra-ref ra)
+      (match (vector-ref (%%ra-dims ra) (- rank 1))
+        (($ <dim> klen klo _)
+         (let loop-rank ((ra ra))
+           (if (= 1 (%%ra-rank ra))
+             (if (> klen 20)
+               (ra-fold xcons '() ra)
+               (let loop-dim ((l '()) (i klo))
+                 (if (> i (dim-hi klen klo))
+                   l
+                   (loop-dim (cons (ra-ref ra i) l) (+ i 1)))))
+             (let ((l '()))
+               (ra-slice-for-each-in-order 1 (lambda (x) (set! l (cons (loop-rank x) l))) ra)
+               l))))))))
 
-; Similar to (@ (newra) ra-for-each-slice-1) - since we cannot unroll. It
-; might be cheaper to go Fortran order (building the index lists back to front);
-; should try that. C order and set-cdr! is how oldra does it.
-; This function is provided for compatibility with oldra; generally we shouldn't
-; be building index lists.
+; Based on (@ (newra) ra-for-each-slice-2) - we cannot unroll. It might be cheaper to
+; go Fortran order (building the index lists back to front); should try that. C order
+; and set-cdr! is how oldra does it. This function is provided for compatibility with
+; oldra; generally we shouldn't be building index lists.
 
 (define (ra-index-map! ra op)
   "
@@ -204,30 +198,26 @@ x @result{} #%2:2:3(((0 0) (0 1) (0 2)) ((1 0) (1 1) (1 2)))
 
 See also: @code{ra-iota} @code{ra-i}
 "
-  (let* ((kk (ra-rank ra))
-         (ii (make-list kk))
-         (los lens ((@ (newra map) ra-slice-for-each-check) kk ra)))
-      (if (= kk 0)
-        (ra-set! ra (apply op ii))
-        (let loop-rank ((k 0) (ra ra) (endi ii))
-          (let* ((lo (vector-ref los k))
-                 (end (+ lo (vector-ref lens k))))
-            (if (= (+ 1 k) kk)
-              (let loop-dim ((i lo))
-                (if (= i end)
-                  (set-car! endi lo)
-                  (begin
-                    (set-car! endi i)
-                    (ra-set! ra (apply op ii) i)
-                    (loop-dim (+ i 1)))))
-              (let loop-dim ((i lo))
-                (if (= i end)
-                  (set-car! endi lo)
-                  (begin
-                    (set-car! endi i)
-                    (loop-rank (+ k 1) (ra-slice ra i) (cdr endi))
-                    (loop-dim (+ i 1)))))))))
-      ra))
+  (let* ((frame (ra-check ra))
+         (ii (make-list (%%ra-rank frame)))
+         (dims (%%ra-dims frame))
+         (ra (make-ra-root (%%ra-root frame) #() (ra-offset frame))))
+    (let loop-rank ((k 0) (endi ii))
+      (if (null? endi)
+        ((%%ra-vset! ra) (%%ra-root ra) (%%ra-zero ra) (apply op ii))
+        (match (vector-ref dims k)
+          (($ <dim> len lo step)
+           (let loop-dim ((i 0))
+             (if (= i len)
+               (begin
+                 (set-car! endi lo)
+                 (%%ra-zero-set! ra (- (%%ra-zero ra) (* step len))))
+               (begin
+                 (set-car! endi (+ i lo))
+                 (loop-rank (+ k 1) (cdr endi))
+                 (%%ra-zero-set! ra (+ (%%ra-zero ra) step))
+                 (loop-dim (+ i 1)))))))))
+    frame))
 
 
 ; ----------------

@@ -178,7 +178,7 @@
 ; FIXME going over the args twice, here and in fromb
 
 (define (parse-args A . i)
-  (let ((rank (ra-rank A)))
+  (let ((r (ra-rank A)))
     (let loop ((j 0) (m 0) (ii i)
                (ib '()) (ibi '()) (tb '())
                (iu '()) (iui '()) (tu '()))
@@ -186,7 +186,7 @@
         ((i0 . irest)
          (match i0
            (($ <dots> n)
-            (let* ((k (or n (- rank j (count-axes-left irest))))
+            (let* ((k (or n (- r j (count-axes-left irest))))
                    (idest (iota k m)))
               (loop (+ j k) (+ m k) irest
                     (cons (dots k) ib) (fold cons ibi (iota k j)) (fold cons tb idest)
@@ -202,8 +202,8 @@
                       ib ibi tb
                       (cons i0 iu) (cons j iui) (fold cons tu idest)))))))
         (()
-         (when (> j rank)
-           (throw 'too-many-indices-for-rank-of-A j rank))
+         (when (> j r)
+           (throw 'too-many-indices-for-rank-of-A j r))
          (let ((ib (reverse! ib))
                (ibi (reverse! ibi))
                (iu (reverse! iu))

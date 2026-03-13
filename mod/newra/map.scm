@@ -149,7 +149,7 @@
              (%let ((ra (frame) (make-ra-root-prefix frame k los)) ...)
 ; since we'll unroll, special case for rank 0
                (if (zero? k)
-; no fresh slice descriptor like in array-slice-for-each. Should be all right b/c the descriptors can be copied.
+; no fresh slice descriptor like in array-slice-for-each. Should be all right bc descriptors can be copied.
                  (%op ra ...)
 ; check early so we can save a step in the loop later.
                  (when (vector-every positive? lens)

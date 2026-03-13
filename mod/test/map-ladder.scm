@@ -43,25 +43,22 @@
          (ra (map (cut make-ra-root-prefix <> kk los) frame)))
     (let loop-rank ((k 0))
       (if (= k kk)
-; no fresh slice descriptor like in array-slice-for-each. Should be all right b/c the descriptors can be copied.
+; no fresh slice descriptor like in array-slice-for-each. Should be all right bc descriptors can be copied.
         (apply op ra)
-        (let  ((lenk (vector-ref lens k)))
+        (let ((len (vector-ref lens k)))
           (let loop-dim ((i 0))
-            (cond
-             ((= i lenk)
-              (for-each
-                  (lambda (ra frame)
-                    (let ((step (dim-step (vector-ref (%%ra-dims frame) k))))
-                      (%%ra-zero-set! ra (- (%%ra-zero ra) (* step lenk)))))
-                ra frame))
-             (else
-              (loop-rank (+ k 1))
-              (for-each
-                  (lambda (ra frame)
-                    (let ((step (dim-step (vector-ref (%%ra-dims frame) k))))
-                      (%%ra-zero-set! ra (+ (%%ra-zero ra) step))))
+            (if (= i len)
+              (for-each (lambda (ra frame)
+                          (let ((step (dim-step (vector-ref (%%ra-dims frame) k))))
+                            (%%ra-zero-set! ra (- (%%ra-zero ra) (* step len)))))
                 ra frame)
-              (loop-dim (+ i 1))))))))))
+              (begin
+                (loop-rank (+ k 1))
+                (for-each (lambda (ra frame)
+                            (let ((step (dim-step (vector-ref (%%ra-dims frame) k))))
+                              (%%ra-zero-set! ra (+ (%%ra-zero ra) step))))
+                  ra frame)
+                (loop-dim (+ i 1))))))))))
 
 ; moving slice with row-major unrolling.
 (define (ra-slice-for-each-3 u op . frame)
@@ -91,7 +88,7 @@
               (if (= k u)
 ; unrolled dimensions.
                 (let loop ((i lenm))
-; no fresh slice descriptor like in array-slice-for-each. Should be all right b/c the descriptors can be copied.
+; no fresh slice descriptor like in array-slice-for-each. Should be all right bc descriptors can be copied.
                   (apply op ra)
                   (cond
                    ((zero? i)
